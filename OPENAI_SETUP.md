@@ -1,5 +1,16 @@
 # OpenAI Integration Setup Guide
 
+## 🚨 **URGENT: Fix "API key not configured" Error**
+
+**If you're seeing "OpenAI API key not configured" error:**
+
+1. **The `.env.local` file exists** - you just need to edit it
+2. **Get your API key** from [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+3. **Edit `.env.local`** and replace `your_openai_api_key_here` with your actual key
+4. **Restart your server** with `npm run dev`
+
+---
+
 ## 🔑 **API Key Configuration**
 
 ### **1. Get OpenAI API Key**
@@ -140,12 +151,29 @@ The system automatically searches for latest medicine information from:
 
 ## 🚀 **Quick Start**
 
-1. **Set API Key:**
+### ⚠️ **IMMEDIATE ACTION REQUIRED**
+
+**The `.env.local` file has been created for you!** 
+
+1. **Edit the API Key:**
    ```bash
-   echo "OPENAI_API_KEY=sk-your-key-here" > .env.local
+   # The file already exists, just edit it:
+   nano .env.local
+   # OR
+   code .env.local
+   ```
+   
+   **Replace `your_openai_api_key_here` with your actual API key:**
+   ```bash
+   OPENAI_API_KEY=sk-proj-your-actual-api-key-here
    ```
 
-2. **Start Development:**
+2. **Get Your API Key:**
+   - Go to [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+   - Create a new secret key
+   - Copy the key (starts with `sk-proj-`)
+
+3. **Start Development:**
    ```bash
    npm run dev
    ```
