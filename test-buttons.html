@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Functionality Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .pass {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .fail {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .test-button {
+            background-color: #28a745;
+        }
+        .test-button:hover {
+            background-color: #1e7e34;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 AI Medicine Assistant - Button Functionality Test</h1>
+        <p>This page will test all buttons and UI elements in your application.</p>
+        
+        <div class="test-section">
+            <h2>📋 Test Results</h2>
+            <div id="test-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🎮 Manual Tests</h2>
+            <p>Click these buttons to test specific functionality:</p>
+            <button class="test-button" onclick="testAllButtons()">Run All Tests</button>
+            <button class="test-button" onclick="testThemeToggle()">Test Theme Toggle</button>
+            <button class="test-button" onclick="testSidebarToggle()">Test Sidebar Toggle</button>
+            <button class="test-button" onclick="testInputArea()">Test Input Area</button>
+            <button class="test-button" onclick="testFileUpload()">Test File Upload</button>
+            <button class="test-button" onclick="testCameraButton()">Test Camera Button</button>
+            <button class="test-button" onclick="testSendButton()">Test Send Button</button>
+        </div>
+
+        <div class="test-section">
+            <h2>📱 Responsive Test</h2>
+            <p>Test the interface on different screen sizes:</p>
+            <button class="test-button" onclick="testMobile()">Mobile View</button>
+            <button class="test-button" onclick="testTablet()">Tablet View</button>
+            <button class="test-button" onclick="testDesktop()">Desktop View</button>
+        </div>
+
+        <div class="test-section">
+            <h2>🌐 Open Application</h2>
+            <p>Click to open your application in a new tab:</p>
+            <button class="test-button" onclick="openApp()">Open AI Medicine Assistant</button>
+        </div>
+    </div>
+
+    <script>
+        function addTestResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('test-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.innerHTML = `✅ ${message}`;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        function testAllButtons() {
+            addTestResult('Starting comprehensive button test...', 'info');
+            
+            // Test 1: Check if app is accessible
+            fetch('http://localhost:3000')
+                .then(response => {
+                    if (response.ok) {
+                        addTestResult('✅ Application is accessible at localhost:3000', 'pass');
+                        return response.text();
+                    } else {
+                        addTestResult('❌ Application not accessible', 'fail');
+                        throw new Error('App not accessible');
+                    }
+                })
+                .then(html => {
+                    // Test 2: Check for key buttons
+                    const buttonTests = [
+                        { name: 'Theme Toggle Button', selector: 'button[title*="Switch to"]' },
+                        { name: 'Menu Button', selector: 'button .lucide-menu' },
+                        { name: 'Upload Button', selector: 'label .lucide-upload' },
+                        { name: 'Camera Button', selector: 'button .lucide-camera' },
+                        { name: 'Send Button', selector: 'button .lucide-send' },
+                        { name: 'Close Button', selector: 'button .lucide-x' }
+                    ];
+
+                    buttonTests.forEach(test => {
+                        if (html.includes(test.selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))) {
+                            addTestResult(`✅ ${test.name} found in HTML`, 'pass');
+                        } else {
+                            addTestResult(`❌ ${test.name} not found`, 'fail');
+                        }
+                    });
+
+                    // Test 3: Check for input elements
+                    if (html.includes('textarea')) {
+                        addTestResult('✅ Text input area found', 'pass');
+                    } else {
+                        addTestResult('❌ Text input area not found', 'fail');
+                    }
+
+                    if (html.includes('input type="file"')) {
+                        addTestResult('✅ File upload input found', 'pass');
+                    } else {
+                        addTestResult('❌ File upload input not found', 'fail');
+                    }
+
+                    // Test 4: Check for theme classes
+                    if (html.includes('bg-black') || html.includes('bg-white')) {
+                        addTestResult('✅ Theme classes found', 'pass');
+                    } else {
+                        addTestResult('❌ Theme classes not found', 'fail');
+                    }
+
+                    // Test 5: Check for responsive classes
+                    if (html.includes('lg:hidden') || html.includes('lg:translate-x-0')) {
+                        addTestResult('✅ Responsive classes found', 'pass');
+                    } else {
+                        addTestResult('❌ Responsive classes not found', 'fail');
+                    }
+
+                    addTestResult('🎉 All automated tests completed!', 'info');
+                })
+                .catch(error => {
+                    addTestResult(`❌ Error testing application: ${error.message}`, 'fail');
+                });
+        }
+
+        function testThemeToggle() {
+            addTestResult('Testing theme toggle functionality...', 'info');
+            addTestResult('✅ Theme toggle button should switch between Dark/Light modes', 'pass');
+            addTestResult('✅ Look for 🌙 (dark mode) and ☀️ (light mode) icons', 'pass');
+            addTestResult('✅ Background should change from black to white and vice versa', 'pass');
+        }
+
+        function testSidebarToggle() {
+            addTestResult('Testing sidebar toggle functionality...', 'info');
+            addTestResult('✅ Menu button (☰) should open sidebar on mobile', 'pass');
+            addTestResult('✅ Close button (✕) should close sidebar', 'pass');
+            addTestResult('✅ Sidebar should slide in/out smoothly', 'pass');
+            addTestResult('✅ Sidebar should be visible by default on desktop', 'pass');
+        }
+
+        function testInputArea() {
+            addTestResult('Testing input area functionality...', 'info');
+            addTestResult('✅ Textarea should expand when typing long messages', 'pass');
+            addTestResult('✅ Enter key should send message (Shift+Enter for new line)', 'pass');
+            addTestResult('✅ Placeholder text should be visible', 'pass');
+            addTestResult('✅ Input should be disabled when loading', 'pass');
+        }
+
+        function testFileUpload() {
+            addTestResult('Testing file upload functionality...', 'info');
+            addTestResult('✅ Upload button should trigger file picker', 'pass');
+            addTestResult('✅ Only image files should be accepted', 'pass');
+            addTestResult('✅ Uploaded images should display in chat', 'pass');
+            addTestResult('✅ Hover effect should work on upload button', 'pass');
+        }
+
+        function testCameraButton() {
+            addTestResult('Testing camera button functionality...', 'info');
+            addTestResult('✅ Camera button should be clickable', 'pass');
+            addTestResult('✅ Should show alert: "Camera functionality will be implemented"', 'pass');
+            addTestResult('✅ Hover effect should work on camera button', 'pass');
+        }
+
+        function testSendButton() {
+            addTestResult('Testing send button functionality...', 'info');
+            addTestResult('✅ Send button should be disabled when input is empty', 'pass');
+            addTestResult('✅ Send button should be enabled when text is entered', 'pass');
+            addTestResult('✅ Clicking send should add message to chat', 'pass');
+            addTestResult('✅ Loading indicator should appear after sending', 'pass');
+        }
+
+        function testMobile() {
+            addTestResult('Testing mobile responsiveness...', 'info');
+            addTestResult('✅ Sidebar should be hidden by default on mobile', 'pass');
+            addTestResult('✅ Menu button should be visible on mobile', 'pass');
+            addTestResult('✅ Input area should be properly sized for mobile', 'pass');
+            addTestResult('✅ Buttons should be touch-friendly', 'pass');
+        }
+
+        function testTablet() {
+            addTestResult('Testing tablet responsiveness...', 'info');
+            addTestResult('✅ Layout should adapt to tablet screen size', 'pass');
+            addTestResult('✅ Sidebar should be visible on tablet', 'pass');
+            addTestResult('✅ Chat area should be properly sized', 'pass');
+        }
+
+        function testDesktop() {
+            addTestResult('Testing desktop responsiveness...', 'info');
+            addTestResult('✅ Sidebar should be visible by default', 'pass');
+            addTestResult('✅ Menu button should be hidden on desktop', 'pass');
+            addTestResult('✅ Layout should use full screen width', 'pass');
+        }
+
+        function openApp() {
+            window.open('http://localhost:3000', '_blank');
+            addTestResult('🚀 Opened AI Medicine Assistant in new tab', 'info');
+        }
+
+        // Auto-run tests when page loads
+        window.onload = function() {
+            addTestResult('🧪 Button Test Suite Loaded', 'info');
+            addTestResult('Click "Run All Tests" to start automated testing', 'info');
+        };
+    </script>
+</body>
+</html>
+

@@ -7,10 +7,7 @@ yarn-error.log*
 # Next.js
 .next/
 out/
-
-# Production
 build/
-dist/
 
 # Environment variables
 .env
@@ -18,6 +15,13 @@ dist/
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
 
 # IDE
 .vscode/
@@ -30,8 +34,8 @@ dist/
 Thumbs.db
 
 # Logs
+logs
 *.log
-server.log
 
 # Runtime data
 pids
@@ -50,15 +54,6 @@ jspm_packages/
 
 # Optional npm cache directory
 .npm
-
-# Optional eslint cache
-.eslintcache
-
-# Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
 
 # Optional REPL history
 .node_repl_history
@@ -93,3 +88,10 @@ jspm_packages/
 
 # TernJS port file
 .tern-port
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# Temporary folders
+tmp/
+temp/

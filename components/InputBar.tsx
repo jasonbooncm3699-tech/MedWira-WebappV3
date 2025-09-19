@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useRef, useState, useEffect } from 'react';
 import { Upload, Camera, Send, Mic, MicOff } from 'lucide-react';
 
 interface InputBarProps {
@@ -24,46 +23,116 @@ export default function InputBar({
   const [inputMessage, setInputMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  console.log('InputBar rendered:', { isLoading, darkMode, tokens, inputMessage }); // Debug log
+
+  // Client-side hydration check
+  useEffect(() => {
+    console.log('InputBar mounted on client side');
+    
+    // Test if buttons are clickable
+    const uploadBtn = document.querySelector('button[type="button"]');
+    const cameraBtn = document.querySelectorAll('button[type="button"]')[1];
+    
+    console.log('Upload button element:', uploadBtn);
+    console.log('Camera button element:', cameraBtn);
+    
+    if (uploadBtn) {
+      console.log('Upload button has onclick:', !!uploadBtn.onclick);
+    }
+  }, []);
 
   const handleSendMessage = () => {
-    if (!inputMessage.trim() || isLoading) return;
+    console.log('Send button clicked!', { message: inputMessage.trim(), isLoading }); // Debug log
+    if (!inputMessage.trim() || isLoading) {
+      console.log('Cannot send - empty message or loading');
+      return;
+    }
     
+    console.log('Sending message:', inputMessage.trim());
     onSendMessage(inputMessage.trim());
     setInputMessage('');
-    
-    // Reset textarea height
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
+    console.log('Key pressed:', e.key); // Debug log
     if (e.key === 'Enter' && !e.shiftKey) {
+      console.log('Enter key pressed, sending message'); // Debug log
       e.preventDefault();
       handleSendMessage();
     }
   };
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    console.log('Textarea changed:', e.target.value); // Debug log
     setInputMessage(e.target.value);
-    
-    // Auto-resize textarea
-    const textarea = e.target;
-    textarea.style.height = 'auto';
-    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('File input changed!'); // Debug log
     const file = e.target.files?.[0];
+    console.log('Selected file:', file); // Debug log
     if (file) {
+      console.log('File details:', { name: file.name, type: file.type, size: file.size }); // Debug log
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file.');
+        return;
+      }
+      
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size too large. Please select an image smaller than 10MB.');
+        return;
+      }
+      
+      console.log('Calling onImageUpload with file:', file.name); // Debug log
       onImageUpload(file);
+    } else {
+      console.log('No file selected'); // Debug log
+    }
+    
+    // Reset input value
+    e.target.value = '';
+  };
+
+  const handleUploadClick = () => {
+    console.log('Upload button clicked!'); // Debug log
+    if (tokens <= 0) {
+      alert('No tokens left! Please subscribe for more scans.');
+      return;
+    }
+    if (isLoading) {
+      console.log('Currently loading, ignoring click');
+      return;
+    }
+    console.log('Triggering file input click');
+    if (fileInputRef.current) {
+      console.log('File input ref found, clicking...');
+      fileInputRef.current.click();
+    } else {
+      console.error('File input ref is null!');
     }
   };
 
+  const handleCameraClick = () => {
+    console.log('Camera button clicked!'); // Debug log
+    if (tokens <= 0) {
+      alert('No tokens left! Please subscribe for more scans.');
+      return;
+    }
+    if (isLoading) {
+      console.log('Currently loading, ignoring click');
+      return;
+    }
+    console.log('Starting camera...');
+    onStartCamera();
+  };
+
   const toggleRecording = () => {
+    console.log('Voice button clicked!'); // Debug log
     setIsRecording(!isRecording);
-    // TODO: Implement voice recording functionality
   };
 
   return (
@@ -72,6 +141,15 @@ export default function InputBar({
         ? 'border-gray-600 bg-gray-900' 
         : 'border-gray-200 bg-white'
     }`}>
+      {/* Simple Working Test */}
+      <div className="mb-2">
+        <button 
+          onClick={() => alert('Button works!')}
+          className="px-4 py-2 bg-green-500 text-white rounded cursor-pointer"
+        >
+          WORKING TEST BUTTON
+        </button>
+      </div>
       {/* Token Counter */}
       <div className="flex justify-between items-center mb-3 text-sm">
         <span className={`${darkMode ? 'text-slate-400' : 'text-gray-500'}`}>
@@ -82,57 +160,87 @@ export default function InputBar({
         </a>
       </div>
 
-        {/* Input Area */}
-        <div className="flex items-center space-x-3">
-          {/* Action Buttons */}
-          <div className="flex items-center space-x-2">
-            {/* File Upload Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => fileInputRef.current?.click()}
-              className={`h-[48px] w-12 rounded-xl flex items-center justify-center p-0 hover:bg-opacity-20 ${
-                darkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-100'
-              }`}
-              disabled={isLoading}
-            >
-              <Upload className="h-6 w-6" />
-            </Button>
-            
-            {/* Camera Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onStartCamera}
-              className={`h-[48px] w-12 rounded-xl flex items-center justify-center p-0 hover:bg-opacity-20 ${
-                darkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-100'
-              }`}
-              disabled={isLoading}
-            >
-              <Camera className="h-6 w-6" />
-            </Button>
-            
-            {/* Voice Input Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleRecording}
-              className={`h-[48px] w-12 rounded-xl flex items-center justify-center p-0 hover:bg-opacity-20 ${
-                darkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-100'
-              } ${isRecording ? 'bg-red-500 text-white' : ''}`}
-              disabled={isLoading}
-            >
-              {isRecording ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
-            </Button>
-          </div>
+      {/* Input Area */}
+      <div className="flex items-center space-x-3">
+        {/* Action Buttons */}
+        <div className="flex items-center space-x-2">
+          {/* File Upload Button */}
+          <button
+            onClick={() => {
+              console.log('Upload button clicked!');
+              if (tokens <= 0) {
+                alert('No tokens left! Please subscribe for more scans.');
+                return;
+              }
+              if (isLoading) {
+                console.log('Currently loading, ignoring click');
+                return;
+              }
+              console.log('Triggering file input click');
+              if (fileInputRef.current) {
+                console.log('File input ref found, clicking...');
+                fileInputRef.current.click();
+              } else {
+                console.error('File input ref is null!');
+              }
+            }}
+            className={`h-[48px] w-12 rounded-xl flex items-center justify-center p-0 hover:bg-opacity-20 transition-all duration-200 ${
+              darkMode ? 'hover:bg-slate-700 text-white' : 'hover:bg-gray-100 text-gray-700'
+            } ${isLoading || tokens <= 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            disabled={isLoading || tokens <= 0}
+            type="button"
+          >
+            <Upload className="h-6 w-6" />
+          </button>
+          
+          {/* Camera Button */}
+          <button
+            onClick={() => {
+              console.log('Camera button clicked!');
+              if (tokens <= 0) {
+                alert('No tokens left! Please subscribe for more scans.');
+                return;
+              }
+              if (isLoading) {
+                console.log('Currently loading, ignoring click');
+                return;
+              }
+              console.log('Starting camera...');
+              onStartCamera();
+            }}
+            className={`h-[48px] w-12 rounded-xl flex items-center justify-center p-0 hover:bg-opacity-20 transition-all duration-200 ${
+              darkMode ? 'hover:bg-slate-700 text-white' : 'hover:bg-gray-100 text-gray-700'
+            } ${isLoading || tokens <= 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            disabled={isLoading || tokens <= 0}
+            type="button"
+          >
+            <Camera className="h-6 w-6" />
+          </button>
+          
+          {/* Voice Input Button */}
+          <button
+            onClick={() => {
+              console.log('Voice button clicked!');
+              setIsRecording(!isRecording);
+            }}
+            className={`h-[48px] w-12 rounded-xl flex items-center justify-center p-0 hover:bg-opacity-20 transition-all duration-200 ${
+              darkMode ? 'hover:bg-slate-700 text-white' : 'hover:bg-gray-100 text-gray-700'
+            } ${isRecording ? 'bg-red-500 text-white' : ''} ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            disabled={isLoading}
+            type="button"
+          >
+            {isRecording ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+          </button>
+        </div>
         
         {/* Text Input */}
         <div className="flex-1 relative">
           <textarea
-            ref={textareaRef}
             value={inputMessage}
             onChange={handleTextareaChange}
             onKeyPress={handleKeyPress}
+            onFocus={() => console.log('Textarea focused')} // Debug log
+            onBlur={() => console.log('Textarea blurred')} // Debug log
             placeholder="Ask about medicines or upload an image..."
             className={`w-full resize-none rounded-xl px-4 py-3 border transition-all duration-200 text-base ${
               darkMode 
@@ -155,28 +263,49 @@ export default function InputBar({
         </div>
         
         {/* Send Button */}
-        <Button
-          onClick={handleSendMessage}
+        <button
+          onClick={() => {
+            console.log('Send button clicked!', { message: inputMessage.trim(), isLoading });
+            if (!inputMessage.trim() || isLoading) {
+              console.log('Cannot send - empty message or loading');
+              return;
+            }
+            
+            console.log('Sending message:', inputMessage.trim());
+            onSendMessage(inputMessage.trim());
+            setInputMessage('');
+          }}
           disabled={!inputMessage.trim() || isLoading}
-          className={`h-[48px] w-12 flex-shrink-0 rounded-xl flex items-center justify-center p-0 ${
+          className={`h-[48px] w-12 flex-shrink-0 rounded-xl flex items-center justify-center p-0 transition-all duration-200 ${
             inputMessage.trim() && !isLoading
-              ? 'bg-blue-500 hover:bg-blue-600'
+              ? 'bg-blue-500 hover:bg-blue-600 text-white'
               : darkMode 
                 ? 'bg-slate-700 text-slate-400' 
                 : 'bg-gray-200 text-gray-400'
-          }`}
+          } ${!inputMessage.trim() || isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+          type="button"
         >
           <Send className="h-6 w-6" />
-        </Button>
+        </button>
       </div>
       
-      {/* Hidden File Input */}
+      {/* File Input - Multiple approaches for reliability */}
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
         className="hidden"
         onChange={handleFileUpload}
+        id="file-upload-input"
+      />
+      
+      {/* Alternative file input overlay */}
+      <input
+        type="file"
+        accept="image/*"
+        className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
+        onChange={handleFileUpload}
+        style={{ pointerEvents: 'auto' }}
       />
       
       {/* Recording Indicator */}

@@ -13,11 +13,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Medicine Assistant - Conversational Medicine Identification",
-  description: "Chat with our AI assistant to identify medicines instantly. Upload photos or use camera to identify pills, tablets, and medicine packaging. Supports multiple Southeast Asian languages.",
+  title: "SeaMed AI - Medicine Assistant",
+  description: "AI-powered medicine identification and chat assistant with SEA language support",
   keywords: "medicine identification, AI chat, pill scanner, Southeast Asia, pharmacy, drug identification, conversational AI",
-  authors: [{ name: "AI Medicine Assistant Team" }],
-  viewport: "width=device-width, initial-scale=1",
+  authors: [{ name: "SeaMed AI Team" }],
+  manifest: "/manifest.json",
+  themeColor: "#00A3B5",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "SeaMed AI",
+  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -27,6 +38,31 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#00A3B5" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="SeaMed AI" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                      console.log('SW registered: ', registration);
+                    })
+                    .catch(function(registrationError) {
+                      console.log('SW registration failed: ', registrationError);
+                    });
+                });
+              }
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

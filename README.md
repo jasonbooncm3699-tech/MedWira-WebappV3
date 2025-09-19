@@ -26,7 +26,7 @@ A sophisticated AI-powered medicine identification application with a modern con
 - **Camera Integration**: Direct camera access for mobile devices
 - **Image Upload**: Drag-and-drop file upload with preview
 - **Voice Input**: Voice recording capabilities (placeholder)
-- **Multi-language Support**: 9 Southeast Asian languages
+- **Multi-language Support**: 10 languages including Chinese and Southeast Asian languages
 - **Token System**: Freemium model with usage tracking
 
 ## 🏗️ **Component Structure**
