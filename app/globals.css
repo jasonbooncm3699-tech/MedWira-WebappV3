@@ -620,7 +620,7 @@ body {
   border-radius: 8px;
   padding: 8px 12px;
   color: #ffffff;
-  font-size: 13px;
+  font-size: 14px;
   outline: none;
   transition: all 0.2s ease;
 }
@@ -952,18 +952,18 @@ body {
   }
   
   .logo {
-    font-size: 16px;
+    font-size: 17px;
   }
   
   .language-select {
-    font-size: 11px;
+    font-size: 12px;
     padding: 3px 6px;
     min-width: 35px;
     max-width: 50px;
   }
   
   .auth-btn {
-    font-size: 12px;
+    font-size: 13px;
     padding: 6px 12px;
   }
   
@@ -991,8 +991,8 @@ body {
   }
   
   .message-text {
-    font-size: 13px;
-    padding: 10px 14px;
+    font-size: 15px;
+    padding: 12px 16px;
   }
   
   .input-container {
@@ -1009,8 +1009,8 @@ body {
   }
   
   .text-input {
-    font-size: 13px;
-    padding: 10px 12px;
+    font-size: 15px;
+    padding: 12px 14px;
   }
   
   .upload-btn, .camera-btn, .send-btn {
@@ -1037,7 +1037,7 @@ body {
   }
   
   .logo {
-    font-size: 14px;
+    font-size: 15px;
   }
   
   .header-right {
@@ -1045,14 +1045,14 @@ body {
   }
   
   .language-select {
-    font-size: 10px;
+    font-size: 11px;
     padding: 2px 4px;
     min-width: 30px;
     max-width: 45px;
   }
   
   .auth-btn {
-    font-size: 11px;
+    font-size: 12px;
     padding: 5px 10px;
   }
   
@@ -1066,8 +1066,8 @@ body {
   }
   
   .message-text {
-    font-size: 12px;
-    padding: 8px 12px;
+    font-size: 14px;
+    padding: 10px 14px;
   }
   
   .input-container {
@@ -1083,8 +1083,8 @@ body {
   }
   
   .text-input {
-    font-size: 12px;
-    padding: 8px 10px;
+    font-size: 14px;
+    padding: 10px 12px;
   }
   
   .upload-btn, .camera-btn, .send-btn {
