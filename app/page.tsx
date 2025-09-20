@@ -1073,7 +1073,7 @@ For accurate medicine identification and safety information, please take a photo
                   </div>
                   <div className="message-footer">
                     <div className="message-time">{formatTime(message.timestamp)}</div>
-                    {message.type === 'ai' && !message.content.includes('Start this conversation') && !message.content.includes('请拍摄您的药品照片') && !message.content.includes('Mulakan perbualan') && (
+                    {message.type === 'ai' && message.content.includes('**Medicine Name:**') && (
                       <button 
                         className="message-share-btn whatsapp-share" 
                         onClick={() => handleShareMessage(message.content)}
