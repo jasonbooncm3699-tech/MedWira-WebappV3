@@ -1,6 +1,6 @@
 {
-  "name": "SeaMed AI - Medicine Assistant",
-  "short_name": "SeaMed AI",
+  "name": "Seamed AI - Medicine Assistant",
+  "short_name": "Seamed AI",
   "description": "AI-powered medicine identification and chat assistant",
   "start_url": "/",
   "display": "standalone",

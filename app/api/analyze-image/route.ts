@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
             role: 'user',
             content: `Based on the medicine packaging information: "${packagingInfo}"
 
-            Analyze this medicine and provide comprehensive information directly from your medical knowledge. Do NOT conduct web searches. Provide a detailed analysis including:
+            Conduct a comprehensive web search for the latest information about this medicine from reliable medical sources (MIMS, HealthHub SG, MySejahtera, FDA databases, official pharmacy websites, medical literature, etc.) and combine it with your medical knowledge to provide accurate analysis including:
 
             **Medicine Name:** Full name with active ingredients and strength
 
@@ -233,7 +233,7 @@ export async function POST(request: NextRequest) {
 
             ${languageInstructions}
             
-            Format with clear **bold headers** and bullet points. Base analysis on your medical knowledge, not web searches.`
+            Format with clear **bold headers** and bullet points. Ensure all information is accurate and up-to-date by conducting thorough web searches from reliable medical sources.`
           }
         ],
         max_tokens: 1500,

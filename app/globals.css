@@ -570,17 +570,6 @@ body {
   border-color: rgba(0, 212, 255, 0.3);
 }
 
-.whatsapp-share {
-  background: rgba(37, 211, 102, 0.1);
-  color: #25D366;
-  border-color: rgba(37, 211, 102, 0.2);
-}
-
-.whatsapp-share:hover {
-  background: rgba(37, 211, 102, 0.2);
-  color: #25D366;
-  border-color: rgba(37, 211, 102, 0.4);
-}
 
 .message-share-btn svg {
   width: 12px;

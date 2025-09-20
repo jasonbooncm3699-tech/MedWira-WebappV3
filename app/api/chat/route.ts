@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const systemPrompt = `You are SeaMed AI, a professional medicine identification assistant specializing in Southeast Asian medicines. When users upload medicine images, provide comprehensive analysis including:
+    const systemPrompt = `You are Seamed AI, a professional medicine identification assistant specializing in Southeast Asian medicines. When users upload medicine images, provide comprehensive analysis including:
 
 1. **Packaging Detection**: Confirm if packaging/box/strip is visible
 2. **Medicine Identification**: Name, active ingredients, dosage strength
