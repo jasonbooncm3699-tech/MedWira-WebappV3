@@ -195,10 +195,10 @@ body {
 /* Side Navigation */
 .side-nav {
   position: fixed;
-  top: 0;
+  top: 60px;
   left: -280px;
   width: 280px;
-  height: 100vh;
+  height: calc(100vh - 60px);
   background: rgba(10, 10, 10, 0.95);
   backdrop-filter: blur(20px);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
@@ -570,6 +570,18 @@ body {
   border-color: rgba(0, 212, 255, 0.3);
 }
 
+.whatsapp-share {
+  background: rgba(37, 211, 102, 0.1);
+  color: #25D366;
+  border-color: rgba(37, 211, 102, 0.2);
+}
+
+.whatsapp-share:hover {
+  background: rgba(37, 211, 102, 0.2);
+  color: #25D366;
+  border-color: rgba(37, 211, 102, 0.4);
+}
+
 .message-share-btn svg {
   width: 12px;
   height: 12px;
@@ -935,6 +947,8 @@ body {
 @media (min-width: 769px) {
   .side-nav {
     left: 0;
+    top: 0;
+    height: 100vh;
   }
   
   .chat-container {
@@ -970,6 +984,8 @@ body {
   .side-nav {
     width: 100%;
     left: -100%;
+    top: 56px;
+    height: calc(100vh - 56px);
   }
   
   .chat-container {
