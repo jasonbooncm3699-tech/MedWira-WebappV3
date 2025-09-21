@@ -137,8 +137,10 @@ export default function Home() {
   useEffect(() => {
     // Check for saved language preference first
     const savedLanguage = localStorage.getItem('selectedLanguage');
+    let initialLanguage = 'English';
+    
     if (savedLanguage) {
-      setLanguage(savedLanguage);
+      initialLanguage = savedLanguage;
     } else {
       // Auto-detect browser language if no preference saved
       const browserLang = navigator.language.split('-')[0].toLowerCase();
@@ -146,7 +148,20 @@ export default function Home() {
         en: 'English', zh: 'Chinese', ms: 'Malay', id: 'Indonesian', th: 'Thai', 
         vi: 'Vietnamese', tl: 'Tagalog', my: 'Burmese', km: 'Khmer', lo: 'Lao' 
       };
-      setLanguage(langMap[browserLang] || 'English');
+      initialLanguage = langMap[browserLang] || 'English';
+    }
+    
+    setLanguage(initialLanguage);
+    
+    // Set welcome message immediately with the correct language
+    if (messages.length === 0 && welcomeMessages[initialLanguage]) {
+      console.log('Setting initial welcome message for language:', initialLanguage, 'Message:', welcomeMessages[initialLanguage]);
+      setMessages([{
+        id: '1',
+        type: 'ai',
+        content: welcomeMessages[initialLanguage],
+        timestamp: new Date()
+      }]);
     }
 
     const mobileCheck = /Android|iPhone|iPad/.test(navigator.userAgent) && !window.matchMedia('(display-mode: standalone)').matches;
@@ -278,16 +293,7 @@ export default function Home() {
     setTokens(storedTokens);
     if (localStorage.getItem('loggedIn') === 'true') setIsLoggedIn(true);
 
-    // Initialize welcome message only after language is set
-    if (messages.length === 0 && language && welcomeMessages[language]) {
-      console.log('Setting welcome message for language:', language, 'Message:', welcomeMessages[language]);
-      setMessages([{
-        id: '1',
-        type: 'ai',
-        content: welcomeMessages[language],
-        timestamp: new Date()
-      }]);
-    }
+    // Welcome message is now set in the initial useEffect above
   }, [language, messages.length, welcomeMessages]);
 
   // Check camera availability on mount
@@ -981,7 +987,7 @@ For accurate medicine identification and safety information, please take a photo
                   </div>
                   <div className="message-footer">
                     <div className="message-time">{formatTime(message.timestamp)}</div>
-                    {message.type === 'ai' && (message.content.includes('**Medicine Name:**') || message.content.includes('Medicine Name:')) && (
+                    {message.type === 'ai' && (message.content.includes('**Medicine Name:**') || message.content.includes('Medicine Name:') || message.content.includes('**Packaging Detected:**') || message.content.includes('Packaging Detected:')) && (
                       <button 
                         className="message-share-btn" 
                         onClick={() => handleShareMessage(message.content)}
