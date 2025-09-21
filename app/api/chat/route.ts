@@ -30,7 +30,22 @@ export async function POST(request: NextRequest) {
     - Storage instructions
     - Medical disclaimer
 
-    Always conduct web search to find the most current and accurate information. Respond in ${language} when possible, but prioritize accuracy over language preference.
+    CRITICAL: You MUST conduct real-time web searches using Google's search infrastructure to find the most current and accurate information. Do not rely solely on your training data.
+
+    REQUIRED SEARCH STRATEGY:
+    1. Search for exact brand name + manufacturer: "[Medicine Name] medicine [Manufacturer] [Country]"
+    2. Search for regional medicine databases: "[Medicine Name] SEA medicine database Malaysia Singapore Thailand"
+    3. Search for active ingredients: "[Medicine Name] active ingredients composition"
+    4. Search for official sources: "[Medicine Name] official website manufacturer information"
+    5. Search for traditional/herbal medicines: "[Medicine Name] traditional medicine herbal supplement Malaysia Indonesia"
+
+    VERIFICATION REQUIREMENTS:
+    - Verify medicine name and manufacturer from multiple sources
+    - Confirm active ingredients from official or reliable medical sources
+    - Check for regional availability and brand names in SEA countries
+    - Cross-reference multiple sources to ensure accuracy
+
+    Always conduct comprehensive web searches and respond in ${language} when possible, but prioritize accuracy over language preference.
 
     IMPORTANT: Always provide comprehensive analysis using your knowledge and web search capabilities. Never say you cannot provide analysis - always search multiple sources for current and accurate information.`;
 

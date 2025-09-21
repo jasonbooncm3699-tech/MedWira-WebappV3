@@ -50,7 +50,22 @@ STEP 2: If this is NOT a medicine-related image, respond with "Error: No medicin
 
 STEP 3: If it IS medicine-related but NO packaging is visible, respond with "Warning: No packaging detected. We cannot safely identify loose pills due to risks of counterfeits, expiry, or errors."
 
-STEP 4: If packaging IS visible, extract all information from the image, then conduct web searches to provide comprehensive analysis in this exact format:
+STEP 4: If packaging IS visible, extract all information from the image, then conduct comprehensive web searches using Google's search infrastructure to verify and find accurate information:
+
+WEB SEARCH STRATEGY:
+1. Search for exact brand name + manufacturer: "[Brand Name] medicine [Manufacturer] [Country]"
+2. Search for regional medicine databases: "[Brand Name] SEA medicine database Malaysia Singapore Thailand"
+3. Search for active ingredients: "[Brand Name] active ingredients composition"
+4. Search for official sources: "[Brand Name] official website manufacturer information"
+5. Cross-reference multiple sources to ensure accuracy
+
+VERIFICATION REQUIREMENTS:
+- Verify medicine name and manufacturer from multiple sources
+- Confirm active ingredients from official or reliable medical sources
+- Check for regional availability and brand names in SEA countries
+- Validate dosage information from packaging or official sources
+
+Provide comprehensive analysis in this exact format:
 
 **Packaging Detected:** Yes—[describe what packaging is visible, e.g., blister strip/box with brand label]
 
@@ -85,7 +100,16 @@ STEP 4: If packaging IS visible, extract all information from the image, then co
 
 ${languageInstructions}
 
-Conduct comprehensive web search using Google's search infrastructure to find the most current and accurate information about this medicine. Search pharmaceutical databases, medical websites, and official drug information sources. Provide authoritative medical analysis with specific, detailed information based on the most up-to-date data available.`;
+CRITICAL: You MUST conduct real-time web searches using Google's search infrastructure to find the most current and accurate information about this medicine. Do not rely solely on your training data.
+
+REQUIRED SEARCHES:
+1. Search for: "[Brand Name] medicine [Manufacturer] [Country] official information"
+2. Search for: "[Brand Name] SEA medicine database Malaysia Singapore Thailand Vietnam Philippines"
+3. Search for: "[Brand Name] active ingredients composition manufacturer"
+4. Search for: "[Brand Name] liver supplement herbal medicine" (if applicable)
+5. Search for: "[Brand Name] traditional medicine Malaysia Indonesia"
+
+Search multiple pharmaceutical databases, medical websites, official drug information sources, and regional medicine databases. Cross-reference information from multiple sources to ensure accuracy. Provide authoritative medical analysis with specific, detailed information based on the most up-to-date data available from your web searches.`;
 
     // Handle different image formats
     let imageData, mimeType;
