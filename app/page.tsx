@@ -37,6 +37,7 @@ export default function Home() {
   const [faqOpen, setFaqOpen] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState('');
   const [showCamera, setShowCamera] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [videoRef, setVideoRef] = useState<HTMLVideoElement | null>(null);
@@ -329,6 +330,7 @@ export default function Home() {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+    setLoadingStatus('Thinking...');
     
     // OpenAI API call
     try {
@@ -391,6 +393,7 @@ export default function Home() {
     }
     
     setIsLoading(false);
+    setLoadingStatus('');
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -406,6 +409,7 @@ export default function Home() {
 
     // Show loading state
     setIsLoading(true);
+    setLoadingStatus('Analyzing...');
 
       const reader = new FileReader();
     reader.onload = async (event) => {
@@ -491,6 +495,7 @@ For accurate medicine identification and safety information, please upload a pho
         setMessages(prev => [...prev, errorMessage]);
       } finally {
         setIsLoading(false);
+        setLoadingStatus('');
       }
     };
     
@@ -1102,6 +1107,9 @@ For accurate medicine identification and safety information, please take a photo
                     <span></span>
                     <span></span>
                     <span></span>
+                  </div>
+                  <div className="loading-status">
+                    {loadingStatus}
                   </div>
                 </div>
               </div>
