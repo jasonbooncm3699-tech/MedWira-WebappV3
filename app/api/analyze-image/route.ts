@@ -164,8 +164,9 @@ Conduct comprehensive web search using Google's search infrastructure to find th
       });
     }
 
-    // Successful analysis
+    // Successful analysis - always return analysis field
     return NextResponse.json({
+      success: true,
       analysis: analysis,
       allergyWarning: allergyWarning,
       hasPackaging: true,

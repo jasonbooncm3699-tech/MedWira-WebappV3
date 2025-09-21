@@ -458,6 +458,18 @@ export default function Home() {
       return;
     }
 
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file.');
+      return;
+    }
+
+    // Check file size (limit to 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Image file is too large. Please select an image smaller than 10MB.');
+      return;
+    }
+
     // Show loading state
     setIsLoading(true);
 
@@ -536,10 +548,24 @@ For accurate medicine identification and safety information, please upload a pho
         }
       } catch (error) {
         console.error('Image analysis error:', error);
+        
+        // Check if it's a specific API error
+        let errorContent = 'Sorry, I encountered an error while analyzing the image. Please try again or contact support.';
+        
+        if (error instanceof Error) {
+          if (error.message.includes('timeout')) {
+            errorContent = 'The analysis is taking too long. Please try with a smaller image or try again later.';
+          } else if (error.message.includes('network') || error.message.includes('fetch')) {
+            errorContent = 'Network error. Please check your internet connection and try again.';
+          } else if (error.message.includes('Invalid image')) {
+            errorContent = 'The uploaded image format is not supported. Please upload a JPEG or PNG image.';
+          }
+        }
+        
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           type: 'ai',
-          content: 'Sorry, I encountered an error while analyzing the image. Please try again or contact support.',
+          content: `**Error:** ${errorContent}`,
           timestamp: new Date()
         };
         setMessages(prev => [...prev, errorMessage]);
