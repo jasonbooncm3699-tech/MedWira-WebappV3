@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, createContext, useMemo } from 'react';
+import { useState, useEffect, createContext, useMemo, useRef } from 'react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -48,6 +48,9 @@ export default function Home() {
   const [cameraLoading, setCameraLoading] = useState(false);
   const [cameraAvailable, setCameraAvailable] = useState(true);
   const [allergy, setAllergy] = useState('');
+
+  // Chat window ref for auto-scroll
+  const chatWindowRef = useRef<HTMLDivElement>(null);
 
   // Mobile language abbreviations
   const getLanguageDisplayText = (lang: string, isMobile: boolean) => {
@@ -333,6 +336,18 @@ export default function Home() {
       }
     };
   }, [cameraStream]);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (chatWindowRef.current) {
+      const scrollToBottom = () => {
+        chatWindowRef.current!.scrollTop = chatWindowRef.current!.scrollHeight;
+      };
+      
+      // Small delay to ensure DOM is updated
+      setTimeout(scrollToBottom, 100);
+    }
+  }, [messages]);
 
   const handleLogin = () => {
     console.log('Login/Sign Up button clicked');
@@ -968,7 +983,7 @@ For accurate medicine identification and safety information, please take a photo
         {/* Chat Container */}
         <div className={`chat-container ${showInstallPrompt ? 'with-banner' : ''}`}>
           
-          <div className="chat-window">
+          <div className="chat-window" ref={chatWindowRef}>
             {messages.map((message) => (
               <div key={message.id} className={`message ${message.type}`}>
                 <div className="message-avatar">
