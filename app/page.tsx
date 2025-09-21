@@ -278,12 +278,13 @@ export default function Home() {
     setTokens(storedTokens);
     if (localStorage.getItem('loggedIn') === 'true') setIsLoggedIn(true);
 
-    // Initialize welcome message
-    if (messages.length === 0) {
+    // Initialize welcome message only after language is set
+    if (messages.length === 0 && language && welcomeMessages[language]) {
+      console.log('Setting welcome message for language:', language, 'Message:', welcomeMessages[language]);
       setMessages([{
         id: '1',
         type: 'ai',
-        content: welcomeMessages[language] || welcomeMessages['English'],
+        content: welcomeMessages[language],
         timestamp: new Date()
       }]);
     }
@@ -779,17 +780,28 @@ For accurate medicine identification and safety information, please take a photo
   };
 
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    console.log('Language changed to:', e.target.value);
-    setLanguage(e.target.value);
+    const newLanguage = e.target.value;
+    console.log('Language changed to:', newLanguage);
+    setLanguage(newLanguage);
     
     // Save language preference to localStorage
-    localStorage.setItem('selectedLanguage', e.target.value);
+    localStorage.setItem('selectedLanguage', newLanguage);
     
     // Update welcome message in current chat
     if (messages.length > 0 && messages[0].type === 'ai') {
+      console.log('Updating welcome message for existing chat, new language:', newLanguage, 'Message:', welcomeMessages[newLanguage]);
       setMessages(prev => prev.map((msg, index) => 
-        index === 0 ? { ...msg, content: welcomeMessages[e.target.value] || welcomeMessages['English'] } : msg
+        index === 0 ? { ...msg, content: welcomeMessages[newLanguage] || welcomeMessages['English'] } : msg
       ));
+    } else if (messages.length === 0) {
+      // If no messages, set the welcome message
+      console.log('Setting welcome message for empty chat, new language:', newLanguage, 'Message:', welcomeMessages[newLanguage]);
+      setMessages([{
+        id: '1',
+        type: 'ai',
+        content: welcomeMessages[newLanguage] || welcomeMessages['English'],
+        timestamp: new Date()
+      }]);
     }
   };
 
