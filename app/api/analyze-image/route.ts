@@ -60,6 +60,17 @@ If you identify "Livason" in the image, provide this specific information:
 - Safety: Not FDA approved, not recommended for pregnant/breastfeeding women without medical advice
 - Side effects: Generally well-tolerated, possible mild bloating or upset stomach
 
+If you identify "安德 風痧濟急丸" (Ān Dé Fēng Shā Jì Jí Wán) or "PIL CHI KIT" in the image, provide this specific information:
+- This is a traditional Chinese medicine manufactured by TECK AUN
+- Medicine name: 風痧濟急丸 (Fēng Shā Jì Jí Wán) - Wind-Heat Emergency Pills
+- Purpose: Treatment of wind-heat conditions, fever, sore throat, cold symptoms, and travel-related ailments
+- Target users: Home and travel use for common cold and wind-heat symptoms
+- Active ingredients: Traditional Chinese herbal formula (specific ingredients not listed on packaging)
+- Dosage: Typically 3-5 pills, 2-3 times daily for adults (follow packaging instructions)
+- Safety: Traditional medicine, consult TCM practitioner for proper usage
+- Side effects: Generally well-tolerated when used as directed
+- Storage: Keep in cool, dry place away from direct sunlight
+
 Provide analysis in this exact format:
 
 **Packaging Detected:** Yes—[describe visible packaging details]
