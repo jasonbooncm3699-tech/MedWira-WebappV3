@@ -38,7 +38,7 @@ export default function InputBar({
     console.log('Camera button element:', cameraBtn);
     
     if (uploadBtn) {
-      console.log('Upload button has onclick:', !!uploadBtn.onclick);
+      console.log('Upload button has onclick:', !!(uploadBtn as HTMLButtonElement).onclick);
     }
   }, []);
 

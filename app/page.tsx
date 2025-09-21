@@ -1,6 +1,11 @@
 'use client';
 
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, createContext, useMemo } from 'react';
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
 import { Bot, User, Send, Upload, Camera, Menu, X, Plus, MessageSquare, Settings, LogOut, LogIn } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -33,7 +38,7 @@ export default function Home() {
   const [recentChats, setRecentChats] = useState<Chat[]>([]);
   const [isMobile, setIsMobile] = useState(false);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [faqOpen, setFaqOpen] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -116,7 +121,7 @@ export default function Home() {
     'Lao': 'ປ້ອນການແພ້ (ຕົວຢ່າງ: penicillin, paracetamol)'
   };
 
-  const welcomeMessages: { [key: string]: string } = {
+  const welcomeMessages: { [key: string]: string } = useMemo(() => ({
     'English': 'Start this conversation by taking your medicine photo.',
     'Chinese': '请拍摄您的药品照片来开始这次对话。',
     'Malay': 'Mulakan perbualan ini dengan mengambil foto ubat anda.',
@@ -127,7 +132,7 @@ export default function Home() {
     'Burmese': 'သင့်ဆေးပုံကို ရိုက်ယူခြင်းဖြင့် ဤစကားပြောဆိုမှုကို စတင်ပါ။',
     'Khmer': 'ចាប់ផ្តើមការសន្ទនានេះដោយថតរូបថ្នាំរបស់អ្នក។',
     'Lao': 'ເລີ່ມການສົນທະນານີ້ໂດຍການຖ່າຍຮູບຢາຂອງທ່ານ.'
-  };
+  }), []);
 
   useEffect(() => {
     // Check for saved language preference first
@@ -150,7 +155,7 @@ export default function Home() {
 
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
     });
 
     // Add dummy recent chats for UI demonstration
@@ -273,7 +278,7 @@ export default function Home() {
         timestamp: new Date()
       }]);
     }
-  }, [language]);
+  }, [language, messages.length, welcomeMessages]);
 
   // Check camera availability on mount
   useEffect(() => {
@@ -536,192 +541,6 @@ For accurate medicine identification and safety information, please upload a pho
     reader.readAsDataURL(file);
   };
 
-  const generateMedicineAnalysis = (lang: string, isMedicineImage: boolean = true) => {
-    if (!isMedicineImage) {
-      const errorResponses: { [key: string]: string } = {
-        'English': `**Error: Non-Medicine Image Detected**
-
-The uploaded image does not appear to contain medicine-related content. For accurate medicine identification, please upload a photo that shows:
-
-• Medicine packaging (box, bottle, or blister strip)
-• Medicine tablets/pills with clear markings
-• Prescription labels
-• Medicine bottles with labels
-
-**Safety Note:** We cannot identify non-medicine items or provide medical information for unrelated images.
-
-Please upload a clear photo of your medicine for proper identification and safety information.`,
-
-        'Malay': `**Ralat: Imej Bukan Ubat Dikesan**
-
-Imej yang dimuat naik tidak kelihatan mengandungi kandungan berkaitan ubat. Untuk pengenalan ubat yang tepat, sila muat naik foto yang menunjukkan:
-
-• Pembungkusan ubat (kotak, botol, atau jalur lepuh)
-• Tablet/pil ubat dengan tanda yang jelas
-• Label preskripsi
-• Botol ubat dengan label
-
-**Nota Keselamatan:** Kami tidak dapat mengenal pasti item bukan ubat atau memberikan maklumat perubatan untuk imej yang tidak berkaitan.
-
-Sila muat naik foto yang jelas tentang ubat anda untuk pengenalan dan maklumat keselamatan yang betul.`,
-
-        'Chinese': `**错误：检测到非药品图片**
-
-上传的图片似乎不包含药品相关内容。为了准确识别药品，请上传显示以下内容的照片：
-
-• 药品包装（盒子、瓶子或泡罩条）
-• 带有清晰标记的药片/药丸
-• 处方标签
-• 带标签的药瓶
-
-**安全提示：** 我们无法识别非药品物品或为无关图片提供医疗信息。
-
-请上传清晰的药品照片以获得正确的识别和安全信息。`,
-
-        'Indonesian': `**Error: Gambar Non-Obat Terdeteksi**
-
-Gambar yang diunggah tidak tampak mengandung konten terkait obat. Untuk identifikasi obat yang akurat, silakan unggah foto yang menunjukkan:
-
-• Kemasan obat (kotak, botol, atau strip blister)
-• Tablet/pil obat dengan tanda yang jelas
-• Label resep
-• Botol obat dengan label
-
-**Catatan Keamanan:** Kami tidak dapat mengidentifikasi item non-obat atau memberikan informasi medis untuk gambar yang tidak terkait.
-
-Silakan unggah foto yang jelas tentang obat Anda untuk identifikasi dan informasi keamanan yang tepat.`
-      };
-      return errorResponses[lang] || errorResponses['English'];
-    }
-
-    const responses: { [key: string]: string } = {
-      'English': `**Packaging Detected:** Yes—blister strip/box with "Panadol" label visible. Proceed with identification.
-
-**Medicine Name:** Panadol (Paracetamol/Acetaminophen 500mg)
-
-**Purpose:** Relieves mild to moderate pain (e.g., headache, toothache, backache) and reduces fever (e.g., for flu or colds). Based on packaging: For adults and children over 12.
-
-**Dosage (from packaging and web info):**
-• Adults/Children over 12: 1-2 tablets every 4-6 hours, max 8 tablets per day.
-• Children 7-12 years: 1 tablet every 4-6 hours, max 4 tablets per day.
-• Do not exceed recommended dose; follow packaging instructions.
-
-**Side Effects:** Common: None frequent. Rare: Skin rash, allergic reactions, or stomach upset. Overdose risk: Liver damage—seek immediate help if exceeded.
-
-**Allergy Warning:** Contains paracetamol and excipients (e.g., starch, magnesium stearate). May cause reactions if allergic. If you entered allergies (e.g., paracetamol), warning: Potential trigger—consult a doctor.
-
-**Drug Interactions:**
-• With other drugs: Do not combine with other paracetamol products (e.g., cold meds) to avoid overdose. May enhance effects of blood thinners (e.g., warfarin) or interact with seizure meds (e.g., phenytoin).
-• With food: Can be taken with or without food; no major interactions.
-• With alcohol: Avoid—alcohol increases liver toxicity risk when taken with paracetamol.
-
-**Safety Notes:**
-• For kids: Suitable for children over 7 per packaging, but consult pediatrician for younger ages or if under 12.
-• For pregnant women: Category B—generally safe in low doses, but consult doctor (especially if breastfeeding or third trimester).
-• Other: Not for those with liver/kidney issues. Check packaging expiry date.
-
-**Cross-Border Info:** Equivalent to "Panadol" in Malaysia/Singapore/Thailand; "Hapacol" or "Efferalgan" in Vietnam; "Biogesic" in Philippines. Widely available in SEA pharmacies.
-
-**Storage:** Keep in original packaging below 30°C, dry place. Do not use if damaged.
-
-**Disclaimer:** This information is sourced from public websites and packaging details. For informational purposes only. Not medical advice. Consult a doctor or pharmacist before use.`,
-
-      'Chinese': `**检测到包装：** 是的—可见带有"Panadol"标签的泡罩条/盒子。继续进行识别。
-
-**药品名称：** 必理痛 (扑热息痛/对乙酰氨基酚 500mg)
-
-**用途：** 缓解轻度至中度疼痛（如头痛、牙痛、背痛）并退烧（如流感或感冒）。根据包装：适用于成人和12岁以上儿童。
-
-**剂量（来自包装和网络信息）：**
-• 成人/12岁以上儿童：每4-6小时1-2片，每日最多8片。
-• 7-12岁儿童：每4-6小时1片，每日最多4片。
-• 不要超过推荐剂量；遵循包装说明。
-
-**副作用：** 常见：无明显副作用。罕见：皮疹、过敏反应或胃部不适。过量风险：肝损伤—如超量请立即就医。
-
-**过敏警告：** 含有扑热息痛和辅料（如淀粉、硬脂酸镁）。如对扑热息痛过敏可能引起反应。如果您输入了过敏信息（如扑热息痛），警告：潜在触发因素—请咨询医生。
-
-**药物相互作用：**
-• 与其他药物：不要与其他扑热息痛产品（如感冒药）同时服用以避免过量。可能增强血液稀释剂（如华法林）的效果或与抗癫痫药物（如苯妥英）相互作用。
-• 与食物：可与食物一起服用或空腹服用；无主要相互作用。
-• 与酒精：避免—酒精与扑热息痛同服会增加肝毒性风险。
-
-**安全注意事项：**
-• 对于儿童：根据包装适用于7岁以上儿童，但12岁以下或更小年龄请咨询儿科医生。
-• 对于孕妇：B类—低剂量通常安全，但请咨询医生（特别是哺乳期或妊娠晚期）。
-• 其他：不适合有肝/肾问题的人。检查包装有效期。
-
-**跨境信息：** 在马来西亚/新加坡/泰国相当于"Panadol"；在越南为"Hapacol"或"Efferalgan"；在菲律宾为"Biogesic"。在东南亚药店广泛销售。
-
-**储存：** 在原始包装中保存，温度低于30°C，干燥处。如损坏请勿使用。
-
-**免责声明：** 此信息来源于公共网站和包装详情。仅供参考。非医疗建议。使用前请咨询医生或药剂师。`,
-
-      'Malay': `**Pembungkusan Dikesan:** Ya—jalur lepuh/kotak dengan label "Panadol" kelihatan. Teruskan dengan pengenalan.
-
-**Nama Ubat:** Panadol (Paracetamol/Acetaminophen 500mg)
-
-**Tujuan:** Melegakan kesakitan ringan hingga sederhana (cth, sakit kepala, sakit gigi, sakit belakang) dan mengurangkan demam (cth, untuk selesema). Berdasarkan pembungkusan: Untuk dewasa dan kanak-kanak berumur 12 tahun ke atas.
-
-**Dos (dari pembungkusan dan maklumat web):**
-• Dewasa/Kanak-kanak 12+: 1-2 tablet setiap 4-6 jam, maksimum 8 tablet sehari.
-• Kanak-kanak 7-12 tahun: 1 tablet setiap 4-6 jam, maksimum 4 tablet sehari.
-• Jangan melebihi dos yang disyorkan; ikut arahan pembungkusan.
-
-**Kesan Sampingan:** Biasa: Tiada yang kerap. Jarang: Ruam kulit, reaksi alahan, atau sakit perut. Risiko overdos: Kerosakan hati—dapatkan bantuan segera jika melebihi.
-
-**Amaran Alahan:** Mengandungi paracetamol dan eksipien (cth, kanji, magnesium stearate). Boleh menyebabkan reaksi jika alah. Jika anda memasukkan alahan (cth, paracetamol), amaran: Pencetus berpotensi—berunding dengan doktor.
-
-**Interaksi Ubat:**
-• Dengan ubat lain: Jangan gabungkan dengan produk paracetamol lain (cth, ubat selesema) untuk mengelakkan overdos. Boleh meningkatkan kesan pengencer darah (cth, warfarin) atau berinteraksi dengan ubat sawan (cth, phenytoin).
-• Dengan makanan: Boleh diambil dengan atau tanpa makanan; tiada interaksi utama.
-• Dengan alkohol: Elakkan—alkohol meningkatkan risiko ketoksikan hati apabila diambil dengan paracetamol.
-
-**Nota Keselamatan:**
-• Untuk kanak-kanak: Sesuai untuk kanak-kanak berumur 7+ mengikut pembungkusan, tetapi berunding dengan pakar pediatrik untuk usia yang lebih muda atau jika di bawah 12.
-• Untuk wanita hamil: Kategori B—biasanya selamat dalam dos rendah, tetapi berunding dengan doktor (terutama jika menyusu atau trimester ketiga).
-• Lain-lain: Tidak untuk mereka yang mempunyai masalah hati/ginjal. Semak tarikh luput pembungkusan.
-
-**Maklumat Lintas Sempadan:** Setara dengan "Panadol" di Malaysia/Singapore/Thailand; "Hapacol" atau "Efferalgan" di Vietnam; "Biogesic" di Filipina. Mudah didapati di farmasi SEA.
-
-**Penyimpanan:** Simpan dalam pembungkusan asal di bawah 30°C, tempat kering. Jangan gunakan jika rosak.
-
-**Penafian:** Maklumat ini diperoleh dari laman web awam dan butiran pembungkusan. Untuk tujuan maklumat sahaja. Bukan nasihat perubatan. Berunding dengan doktor atau ahli farmasi sebelum digunakan.`,
-
-      'Indonesian': `**Kemasan Terdeteksi:** Ya—strip blister/kotak dengan label "Panadol" terlihat. Lanjutkan dengan identifikasi.
-
-**Nama Obat:** Panadol (Paracetamol/Acetaminophen 500mg)
-
-**Tujuan:** Meredakan nyeri ringan hingga sedang (misalnya, sakit kepala, sakit gigi, sakit punggung) dan menurunkan demam (misalnya, untuk flu atau pilek). Berdasarkan kemasan: Untuk dewasa dan anak-anak di atas 12 tahun.
-
-**Dosis (dari kemasan dan info web):**
-• Dewasa/Anak-anak 12+: 1-2 tablet setiap 4-6 jam, maksimal 8 tablet per hari.
-• Anak-anak 7-12 tahun: 1 tablet setiap 4-6 jam, maksimal 4 tablet per hari.
-• Jangan melebihi dosis yang direkomendasikan; ikuti instruksi kemasan.
-
-**Efek Samping:** Umum: Tidak ada yang sering. Jarang: Ruam kulit, reaksi alergi, atau sakit perut. Risiko overdosis: Kerusakan hati—cari bantuan segera jika melebihi.
-
-**Peringatan Alergi:** Mengandung paracetamol dan eksipien (misalnya, pati, magnesium stearate). Dapat menyebabkan reaksi jika alergi. Jika Anda memasukkan alergi (misalnya, paracetamol), peringatan: Pemicu potensial—konsultasikan dokter.
-
-**Interaksi Obat:**
-• Dengan obat lain: Jangan gabungkan dengan produk paracetamol lain (misalnya, obat flu) untuk menghindari overdosis. Dapat meningkatkan efek pengencer darah (misalnya, warfarin) atau berinteraksi dengan obat kejang (misalnya, phenytoin).
-• Dengan makanan: Dapat dikonsumsi dengan atau tanpa makanan; tidak ada interaksi utama.
-• Dengan alkohol: Hindari—alkohol meningkatkan risiko toksisitas hati ketika dikonsumsi dengan paracetamol.
-
-**Catatan Keamanan:**
-• Untuk anak-anak: Cocok untuk anak-anak di atas 7 tahun sesuai kemasan, tetapi konsultasikan dokter anak untuk usia yang lebih muda atau jika di bawah 12.
-• Untuk wanita hamil: Kategori B—umumnya aman dalam dosis rendah, tetapi konsultasikan dokter (terutama jika menyusui atau trimester ketiga).
-• Lainnya: Tidak untuk mereka yang memiliki masalah hati/ginjal. Periksa tanggal kedaluwarsa kemasan.
-
-**Info Lintas Batas:** Setara dengan "Panadol" di Malaysia/Singapore/Thailand; "Hapacol" atau "Efferalgan" di Vietnam; "Biogesic" di Filipina. Tersedia luas di apotek SEA.
-
-**Penyimpanan:** Simpan dalam kemasan asli di bawah 30°C, tempat kering. Jangan gunakan jika rusak.
-
-**Disclaimer:** Informasi ini bersumber dari situs web publik dan detail kemasan. Hanya untuk tujuan informasi. Bukan saran medis. Konsultasikan dokter atau apoteker sebelum digunakan.`
-    };
-
-    return responses[lang] || responses['English'];
-  };
 
   const handleCameraCapture = async () => {
     console.log('Camera button clicked');
@@ -758,20 +577,20 @@ Silakan unggah foto yang jelas tentang obat Anda untuk identifikasi dan informas
       if (videoRef) {
         videoRef.srcObject = stream;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.log('Camera access error:', error);
       setCameraLoading(false);
       
       let errorMessage = '';
       let showFileUpload = false;
       
-      if (error.name === 'NotAllowedError') {
+      if ((error as Error).name === 'NotAllowedError') {
         errorMessage = 'Camera access denied. Please allow camera permission in your browser settings, or use the upload button to select a photo from your device.';
         showFileUpload = true;
-      } else if (error.name === 'NotFoundError') {
+      } else if ((error as Error).name === 'NotFoundError') {
         errorMessage = 'No camera found on this device. Please use the upload button to select a photo from your device.';
         showFileUpload = true;
-      } else if (error.message === 'HTTPS_REQUIRED') {
+      } else if ((error as Error).message === 'HTTPS_REQUIRED') {
         const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (isMobile) {
           errorMessage = 'Mobile camera requires HTTPS or network access. Try accessing via your computer\'s IP address (e.g., http://192.168.1.100:3000) or use the upload button.';
@@ -779,7 +598,7 @@ Silakan unggah foto yang jelas tentang obat Anda untuk identifikasi dan informas
           errorMessage = 'Camera access requires HTTPS. For development, please use https://localhost:3000 or upload a photo using the upload button.';
         }
         showFileUpload = true;
-      } else if (error.message === 'Camera not supported') {
+      } else if ((error as Error).message === 'Camera not supported') {
         errorMessage = 'Camera is not supported in this browser. Please use the upload button to select a photo from your device.';
         showFileUpload = true;
       } else {
@@ -928,12 +747,6 @@ For accurate medicine identification and safety information, please take a photo
     setShowCamera(false);
   };
 
-  const handleShare = () => {
-    console.log('Share button clicked');
-    const shareText = `Check out Seamed AI - AI Medicine Assistant!`;
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
-    window.open(whatsappUrl, '_blank');
-  };
 
   const handleShareMessage = (messageContent: string) => {
     console.log('Share message button clicked');
@@ -946,7 +759,7 @@ For accurate medicine identification and safety information, please take a photo
     console.log('Install button clicked');
     if (deferredPrompt) {
       deferredPrompt.prompt();
-      deferredPrompt.userChoice.then((choiceResult: any) => {
+      deferredPrompt.userChoice.then((choiceResult: { outcome: 'accepted' | 'dismissed' }) => {
         if (choiceResult.outcome === 'accepted') {
           console.log('User accepted the install prompt');
         }

@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
+  let language = 'English'; // Default fallback
   try {
-    const { imageBase64, language, allergy } = await request.json();
+    const { imageBase64, language: requestLanguage, allergy } = await request.json();
+    language = requestLanguage;
 
     if (!imageBase64) {
       return NextResponse.json(

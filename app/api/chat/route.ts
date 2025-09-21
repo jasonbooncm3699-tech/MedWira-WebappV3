@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, language, messages } = await request.json();
+    const { language, messages } = await request.json();
 
     // Get OpenAI API key from environment variables
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -44,7 +44,7 @@ IMPORTANT: Use your comprehensive knowledge of pharmaceuticals, medicine databas
         model: 'gpt-4',
         messages: [
           { role: 'system', content: systemPrompt },
-          ...messages.map((msg: any) => ({
+          ...messages.map((msg: { type: string; content: string }) => ({
             role: msg.type === 'user' ? 'user' : 'assistant',
             content: msg.content
           }))
