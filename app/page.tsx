@@ -1073,7 +1073,7 @@ For accurate medicine identification and safety information, please take a photo
                   </div>
                   <div className="message-footer">
                     <div className="message-time">{formatTime(message.timestamp)}</div>
-                    {message.type === 'ai' && message.content.includes('**Medicine Name:**') && (
+                    {message.type === 'ai' && (message.content.includes('**Medicine Name:**') || message.content.includes('Medicine Name:')) && (
                       <button 
                         className="message-share-btn" 
                         onClick={() => handleShareMessage(message.content)}

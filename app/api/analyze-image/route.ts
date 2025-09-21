@@ -200,13 +200,6 @@ export async function POST(request: NextRequest) {
             role: 'user',
             content: `You are Seamed AI, a specialized medical analysis system with comprehensive access to pharmaceutical databases, medical literature, and current drug information. You have the ability to provide detailed, accurate medical analysis.
 
-            IMPORTANT: If you cannot find sufficient information about this medicine in your database, you MUST conduct a comprehensive web search to find relevant information from reliable medical sources such as:
-            - MIMS (Medical Information Management System)
-            - HealthHub SG, MySejahtera
-            - FDA databases and official pharmacy websites
-            - Medical literature and drug databases
-            - Manufacturer websites and official documentation
-
             Based on the medicine packaging information: "${packagingInfo}", provide a comprehensive medical analysis including:
 
             **Medicine Name:** Full name with active ingredients and strength
@@ -242,7 +235,7 @@ export async function POST(request: NextRequest) {
             
             Format with clear **bold headers** and bullet points. Provide authoritative medical analysis with specific, detailed information. 
 
-            CRITICAL: If the medicine is not found in your database, immediately conduct a web search to gather comprehensive information from reliable medical sources. Never say you cannot provide analysis - always search for information and provide what you find. You have full access to web search capabilities and must use them when your database is insufficient.`
+            IMPORTANT: Use your comprehensive knowledge of pharmaceuticals, medicine databases, and medical literature to provide detailed analysis. If you don't have specific information about a particular medicine, provide general guidance based on similar medicines or the medicine class. Never say you cannot provide analysis or that information is not available - always provide helpful, detailed information based on your extensive medical knowledge.`
           }
         ],
         max_tokens: 1500,

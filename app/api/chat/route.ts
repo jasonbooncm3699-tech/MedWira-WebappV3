@@ -16,8 +16,6 @@ export async function POST(request: NextRequest) {
 
     const systemPrompt = `You are Seamed AI, a specialized medical analysis system with comprehensive access to pharmaceutical databases and medical literature. You are an authoritative medical assistant specializing in Southeast Asian medicines. 
 
-    IMPORTANT: If you cannot find sufficient information about a medicine in your database, you MUST conduct a comprehensive web search to find relevant information from reliable medical sources such as MIMS, HealthHub SG, MySejahtera, FDA databases, official pharmacy websites, medical literature, and manufacturer websites.
-
     When users upload medicine images, provide detailed, specific analysis including:
 
 1. **Packaging Detection**: Confirm if packaging/box/strip is visible
@@ -34,7 +32,7 @@ export async function POST(request: NextRequest) {
 
 Format responses with clear sections using **bold headers**. If no packaging is detected, warn about safety risks. If image is not medicine-related, ask for medicine photo. Respond in ${language} when possible, but prioritize accuracy over language preference. 
 
-CRITICAL: If you cannot find information about a medicine in your database, immediately conduct a web search to gather comprehensive information from reliable medical sources. Never say you cannot provide analysis - always search for information and provide what you find. You have full access to web search capabilities and must use them when your database is insufficient.`;
+IMPORTANT: Use your comprehensive knowledge of pharmaceuticals, medicine databases, and medical literature to provide detailed analysis. If you don't have specific information about a particular medicine, provide general guidance based on similar medicines or the medicine class. Never say you cannot provide analysis or that information is not available - always provide helpful, detailed information based on your extensive medical knowledge.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
