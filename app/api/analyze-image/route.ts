@@ -30,9 +30,7 @@ export async function POST(request: NextRequest) {
     // Single comprehensive analysis - like the original OpenAI approach
     const languageInstructions = getLanguageInstructions(language);
     
-    const analysisResult = await model.generateContent([
-      {
-        text: `Analyze this medicine image and provide comprehensive medical analysis. 
+    const prompt = `Analyze this medicine image and provide comprehensive medical analysis. 
 
 First, check if this is a medicine-related image. If not, respond with "Error: No medicine detected in the image."
 
@@ -40,43 +38,64 @@ If it is medicine-related, check for packaging. If no packaging is visible, resp
 
 If packaging is visible, provide detailed analysis in this exact format:
 
+**Packaging Detected:** Yes—[describe what packaging is visible, e.g., blister strip/box with brand label]
+
 **Medicine Name:** [Full name with active ingredients and strength]
 
-**Purpose:** [What conditions this medicine treats]
+**Purpose:** [What conditions this medicine treats with specific details]
 
 **Dosage Instructions:**
-• Adults/Children over 12: [specific dosing from packaging]
+• Adults/Children over 12: [specific dosing from packaging and web info]
 • Children 7-12 years: [specific dosing from packaging]
-• Follow packaging instructions
+• Do not exceed recommended dose; follow packaging instructions
 
-**Side Effects:** [Common and rare side effects]
+**Side Effects:** Common: [list common effects]. Rare: [list rare effects]. Overdose risk: [specific risks]—seek immediate help if exceeded.
 
-**Allergy Warnings:** [Active ingredients and excipients that may cause reactions]
+**Allergy Warning:** Contains [active ingredients] and excipients (e.g., [list excipients]). May cause reactions if allergic. [If user entered allergies, add specific warning about potential triggers]
 
 **Drug Interactions:**
-• With other medicines
-• With food
-• With alcohol
+• With other drugs: [specific interactions with other medicines]
+• With food: [food interactions or lack thereof]
+• With alcohol: [alcohol interactions and warnings]
 
 **Safety Notes:**
-• For children
-• For pregnant women
-• For special populations
+• For kids: [age-specific safety information]
+• For pregnant women: [pregnancy category and recommendations]
+• Other: [additional safety considerations]
 
-**Cross-Border Equivalents:** [Equivalent names in Southeast Asian countries]
+**Cross-Border Info:** Equivalent to [brand name] in [countries]; [alternative names] in [other countries]. Widely available in SEA pharmacies.
 
-**Storage Instructions:** [Temperature, conditions, expiry]
+**Storage:** [specific storage instructions with temperature and conditions]
 
-**Disclaimer:** This analysis is for informational purposes only. Always consult a healthcare professional for medical advice.
+**Disclaimer:** This information is sourced from public websites and packaging details. For informational purposes only. Not medical advice. Consult a doctor or pharmacist before use.
 
 ${languageInstructions}
 
-Conduct comprehensive web search using Google's search infrastructure to find the most current and accurate information about this medicine. Search pharmaceutical databases, medical websites, and official drug information sources. Provide authoritative medical analysis with specific, detailed information based on the most up-to-date data available.`
-      },
+Conduct comprehensive web search using Google's search infrastructure to find the most current and accurate information about this medicine. Search pharmaceutical databases, medical websites, and official drug information sources. Provide authoritative medical analysis with specific, detailed information based on the most up-to-date data available.`;
+
+    // Handle different image formats
+    let imageData, mimeType;
+    if (imageBase64.includes(',')) {
+      const [header, data] = imageBase64.split(',');
+      imageData = data;
+      if (header.includes('png')) {
+        mimeType = "image/png";
+      } else if (header.includes('jpeg') || header.includes('jpg')) {
+        mimeType = "image/jpeg";
+      } else {
+        mimeType = "image/jpeg"; // default
+      }
+    } else {
+      imageData = imageBase64;
+      mimeType = "image/jpeg";
+    }
+
+    const analysisResult = await model.generateContent([
+      prompt,
       {
         inlineData: {
-          data: imageBase64.split(',')[1], // Remove data:image/jpeg;base64, prefix
-          mimeType: "image/jpeg"
+          data: imageData,
+          mimeType: mimeType
         }
       }
     ]);

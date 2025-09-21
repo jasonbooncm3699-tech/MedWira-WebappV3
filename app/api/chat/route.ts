@@ -34,16 +34,13 @@ export async function POST(request: NextRequest) {
 
     IMPORTANT: Always provide comprehensive analysis using your knowledge and web search capabilities. Never say you cannot provide analysis - always search multiple sources for current and accurate information.`;
 
-    // Convert messages to Gemini format
-    const geminiMessages = [
-      { role: 'user', parts: [{ text: systemPrompt }] },
-      ...messages.map((msg: { type: string; content: string }) => ({
-        role: msg.type === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.content }]
-      }))
-    ];
+    // Build the full conversation with system prompt
+    const conversation = [
+      systemPrompt,
+      ...messages.map((msg: { type: string; content: string }) => msg.content)
+    ].join('\n\n');
 
-    const result = await model.generateContent(geminiMessages);
+    const result = await model.generateContent(conversation);
     const response = await result.response;
     const aiResponse = response.text();
 
