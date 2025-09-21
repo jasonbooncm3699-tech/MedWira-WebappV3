@@ -14,6 +14,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate image format
+    if (!imageBase64.startsWith('data:image/')) {
+      return NextResponse.json(
+        { error: 'Invalid image format. Please upload a valid image file.' },
+        { status: 400 }
+      );
+    }
+
     // Get API key from environment variables
     const API_KEY = process.env.GEMINI_API_KEY;
     
@@ -30,13 +38,19 @@ export async function POST(request: NextRequest) {
     // Single comprehensive analysis - like the original OpenAI approach
     const languageInstructions = getLanguageInstructions(language);
     
-    const prompt = `Analyze this medicine image and provide comprehensive medical analysis. 
+    const prompt = `You are Seamed AI, a specialized medical analysis system. Analyze this medicine image carefully and extract all visible information from the packaging, then conduct comprehensive web searches to provide detailed medical analysis.
 
-First, check if this is a medicine-related image. If not, respond with "Error: No medicine detected in the image."
+STEP 1: Examine the image carefully. Look for:
+- Medicine packaging (boxes, bottles, blister strips, labels)
+- Brand names, medicine names, active ingredients
+- Dosage information, expiry dates, manufacturer details
+- Any text visible on the packaging
 
-If it is medicine-related, check for packaging. If no packaging is visible, respond with "Warning: No packaging detected. We cannot safely identify loose pills due to risks of counterfeits, expiry, or errors."
+STEP 2: If this is NOT a medicine-related image, respond with "Error: No medicine detected in the image."
 
-If packaging is visible, provide detailed analysis in this exact format:
+STEP 3: If it IS medicine-related but NO packaging is visible, respond with "Warning: No packaging detected. We cannot safely identify loose pills due to risks of counterfeits, expiry, or errors."
+
+STEP 4: If packaging IS visible, extract all information from the image, then conduct web searches to provide comprehensive analysis in this exact format:
 
 **Packaging Detected:** Yes—[describe what packaging is visible, e.g., blister strip/box with brand label]
 
@@ -90,7 +104,13 @@ Conduct comprehensive web search using Google's search infrastructure to find th
       mimeType = "image/jpeg";
     }
 
-    const analysisResult = await model.generateContent([
+    console.log('Starting Gemini analysis...');
+    console.log('Image data length:', imageData.length);
+    console.log('MIME type:', mimeType);
+    console.log('Language:', language);
+    
+    // Add timeout to prevent hanging
+    const analysisPromise = model.generateContent([
       prompt,
       {
         inlineData: {
@@ -100,8 +120,17 @@ Conduct comprehensive web search using Google's search infrastructure to find th
       }
     ]);
 
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Analysis timeout after 30 seconds')), 30000)
+    );
+
+    const analysisResult = await Promise.race([analysisPromise, timeoutPromise]);
     const analysisResponse = await analysisResult.response;
     let analysis = analysisResponse.text();
+    
+    console.log('Gemini analysis completed');
+    console.log('Analysis length:', analysis.length);
+    console.log('Analysis preview:', analysis.substring(0, 200));
 
     // Check for allergy conflicts if allergy is provided
     let allergyWarning = '';
@@ -145,8 +174,17 @@ Conduct comprehensive web search using Google's search infrastructure to find th
 
   } catch (error) {
     console.error('API error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     return NextResponse.json(
-      { error: 'Failed to analyze image' },
+      { 
+        error: 'Failed to analyze image',
+        details: error.message,
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     );
   }
