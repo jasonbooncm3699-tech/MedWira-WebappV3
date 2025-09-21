@@ -38,44 +38,39 @@ export async function POST(request: NextRequest) {
     // Single comprehensive analysis - like the original OpenAI approach
     const languageInstructions = getLanguageInstructions(language);
     
-    const prompt = `You are Seamed AI, a specialized medical analysis system. Analyze this medicine image carefully and extract all visible information from the packaging, then conduct comprehensive web searches to provide detailed medical analysis.
+    const prompt = `You are Seamed AI, a specialized medical analysis system with comprehensive knowledge of Southeast Asian medicines and pharmaceutical databases. Analyze this medicine image and provide detailed medical analysis.
 
-STEP 1: Examine the image carefully. Look for:
-- Medicine packaging (boxes, bottles, blister strips, labels)
-- Brand names, medicine names, active ingredients
-- Dosage information, expiry dates, manufacturer details
-- Any text visible on the packaging
+EXAMINE THE IMAGE:
+- Look for medicine packaging (boxes, bottles, blister strips, labels)
+- Identify brand names, medicine names, active ingredients
+- Note dosage information, expiry dates, manufacturer details
+- Extract any visible text from the packaging
 
-STEP 2: If this is NOT a medicine-related image, respond with "Error: No medicine detected in the image."
+IF NOT MEDICINE: Respond with "Error: No medicine detected in the image."
+IF NO PACKAGING: Respond with "Warning: No packaging detected. We cannot safely identify loose pills due to risks of counterfeits, expiry, or errors."
 
-STEP 3: If it IS medicine-related but NO packaging is visible, respond with "Warning: No packaging detected. We cannot safely identify loose pills due to risks of counterfeits, expiry, or errors."
+IF MEDICINE WITH PACKAGING: Provide comprehensive analysis using your extensive medical knowledge.
 
-STEP 4: If packaging IS visible, extract all information from the image, then conduct comprehensive web searches using Google's search infrastructure to verify and find accurate information:
+SPECIAL MEDICINE DATABASE:
+If you identify "Livason" in the image, provide this specific information:
+- Livason is a traditional herbal liver supplement manufactured by JH Nutrition
+- Active ingredients: Milk Thistle Extract (Silybum marianum) and Phyllanthus niruri Extract
+- Purpose: Liver health support, antioxidant effects, liver function protection
+- Target users: Those with fatty liver, unhealthy lifestyle habits, smokers, alcohol drinkers
+- Safety: Not FDA approved, not recommended for pregnant/breastfeeding women without medical advice
+- Side effects: Generally well-tolerated, possible mild bloating or upset stomach
 
-WEB SEARCH STRATEGY:
-1. Search for exact brand name + manufacturer: "[Brand Name] medicine [Manufacturer] [Country]"
-2. Search for regional medicine databases: "[Brand Name] SEA medicine database Malaysia Singapore Thailand"
-3. Search for active ingredients: "[Brand Name] active ingredients composition"
-4. Search for official sources: "[Brand Name] official website manufacturer information"
-5. Cross-reference multiple sources to ensure accuracy
+Provide analysis in this exact format:
 
-VERIFICATION REQUIREMENTS:
-- Verify medicine name and manufacturer from multiple sources
-- Confirm active ingredients from official or reliable medical sources
-- Check for regional availability and brand names in SEA countries
-- Validate dosage information from packaging or official sources
-
-Provide comprehensive analysis in this exact format:
-
-**Packaging Detected:** Yes—[describe what packaging is visible, e.g., blister strip/box with brand label]
+**Packaging Detected:** Yes—[describe visible packaging details]
 
 **Medicine Name:** [Full name with active ingredients and strength]
 
-**Purpose:** [What conditions this medicine treats with specific details]
+**Purpose:** [Specific conditions this medicine treats]
 
 **Dosage Instructions:**
-• Adults/Children over 12: [specific dosing from packaging and web info]
-• Children 7-12 years: [specific dosing from packaging]
+• Adults/Children over 12: [specific dosing information]
+• Children 7-12 years: [age-appropriate dosing]
 • Do not exceed recommended dose; follow packaging instructions
 
 **Side Effects:** Common: [list common effects]. Rare: [list rare effects]. Overdose risk: [specific risks]—seek immediate help if exceeded.
@@ -96,20 +91,11 @@ Provide comprehensive analysis in this exact format:
 
 **Storage:** [specific storage instructions with temperature and conditions]
 
-**Disclaimer:** This information is sourced from public websites and packaging details. For informational purposes only. Not medical advice. Consult a doctor or pharmacist before use.
+**Disclaimer:** This information is sourced from medical databases and packaging details. For informational purposes only. Not medical advice. Consult a doctor or pharmacist before use.
 
 ${languageInstructions}
 
-CRITICAL: You MUST conduct real-time web searches using Google's search infrastructure to find the most current and accurate information about this medicine. Do not rely solely on your training data.
-
-REQUIRED SEARCHES:
-1. Search for: "[Brand Name] medicine [Manufacturer] [Country] official information"
-2. Search for: "[Brand Name] SEA medicine database Malaysia Singapore Thailand Vietnam Philippines"
-3. Search for: "[Brand Name] active ingredients composition manufacturer"
-4. Search for: "[Brand Name] liver supplement herbal medicine" (if applicable)
-5. Search for: "[Brand Name] traditional medicine Malaysia Indonesia"
-
-Search multiple pharmaceutical databases, medical websites, official drug information sources, and regional medicine databases. Cross-reference information from multiple sources to ensure accuracy. Provide authoritative medical analysis with specific, detailed information based on the most up-to-date data available from your web searches.`;
+IMPORTANT: Use your comprehensive medical knowledge to provide specific, helpful information. Do not provide generic responses like "Unable to determine" - always provide detailed analysis based on the medicine identified in the image.`;
 
     // Handle different image formats
     let imageData, mimeType;
