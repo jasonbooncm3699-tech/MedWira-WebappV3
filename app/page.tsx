@@ -103,6 +103,19 @@ export default function Home() {
     'Lao': 'ຂ້ອຍໄດ້ຖ່າຍຮູບຢາເພື່ອການກວດສອບແລະກຳນົດຕົວຕົນ.'
   };
 
+  const allergyPlaceholders: { [key: string]: string } = {
+    'English': 'Enter allergies (e.g., penicillin, paracetamol)',
+    'Chinese': '输入过敏史（例如：青霉素、扑热息痛）',
+    'Malay': 'Masukkan alahan (cth., penicillin, paracetamol)',
+    'Indonesian': 'Masukkan alergi (mis., penisilin, parasetamol)',
+    'Thai': 'ใส่ข้อมูลการแพ้ (เช่น เพนิซิลลิน พาราเซตามอล)',
+    'Vietnamese': 'Nhập dị ứng (vd., penicillin, paracetamol)',
+    'Tagalog': 'Ilagay ang mga allergy (hal., penicillin, paracetamol)',
+    'Burmese': 'ဓာတ်မတည့်မှုများ ထည့်သွင်းပါ (ဥပမာ- ပန်န်နီစလင်၊ ပါရာစီတမော)',
+    'Khmer': 'បញ្ចូលរោគអាឡែន (ឧទាហរណ៍ ពេនីស៊ីលីន ប៉ារ៉ាស៊ីតាម៉ុល)',
+    'Lao': 'ປ້ອນການແພ້ (ຕົວຢ່າງ: penicillin, paracetamol)'
+  };
+
   const welcomeMessages: { [key: string]: string } = {
     'English': 'Start this conversation by taking your medicine photo.',
     'Chinese': '请拍摄您的药品照片来开始这次对话。',
@@ -1139,7 +1152,7 @@ For accurate medicine identification and safety information, please take a photo
             <div className="allergy-input-wrapper">
               <input
                 type="text"
-                placeholder="Enter allergies (e.g., penicillin, paracetamol)"
+                placeholder={allergyPlaceholders[language] || allergyPlaceholders['English']}
                 value={allergy}
                 onChange={(e) => setAllergy(e.target.value)}
                 className="allergy-input"
