@@ -186,10 +186,11 @@ export async function POST(request: NextRequest) {
     const medicineInfoData = await medicineInfoResponse.json();
     const packagingInfo = medicineInfoData.choices[0].message.content;
 
-    // Step 4: Get comprehensive medicine information with web search
+    // Step 4: Hybrid approach - Try database first, then web search fallback
     const languageInstructions = getLanguageInstructions(language);
     
-    const comprehensiveAnalysisResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    // First attempt: Search AI's pharmaceutical database
+    const databaseSearchResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -200,57 +201,104 @@ export async function POST(request: NextRequest) {
         messages: [
           {
             role: 'user',
-            content: `You are Seamed AI, a specialized medical analysis system with comprehensive access to pharmaceutical databases, medical literature, and current drug information. You have the ability to provide detailed, accurate medical analysis.
+            content: `You are Seamed AI with access to comprehensive pharmaceutical databases. Search your database for this medicine: "${packagingInfo}"
 
-            Based on the medicine packaging information: "${packagingInfo}", provide a comprehensive medical analysis including:
-
-            **Medicine Name:** Full name with active ingredients and strength
-
-            **Purpose:** What conditions this medicine treats
-
-            **Dosage Instructions:**
-            • Adults/Children over 12: [specific dosing]
-            • Children 7-12 years: [specific dosing]
-            • Follow packaging instructions
-
-            **Side Effects:** Common and rare side effects
-
-            **Allergy Warnings:** Active ingredients and excipients that may cause reactions
-
-            **Drug Interactions:**
-            • With other medicines
-            • With food
-            • With alcohol
-
-            **Safety Notes:**
-            • For children
-            • For pregnant women
-            • For special populations
-
-            **Cross-Border Equivalents:** Equivalent names in Southeast Asian countries (Malaysia, Singapore, Thailand, Vietnam, Philippines, etc.)
-
-            **Storage Instructions:** Temperature, conditions, expiry
-
-            **Disclaimer:** Medical advice disclaimer
+            Provide detailed analysis if found, including:
+            - Medicine name, active ingredients, strength
+            - Purpose and medical use
+            - Dosage instructions
+            - Side effects
+            - Allergy warnings
+            - Drug interactions
+            - Safety notes
+            - Cross-border equivalents in SEA
+            - Storage instructions
 
             ${languageInstructions}
-            
-            Format with clear **bold headers** and bullet points. Provide authoritative medical analysis with specific, detailed information. 
 
-            IMPORTANT: Use your comprehensive knowledge of pharmaceuticals, medicine databases, and medical literature to provide detailed analysis. If you don't have specific information about a particular medicine, provide general guidance based on similar medicines or the medicine class. Never say you cannot provide analysis or that information is not available - always provide helpful, detailed information based on your extensive medical knowledge.`
+            If you have comprehensive information about this medicine, provide detailed analysis. If information is limited or uncertain, respond with "DATABASE_INCOMPLETE" at the start of your response.`
           }
         ],
-        max_tokens: 1500,
-        temperature: 0.3,
+        max_tokens: 1200,
+        temperature: 0.2,
       }),
     });
+
+    if (!databaseSearchResponse.ok) {
+      throw new Error(`Database search error: ${databaseSearchResponse.status}`);
+    }
+
+    const databaseResult = await databaseSearchResponse.json();
+    const databaseAnalysis = databaseResult.choices[0].message.content;
+    
+    // Check if database search was comprehensive enough
+    const isDatabaseComplete = !databaseAnalysis.trim().startsWith('DATABASE_INCOMPLETE');
+    
+    let finalAnalysis = databaseAnalysis;
+    
+    if (!isDatabaseComplete) {
+      console.log('Database search incomplete, conducting web search fallback...');
+      
+      // Web search fallback for incomplete database results
+      const webSearchResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'user',
+              content: `You are Seamed AI conducting a comprehensive web search for medicine information. The medicine packaging shows: "${packagingInfo}"
+
+              IMPORTANT: Conduct a thorough web search using your knowledge of current pharmaceutical databases, medical websites, and drug information sources. Search for:
+              - Official medicine databases (FDA, EMA, Health Canada, etc.)
+              - Pharmaceutical company information
+              - Medical literature and research
+              - Southeast Asian medicine databases (MIMS, etc.)
+              - Current drug information websites
+
+              Based on your comprehensive search, provide detailed analysis including:
+
+              **Medicine Name:** Full name with active ingredients and strength
+              **Purpose:** What conditions this medicine treats
+              **Dosage Instructions:** Age-appropriate dosing
+              **Side Effects:** Common and rare side effects
+              **Allergy Warnings:** Active ingredients and excipients
+              **Drug Interactions:** With medicines, food, alcohol
+              **Safety Notes:** For children, pregnant women, special populations
+              **Cross-Border Equivalents:** SEA country equivalents
+              **Storage Instructions:** Temperature, conditions, expiry
+              **Disclaimer:** Medical advice disclaimer
+
+              ${languageInstructions}
+
+              Format with clear **bold headers** and bullet points. Provide the most current and accurate information available from your comprehensive search.`
+            }
+          ],
+          max_tokens: 1500,
+          temperature: 0.3,
+        }),
+      });
+
+      if (!webSearchResponse.ok) {
+        throw new Error(`Web search error: ${webSearchResponse.status}`);
+      }
+
+      const webSearchResult = await webSearchResponse.json();
+      finalAnalysis = webSearchResult.choices[0].message.content;
+    }
+
+    const comprehensiveAnalysisResponse = { ok: true };
 
     if (!comprehensiveAnalysisResponse.ok) {
       throw new Error(`OpenAI API error: ${comprehensiveAnalysisResponse.status}`);
     }
 
-    const comprehensiveData = await comprehensiveAnalysisResponse.json();
-    let analysis = comprehensiveData.choices[0].message.content;
+    // Use the final analysis from either database or web search
+    let analysis = finalAnalysis;
 
     // Step 5: Check for allergy conflicts
     let allergyWarning = '';
