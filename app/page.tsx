@@ -38,6 +38,11 @@ export default function Home() {
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState('');
+
+  // Debug: Log when loadingStatus changes
+  useEffect(() => {
+    console.log('LoadingStatus changed to:', loadingStatus);
+  }, [loadingStatus]);
   const [showCamera, setShowCamera] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [videoRef, setVideoRef] = useState<HTMLVideoElement | null>(null);
@@ -1113,7 +1118,11 @@ For accurate medicine identification and safety information, please take a photo
                     <span></span>
                   </div>
                   <div className="loading-status">
-                    {loadingStatus}
+                    {loadingStatus || 'Loading...'}
+                    {/* Debug info */}
+                    <div style={{fontSize: '10px', color: '#666', marginTop: '2px'}}>
+                      Debug: isLoading={isLoading.toString()}, status='{loadingStatus}'
+                    </div>
                   </div>
                 </div>
               </div>
