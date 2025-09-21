@@ -331,6 +331,7 @@ export default function Home() {
     setInput('');
     setIsLoading(true);
     setLoadingStatus('Thinking...');
+    console.log('Setting loading status to: Thinking...');
     
     // OpenAI API call
     try {
@@ -410,6 +411,7 @@ export default function Home() {
     // Show loading state
     setIsLoading(true);
     setLoadingStatus('Analyzing...');
+    console.log('Setting loading status to: Analyzing...');
 
       const reader = new FileReader();
     reader.onload = async (event) => {
@@ -806,6 +808,8 @@ Silakan unggah foto yang jelas tentang obat Anda untuk identifikasi dan informas
 
           // Show loading state
           setIsLoading(true);
+          setLoadingStatus('Analyzing...');
+          console.log('Setting loading status to: Analyzing... (camera)');
 
           try {
             // Call the image analysis API
