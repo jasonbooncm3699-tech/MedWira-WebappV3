@@ -263,8 +263,17 @@ export default function Home() {
     ];
 
     const storedChats = JSON.parse(localStorage.getItem('recentChats') || '[]');
+    // Convert timestamp strings back to Date objects
+    const parsedChats = storedChats.map((chat: any) => ({
+      ...chat,
+      timestamp: new Date(chat.timestamp),
+      messages: chat.messages.map((msg: any) => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp)
+      }))
+    }));
     // Use dummy chats if no stored chats exist
-    setRecentChats(storedChats.length > 0 ? storedChats : dummyChats);
+    setRecentChats(parsedChats.length > 0 ? parsedChats : dummyChats);
     const storedTokens = parseInt(localStorage.getItem('tokens') || '100');
     setTokens(storedTokens);
     if (localStorage.getItem('loggedIn') === 'true') setIsLoggedIn(true);
@@ -788,8 +797,17 @@ For accurate medicine identification and safety information, please take a photo
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  const formatDate = (date: Date | string) => {
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      if (isNaN(dateObj.getTime())) {
+        return 'Invalid Date';
+      }
+      return dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    } catch (error) {
+      console.error('Error formatting date:', error, date);
+      return 'Invalid Date';
+    }
   };
 
   return (
