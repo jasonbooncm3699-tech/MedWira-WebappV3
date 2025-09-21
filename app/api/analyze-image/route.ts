@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export async function POST(request: NextRequest) {
   let language = 'English'; // Default fallback
@@ -13,61 +14,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get OpenAI API key from environment variables
-    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+    // Get API key from environment variables
+    const API_KEY = process.env.GEMINI_API_KEY;
     
-    if (!OPENAI_API_KEY) {
+    if (!API_KEY) {
       return NextResponse.json(
-        { error: 'OpenAI API key not configured' },
+        { error: 'API key not configured' },
         { status: 500 }
       );
     }
 
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+
     // Step 1: Check if image contains medicine/packaging
-    const medicineCheckResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+    const medicineCheckResult = await model.generateContent([
+      {
+        text: `Analyze this image carefully. Is this a medicine-related image? Look for:
+        - Medicine packaging (boxes, bottles, blister strips)
+        - Pills, tablets, or capsules
+        - Prescription labels
+        - Pharmacy or medical context
+        - Any text indicating medicine names, dosages, or medical use
+        
+        Respond with ONLY "YES" if it's medicine-related, or "NO" if it's not medicine-related.`
       },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: `Analyze this image carefully. Is this a medicine-related image? Look for:
-                - Medicine packaging (boxes, bottles, blister strips)
-                - Pills, tablets, or capsules
-                - Prescription labels
-                - Pharmacy or medical context
-                - Any text indicating medicine names, dosages, or medical use
-                
-                Respond with ONLY "YES" if it's medicine-related, or "NO" if it's not medicine-related.`
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: imageBase64,
-                  detail: 'high'
-                }
-              }
-            ]
-          }
-        ],
-        max_tokens: 10,
-        temperature: 0.1,
-      }),
-    });
+      {
+        inlineData: {
+          data: imageBase64.split(',')[1], // Remove data:image/jpeg;base64, prefix
+          mimeType: "image/jpeg"
+        }
+      }
+    ]);
 
-    if (!medicineCheckResponse.ok) {
-      throw new Error(`OpenAI API error: ${medicineCheckResponse.status}`);
-    }
-
-    const medicineCheckData = await medicineCheckResponse.json();
-    const isMedicineRelated = medicineCheckData.choices[0].message.content.trim().toUpperCase().includes('YES');
+    const medicineCheckResponse = await medicineCheckResult.response;
+    const medicineCheckText = medicineCheckResponse.text();
+    const isMedicineRelated = medicineCheckText.trim().toUpperCase().includes('YES');
 
     if (!isMedicineRelated) {
       const errorMessage = language === 'Chinese' 
@@ -81,50 +63,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 2: Check for packaging visibility
-    const packagingCheckResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+    const packagingCheckResult = await model.generateContent([
+      {
+        text: `Analyze this medicine image. Is there visible packaging (e.g., box, blister strip, bottle label, prescription label)? Look for:
+        - Brand names or medicine names
+        - Dosage information
+        - Expiry dates
+        - Manufacturer information
+        - Any text or labels on packaging
+        
+        Respond with "YES" if packaging is clearly visible, or "NO" if only loose pills/tablets without packaging are shown.`
       },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: `Analyze this medicine image. Is there visible packaging (e.g., box, blister strip, bottle label, prescription label)? Look for:
-                - Brand names or medicine names
-                - Dosage information
-                - Expiry dates
-                - Manufacturer information
-                - Any text or labels on packaging
-                
-                Respond with "YES" if packaging is clearly visible, or "NO" if only loose pills/tablets without packaging are shown.`
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: imageBase64,
-                  detail: 'high'
-                }
-              }
-            ]
-          }
-        ],
-        max_tokens: 50,
-        temperature: 0.1,
-      }),
-    });
+      {
+        inlineData: {
+          data: imageBase64.split(',')[1],
+          mimeType: "image/jpeg"
+        }
+      }
+    ]);
 
-    if (!packagingCheckResponse.ok) {
-      throw new Error(`OpenAI API error: ${packagingCheckResponse.status}`);
-    }
-
-    const packagingCheckData = await packagingCheckResponse.json();
-    const hasPackaging = packagingCheckData.choices[0].message.content.trim().toUpperCase().includes('YES');
+    const packagingCheckResponse = await packagingCheckResult.response;
+    const packagingCheckText = packagingCheckResponse.text();
+    const hasPackaging = packagingCheckText.trim().toUpperCase().includes('YES');
 
     if (!hasPackaging) {
       const warningMessage = language === 'Chinese'
@@ -139,230 +99,103 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 3: Extract medicine information from image
-    const medicineInfoResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+    const medicineInfoResult = await model.generateContent([
+      {
+        text: `Analyze this medicine packaging image and extract all visible information:
+        - Medicine/brand name
+        - Active ingredients
+        - Dosage strength (e.g., 500mg)
+        - Manufacturer
+        - Any text visible on packaging
+        - Expiry date if visible
+        - Dosage instructions if visible
+        
+        Provide a detailed description of what you can see on the packaging.`
       },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: `Analyze this medicine packaging image and extract all visible information:
-                - Medicine/brand name
-                - Active ingredients
-                - Dosage strength (e.g., 500mg)
-                - Manufacturer
-                - Any text visible on packaging
-                - Expiry date if visible
-                - Dosage instructions if visible
-                
-                Provide a detailed description of what you can see on the packaging.`
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: imageBase64,
-                  detail: 'high'
-                }
-              }
-            ]
-          }
-        ],
-        max_tokens: 500,
-        temperature: 0.1,
-      }),
-    });
+      {
+        inlineData: {
+          data: imageBase64.split(',')[1],
+          mimeType: "image/jpeg"
+        }
+      }
+    ]);
 
-    if (!medicineInfoResponse.ok) {
-      throw new Error(`OpenAI API error: ${medicineInfoResponse.status}`);
-    }
+    const medicineInfoResponse = await medicineInfoResult.response;
+    const packagingInfo = medicineInfoResponse.text();
 
-    const medicineInfoData = await medicineInfoResponse.json();
-    const packagingInfo = medicineInfoData.choices[0].message.content;
-
-    // Step 4: Hybrid approach - Try database first, then web search fallback
+    // Step 4: Comprehensive analysis using Gemini's superior search capabilities
     const languageInstructions = getLanguageInstructions(language);
     
-    // First attempt: Search AI's pharmaceutical database
-    const databaseSearchResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'user',
-            content: `You are Seamed AI with access to comprehensive pharmaceutical databases. Search your database for this medicine: "${packagingInfo}"
+    const comprehensiveAnalysisResult = await model.generateContent([
+      {
+        text: `You are Seamed AI powered by Google's advanced search capabilities. You have access to comprehensive pharmaceutical databases, medical literature, and real-time web search through Google's search infrastructure.
 
-            Provide detailed analysis if found, including:
-            - Medicine name, active ingredients, strength
-            - Purpose and medical use
-            - Dosage instructions
-            - Side effects
-            - Allergy warnings
-            - Drug interactions
-            - Safety notes
-            - Cross-border equivalents in SEA
-            - Storage instructions
+        Based on the medicine packaging information: "${packagingInfo}", provide a comprehensive medical analysis including:
 
-            ${languageInstructions}
+        **Medicine Name:** Full name with active ingredients and strength
 
-            If you have comprehensive information about this medicine, provide detailed analysis. If information is limited or uncertain, respond with "DATABASE_INCOMPLETE" at the start of your response.`
-          }
-        ],
-        max_tokens: 1200,
-        temperature: 0.2,
-      }),
-    });
+        **Purpose:** What conditions this medicine treats
 
-    if (!databaseSearchResponse.ok) {
-      throw new Error(`Database search error: ${databaseSearchResponse.status}`);
-    }
+        **Dosage Instructions:**
+        • Adults/Children over 12: [specific dosing]
+        • Children 7-12 years: [specific dosing]
+        • Follow packaging instructions
 
-    const databaseResult = await databaseSearchResponse.json();
-    const databaseAnalysis = databaseResult.choices[0].message.content;
-    
-    // Check if database search was comprehensive enough
-    const isDatabaseComplete = !databaseAnalysis.trim().startsWith('DATABASE_INCOMPLETE');
-    
-    let finalAnalysis = databaseAnalysis;
-    
-    if (!isDatabaseComplete) {
-      console.log('Database search incomplete, conducting web search fallback...');
-      
-      // Web search fallback for incomplete database results
-      const webSearchResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'user',
-              content: `You are Seamed AI conducting a comprehensive web search for medicine information. The medicine packaging shows: "${packagingInfo}"
+        **Side Effects:** Common and rare side effects
 
-              IMPORTANT: Conduct a thorough web search using your knowledge of current pharmaceutical databases, medical websites, and drug information sources. Search for:
-              - Official medicine databases (FDA, EMA, Health Canada, etc.)
-              - Pharmaceutical company information
-              - Medical literature and research
-              - Southeast Asian medicine databases (MIMS, etc.)
-              - Current drug information websites
+        **Allergy Warnings:** Active ingredients and excipients that may cause reactions
 
-              Based on your comprehensive search, provide detailed analysis including:
+        **Drug Interactions:**
+        • With other medicines
+        • With food
+        • With alcohol
 
-              **Medicine Name:** Full name with active ingredients and strength
-              **Purpose:** What conditions this medicine treats
-              **Dosage Instructions:** Age-appropriate dosing
-              **Side Effects:** Common and rare side effects
-              **Allergy Warnings:** Active ingredients and excipients
-              **Drug Interactions:** With medicines, food, alcohol
-              **Safety Notes:** For children, pregnant women, special populations
-              **Cross-Border Equivalents:** SEA country equivalents
-              **Storage Instructions:** Temperature, conditions, expiry
-              **Disclaimer:** Medical advice disclaimer
+        **Safety Notes:**
+        • For children
+        • For pregnant women
+        • For special populations
 
-              ${languageInstructions}
+        **Cross-Border Equivalents:** Equivalent names in Southeast Asian countries (Malaysia, Singapore, Thailand, Vietnam, Philippines, etc.)
 
-              Format with clear **bold headers** and bullet points. Provide the most current and accurate information available from your comprehensive search.`
-            }
-          ],
-          max_tokens: 1500,
-          temperature: 0.3,
-        }),
-      });
+        **Storage Instructions:** Temperature, conditions, expiry
 
-      if (!webSearchResponse.ok) {
-        throw new Error(`Web search error: ${webSearchResponse.status}`);
+        **Disclaimer:** Medical advice disclaimer
+
+        ${languageInstructions}
+
+        IMPORTANT: Use Google's comprehensive search capabilities to find the most current and accurate information. Search multiple pharmaceutical databases, medical websites, and official drug information sources. Provide authoritative medical analysis with specific, detailed information based on the most up-to-date data available.`
       }
+    ]);
 
-      const webSearchResult = await webSearchResponse.json();
-      finalAnalysis = webSearchResult.choices[0].message.content;
-    }
-
-    const comprehensiveAnalysisResponse = { ok: true };
-
-    if (!comprehensiveAnalysisResponse.ok) {
-      throw new Error(`OpenAI API error: ${comprehensiveAnalysisResponse.status}`);
-    }
-
-    // Use the final analysis from either database or web search
-    let analysis = finalAnalysis;
+    const comprehensiveAnalysisResponse = await comprehensiveAnalysisResult.response;
+    let analysis = comprehensiveAnalysisResponse.text();
 
     // Step 5: Check for allergy conflicts
     let allergyWarning = '';
     if (allergy && allergy.trim()) {
-      const allergyCheckResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'user',
-              content: `Check if the medicine "${packagingInfo}" contains or interacts with the allergen: "${allergy}". 
-
-              Respond with:
-              - "CONFLICT: [explanation]" if there's a potential allergy conflict
-              - "SAFE: No allergy conflicts detected" if it's safe
-              
-              Be very careful about cross-reactions and similar chemical compounds.`
-            }
-          ],
-          max_tokens: 100,
-          temperature: 0.1,
-        }),
-      });
-
-      if (allergyCheckResponse.ok) {
-        const allergyData = await allergyCheckResponse.json();
-        const allergyResult = allergyData.choices[0].message.content;
-        
-        if (allergyResult.includes('CONFLICT')) {
-          allergyWarning = `⚠️ **Allergy Warning**: ${allergyResult.replace('CONFLICT:', '').trim()} Please consult a doctor before taking this medicine.`;
-        } else {
-          allergyWarning = '✅ No allergy conflicts detected. However, always consult a doctor if you have concerns.';
+      const allergyCheckResult = await model.generateContent([
+        {
+          text: `Based on the medicine analysis: "${analysis}" and user allergy: "${allergy}", check for potential allergy conflicts. 
+          
+          If there are potential conflicts, provide a clear warning. If safe, confirm no conflicts detected.`
         }
-      }
-    }
+      ]);
 
-    // Add allergy warning to analysis if present
-    if (allergyWarning) {
-      analysis += `\n\n${allergyWarning}`;
+      const allergyCheckResponse = await allergyCheckResult.response;
+      allergyWarning = allergyCheckResponse.text();
     }
 
     return NextResponse.json({
-      success: true,
-      isMedicineRelated: true,
+      analysis: analysis,
+      allergyWarning: allergyWarning,
       hasPackaging: true,
-      packagingInfo,
-      analysis,
-      language
+      isMedicineRelated: true
     });
 
   } catch (error) {
-    console.error('Image analysis API error:', error);
+    console.error('API error:', error);
     return NextResponse.json(
-      { 
-        error: language === 'Chinese' 
-          ? '图像分析失败。请重试或联系支持。'
-          : 'Failed to analyze image. Please try again or contact support.',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
+      { error: 'Failed to analyze image' },
       { status: 500 }
     );
   }
@@ -370,16 +203,16 @@ export async function POST(request: NextRequest) {
 
 function getLanguageInstructions(language: string): string {
   const instructions: { [key: string]: string } = {
-    'English': 'Provide the response in English.',
-    'Chinese': '请用中文提供回复。',
-    'Malay': 'Berikan respons dalam Bahasa Melayu.',
-    'Indonesian': 'Berikan respons dalam Bahasa Indonesia.',
-    'Thai': 'ให้คำตอบเป็นภาษาไทย',
-    'Vietnamese': 'Cung cấp phản hồi bằng tiếng Việt.',
-    'Tagalog': 'Magbigay ng tugon sa Tagalog.',
-    'Burmese': 'မြန်မာဘာသာဖြင့် တုံ့ပြန်ပါ။',
-    'Khmer': 'ផ្តល់ការឆ្លើយតបជាភាសាខ្មែរ។',
-    'Lao': 'ໃຫ້ການຕອບກັບເປັນພາສາລາວ.'
+    'English': 'Respond in English with clear, professional medical language.',
+    'Chinese': '请用中文回复，使用专业、清晰的医学语言。',
+    'Malay': 'Balas dalam bahasa Melayu dengan bahasa perubatan yang profesional dan jelas.',
+    'Indonesian': 'Balas dalam bahasa Indonesia dengan bahasa medis yang profesional dan jelas.',
+    'Thai': 'ตอบเป็นภาษาไทยด้วยภาษาการแพทย์ที่เป็นมืออาชีพและชัดเจน',
+    'Vietnamese': 'Trả lời bằng tiếng Việt với ngôn ngữ y tế chuyên nghiệp và rõ ràng.',
+    'Tagalog': 'Sumagot sa Tagalog gamit ang propesyonal at malinaw na wikang medikal.',
+    'Burmese': 'မြန်မာဘာသာဖြင့် ပညာရှင်ဆန်ပြီး ရှင်းလင်းသော ဆေးဘက်ဆိုင်ရာ ဘာသာစကားဖြင့် ဖြေကြားပါ။',
+    'Khmer': 'ឆ្លើយតបជាភាសាខ្មែរដោយប្រើភាសាវេជ្ជសាស្ត្រមុខរបរនិងច្បាស់លាស់។',
+    'Lao': 'ຕອບເປັນພາສາລາວໂດຍໃຊ້ພາສາທາງການແພດທີ່ມືອາຊີບແລະຊັດເຈນ.'
   };
   
   return instructions[language] || instructions['English'];
