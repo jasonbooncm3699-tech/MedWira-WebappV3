@@ -1332,6 +1332,39 @@ select:focus {
   }
 }
 
+/* AI Model Toggle Styles */
+.ai-model-toggle {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 8px 12px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-model-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.ai-model-toggle.gemini-active {
+  background: linear-gradient(135deg, #4285f4, #34a853);
+  border-color: #34a853;
+  box-shadow: 0 2px 8px rgba(52, 168, 83, 0.3);
+}
+
+.ai-model-toggle.openai-active {
+  background: linear-gradient(135deg, #10a37f, #1a7f64);
+  border-color: #1a7f64;
+  box-shadow: 0 2px 8px rgba(26, 127, 100, 0.3);
+}
+
 /* Accessibility */
 @media (prefers-reduced-motion: reduce) {
   * {

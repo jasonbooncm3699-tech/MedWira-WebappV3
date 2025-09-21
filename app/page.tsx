@@ -48,6 +48,7 @@ export default function Home() {
   const [cameraLoading, setCameraLoading] = useState(false);
   const [cameraAvailable, setCameraAvailable] = useState(true);
   const [allergy, setAllergy] = useState('');
+  const [useGemini, setUseGemini] = useState(false);
 
   // Mobile language abbreviations
   const getLanguageDisplayText = (lang: string, isMobile: boolean) => {
@@ -386,7 +387,8 @@ export default function Home() {
     
     // OpenAI API call
     try {
-      const response = await fetch('/api/chat', {
+      const chatApiEndpoint = useGemini ? '/api/chat-gemini' : '/api/chat';
+      const response = await fetch(chatApiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -476,7 +478,8 @@ export default function Home() {
         
       try {
         // Call the new image analysis API
-        const response = await fetch('/api/analyze-image', {
+        const apiEndpoint = useGemini ? '/api/analyze-image-gemini' : '/api/analyze-image';
+        const response = await fetch(apiEndpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -672,7 +675,8 @@ For accurate medicine identification and safety information, please upload a pho
 
           try {
             // Call the image analysis API
-            const response = await fetch('/api/analyze-image', {
+            const apiEndpoint = useGemini ? '/api/analyze-image-gemini' : '/api/analyze-image';
+            const response = await fetch(apiEndpoint, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -868,6 +872,15 @@ For accurate medicine identification and safety information, please take a photo
           </div>
           
           <div className="header-right">
+            {/* AI Model Toggle */}
+            <button 
+              onClick={() => setUseGemini(!useGemini)} 
+              className={`ai-model-toggle ${useGemini ? 'gemini-active' : 'openai-active'}`}
+              title={`Currently using: ${useGemini ? 'Gemini 1.5 Pro' : 'OpenAI GPT-4o'}`}
+            >
+              {useGemini ? '🤖' : '🧠'}
+            </button>
+            
             {isLoggedIn ? (
               <button onClick={handleLogout} className="auth-btn">
                 <LogOut size={16} />
