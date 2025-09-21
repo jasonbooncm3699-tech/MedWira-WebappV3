@@ -766,12 +766,12 @@ body {
 }
 
 .send-btn {
-  background: linear-gradient(135deg, #00d4ff, #0099cc);
-  color: white;
+  background: none;
   border: none;
+  color: #888;
+  cursor: pointer;
   padding: 8px;
   border-radius: 6px;
-  cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -781,8 +781,8 @@ body {
 }
 
 .send-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #0099cc, #007aa3);
-  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
 }
 
 .send-btn:disabled {
