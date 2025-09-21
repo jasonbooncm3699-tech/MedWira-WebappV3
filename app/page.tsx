@@ -77,6 +77,32 @@ export default function Home() {
     'Lao': 'ຖາມເປັນພາສາລາວ...'
   };
 
+  const imageUploadMessages: { [key: string]: string } = {
+    'English': 'I\'ve uploaded an image of a medicine for identification.',
+    'Chinese': '我已上传药品图片进行识别。',
+    'Malay': 'Saya telah memuat naik gambar ubat untuk pengenalan.',
+    'Indonesian': 'Saya telah mengunggah gambar obat untuk identifikasi.',
+    'Thai': 'ฉันได้อัปโหลดรูปภาพยาสำหรับการระบุตัวตน',
+    'Vietnamese': 'Tôi đã tải lên hình ảnh thuốc để nhận dạng.',
+    'Tagalog': 'Nai-upload ko na ang larawan ng gamot para sa pagkilala.',
+    'Burmese': 'ဆေးဝါးများကို ခွဲခြားသိမြင်ရန် ပုံတစ်ပုံကို တင်ပို့ပြီးပါပြီ။',
+    'Khmer': 'ខ្ញុំបានផ្ទុករូបភាពថ្នាំឡើងសម្រាប់ការកំណត់អត្តសញ្ញាណ។',
+    'Lao': 'ຂ້ອຍໄດ້ອັບໂລດຮູບພາບຢາເພື່ອການກວດສອບແລະກຳນົດຕົວຕົນ.'
+  };
+
+  const cameraCaptureMessages: { [key: string]: string } = {
+    'English': 'I\'ve captured a photo of a medicine for identification.',
+    'Chinese': '我已拍摄药品照片进行识别。',
+    'Malay': 'Saya telah mengambil gambar ubat untuk pengenalan.',
+    'Indonesian': 'Saya telah memotret obat untuk identifikasi.',
+    'Thai': 'ฉันได้ถ่ายภาพยาสำหรับการระบุตัวตน',
+    'Vietnamese': 'Tôi đã chụp ảnh thuốc để nhận dạng.',
+    'Tagalog': 'Kumuha ako ng litrato ng gamot para sa pagkilala.',
+    'Burmese': 'ဆေးဝါးများကို ခွဲခြားသိမြင်ရန် ဓာတ်ပုံတစ်ပုံကို ရိုက်ယူပြီးပါပြီ။',
+    'Khmer': 'ខ្ញុំបានថតរូបថ្នាំសម្រាប់ការកំណត់អត្តសញ្ញាណ។',
+    'Lao': 'ຂ້ອຍໄດ້ຖ່າຍຮູບຢາເພື່ອການກວດສອບແລະກຳນົດຕົວຕົນ.'
+  };
+
   const welcomeMessages: { [key: string]: string } = {
     'English': 'Start this conversation by taking your medicine photo.',
     'Chinese': '请拍摄您的药品照片来开始这次对话。',
@@ -414,9 +440,9 @@ export default function Home() {
         const imageMessage: Message = {
           id: Date.now().toString(),
           type: 'user',
-          content: 'I\'ve uploaded an image of a medicine for identification.',
+          content: imageUploadMessages[language] || imageUploadMessages['English'],
           timestamp: new Date(),
-        image: imageBase64
+          image: imageBase64
         };
         setMessages(prev => [...prev, imageMessage]);
         
@@ -793,7 +819,7 @@ Silakan unggah foto yang jelas tentang obat Anda untuk identifikasi dan informas
           const imageMessage: Message = {
             id: Date.now().toString(),
             type: 'user',
-            content: 'I\'ve captured a photo of a medicine for identification.',
+            content: cameraCaptureMessages[language] || cameraCaptureMessages['English'],
             timestamp: new Date(),
             image: imageBase64
           };
