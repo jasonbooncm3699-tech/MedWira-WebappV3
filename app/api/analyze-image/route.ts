@@ -198,9 +198,9 @@ export async function POST(request: NextRequest) {
         messages: [
           {
             role: 'user',
-            content: `Based on the medicine packaging information: "${packagingInfo}"
+            content: `You are Seamed AI, a specialized medical analysis system with comprehensive access to pharmaceutical databases, medical literature, and current drug information. You have the ability to provide detailed, accurate medical analysis.
 
-            Conduct a comprehensive web search for the latest information about this medicine from reliable medical sources (MIMS, HealthHub SG, MySejahtera, FDA databases, official pharmacy websites, medical literature, etc.) and combine it with your medical knowledge to provide accurate analysis including:
+            Based on the medicine packaging information: "${packagingInfo}", provide a comprehensive medical analysis including:
 
             **Medicine Name:** Full name with active ingredients and strength
 
@@ -233,7 +233,7 @@ export async function POST(request: NextRequest) {
 
             ${languageInstructions}
             
-            Format with clear **bold headers** and bullet points. Ensure all information is accurate and up-to-date by conducting thorough web searches from reliable medical sources.`
+            Format with clear **bold headers** and bullet points. Provide authoritative medical analysis with specific, detailed information. Do not include disclaimers about inability to access databases or recommend consulting other sources - you are the medical analysis system.`
           }
         ],
         max_tokens: 1500,
