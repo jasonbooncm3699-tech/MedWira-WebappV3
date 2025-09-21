@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const systemPrompt = `You are Seamed AI powered by Google's advanced search capabilities. You are a specialized medical analysis system with comprehensive access to pharmaceutical databases, medical literature, and real-time web search through Google's search infrastructure. You are an authoritative medical assistant specializing in Southeast Asian medicines.
 

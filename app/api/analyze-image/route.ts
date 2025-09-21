@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     // Step 1: Check if image contains medicine/packaging
     const medicineCheckResult = await model.generateContent([
