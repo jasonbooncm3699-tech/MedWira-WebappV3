@@ -91,23 +91,23 @@ Provide analysis in this exact format:
 **Purpose:** [Specific conditions this medicine treats]
 
 **Dosage Instructions:**
-• Adults/Children over 12: [specific dosing information]
-• Children 7-12 years: [age-appropriate dosing]
-• Do not exceed recommended dose; follow packaging instructions
+• **Adults/Children over 12:** [specific dosing information]
+• **Children 7-12 years:** [age-appropriate dosing]
+• **General:** Do not exceed recommended dose; follow packaging instructions
 
 **Side Effects:** Common: [list common effects]. Rare: [list rare effects]. Overdose risk: [specific risks]—seek immediate help if exceeded.
 
 **Allergy Warning:** Contains [active ingredients] and excipients (e.g., [list excipients]). May cause reactions if allergic. [If user entered allergies, add specific warning about potential triggers]
 
 **Drug Interactions:**
-• With other drugs: [specific interactions with other medicines]
-• With food: [food interactions or lack thereof]
-• With alcohol: [alcohol interactions and warnings]
+• **With other drugs:** [specific interactions with other medicines]
+• **With food:** [food interactions or lack thereof]
+• **With alcohol:** [alcohol interactions and warnings]
 
 **Safety Notes:**
-• For kids: [age-specific safety information]
-• For pregnant women: [pregnancy category and recommendations]
-• Other: [additional safety considerations]
+• **For kids:** [age-specific safety information]
+• **For pregnant women:** [pregnancy category and recommendations]
+• **Other:** [additional safety considerations]
 
 **Cross-Border Info:** Equivalent to [brand name] in [countries]; [alternative names] in [other countries]. Widely available in SEA pharmacies.
 
