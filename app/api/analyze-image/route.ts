@@ -35,6 +35,23 @@ export async function POST(request: NextRequest) {
     const genAI = new GoogleGenerativeAI(API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
+    // Handle different image formats first
+    let imageData, mimeType;
+    if (imageBase64.includes(',')) {
+      const [header, data] = imageBase64.split(',');
+      imageData = data;
+      if (header.includes('png')) {
+        mimeType = "image/png";
+      } else if (header.includes('jpeg') || header.includes('jpg')) {
+        mimeType = "image/jpeg";
+      } else {
+        mimeType = "image/jpeg"; // default
+      }
+    } else {
+      imageData = imageBase64;
+      mimeType = "image/jpeg";
+    }
+
     // Single comprehensive analysis - like the original OpenAI approach
     const languageInstructions = getLanguageInstructions(language);
     
@@ -177,23 +194,6 @@ Provide analysis in this exact format:
 ${languageInstructions}
 
 IMPORTANT: Use the extracted information and web search results to provide specific, helpful information. Do not provide generic responses like "Unable to determine" - always provide detailed analysis based on available information.`;
-
-    // Handle different image formats
-    let imageData, mimeType;
-    if (imageBase64.includes(',')) {
-      const [header, data] = imageBase64.split(',');
-      imageData = data;
-      if (header.includes('png')) {
-        mimeType = "image/png";
-      } else if (header.includes('jpeg') || header.includes('jpg')) {
-        mimeType = "image/jpeg";
-      } else {
-        mimeType = "image/jpeg"; // default
-      }
-    } else {
-      imageData = imageBase64;
-      mimeType = "image/jpeg";
-    }
 
     console.log('Starting Gemini analysis...');
     console.log('Image data length:', imageData.length);
