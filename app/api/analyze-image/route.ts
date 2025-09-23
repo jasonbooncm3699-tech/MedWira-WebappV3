@@ -71,6 +71,17 @@ If you identify "安德 風痧濟急丸" (Ān Dé Fēng Shā Jì Jí Wán) or "P
 - Side effects: Generally well-tolerated when used as directed
 - Storage: Keep in cool, dry place away from direct sunlight
 
+If you identify "Avosil Lozenge" or "NMC" in the image, provide this specific information:
+- Avosil Lozenge is an antiseptic throat lozenge manufactured by NMC
+- Active ingredient: Cetylpyridinium Chloride 2mg
+- Purpose: Temporary relief of sore throat, mouth irritation, and throat infections
+- Target users: Adults and children over 12 years for throat discomfort
+- Dosage: 1 lozenge every 2-3 hours as needed, maximum 8 lozenges per day
+- Safety: Not recommended for children under 12 years without medical supervision
+- Side effects: Generally well-tolerated, possible mild taste changes or mouth irritation
+- Drug interactions: May reduce effectiveness of other mouth/throat medications
+- Storage: Store at room temperature, keep away from moisture
+
 Provide analysis in this exact format:
 
 **Packaging Detected:** Yes—[describe visible packaging details]
