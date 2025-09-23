@@ -38,20 +38,74 @@ export async function POST(request: NextRequest) {
     // Single comprehensive analysis - like the original OpenAI approach
     const languageInstructions = getLanguageInstructions(language);
     
-    const prompt = `You are Seamed AI, a specialized medical analysis system with comprehensive knowledge of Southeast Asian medicines and pharmaceutical databases. Analyze this medicine image and provide detailed medical analysis.
+    // First, analyze the image to extract medicine information
+    const initialPrompt = `Analyze this medicine image and extract the following information:
+1. Brand name or medicine name
+2. Active ingredient(s) and strength
+3. Manufacturer name
+4. Form (tablet, capsule, liquid, etc.)
+5. Any visible text on packaging
 
-EXAMINE THE IMAGE:
-- Look for medicine packaging (boxes, bottles, blister strips, labels)
-- Identify brand names, medicine names, active ingredients
-- Note dosage information, expiry dates, manufacturer details
-- Extract any visible text from the packaging
+Respond in this format:
+Medicine Name: [name]
+Active Ingredient: [ingredient and strength]
+Manufacturer: [manufacturer]
+Form: [form]
+Additional Text: [any other visible text]`;
 
-IF NOT MEDICINE: Respond with "Error: No medicine detected in the image."
-IF NO PACKAGING: Respond with "Warning: No packaging detected. We cannot safely identify loose pills due to risks of counterfeits, expiry, or errors."
+    console.log('Starting initial image analysis...');
+    const initialAnalysisPromise = model.generateContent([
+      initialPrompt,
+      {
+        inlineData: {
+          data: imageData,
+          mimeType: mimeType
+        }
+      }
+    ]);
 
-IF MEDICINE WITH PACKAGING: Provide comprehensive analysis using your extensive medical knowledge.
+    const initialTimeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Initial analysis timeout')), 15000)
+    );
 
-SPECIAL MEDICINE DATABASE:
+    const initialResult = await Promise.race([initialAnalysisPromise, initialTimeoutPromise]);
+    const initialResponse = await initialResult.response;
+    const extractedInfo = initialResponse.text();
+    
+    console.log('Initial analysis completed:', extractedInfo);
+
+    // Extract medicine name for web search
+    const medicineNameMatch = extractedInfo.match(/Medicine Name:\s*(.+)/i);
+    const medicineName = medicineNameMatch ? medicineNameMatch[1].trim() : '';
+
+    // Perform web search if medicine name is found
+    let webSearchResults = '';
+    if (medicineName) {
+      try {
+        console.log('Searching for medicine:', medicineName);
+        const searchResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/search-medicine?q=${encodeURIComponent(medicineName)}`);
+        const searchData = await searchResponse.json();
+        
+        if (searchData.success && searchData.results.length > 0) {
+          webSearchResults = searchData.results.map((result: any) => 
+            `Title: ${result.title}\nSnippet: ${result.snippet}\nLink: ${result.link}`
+          ).join('\n\n');
+          console.log('Web search results obtained');
+        }
+      } catch (error) {
+        console.error('Web search failed:', error);
+      }
+    }
+
+    const prompt = `You are Seamed AI, a specialized medical analysis system. Based on the image analysis and web search results, provide comprehensive medical analysis.
+
+EXTRACTED INFORMATION FROM IMAGE:
+${extractedInfo}
+
+WEB SEARCH RESULTS:
+${webSearchResults || 'No additional web search results available.'}
+
+SPECIAL MEDICINE DATABASE (if applicable):
 If you identify "Livason" in the image, provide this specific information:
 - Livason is a traditional herbal liver supplement manufactured by JH Nutrition
 - Active ingredients: Milk Thistle Extract (Silybum marianum) and Phyllanthus niruri Extract
@@ -81,6 +135,11 @@ If you identify "Avosil Lozenge" or "NMC" in the image, provide this specific in
 - Side effects: Generally well-tolerated, possible mild taste changes or mouth irritation
 - Drug interactions: May reduce effectiveness of other mouth/throat medications
 - Storage: Store at room temperature, keep away from moisture
+
+IF NOT MEDICINE: Respond with "Error: No medicine detected in the image."
+IF NO PACKAGING: Respond with "Warning: No packaging detected. We cannot safely identify loose pills due to risks of counterfeits, expiry, or errors."
+
+IF MEDICINE WITH PACKAGING: Provide comprehensive analysis using the extracted information and web search results. If you don't have specific information, use your medical knowledge to provide general guidance based on the active ingredient(s) identified.
 
 Provide analysis in this exact format:
 
@@ -113,11 +172,11 @@ Provide analysis in this exact format:
 
 **Storage:** [specific storage instructions with temperature and conditions]
 
-**Disclaimer:** This information is sourced from medical databases and packaging details. For informational purposes only. Not medical advice. Consult a doctor or pharmacist before use.
+**Disclaimer:** This information is sourced from medical databases, web searches, and packaging details. For informational purposes only. Not medical advice. Consult a doctor or pharmacist before use.
 
 ${languageInstructions}
 
-IMPORTANT: Use your comprehensive medical knowledge to provide specific, helpful information. Do not provide generic responses like "Unable to determine" - always provide detailed analysis based on the medicine identified in the image.`;
+IMPORTANT: Use the extracted information and web search results to provide specific, helpful information. Do not provide generic responses like "Unable to determine" - always provide detailed analysis based on available information.`;
 
     // Handle different image formats
     let imageData, mimeType;
