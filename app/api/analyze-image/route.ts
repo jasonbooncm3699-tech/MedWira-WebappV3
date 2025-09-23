@@ -223,6 +223,9 @@ IMPORTANT: Use the extracted information and web search results to provide speci
     console.log('Analysis length:', analysis.length);
     console.log('Analysis preview:', analysis.substring(0, 200));
 
+    // Format bullet points for better web display
+    analysis = formatBulletPoints(analysis);
+
     // Check for allergy conflicts if allergy is provided
     let allergyWarning = '';
     if (allergy && allergy.trim()) {
@@ -297,4 +300,16 @@ function getLanguageInstructions(language: string): string {
   };
   
   return instructions[language] || instructions['English'];
+}
+
+function formatBulletPoints(text: string): string {
+  // Convert bullet points to HTML format for better web display
+  return text
+    // Convert • bullets to HTML list items with proper spacing
+    .replace(/• \*\*(.*?):\*\* (.*?)(?=\n•|$)/gs, '• **$1:** $2\n')
+    // Ensure proper line breaks after bullet points
+    .replace(/• /g, '\n• ')
+    // Clean up multiple line breaks
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
