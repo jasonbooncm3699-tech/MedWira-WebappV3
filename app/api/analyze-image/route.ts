@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get API key from environment variables
-    const API_KEY = process.env.GEMINI_API_KEY;
+    const API_KEY = process.env.GOOGLE_API_KEY;
     
     if (!API_KEY) {
       return NextResponse.json(
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     // Handle different image formats first
     let imageData, mimeType;
@@ -85,42 +85,22 @@ Additional Text: [any other visible text]`;
       setTimeout(() => reject(new Error('Initial analysis timeout')), 15000)
     );
 
-    const initialResult = await Promise.race([initialAnalysisPromise, initialTimeoutPromise]);
+    const initialResult = await Promise.race([initialAnalysisPromise, initialTimeoutPromise]) as any;
     const initialResponse = await initialResult.response;
     const extractedInfo = initialResponse.text();
     
     console.log('Initial analysis completed:', extractedInfo);
 
-    // Extract medicine name for web search
+    // Extract medicine name for reference
     const medicineNameMatch = extractedInfo.match(/Medicine Name:\s*(.+)/i);
     const medicineName = medicineNameMatch ? medicineNameMatch[1].trim() : '';
+    
+    console.log('Medicine identified:', medicineName);
 
-    // Perform web search if medicine name is found
-    let webSearchResults = '';
-    if (medicineName) {
-      try {
-        console.log('Searching for medicine:', medicineName);
-        const searchResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/search-medicine?q=${encodeURIComponent(medicineName)}`);
-        const searchData = await searchResponse.json();
-        
-        if (searchData.success && searchData.results.length > 0) {
-          webSearchResults = searchData.results.map((result: any) => 
-            `Title: ${result.title}\nSnippet: ${result.snippet}\nLink: ${result.link}`
-          ).join('\n\n');
-          console.log('Web search results obtained');
-        }
-      } catch (error) {
-        console.error('Web search failed:', error);
-      }
-    }
-
-    const prompt = `You are Seamed AI, a specialized medical analysis system. Based on the image analysis and web search results, provide comprehensive medical analysis.
+    const prompt = `You are MedWira AI, a specialized medical analysis system. Based on the image analysis, provide comprehensive medical analysis.
 
 EXTRACTED INFORMATION FROM IMAGE:
 ${extractedInfo}
-
-WEB SEARCH RESULTS:
-${webSearchResults || 'No additional web search results available.'}
 
 SPECIAL MEDICINE DATABASE (if applicable):
 If you identify "Livason" in the image, provide this specific information:
@@ -193,7 +173,7 @@ Provide analysis in this exact format:
 
 ${languageInstructions}
 
-IMPORTANT: Use the extracted information and web search results to provide specific, helpful information. Do not provide generic responses like "Unable to determine" - always provide detailed analysis based on available information.`;
+IMPORTANT: Use the extracted information to provide specific, helpful information. Do not provide generic responses like "Unable to determine" - always provide detailed analysis based on available information.`;
 
     console.log('Starting Gemini analysis...');
     console.log('Image data length:', imageData.length);
@@ -215,7 +195,7 @@ IMPORTANT: Use the extracted information and web search results to provide speci
       setTimeout(() => reject(new Error('Analysis timeout after 30 seconds')), 30000)
     );
 
-    const analysisResult = await Promise.race([analysisPromise, timeoutPromise]);
+    const analysisResult = await Promise.race([analysisPromise, timeoutPromise]) as any;
     const analysisResponse = await analysisResult.response;
     let analysis = analysisResponse.text();
     
@@ -267,7 +247,7 @@ IMPORTANT: Use the extracted information and web search results to provide speci
       isMedicineRelated: true
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('API error:', error);
     console.error('Error details:', {
       message: error.message,

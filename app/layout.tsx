@@ -13,16 +13,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Seamed AI - Medicine Assistant",
+  title: "MedWira AI - Medicine Assistant",
   description: "AI-powered medicine identification and chat assistant with SEA language support",
   keywords: "medicine identification, AI chat, pill scanner, Southeast Asia, pharmacy, drug identification, conversational AI",
-  authors: [{ name: "Seamed AI Team" }],
+  authors: [{ name: "MedWira AI Team" }],
   manifest: "/manifest.json",
   themeColor: "#00A3B5",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Seamed AI",
+    title: "MedWira AI",
   },
 };
 
@@ -43,7 +43,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#00A3B5" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Seamed AI" />
+        <meta name="apple-mobile-web-app-title" content="MedWira AI" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <script
           dangerouslySetInnerHTML={{

@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const genAI = new GoogleGenerativeAI(API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
-    const systemPrompt = `You are Seamed AI, a specialized medical assistant for Southeast Asian medicines. You have comprehensive access to pharmaceutical databases and medical literature.
+    const systemPrompt = `You are MedWira AI, a specialized medical assistant for Southeast Asian medicines. You have comprehensive access to pharmaceutical databases and medical literature.
 
     When users ask about medicines, provide detailed analysis including:
     - Medicine name and active ingredients

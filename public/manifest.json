@@ -1,6 +1,6 @@
 {
-  "name": "Seamed AI - Medicine Assistant",
-  "short_name": "Seamed AI",
+  "name": "MedWira AI - Medicine Assistant",
+  "short_name": "MedWira AI",
   "description": "AI-powered medicine identification and chat assistant",
   "start_url": "/",
   "display": "standalone",

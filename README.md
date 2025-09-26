@@ -1,6 +1,6 @@
-# AI Medicine Assistant - Advanced Chat Interface
+# MedWira AI - Advanced Medicine Assistant
 
-A sophisticated AI-powered medicine identification application with a modern conversational interface inspired by advanced AI platforms. Built with Next.js 15, React 19, and Tailwind CSS.
+MedWira AI is a sophisticated AI-powered medicine identification application with a modern conversational interface inspired by advanced AI platforms. Built with Next.js 15, React 19, and Tailwind CSS.
 
 ## 🚀 Features
 

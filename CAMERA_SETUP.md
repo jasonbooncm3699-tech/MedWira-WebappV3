@@ -2,7 +2,7 @@
 
 ## 🎥 Camera Access Requirements
 
-The SeaMed AI app requires camera access for medicine photo capture. Here's how to ensure it works properly:
+The MedWira AI app requires camera access for medicine photo capture. Here's how to ensure it works properly:
 
 ### ✅ **For Production (HTTPS Required)**
 - Camera access requires HTTPS in production
@@ -76,7 +76,7 @@ mkcert localhost 127.0.0.1 ::1
 1. **Clone and install**:
    ```bash
    git clone <repository>
-   cd seamed-ai
+   cd medwira-ai
    npm install
    ```
 

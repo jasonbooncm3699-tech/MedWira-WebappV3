@@ -11,7 +11,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import './globals.css';
 
-const LanguageContext = createContext({ language: 'English', setLanguage: (lang: string) => {} });
+const LanguageContext = createContext({ language: 'English', setLanguage: (_lang: string) => {} });
 
 interface Message {
   id: string;
@@ -282,10 +282,10 @@ export default function Home() {
 
     const storedChats = JSON.parse(localStorage.getItem('recentChats') || '[]');
     // Convert timestamp strings back to Date objects
-    const parsedChats = storedChats.map((chat: any) => ({
+    const parsedChats = storedChats.map((chat: { timestamp: string; messages: Array<{ timestamp: string }> }) => ({
       ...chat,
       timestamp: new Date(chat.timestamp),
-      messages: chat.messages.map((msg: any) => ({
+      messages: chat.messages.map((msg: { timestamp: string }) => ({
         ...msg,
         timestamp: new Date(msg.timestamp)
       }))
@@ -807,7 +807,7 @@ For accurate medicine identification and safety information, please take a photo
 
   const handleShareMessage = (messageContent: string) => {
     console.log('Share message button clicked');
-    const shareText = `Seamed AI Analysis:\n\n${messageContent}\n\nPowered by Seamed AI`;
+    const shareText = `MedWira AI Analysis:\n\n${messageContent}\n\nPowered by MedWira AI`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -876,7 +876,7 @@ For accurate medicine identification and safety information, please take a photo
         {showInstallPrompt && (
           <div className="install-banner-top">
             <div className="install-content">
-              <span>Add Seamed AI to your home screen!</span>
+              <span>Add MedWira AI to your home screen!</span>
               <div className="install-actions">
                 <button onClick={handleInstall}>Install</button>
                 <button onClick={() => setShowInstallPrompt(false)} className="close-install">
@@ -976,7 +976,7 @@ For accurate medicine identification and safety information, please take a photo
               <Settings size={16} />
               FAQ
             </button>
-            <p className="copyright">© 2025 Seamed AI. Not medical advice.</p>
+            <p className="copyright">© 2025 MedWira AI. AI powered medicine database</p>
           </div>
         </nav>
 
@@ -1106,7 +1106,7 @@ For accurate medicine identification and safety information, please take a photo
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <h2>FAQ</h2>
               <ul>
-                <li>What is Seamed AI? A clean AI chat platform with SEA language support.</li>
+                <li>What is MedWira AI? A clean AI chat platform with SEA language support.</li>
                 <li>How do I start a chat? Sign in, select language, type your query.</li>
                 <li>Why sign in? For personalized features and token tracking.</li>
                 <li>What are tokens? Virtual credits (mocked at 100 initial).</li>
