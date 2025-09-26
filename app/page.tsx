@@ -22,7 +22,9 @@ export default function Home() {
       }
 
                   const stream = await navigator.mediaDevices.getUserMedia({
-                    video: true
+                    video: {
+                      facingMode: { exact: 'environment' } // Force back camera
+                    }
                   });
       
       setCameraStream(stream);
@@ -245,14 +247,14 @@ export default function Home() {
                           }
                         }}
                         autoPlay
+                        playsInline
                         style={{ 
                           width: '100%', 
-                          height: '100%',
-                          transform: 'scaleX(-1)' // Flip horizontally to fix mirror effect
+                          height: '100%'
                         }}
                       />
           <p style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', color: 'white', textAlign: 'center', background: 'rgba(0,0,0,0.7)', padding: '10px', borderRadius: '8px' }}>
-            Camera Test - Browser mirrors by default, using scaleX(-1) to fix
+            Camera Test - Using back camera (environment) with playsInline
           </p>
         </div>
       )}
