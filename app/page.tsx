@@ -21,11 +21,13 @@ export default function Home() {
         return;
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'environment' // Back camera
-        }
-      });
+                  const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                      facingMode: 'environment', // Back camera
+                      width: { ideal: 1280 },
+                      height: { ideal: 720 }
+                    }
+                  });
       
       setCameraStream(stream);
       setShowCamera(true);
@@ -247,15 +249,15 @@ export default function Home() {
                           }
                         }}
                         autoPlay
+                        playsInline
                         style={{ 
                           width: '100%', 
                           height: '100%', 
-                          objectFit: 'cover',
-                          transform: 'scaleX(-1)' // Flip horizontally to fix mirror effect
+                          objectFit: 'cover'
                         }}
                       />
           <p style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', color: 'white', textAlign: 'center', background: 'rgba(0,0,0,0.7)', padding: '10px', borderRadius: '8px' }}>
-            Camera Test - Video should now appear normal (not mirrored)
+            Camera Test - Removed CSS transform, using playsInline for mobile
           </p>
         </div>
       )}
