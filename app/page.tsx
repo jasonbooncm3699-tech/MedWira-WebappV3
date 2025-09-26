@@ -301,10 +301,19 @@ export default function Home() {
     // Welcome message is now set in the initial useEffect above
   }, [language, messages.length, welcomeMessages]);
 
-  // Check camera availability on mount
+  // Check camera availability on mount - only for mobile/tablet
   useEffect(() => {
     const checkCameraAvailability = async () => {
       try {
+        // Check if we're on mobile/tablet
+        const isMobileDevice = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // Disable camera completely on desktop/laptop
+        if (!isMobileDevice) {
+          setCameraAvailable(false);
+          return;
+        }
+        
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
           setCameraAvailable(false);
           return;
@@ -606,6 +615,22 @@ For accurate medicine identification and safety information, please upload a pho
     setCameraLoading(true);
     
     try {
+      // Check if we're on mobile/tablet
+      const isMobileDevice = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      // Show friendly message for desktop users
+      if (!isMobileDevice) {
+        const useFileUpload = confirm('Camera is available on mobile/tablet. Please use your phone.\n\nWould you like to upload a photo from your device instead?');
+        if (useFileUpload) {
+          const fileInput = document.getElementById('upload') as HTMLInputElement;
+          if (fileInput) {
+            fileInput.click();
+          }
+        }
+        setCameraLoading(false);
+        return;
+      }
+
       // Check if getUserMedia is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Camera not supported');
@@ -616,43 +641,34 @@ For accurate medicine identification and safety information, please upload a pho
       if (!isSecureContext) {
         throw new Error('HTTPS_REQUIRED');
       }
-
-      // Check if we're on mobile
-      const isMobileDevice = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-      const isAndroid = /Android/i.test(navigator.userAgent);
       
-      console.log('Device detection:', { isMobileDevice, isIOS, isAndroid });
-      
-      // Modern camera constraints with proper orientation handling
+      // Camera constraints - back camera only, no mirroring
       const constraints = {
         video: {
-          facingMode: 'environment', // Use back camera on mobile
-          width: { ideal: isMobileDevice ? 1920 : 1280 },
-          height: { ideal: isMobileDevice ? 1080 : 720 },
-          // Add additional constraints for better compatibility
+          facingMode: 'environment', // Use back camera only
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
           frameRate: { ideal: 30, max: 60 }
         }
       };
       
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.log('Camera access granted');
+      console.log('Camera access granted - back camera only');
       
       setCameraStream(stream);
       setShowCamera(true);
       setCameraLoading(false);
       
-      // Set video source and handle orientation
+      // Set video source - no mirroring
       if (videoRef) {
         videoRef.srcObject = stream;
-        // Force cache refresh and ensure no flipping
+        // Ensure no CSS transforms for mirroring
         videoRef.style.transform = 'none';
-        videoRef.style.webkitTransform = 'none';
-        videoRef.style.mozTransform = 'none';
-        videoRef.style.msTransform = 'none';
+        (videoRef.style as any).webkitTransform = 'none';
+        (videoRef.style as any).mozTransform = 'none';
+        (videoRef.style as any).msTransform = 'none';
         videoRef.play().catch(console.error);
-        console.log('Camera video element updated - no transform applied');
-        console.log('Video element computed style:', window.getComputedStyle(videoRef).transform);
+        console.log('Camera video element updated - no mirroring applied');
       }
     } catch (error: unknown) {
       console.log('Camera access error:', error);
@@ -668,12 +684,7 @@ For accurate medicine identification and safety information, please upload a pho
         errorMessage = 'No camera found on this device. Please use the upload button to select a photo from your device.';
         showFileUpload = true;
       } else if ((error as Error).message === 'HTTPS_REQUIRED') {
-        const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (isMobile) {
-          errorMessage = 'Mobile camera requires HTTPS or network access. Try accessing via your computer\'s IP address (e.g., http://192.168.1.100:3000) or use the upload button.';
-        } else {
-          errorMessage = 'Camera access requires HTTPS. For development, please use https://localhost:3000 or upload a photo using the upload button.';
-        }
+        errorMessage = 'Mobile camera requires HTTPS or network access. Try accessing via your computer\'s IP address (e.g., http://192.168.1.100:3000) or use the upload button.';
         showFileUpload = true;
       } else if ((error as Error).message === 'Camera not supported') {
         errorMessage = 'Camera is not supported in this browser. Please use the upload button to select a photo from your device.';
@@ -725,10 +736,10 @@ For accurate medicine identification and safety information, please upload a pho
       canvas.width = videoWidth;
       canvas.height = videoHeight;
       
-      // ✅ CAMERA FIX: Draw normally - no flipping for back camera
-      // This ensures the captured image matches what the user sees
+      // Draw normally - no mirroring/flipping for back camera
+      // This ensures the captured image matches what the user sees in preview
       context.drawImage(videoRef, 0, 0, videoWidth, videoHeight);
-      console.log('Canvas capture: No flipping applied - raw video stream');
+      console.log('Canvas capture: Normal draw - no mirroring applied');
       
       // Convert canvas to blob with high quality
       canvas.toBlob((blob) => {
@@ -1133,8 +1144,8 @@ For accurate medicine identification and safety information, please take a photo
               <button 
                 className={`camera-btn ${!cameraAvailable ? 'camera-unavailable' : ''}`}
                 onClick={handleCameraCapture}
-                disabled={cameraLoading || !cameraAvailable}
-                title={!cameraAvailable ? 'Camera not available. Use upload button instead.' : 'Take photo with camera'}
+                disabled={cameraLoading}
+                title={!cameraAvailable ? 'Camera is available on mobile/tablet. Please use your phone.' : 'Take photo with camera'}
               >
                 {cameraLoading ? (
                   <div className="camera-loading">
