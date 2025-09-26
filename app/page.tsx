@@ -361,16 +361,17 @@ export default function Home() {
   }, [messages]);
 
   const handleLogin = () => {
-    console.log('Login/Sign Up button clicked');
-    setIsLoggedIn(true);
-    localStorage.setItem('loggedIn', 'true');
-    localStorage.setItem('tokens', tokens.toString());
+    console.log('Login/Sign Up button clicked - DISABLED');
+    // Authentication functionality disabled
+    alert('Login/Signup is currently disabled. This feature will be re-enabled soon.');
+    return;
   };
 
   const handleLogout = () => {
-    console.log('Sign Out button clicked');
-    setIsLoggedIn(false);
-    localStorage.removeItem('loggedIn');
+    console.log('Sign Out button clicked - DISABLED');
+    // Authentication functionality disabled
+    alert('Logout is currently disabled. This feature will be re-enabled soon.');
+    return;
   };
 
   const handleNewChat = () => {
@@ -505,21 +506,21 @@ export default function Home() {
     // Show loading state
     setIsLoading(true);
 
-      const reader = new FileReader();
+    const reader = new FileReader();
     reader.onload = async (event) => {
       const imageBase64 = event.target?.result as string;
       
-        const imageMessage: Message = {
-          id: Date.now().toString(),
-          type: 'user',
-          content: imageUploadMessages[language] || imageUploadMessages['English'],
-          timestamp: new Date(),
-          image: imageBase64
-        };
-        setMessages(prev => [...prev, imageMessage]);
-        
+      const imageMessage: Message = {
+        id: Date.now().toString(),
+        type: 'user',
+        content: imageUploadMessages[language] || imageUploadMessages['English'],
+        timestamp: new Date(),
+        image: imageBase64
+      };
+      setMessages(prev => [...prev, imageMessage]);
+      
       try {
-        // Call the new image analysis API
+        // Call the image analysis API
         const response = await fetch('/api/analyze-image', {
           method: 'POST',
           headers: {
