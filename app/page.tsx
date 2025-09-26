@@ -618,21 +618,28 @@ For accurate medicine identification and safety information, please upload a pho
       // Check if we're on mobile
       const isMobileDevice = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
+      // Modern camera constraints with proper orientation handling
+      const constraints = {
+        video: {
           facingMode: 'environment', // Use back camera on mobile
           width: { ideal: isMobileDevice ? 1920 : 1280 },
-          height: { ideal: isMobileDevice ? 1080 : 720 }
-        } 
-      });
+          height: { ideal: isMobileDevice ? 1080 : 720 },
+          // Add additional constraints for better compatibility
+          frameRate: { ideal: 30, max: 60 }
+        }
+      };
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       console.log('Camera access granted');
+      
       setCameraStream(stream);
       setShowCamera(true);
       setCameraLoading(false);
       
-      // Set video source once video element is ready
+      // Set video source and handle orientation
       if (videoRef) {
         videoRef.srcObject = stream;
+        videoRef.play().catch(console.error);
       }
     } catch (error: unknown) {
       console.log('Camera access error:', error);
@@ -680,31 +687,51 @@ For accurate medicine identification and safety information, please upload a pho
   };
 
   const capturePhoto = () => {
-    if (!videoRef || !cameraStream) return;
+    if (!videoRef || !cameraStream) {
+      console.error('Camera not ready for capture');
+      return;
+    }
     
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    
-    if (!context) return;
-    
-    // Set canvas dimensions to match video
-    canvas.width = videoRef.videoWidth;
-    canvas.height = videoRef.videoHeight;
-    
-    // Flip canvas horizontally to compensate for flipped video display
-    context.scale(-1, 1);
-    context.drawImage(videoRef, -canvas.width, 0, canvas.width, canvas.height);
-    
-    // Convert canvas to blob
-    canvas.toBlob((blob) => {
-      if (blob) {
+    try {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      
+      if (!context) {
+        throw new Error('Canvas context not available');
+      }
+      
+      // Get video dimensions
+      const videoWidth = videoRef.videoWidth;
+      const videoHeight = videoRef.videoHeight;
+      
+      if (videoWidth === 0 || videoHeight === 0) {
+        throw new Error('Video not ready for capture');
+      }
+      
+      // Set canvas dimensions to match video
+      canvas.width = videoWidth;
+      canvas.height = videoHeight;
+      
+      // Draw video frame to canvas (no flipping needed for back camera)
+      context.drawImage(videoRef, 0, 0, videoWidth, videoHeight);
+      
+      // Convert canvas to blob with high quality
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          throw new Error('Failed to create image blob');
+        }
+        
         // Create a File object from the blob
         const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
         
-        // Process the captured image through the new AI analysis
+        // Process the captured image
         const reader = new FileReader();
         reader.onload = async (event) => {
           const imageBase64 = event.target?.result as string;
+          
+          if (!imageBase64) {
+            throw new Error('Failed to read captured image');
+          }
           
           const imageMessage: Message = {
             id: Date.now().toString(),
@@ -776,7 +803,7 @@ For accurate medicine identification and safety information, please take a photo
               };
               setMessages(prev => [...prev, aiMessage]);
             }
-    } catch (error) {
+          } catch (error) {
             console.error('Camera image analysis error:', error);
             const errorMessage: Message = {
               id: (Date.now() + 1).toString(),
@@ -789,12 +816,22 @@ For accurate medicine identification and safety information, please take a photo
             setIsLoading(false);
           }
         };
+        
+        reader.onerror = () => {
+          throw new Error('Failed to read captured image');
+        };
+        
         reader.readAsDataURL(file);
-      }
-    }, 'image/jpeg', 0.8);
-    
-    // Close camera
-    closeCamera();
+      }, 'image/jpeg', 0.9);
+      
+    } catch (error) {
+      console.error('Camera capture error:', error);
+      const errorMsg = `Camera capture failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      alert(errorMsg);
+    } finally {
+      // Close camera
+      closeCamera();
+    }
   };
 
   const closeCamera = () => {
