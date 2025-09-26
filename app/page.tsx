@@ -619,6 +619,10 @@ For accurate medicine identification and safety information, please upload a pho
 
       // Check if we're on mobile
       const isMobileDevice = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      
+      console.log('Device detection:', { isMobileDevice, isIOS, isAndroid });
       
       // Modern camera constraints with proper orientation handling
       const constraints = {
@@ -641,10 +645,14 @@ For accurate medicine identification and safety information, please upload a pho
       // Set video source and handle orientation
       if (videoRef) {
         videoRef.srcObject = stream;
-        // Force cache refresh
+        // Force cache refresh and ensure no flipping
         videoRef.style.transform = 'none';
+        videoRef.style.webkitTransform = 'none';
+        videoRef.style.mozTransform = 'none';
+        videoRef.style.msTransform = 'none';
         videoRef.play().catch(console.error);
         console.log('Camera video element updated - no transform applied');
+        console.log('Video element computed style:', window.getComputedStyle(videoRef).transform);
       }
     } catch (error: unknown) {
       console.log('Camera access error:', error);
@@ -717,8 +725,10 @@ For accurate medicine identification and safety information, please upload a pho
       canvas.width = videoWidth;
       canvas.height = videoHeight;
       
-      // ✅ just draw normally - back camera should show raw stream without flipping
+      // ✅ CAMERA FIX: Draw normally - no flipping for back camera
+      // This ensures the captured image matches what the user sees
       context.drawImage(videoRef, 0, 0, videoWidth, videoHeight);
+      console.log('Canvas capture: No flipping applied - raw video stream');
       
       // Convert canvas to blob with high quality
       canvas.toBlob((blob) => {
