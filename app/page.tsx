@@ -46,6 +46,8 @@ export default function Home() {
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [videoRef, setVideoRef] = useState<HTMLVideoElement | null>(null);
   const [cameraLoading, setCameraLoading] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
   const [cameraAvailable, setCameraAvailable] = useState(true);
   const [allergy, setAllergy] = useState('');
 
@@ -724,97 +726,19 @@ For accurate medicine identification and safety information, please upload a pho
         // Create a File object from the blob
         const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
         
-        // Process the captured image
+        // Convert to base64 for preview
         const reader = new FileReader();
-        reader.onload = async (event) => {
+        reader.onload = (event) => {
           const imageBase64 = event.target?.result as string;
           
           if (!imageBase64) {
             throw new Error('Failed to read captured image');
           }
           
-          const imageMessage: Message = {
-            id: Date.now().toString(),
-            type: 'user',
-            content: cameraCaptureMessages[language] || cameraCaptureMessages['English'],
-            timestamp: new Date(),
-            image: imageBase64
-          };
-          setMessages(prev => [...prev, imageMessage]);
-
-          // Show loading state
-          setIsLoading(true);
-
-          try {
-            // Call the image analysis API
-            const response = await fetch('/api/analyze-image', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                imageBase64,
-                language,
-                allergy
-              })
-            });
-
-            const data = await response.json();
-
-            if (data.error) {
-              const aiMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                type: 'ai',
-                content: `**Error: ${data.error}**
-
-Please take a clear photo of medicine packaging, pills, or related medical items for proper identification.`,
-                timestamp: new Date()
-              };
-              setMessages(prev => [...prev, aiMessage]);
-              return;
-            }
-
-            if (data.warning) {
-              const aiMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                type: 'ai',
-                content: `**Warning: ${data.warning}**
-
-For accurate medicine identification and safety information, please take a photo showing the original packaging.`,
-                timestamp: new Date()
-              };
-              setMessages(prev => [...prev, aiMessage]);
-              return;
-            }
-
-            if (data.success && data.analysis) {
-              // Deduct token for successful analysis
-              setTokens(prev => {
-                const newTokens = prev - 1;
-                localStorage.setItem('tokens', newTokens.toString());
-                return newTokens;
-              });
-
-              const aiMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                type: 'ai',
-                content: data.analysis,
-                timestamp: new Date()
-              };
-              setMessages(prev => [...prev, aiMessage]);
-            }
-          } catch (error) {
-            console.error('Camera image analysis error:', error);
-            const errorMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              type: 'ai',
-              content: 'Sorry, I encountered an error while analyzing the captured image. Please try again.',
-              timestamp: new Date()
-            };
-            setMessages(prev => [...prev, errorMessage]);
-          } finally {
-            setIsLoading(false);
-          }
+          // Store captured image and show preview
+          setCapturedImage(imageBase64);
+          setShowPreview(true);
+          setShowCamera(false); // Hide camera, show preview
         };
         
         reader.onerror = () => {
@@ -828,10 +752,104 @@ For accurate medicine identification and safety information, please take a photo
       console.error('Camera capture error:', error);
       const errorMsg = `Camera capture failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
       alert(errorMsg);
-    } finally {
-      // Close camera
-      closeCamera();
     }
+  };
+
+  const sendCapturedImage = async () => {
+    if (!capturedImage) return;
+    
+    // Add image message to chat
+    const imageMessage: Message = {
+      id: Date.now().toString(),
+      type: 'user',
+      content: cameraCaptureMessages[language] || cameraCaptureMessages['English'],
+      timestamp: new Date(),
+      image: capturedImage
+    };
+    setMessages(prev => [...prev, imageMessage]);
+
+    // Show loading state
+    setIsLoading(true);
+
+    try {
+      // Call the image analysis API
+      const response = await fetch('/api/analyze-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageBase64: capturedImage,
+          language,
+          allergy
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'ai',
+          content: `**Error: ${data.error}**
+
+Please take a clear photo of medicine packaging, pills, or related medical items for proper identification.`,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, aiMessage]);
+        return;
+      }
+
+      if (data.warning) {
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'ai',
+          content: `**Warning: ${data.warning}**
+
+For accurate medicine identification and safety information, please take a photo showing the original packaging.`,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, aiMessage]);
+        return;
+      }
+
+      if (data.success && data.analysis) {
+        // Deduct token for successful analysis
+        setTokens(prev => {
+          const newTokens = prev - 1;
+          localStorage.setItem('tokens', newTokens.toString());
+          return newTokens;
+        });
+
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'ai',
+          content: data.analysis,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, aiMessage]);
+      }
+    } catch (error) {
+      console.error('Image analysis error:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai',
+        content: 'Sorry, I encountered an error while analyzing the image. Please try again.',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+      // Close preview and reset
+      setShowPreview(false);
+      setCapturedImage(null);
+    }
+  };
+
+  const retakePhoto = () => {
+    setShowPreview(false);
+    setCapturedImage(null);
+    setShowCamera(true);
   };
 
   const closeCamera = () => {
@@ -1199,8 +1217,39 @@ For accurate medicine identification and safety information, please take a photo
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Preview Modal */}
+        {showPreview && capturedImage && (
+          <div className="camera-modal-overlay">
+            <div className="camera-modal-content">
+              <div className="camera-header">
+                <h3>Preview Photo</h3>
+                <button onClick={() => setShowPreview(false)} className="camera-close-btn">
+                  <X size={24} />
+                </button>
+              </div>
+              <div className="camera-preview">
+                <img 
+                  src={capturedImage} 
+                  alt="Captured photo" 
+                  className="captured-image"
+                />
+              </div>
+              <div className="camera-controls">
+                <button onClick={retakePhoto} className="retake-btn">
+                  <Camera size={20} />
+                  Retake
+                </button>
+                <button onClick={sendCapturedImage} className="send-btn">
+                  <Send size={20} />
+                  Send
+                </button>
+              </div>
             </div>
-          )}
+          </div>
+        )}
         </div>
     </LanguageContext.Provider>
   );
