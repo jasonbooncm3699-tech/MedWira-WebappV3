@@ -691,7 +691,7 @@ For accurate medicine identification and safety information, please upload a pho
     canvas.width = videoRef.videoWidth;
     canvas.height = videoRef.videoHeight;
     
-    // Flip canvas horizontally to fix mirroring issue
+    // Flip canvas horizontally to compensate for flipped video display
     context.scale(-1, 1);
     context.drawImage(videoRef, -canvas.width, 0, canvas.width, canvas.height);
     
