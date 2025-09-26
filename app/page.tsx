@@ -714,9 +714,8 @@ For accurate medicine identification and safety information, please upload a pho
       canvas.width = videoWidth;
       canvas.height = videoHeight;
       
-      // Draw video frame to canvas (flip to match the CSS transform)
-      context.scale(-1, 1);
-      context.drawImage(videoRef, -videoWidth, 0, videoWidth, videoHeight);
+      // ✅ just draw normally - back camera should show raw stream without flipping
+      context.drawImage(videoRef, 0, 0, videoWidth, videoHeight);
       
       // Convert canvas to blob with high quality
       canvas.toBlob((blob) => {
