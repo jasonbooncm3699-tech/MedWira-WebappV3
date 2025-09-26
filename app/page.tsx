@@ -66,7 +66,8 @@ export default function Home() {
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
-          gap: '10px'
+          gap: '10px',
+          boxShadow: '0 4px 12px rgba(0, 212, 255, 0.3)'
         }}
       >
         <Camera size={24} />
