@@ -42,14 +42,9 @@ export default function Home() {
   const [faqOpen, setFaqOpen] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [allergy, setAllergy] = useState('');
   const [showCamera, setShowCamera] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
-  const [videoRef, setVideoRef] = useState<HTMLVideoElement | null>(null);
-  const [cameraLoading, setCameraLoading] = useState(false);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [showPreview, setShowPreview] = useState(false);
-  const [cameraAvailable, setCameraAvailable] = useState(true);
-  const [allergy, setAllergy] = useState('');
 
   // Chat window ref for auto-scroll
   const chatWindowRef = useRef<HTMLDivElement>(null);
@@ -87,31 +82,6 @@ export default function Home() {
     'Lao': 'ຖາມເປັນພາສາລາວ...'
   };
 
-  const imageUploadMessages: { [key: string]: string } = {
-    'English': 'I\'ve uploaded an image of a medicine for identification.',
-    'Chinese': '我已上传药品图片进行识别。',
-    'Malay': 'Saya telah memuat naik gambar ubat untuk pengenalan.',
-    'Indonesian': 'Saya telah mengunggah gambar obat untuk identifikasi.',
-    'Thai': 'ฉันได้อัปโหลดรูปภาพยาสำหรับการระบุตัวตน',
-    'Vietnamese': 'Tôi đã tải lên hình ảnh thuốc để nhận dạng.',
-    'Tagalog': 'Nai-upload ko na ang larawan ng gamot para sa pagkilala.',
-    'Burmese': 'ဆေးဝါးများကို ခွဲခြားသိမြင်ရန် ပုံတစ်ပုံကို တင်ပို့ပြီးပါပြီ။',
-    'Khmer': 'ខ្ញុំបានផ្ទុករូបភាពថ្នាំឡើងសម្រាប់ការកំណត់អត្តសញ្ញាណ។',
-    'Lao': 'ຂ້ອຍໄດ້ອັບໂລດຮູບພາບຢາເພື່ອການກວດສອບແລະກຳນົດຕົວຕົນ.'
-  };
-
-  const cameraCaptureMessages: { [key: string]: string } = {
-    'English': 'I\'ve captured a photo of a medicine for identification.',
-    'Chinese': '我已拍摄药品照片进行识别。',
-    'Malay': 'Saya telah mengambil gambar ubat untuk pengenalan.',
-    'Indonesian': 'Saya telah memotret obat untuk identifikasi.',
-    'Thai': 'ฉันได้ถ่ายภาพยาสำหรับการระบุตัวตน',
-    'Vietnamese': 'Tôi đã chụp ảnh thuốc để nhận dạng.',
-    'Tagalog': 'Kumuha ako ng litrato ng gamot para sa pagkilala.',
-    'Burmese': 'ဆေးဝါးများကို ခွဲခြားသိမြင်ရန် ဓာတ်ပုံတစ်ပုံကို ရိုက်ယူပြီးပါပြီ။',
-    'Khmer': 'ខ្ញុំបានថតរូបថ្នាំសម្រាប់ការកំណត់អត្តសញ្ញាណ។',
-    'Lao': 'ຂ້ອຍໄດ້ຖ່າຍຮູບຢາເພື່ອການກວດສອບແລະກຳນົດຕົວຕົນ.'
-  };
 
   const allergyPlaceholders: { [key: string]: string } = {
     'English': 'Enter allergies (e.g., penicillin, paracetamol)',
@@ -301,52 +271,6 @@ export default function Home() {
     // Welcome message is now set in the initial useEffect above
   }, [language, messages.length, welcomeMessages]);
 
-  // Check camera availability on mount - only for mobile/tablet
-  useEffect(() => {
-    const checkCameraAvailability = async () => {
-      try {
-        // Check if we're on mobile/tablet
-        const isMobileDevice = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        
-        // Disable camera completely on desktop/laptop
-        if (!isMobileDevice) {
-          setCameraAvailable(false);
-          return;
-        }
-        
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          setCameraAvailable(false);
-          return;
-        }
-        
-        // Check if we're on HTTPS or localhost
-        const isSecureContext = window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-        if (!isSecureContext) {
-          setCameraAvailable(false);
-          return;
-        }
-        
-        // Try to enumerate devices to check if camera exists
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const hasCamera = devices.some(device => device.kind === 'videoinput');
-        setCameraAvailable(hasCamera);
-      } catch (error) {
-        console.log('Camera availability check failed:', error);
-        setCameraAvailable(false);
-      }
-    };
-    
-    checkCameraAvailability();
-  }, []);
-
-  // Cleanup camera stream on unmount
-  useEffect(() => {
-    return () => {
-      if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [cameraStream]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -360,18 +284,42 @@ export default function Home() {
     }
   }, [messages]);
 
-  const handleLogin = () => {
-    console.log('Login/Sign Up button clicked - DISABLED');
-    // Authentication functionality disabled
-    alert('Login/Signup is currently disabled. This feature will be re-enabled soon.');
-    return;
+  // Cleanup camera stream on unmount
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [cameraStream]);
+
+  const handleCameraCapture = async () => {
+    console.log('Camera button clicked - minimal test');
+    
+    try {
+      // Simple camera access - no complex logic
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment' // Back camera
+        }
+      });
+      
+      console.log('Camera access granted');
+      setCameraStream(stream);
+      setShowCamera(true);
+      
+    } catch (error) {
+      console.log('Camera access error:', error);
+      alert('Camera access failed: ' + (error as Error).message);
+    }
   };
 
-  const handleLogout = () => {
-    console.log('Sign Out button clicked - DISABLED');
-    // Authentication functionality disabled
-    alert('Logout is currently disabled. This feature will be re-enabled soon.');
-    return;
+  const closeCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setShowCamera(false);
   };
 
   const handleNewChat = () => {
@@ -480,410 +428,11 @@ export default function Home() {
     setIsLoading(false);
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('Image upload triggered');
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Check tokens
-    if (tokens <= 0) {
-      alert('No tokens left! Please subscribe for more scans.');
-      return;
-    }
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert('Please select a valid image file.');
-      return;
-    }
-
-    // Check file size (limit to 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      alert('Image file is too large. Please select an image smaller than 10MB.');
-      return;
-    }
-
-    // Show loading state
-    setIsLoading(true);
-
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const imageBase64 = event.target?.result as string;
-      
-      const imageMessage: Message = {
-        id: Date.now().toString(),
-        type: 'user',
-        content: imageUploadMessages[language] || imageUploadMessages['English'],
-        timestamp: new Date(),
-        image: imageBase64
-      };
-      setMessages(prev => [...prev, imageMessage]);
-      
-      try {
-        // Call the image analysis API
-        const response = await fetch('/api/analyze-image', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            imageBase64,
-            language,
-            allergy
-          })
-        });
-
-        const data = await response.json();
-
-        if (data.error) {
-          // Handle non-medicine images or errors
-          const aiMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            type: 'ai',
-            content: `**Error: ${data.error}**
-
-Please upload a clear photo of medicine packaging, pills, or related medical items for proper identification.`,
-            timestamp: new Date()
-          };
-          setMessages(prev => [...prev, aiMessage]);
-          return;
-        }
-
-        if (data.warning) {
-          // Handle packaging warnings
-          const aiMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            type: 'ai',
-            content: `**Warning: ${data.warning}**
-
-For accurate medicine identification and safety information, please upload a photo showing the original packaging.`,
-            timestamp: new Date()
-          };
-          setMessages(prev => [...prev, aiMessage]);
-          return;
-        }
-
-        if (data.success && data.analysis) {
-          // Deduct token for successful analysis
-          setTokens(prev => {
-            const newTokens = prev - 1;
-            localStorage.setItem('tokens', newTokens.toString());
-            return newTokens;
-          });
-
-          const aiMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            type: 'ai',
-            content: data.analysis,
-            timestamp: new Date()
-          };
-          setMessages(prev => [...prev, aiMessage]);
-        }
-      } catch (error) {
-        console.error('Image analysis error:', error);
-        
-        // Check if it's a specific API error
-        let errorContent = 'Sorry, I encountered an error while analyzing the image. Please try again or contact support.';
-        
-        if (error instanceof Error) {
-          if (error.message.includes('timeout')) {
-            errorContent = 'The analysis is taking too long. Please try with a smaller image or try again later.';
-          } else if (error.message.includes('network') || error.message.includes('fetch')) {
-            errorContent = 'Network error. Please check your internet connection and try again.';
-          } else if (error.message.includes('Invalid image')) {
-            errorContent = 'The uploaded image format is not supported. Please upload a JPEG or PNG image.';
-          }
-        }
-        
-        const errorMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          type: 'ai',
-          content: `**Error:** ${errorContent}`,
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, errorMessage]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    reader.readAsDataURL(file);
-  };
 
 
-  const handleCameraCapture = async () => {
-    console.log('Camera button clicked');
-    setCameraLoading(true);
-    
-    try {
-      // Check if we're on mobile/tablet
-      const isMobileDevice = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      
-      // Show friendly message for desktop users
-      if (!isMobileDevice) {
-        const useFileUpload = confirm('Camera is available on mobile/tablet. Please use your phone.\n\nWould you like to upload a photo from your device instead?');
-        if (useFileUpload) {
-          const fileInput = document.getElementById('upload') as HTMLInputElement;
-          if (fileInput) {
-            fileInput.click();
-          }
-        }
-        setCameraLoading(false);
-        return;
-      }
 
-      // Check if getUserMedia is supported
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Camera not supported');
-      }
 
-      // Check if we're on HTTPS or localhost
-      const isSecureContext = window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-      if (!isSecureContext) {
-        throw new Error('HTTPS_REQUIRED');
-      }
-      
-      // Camera constraints - back camera only, no mirroring
-      const constraints = {
-        video: {
-          facingMode: 'environment', // Use back camera only
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-          frameRate: { ideal: 30, max: 60 }
-        }
-      };
-      
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.log('Camera access granted - back camera only');
-      
-      setCameraStream(stream);
-      setShowCamera(true);
-      setCameraLoading(false);
-      
-      // Set video source - no mirroring
-      if (videoRef) {
-        videoRef.srcObject = stream;
-        // Ensure no CSS transforms for mirroring
-        videoRef.style.transform = 'none';
-        (videoRef.style as any).webkitTransform = 'none';
-        (videoRef.style as any).mozTransform = 'none';
-        (videoRef.style as any).msTransform = 'none';
-        videoRef.play().catch(console.error);
-        console.log('Camera video element updated - no mirroring applied');
-      }
-    } catch (error: unknown) {
-      console.log('Camera access error:', error);
-      setCameraLoading(false);
-      
-      let errorMessage = '';
-      let showFileUpload = false;
-      
-      if ((error as Error).name === 'NotAllowedError') {
-        errorMessage = 'Camera access denied. Please allow camera permission in your browser settings, or use the upload button to select a photo from your device.';
-        showFileUpload = true;
-      } else if ((error as Error).name === 'NotFoundError') {
-        errorMessage = 'No camera found on this device. Please use the upload button to select a photo from your device.';
-        showFileUpload = true;
-      } else if ((error as Error).message === 'HTTPS_REQUIRED') {
-        errorMessage = 'Mobile camera requires HTTPS or network access. Try accessing via your computer\'s IP address (e.g., http://192.168.1.100:3000) or use the upload button.';
-        showFileUpload = true;
-      } else if ((error as Error).message === 'Camera not supported') {
-        errorMessage = 'Camera is not supported in this browser. Please use the upload button to select a photo from your device.';
-        showFileUpload = true;
-      } else {
-        errorMessage = 'Unable to access camera. Please use the upload button to select a photo from your device.';
-        showFileUpload = true;
-      }
-      
-      // Show error with option to upload file instead
-      if (showFileUpload) {
-        const useFileUpload = confirm(errorMessage + '\n\nWould you like to upload a photo from your device instead?');
-        if (useFileUpload) {
-          // Trigger file input
-          const fileInput = document.getElementById('upload') as HTMLInputElement;
-          if (fileInput) {
-            fileInput.click();
-          }
-        }
-      } else {
-        alert(errorMessage);
-      }
-    }
-  };
 
-  const capturePhoto = () => {
-    if (!videoRef || !cameraStream) {
-      console.error('Camera not ready for capture');
-      return;
-    }
-    
-    try {
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      
-      if (!context) {
-        throw new Error('Canvas context not available');
-      }
-      
-      // Get video dimensions
-      const videoWidth = videoRef.videoWidth;
-      const videoHeight = videoRef.videoHeight;
-      
-      if (videoWidth === 0 || videoHeight === 0) {
-        throw new Error('Video not ready for capture');
-      }
-      
-      // Set canvas dimensions to match video
-      canvas.width = videoWidth;
-      canvas.height = videoHeight;
-      
-      // Draw normally - no mirroring/flipping for back camera
-      // This ensures the captured image matches what the user sees in preview
-      context.drawImage(videoRef, 0, 0, videoWidth, videoHeight);
-      console.log('Canvas capture: Normal draw - no mirroring applied');
-      
-      // Convert canvas to blob with high quality
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          throw new Error('Failed to create image blob');
-        }
-        
-        // Create a File object from the blob
-        const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
-        
-        // Convert to base64 for preview
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const imageBase64 = event.target?.result as string;
-          
-          if (!imageBase64) {
-            throw new Error('Failed to read captured image');
-          }
-          
-          // Store captured image and show preview
-          setCapturedImage(imageBase64);
-          setShowPreview(true);
-          setShowCamera(false); // Hide camera, show preview
-        };
-        
-        reader.onerror = () => {
-          throw new Error('Failed to read captured image');
-        };
-        
-        reader.readAsDataURL(file);
-      }, 'image/jpeg', 0.9);
-      
-    } catch (error) {
-      console.error('Camera capture error:', error);
-      const errorMsg = `Camera capture failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
-      alert(errorMsg);
-    }
-  };
-
-  const sendCapturedImage = async () => {
-    if (!capturedImage) return;
-    
-    // Add image message to chat
-    const imageMessage: Message = {
-      id: Date.now().toString(),
-      type: 'user',
-      content: cameraCaptureMessages[language] || cameraCaptureMessages['English'],
-      timestamp: new Date(),
-      image: capturedImage
-    };
-    setMessages(prev => [...prev, imageMessage]);
-
-    // Show loading state
-    setIsLoading(true);
-
-    try {
-      // Call the image analysis API
-      const response = await fetch('/api/analyze-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          imageBase64: capturedImage,
-          language,
-          allergy
-        })
-      });
-
-      const data = await response.json();
-
-      if (data.error) {
-        const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          type: 'ai',
-          content: `**Error: ${data.error}**
-
-Please take a clear photo of medicine packaging, pills, or related medical items for proper identification.`,
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, aiMessage]);
-        return;
-      }
-
-      if (data.warning) {
-        const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          type: 'ai',
-          content: `**Warning: ${data.warning}**
-
-For accurate medicine identification and safety information, please take a photo showing the original packaging.`,
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, aiMessage]);
-        return;
-      }
-
-      if (data.success && data.analysis) {
-        // Deduct token for successful analysis
-        setTokens(prev => {
-          const newTokens = prev - 1;
-          localStorage.setItem('tokens', newTokens.toString());
-          return newTokens;
-        });
-
-        const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          type: 'ai',
-          content: data.analysis,
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, aiMessage]);
-      }
-    } catch (error) {
-      console.error('Image analysis error:', error);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai',
-        content: 'Sorry, I encountered an error while analyzing the image. Please try again.',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-      // Close preview and reset
-      setShowPreview(false);
-      setCapturedImage(null);
-    }
-  };
-
-  const retakePhoto = () => {
-    setShowPreview(false);
-    setCapturedImage(null);
-    setShowCamera(true);
-  };
-
-  const closeCamera = () => {
-    if (cameraStream) {
-      cameraStream.getTracks().forEach(track => track.stop());
-      setCameraStream(null);
-    }
-    setShowCamera(false);
-  };
 
 
   const handleShareMessage = (messageContent: string) => {
@@ -996,17 +545,10 @@ For accurate medicine identification and safety information, please take a photo
           </div>
           
           <div className="header-right">
-            {isLoggedIn ? (
-              <button onClick={handleLogout} className="auth-btn">
-                <LogOut size={16} />
-                Sign Out
-              </button>
-            ) : (
-              <button onClick={handleLogin} className="auth-btn">
-                <LogIn size={16} />
-                Sign In
-              </button>
-            )}
+            <button className="auth-btn">
+              <LogIn size={16} />
+              Sign In
+            </button>
           </div>
       </header>
 
@@ -1135,7 +677,6 @@ For accurate medicine identification and safety information, please take a photo
                 type="file"
                 accept="image/*"
                 id="upload"
-                onChange={handleImageUpload}
                 className="file-input"
               />
               <label htmlFor="upload" className="upload-btn">
@@ -1143,20 +684,11 @@ For accurate medicine identification and safety information, please take a photo
             </label>
               
               <button 
-                className={`camera-btn ${!cameraAvailable ? 'camera-unavailable' : ''}`}
+                className="camera-btn"
                 onClick={handleCameraCapture}
-                disabled={cameraLoading}
-                title={!cameraAvailable ? 'Camera is available on mobile/tablet. Please use your phone.' : 'Take photo with camera'}
+                title="Take photo with camera"
               >
-                {cameraLoading ? (
-                  <div className="camera-loading">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
-                ) : (
                 <Camera size={18} />
-                )}
               </button>
               
               <div className="text-input-wrapper">
@@ -1202,22 +734,20 @@ For accurate medicine identification and safety information, please take a photo
         )}
 
         {/* Sign In Modal */}
-        {!isLoggedIn && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <h2>Sign In Required</h2>
-              <button onClick={handleLogin}>Login with Email (Mock)</button>
-              <button onClick={handleLogin}>Login with Google (Mock)</button>
-            </div>
-            </div>
-          )}
+        <div className="modal-overlay" style={{ display: 'none' }}>
+          <div className="modal-content">
+            <h2>Sign In Required</h2>
+            <button>Login with Email (Mock)</button>
+            <button>Login with Google (Mock)</button>
+          </div>
+        </div>
 
         {/* Camera Modal */}
         {showCamera && (
           <div className="camera-modal-overlay">
             <div className="camera-modal-content">
               <div className="camera-header">
-                <h3>Take Photo</h3>
+                <h3>Camera Test - Check Orientation</h3>
                 <button onClick={closeCamera} className="camera-close-btn">
                   <X size={24} />
                 </button>
@@ -1225,7 +755,6 @@ For accurate medicine identification and safety information, please take a photo
               <div className="camera-preview">
                 <video
                   ref={(el) => {
-                    setVideoRef(el);
                     if (el && cameraStream) {
                       el.srcObject = cameraStream;
                     }
@@ -1237,44 +766,41 @@ For accurate medicine identification and safety information, please take a photo
                 />
               </div>
               <div className="camera-controls">
-                <button onClick={capturePhoto} className="capture-btn">
-                  <Camera size={24} />
-                </button>
+                <p style={{ color: 'white', textAlign: 'center', margin: '10px' }}>
+                  Is the camera view normal or mirrored?
+                </p>
               </div>
             </div>
           </div>
         )}
 
         {/* Preview Modal */}
-        {showPreview && capturedImage && (
-          <div className="camera-modal-overlay">
-            <div className="camera-modal-content">
-              <div className="camera-header">
-                <h3>Preview Photo</h3>
-                <button onClick={() => setShowPreview(false)} className="camera-close-btn">
-                  <X size={24} />
-                </button>
-              </div>
-              <div className="camera-preview">
-                <img 
-                  src={capturedImage} 
-                  alt="Captured photo" 
-                  className="captured-image"
-                />
-              </div>
-              <div className="camera-controls">
-                <button onClick={retakePhoto} className="retake-btn">
-                  <Camera size={20} />
-                  Retake
-                </button>
-                <button onClick={sendCapturedImage} className="send-btn">
-                  <Send size={20} />
-                  Send
-                </button>
-              </div>
+        <div className="camera-modal-overlay" style={{ display: 'none' }}>
+          <div className="camera-modal-content">
+            <div className="camera-header">
+              <h3>Preview Photo</h3>
+              <button className="camera-close-btn">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="camera-preview">
+              <img 
+                alt="Captured photo" 
+                className="captured-image"
+              />
+            </div>
+            <div className="camera-controls">
+              <button className="retake-btn">
+                <Camera size={20} />
+                Retake
+              </button>
+              <button className="send-btn">
+                <Send size={20} />
+                Send
+              </button>
             </div>
           </div>
-        )}
+        </div>
         </div>
     </LanguageContext.Provider>
   );
