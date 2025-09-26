@@ -641,7 +641,10 @@ For accurate medicine identification and safety information, please upload a pho
       // Set video source and handle orientation
       if (videoRef) {
         videoRef.srcObject = stream;
+        // Force cache refresh
+        videoRef.style.transform = 'none';
         videoRef.play().catch(console.error);
+        console.log('Camera video element updated - no transform applied');
       }
     } catch (error: unknown) {
       console.log('Camera access error:', error);

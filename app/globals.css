@@ -1278,9 +1278,9 @@ select:focus {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* ❌ remove this - back camera should show raw stream without flipping */
-  /* transform: scaleX(-1) !important; */
-  /* -webkit-transform: scaleX(-1) !important; */
+  /* ✅ CAMERA FIX: No transform - back camera shows normal orientation */
+  transform: none !important;
+  -webkit-transform: none !important;
 }
 
 .camera-controls {
