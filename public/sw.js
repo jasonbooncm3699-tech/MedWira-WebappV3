@@ -1,4 +1,4 @@
-const CACHE_NAME = 'medwira-ai-v1';
+const CACHE_NAME = 'medwira-ai-v2-clean';
 const urlsToCache = [
   '/',
   '/static/js/bundle.js',
