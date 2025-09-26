@@ -73,10 +73,10 @@ export default function Home() {
         </div>
         
         <div className="header-right">
-          <button className="auth-btn">
-            <LogIn size={16} />
-            Sign In
-          </button>
+                      <button className="auth-btn" onClick={handleCameraCapture}>
+                        <LogOut size={16} />
+                        Sign Out
+                      </button>
         </div>
       </header>
 
@@ -138,10 +138,10 @@ export default function Home() {
               <span className="tokens">100 tokens</span>
             </div>
           </div>
-          <button className="faq-btn">
-            <Settings size={16} />
-            FAQ
-          </button>
+                      <button className="faq-btn" onClick={handleCameraCapture}>
+                        <LogIn size={16} />
+                        Sign Up
+                      </button>
           <p className="copyright">© 2025 MedWira AI. AI powered medicine database</p>
         </div>
       </nav>
@@ -216,9 +216,9 @@ export default function Home() {
               <Upload size={18} />
             </label>
             
-            <button className="camera-btn" title="Take photo with camera" onClick={handleCameraCapture}>
-              <Camera size={18} />
-            </button>
+                        <button className="camera-btn" title="Take photo with camera">
+                          <Camera size={18} />
+                        </button>
             
             <div className="text-input-wrapper">
               <input
@@ -254,7 +254,7 @@ export default function Home() {
                         }}
                       />
           <p style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', color: 'white', textAlign: 'center', background: 'rgba(0,0,0,0.7)', padding: '10px', borderRadius: '8px' }}>
-            Camera Test - Using back camera (environment) with playsInline
+            Camera Test - Triggered by Sign Out or Sign Up button
           </p>
         </div>
       )}
