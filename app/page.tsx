@@ -6,6 +6,7 @@ import { Bot, User, Send, Upload, Camera, Menu, X, Plus, MessageSquare, Settings
 export default function Home() {
   const [showCamera, setShowCamera] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [isFrontCamera, setIsFrontCamera] = useState(false);
 
   const handleCameraCapture = async () => {
     try {
@@ -21,13 +22,27 @@ export default function Home() {
         return;
       }
 
-                  const stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                      facingMode: 'environment', // Back camera
-                      width: { ideal: 1280 },
-                      height: { ideal: 720 }
-                    }
-                  });
+                  // Try to get back camera first, fallback to any camera
+                  let stream;
+                  try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                      video: {
+                        facingMode: 'environment', // Back camera
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                      }
+                    });
+                    setIsFrontCamera(false);
+                  } catch (error) {
+                    // Fallback to any available camera
+                    stream = await navigator.mediaDevices.getUserMedia({
+                      video: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                      }
+                    });
+                    setIsFrontCamera(true);
+                  }
       
       setCameraStream(stream);
       setShowCamera(true);
@@ -44,6 +59,7 @@ export default function Home() {
       setCameraStream(null);
     }
     setShowCamera(false);
+    setIsFrontCamera(false);
   };
   return (
     <div className="app">
@@ -253,11 +269,12 @@ export default function Home() {
                         style={{ 
                           width: '100%', 
                           height: '100%', 
-                          objectFit: 'cover'
+                          objectFit: 'cover',
+                          transform: isFrontCamera ? 'scaleX(-1)' : 'none' // Only flip front camera
                         }}
                       />
           <p style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', color: 'white', textAlign: 'center', background: 'rgba(0,0,0,0.7)', padding: '10px', borderRadius: '8px' }}>
-            Camera Test - Removed CSS transform, using playsInline for mobile
+            Camera Test - {isFrontCamera ? 'Front camera (flipped)' : 'Back camera (normal)'}
           </p>
         </div>
       )}
