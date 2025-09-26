@@ -240,17 +240,22 @@ export default function Home() {
           <button onClick={closeCamera} style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1001, background: 'red', color: 'white', border: 'none', padding: '10px', borderRadius: '8px' }}>
             Close
           </button>
-          <video
-            ref={(el) => {
-              if (el && cameraStream) {
-                el.srcObject = cameraStream;
-              }
-            }}
-            autoPlay
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
+                      <video
+                        ref={(el) => {
+                          if (el && cameraStream) {
+                            el.srcObject = cameraStream;
+                          }
+                        }}
+                        autoPlay
+                        style={{ 
+                          width: '100%', 
+                          height: '100%', 
+                          objectFit: 'cover',
+                          transform: 'scaleX(-1)' // Flip horizontally to fix mirror effect
+                        }}
+                      />
           <p style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', color: 'white', textAlign: 'center', background: 'rgba(0,0,0,0.7)', padding: '10px', borderRadius: '8px' }}>
-            Camera Test - Is the video normal or mirrored?
+            Camera Test - Video should now appear normal (not mirrored)
           </p>
         </div>
       )}
