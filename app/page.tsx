@@ -247,12 +247,11 @@ export default function Home() {
                         autoPlay
                         style={{ 
                           width: '100%', 
-                          height: '100%',
-                          transform: 'scaleX(-1)' // Flip horizontally to fix mirror effect
+                          height: '100%'
                         }}
                       />
           <p style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', color: 'white', textAlign: 'center', background: 'rgba(0,0,0,0.7)', padding: '10px', borderRadius: '8px' }}>
-            Camera Test - Added scaleX(-1) to fix mirroring
+            Camera Test - No transforms, testing default behavior
           </p>
         </div>
       )}
