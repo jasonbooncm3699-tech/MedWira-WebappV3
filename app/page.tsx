@@ -691,8 +691,9 @@ For accurate medicine identification and safety information, please upload a pho
     canvas.width = videoRef.videoWidth;
     canvas.height = videoRef.videoHeight;
     
-    // Draw the video frame to canvas
-    context.drawImage(videoRef, 0, 0, canvas.width, canvas.height);
+    // Flip canvas horizontally to fix mirroring issue
+    context.scale(-1, 1);
+    context.drawImage(videoRef, -canvas.width, 0, canvas.width, canvas.height);
     
     // Convert canvas to blob
     canvas.toBlob((blob) => {
