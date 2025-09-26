@@ -742,35 +742,23 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Camera Modal */}
+        {/* Camera Test - Bare Video Element */}
         {showCamera && (
-          <div className="camera-modal-overlay">
-            <div className="camera-modal-content">
-              <div className="camera-header">
-                <h3>Camera Test - Check Orientation</h3>
-                <button onClick={closeCamera} className="camera-close-btn">
-                  <X size={24} />
-                </button>
-              </div>
-              <div className="camera-preview">
-                <video
-                  ref={(el) => {
-                    if (el && cameraStream) {
-                      el.srcObject = cameraStream;
-                    }
-                  }}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="camera-video"
-                />
-              </div>
-              <div className="camera-controls">
-                <p style={{ color: 'white', textAlign: 'center', margin: '10px' }}>
-                  Is the camera view normal or mirrored?
-                </p>
-              </div>
-            </div>
+          <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'black', zIndex: 1000 }}>
+            <button onClick={closeCamera} style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 1001, background: 'red', color: 'white', border: 'none', padding: '10px' }}>
+              Close
+            </button>
+            <video
+              ref={(el) => {
+                if (el && cameraStream) {
+                  el.srcObject = cameraStream;
+                }
+              }}
+              autoPlay
+            />
+            <p style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', color: 'white', textAlign: 'center' }}>
+              Bare video element - Is it normal or mirrored?
+            </p>
           </div>
         )}
 
