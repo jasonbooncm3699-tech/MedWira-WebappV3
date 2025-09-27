@@ -2,13 +2,18 @@
 
 import React, { useState } from 'react';
 import { Bot, User, Send, Upload, Camera, Menu, X, Plus, MessageSquare, Settings, LogOut, LogIn } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
+import AuthModal from '@/components/AuthModal';
 
 export default function Home() {
+  const { user, logout, isLoading } = useAuth();
   const [showCamera, setShowCamera] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isTablet, setIsTablet] = useState(false);
   const [sideNavOpen, setSideNavOpen] = useState(false);
   const [language, setLanguage] = useState('English');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
 
   const handleCameraCapture = async () => {
     try {
@@ -89,10 +94,23 @@ export default function Home() {
         </div>
 
         <div className="header-right">
-          <button className="auth-btn">
-            <LogOut size={16} />
-            Sign Out
-          </button>
+          {user ? (
+            <button className="auth-btn" onClick={logout}>
+              <LogOut size={16} />
+              Sign Out
+            </button>
+          ) : (
+            <button 
+              className="auth-btn" 
+              onClick={() => {
+                setAuthMode('login');
+                setShowAuthModal(true);
+              }}
+            >
+              <LogIn size={16} />
+              Sign In
+            </button>
+          )}
         </div>
       </header>
 
@@ -153,14 +171,22 @@ export default function Home() {
               <User size={20} />
             </div>
             <div className="user-details">
-              <span className="username">User</span>
-              <span className="tokens">100 tokens</span>
+              <span className="username">{user ? user.name : 'Guest'}</span>
+              <span className="tokens">{user ? `${user.tokens} tokens` : '0 tokens'}</span>
             </div>
           </div>
-          <button className="faq-btn">
-            <LogIn size={16} />
-            Sign Up
-          </button>
+          {!user && (
+            <button 
+              className="faq-btn"
+              onClick={() => {
+                setAuthMode('register');
+                setShowAuthModal(true);
+              }}
+            >
+              <LogIn size={16} />
+              Sign Up
+            </button>
+          )}
           <p className="copyright">@ 2025 MedWira.com. AI Powered medicine database</p>
         </div>
       </nav>
@@ -188,7 +214,7 @@ export default function Home() {
               <div className="message-image">
                 <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2NjYyIvPjx0ZXh0IHg9IjUwIiB5PSI1MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjNjY2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+SW1hZ2U8L3RleHQ+PC9zdmc+" alt="Uploaded medicine" />
               </div>
-              <div className="message-text">I've uploaded an image of a medicine for identification.</div>
+              <div className="message-text">I&apos;ve uploaded an image of a medicine for identification.</div>
               <div className="message-footer">
                 <div className="message-time">19:46</div>
               </div>
@@ -307,6 +333,14 @@ export default function Home() {
           </p>
         </div>
       )}
+
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        mode={authMode}
+        onModeChange={setAuthMode}
+      />
     </div>
   );
 }
