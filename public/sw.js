@@ -1,4 +1,4 @@
-const CACHE_NAME = 'medwira-ai-v3-camera-only';
+const CACHE_NAME = 'medwira-ai-v4-fresh-deploy';
 const urlsToCache = [
   '/',
   '/static/js/bundle.js',

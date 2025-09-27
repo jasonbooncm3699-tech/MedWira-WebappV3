@@ -125,7 +125,7 @@ export default function Home() {
             padding: '10px', 
             borderRadius: '8px' 
           }}>
-            Camera Test - Back camera with playsInline
+            Camera Test - Fresh deployment v4
           </p>
         </div>
       )}
