@@ -6,6 +6,7 @@ import { Camera } from 'lucide-react';
 export default function Home() {
   const [showCamera, setShowCamera] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [isTablet, setIsTablet] = useState(false);
 
   const handleCameraCapture = async () => {
     try {
@@ -20,6 +21,10 @@ export default function Home() {
         alert('Camera requires HTTPS. Please access via https://localhost:3000');
         return;
       }
+
+      // Detect if device is tablet (simple detection)
+      const isTabletDevice = window.innerWidth >= 768 && window.innerWidth <= 1024;
+      setIsTablet(isTabletDevice);
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -111,7 +116,8 @@ export default function Home() {
             playsInline
             style={{ 
               width: '100%', 
-              height: '100%'
+              height: '100%',
+              transform: isTablet ? 'scaleX(-1)' : 'none' // Fix mirroring on tablets only
             }}
           />
           <p style={{ 
@@ -125,7 +131,7 @@ export default function Home() {
             padding: '10px', 
             borderRadius: '8px' 
           }}>
-            Camera Test - Fresh deployment v4
+            Camera Test - Device: {isTablet ? 'Tablet (mirror fix)' : 'Mobile (normal)'}
           </p>
         </div>
       )}
