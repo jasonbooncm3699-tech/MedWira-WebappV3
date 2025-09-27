@@ -161,7 +161,7 @@ export default function Home() {
             <LogIn size={16} />
             Sign Up
           </button>
-          <p className="copyright">© 2025 MedWira AI. AI powered medicine database</p>
+          <p className="copyright">@ 2025 MedWira.com. AI Powered medicine database</p>
         </div>
       </nav>
 
