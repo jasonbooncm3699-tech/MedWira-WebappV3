@@ -1,10 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Remove 'export' to enable API routes
+  // Enable API routes for Netlify
   trailingSlash: true,
   images: {
     unoptimized: true
+  },
+  // Ensure proper build for Netlify
+  experimental: {
+    runtime: 'nodejs'
   }
 };
 
