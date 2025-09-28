@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       email,
       name,
       password: hashedPassword,
-      tokens: 100, // Free tokens for new users
+      tokens: 30, // Free tokens for new users
       createdAt: new Date().toISOString(),
     };
 

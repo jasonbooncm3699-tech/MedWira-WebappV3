@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { Bot, User, Send, Upload, Camera, Menu, X, Plus, MessageSquare, Settings, LogOut, LogIn } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
-import AuthModal from '@/components/AuthModal';
+import SocialAuthModal from '@/components/SocialAuthModal';
+import InstallBanner from '@/components/InstallBanner';
 
 export default function Home() {
   const { user, logout, isLoading } = useAuth();
@@ -11,6 +12,7 @@ export default function Home() {
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isTablet, setIsTablet] = useState(false);
   const [sideNavOpen, setSideNavOpen] = useState(false);
+  const [showInstallBanner, setShowInstallBanner] = useState(true);
   const [language, setLanguage] = useState('English');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -58,8 +60,11 @@ export default function Home() {
 
   return (
     <div className="app">
+      {/* Install Banner */}
+      {showInstallBanner && <InstallBanner />}
+      
       {/* Header */}
-      <header className="header">
+      <header className={`header ${showInstallBanner ? 'with-banner' : ''}`}>
         <div className="header-left">
           <button 
             className="burger-btn" 
@@ -192,7 +197,7 @@ export default function Home() {
       </nav>
 
       {/* Chat Container */}
-      <div className="chat-container">
+      <div className={`chat-container ${showInstallBanner ? 'with-banner' : ''}`}>
         <div className="chat-window">
           <div className="message ai">
             <div className="message-avatar">
@@ -335,7 +340,7 @@ export default function Home() {
       )}
 
       {/* Authentication Modal */}
-      <AuthModal
+      <SocialAuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         mode={authMode}
