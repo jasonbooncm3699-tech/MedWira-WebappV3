@@ -457,6 +457,11 @@ body {
   flex-direction: row-reverse;
 }
 
+/* User message images should appear on the right side */
+.message.user .message-image {
+  order: -1; /* This will place the image on the right side for user messages */
+}
+
 .message.ai {
   align-self: flex-start;
 }
