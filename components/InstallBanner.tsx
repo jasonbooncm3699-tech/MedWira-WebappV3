@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Download } from 'lucide-react';
+import { X } from 'lucide-react';
 
 export default function InstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -61,13 +61,15 @@ export default function InstallBanner() {
   return (
     <div className="install-banner-top">
       <div className="install-content">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-          <Download size={16} />
-          <span>Install MedWira AI to your home screen!</span>
+        <span>Install MedWira AI to your home screen!</span>
+        <div className="install-actions">
+          <button onClick={handleInstall}>
+            Install
+          </button>
+          <button className="close-install" onClick={handleDismiss}>
+            <X size={16} />
+          </button>
         </div>
-        <button className="close-install" onClick={handleDismiss}>
-          <X size={16} />
-        </button>
       </div>
     </div>
   );
