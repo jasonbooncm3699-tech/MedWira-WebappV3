@@ -1237,47 +1237,6 @@ body {
     max-width: 45px;
   }
   
-  /* Hide full language names on mobile, show abbreviations */
-  .language-select option[value="English"] {
-    display: none;
-  }
-  
-  .language-select option[value="Chinese"] {
-    display: none;
-  }
-  
-  .language-select option[value="Malay"] {
-    display: none;
-  }
-  
-  .language-select option[value="Indonesian"] {
-    display: none;
-  }
-  
-  .language-select option[value="Thai"] {
-    display: none;
-  }
-  
-  .language-select option[value="Vietnamese"] {
-    display: none;
-  }
-  
-  .language-select option[value="Tagalog"] {
-    display: none;
-  }
-  
-  .language-select option[value="Burmese"] {
-    display: none;
-  }
-  
-  .language-select option[value="Khmer"] {
-    display: none;
-  }
-  
-  .language-select option[value="Lao"] {
-    display: none;
-  }
-  
   .auth-btn {
     font-size: 12px;
     padding: 5px 10px;
