@@ -15,6 +15,7 @@ export default function InstallBanner() {
 
     // Only show install banner on mobile and tablet devices (not desktop)
     const isMobileOrTablet = window.innerWidth <= 1024;
+    console.log('Screen width:', window.innerWidth, 'Is mobile/tablet:', isMobileOrTablet);
     if (!isMobileOrTablet) {
       return;
     }

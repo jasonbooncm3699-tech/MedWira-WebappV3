@@ -1,4 +1,4 @@
-const CACHE_NAME = 'medwira-ai-v4-fresh-deploy';
+const CACHE_NAME = 'medwira-ai-v5-header-fix';
 const urlsToCache = [
   '/',
   '/static/js/bundle.js',
