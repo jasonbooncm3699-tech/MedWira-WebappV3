@@ -1,4 +1,4 @@
-const CACHE_NAME = 'medwira-ai-v8-banner-text-fix';
+const CACHE_NAME = 'medwira-ai-v9-banner-auto-show';
 const urlsToCache = [
   '/',
   '/static/js/bundle.js',
