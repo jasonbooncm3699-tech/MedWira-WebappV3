@@ -81,16 +81,16 @@ export default function Home() {
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
           >
-            <option value="English">English</option>
+            <option value="English">EN</option>
             <option value="Chinese">中文</option>
-            <option value="Malay">Malay</option>
-            <option value="Indonesian">Indonesian</option>
-            <option value="Thai">Thai</option>
-            <option value="Vietnamese">Vietnamese</option>
-            <option value="Tagalog">Tagalog</option>
-            <option value="Burmese">Burmese</option>
-            <option value="Khmer">Khmer</option>
-            <option value="Lao">Lao</option>
+            <option value="Malay">MY</option>
+            <option value="Indonesian">ID</option>
+            <option value="Thai">TH</option>
+            <option value="Vietnamese">VN</option>
+            <option value="Tagalog">TL</option>
+            <option value="Burmese">MM</option>
+            <option value="Khmer">KH</option>
+            <option value="Lao">LA</option>
           </select>
         </div>
 

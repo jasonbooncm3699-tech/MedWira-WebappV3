@@ -32,6 +32,12 @@ body {
   color: white;
   z-index: 1001;
   animation: slideDown 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.install-banner-top.slide-up {
+  transform: translateY(-100%);
+  opacity: 0;
 }
 
 /* Hide install banner on desktop (1025px and above) - Pure CSS solution */
@@ -118,6 +124,11 @@ body {
 @media (max-width: 1024px) {
   .header {
     top: 40px; /* Position below banner on mobile/tablet */
+    transition: top 0.3s ease;
+  }
+  
+  .header.banner-dismissed {
+    top: 0; /* Slide up when banner is dismissed */
   }
 }
 
@@ -458,9 +469,25 @@ body {
   flex-direction: row-reverse;
 }
 
-/* User message images should appear on the right side */
+/* User message images should appear on the right side with better styling */
 .message.user .message-image {
   order: -1; /* This will place the image on the right side for user messages */
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.message.user .message-image img {
+  max-width: 180px;
+  border-radius: 12px;
+  border: 2px solid rgba(0, 212, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.message.user .message-image img:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 16px rgba(0, 212, 255, 0.3);
 }
 
 .message.ai {

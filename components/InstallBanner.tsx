@@ -51,8 +51,25 @@ export default function InstallBanner() {
   };
 
   const handleDismiss = () => {
-    setShowBanner(false);
-    localStorage.setItem('install-banner-dismissed', 'true');
+    // Add slide-up animation class before hiding
+    const bannerElement = document.querySelector('.install-banner-top');
+    const headerElement = document.querySelector('.header');
+    
+    if (bannerElement) {
+      bannerElement.classList.add('slide-up');
+      // Add banner-dismissed class to header for smooth animation
+      if (headerElement) {
+        headerElement.classList.add('banner-dismissed');
+      }
+      // Hide banner after animation completes
+      setTimeout(() => {
+        setShowBanner(false);
+        localStorage.setItem('install-banner-dismissed', 'true');
+      }, 300);
+    } else {
+      setShowBanner(false);
+      localStorage.setItem('install-banner-dismissed', 'true');
+    }
   };
 
   // Don't render if not showing
