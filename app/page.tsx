@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bot, User, Send, Upload, Camera, Menu, X, Plus, MessageSquare, Settings, LogOut, LogIn, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import SocialAuthModal from '@/components/SocialAuthModal';
@@ -27,9 +27,30 @@ export default function Home() {
     return messages[lang] || messages['English'];
   };
 
+  // Get language display text based on device type
+  const getLanguageDisplayText = (lang: string): string => {
+    if (isMobile) {
+      const abbreviations: { [key: string]: string } = {
+        'English': 'EN',
+        'Chinese': '中文',
+        'Malay': 'MY',
+        'Indonesian': 'ID',
+        'Thai': 'TH',
+        'Vietnamese': 'VN',
+        'Tagalog': 'TL',
+        'Burmese': 'MM',
+        'Khmer': 'KH',
+        'Lao': 'LA'
+      };
+      return abbreviations[lang] || 'EN';
+    }
+    return lang;
+  };
+
   const [showCamera, setShowCamera] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isTablet, setIsTablet] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [sideNavOpen, setSideNavOpen] = useState(false);
   const [language, setLanguage] = useState('English');
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -51,6 +72,19 @@ export default function Home() {
     }
   ]);
 
+  // Detect mobile device on initial load
+  useEffect(() => {
+    const checkDevice = () => {
+      const isMobileDevice = window.innerWidth <= 767;
+      setIsMobile(isMobileDevice);
+    };
+    
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    
+    return () => window.removeEventListener('resize', checkDevice);
+  }, []);
+
   const handleCameraCapture = async () => {
     try {
       // Check if getUserMedia is supported
@@ -68,6 +102,10 @@ export default function Home() {
       // Detect if device is tablet (simple detection)
       const isTabletDevice = window.innerWidth >= 768 && window.innerWidth <= 1024;
       setIsTablet(isTabletDevice);
+      
+      // Detect if device is mobile
+      const isMobileDevice = window.innerWidth <= 767;
+      setIsMobile(isMobileDevice);
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -259,17 +297,29 @@ export default function Home() {
             className="language-select"
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
+            style={{
+              appearance: 'none',
+              background: 'rgba(255, 255, 255, 0.05)',
+              color: '#ffffff',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              padding: isMobile ? '2px 4px' : '6px 12px',
+              borderRadius: '8px',
+              fontSize: isMobile ? '11px' : '13px',
+              cursor: 'pointer',
+              minWidth: isMobile ? '30px' : 'auto',
+              maxWidth: isMobile ? '45px' : 'auto'
+            }}
           >
-            <option value="English">EN</option>
+            <option value="English">{isMobile ? 'EN' : 'English'}</option>
             <option value="Chinese">中文</option>
-            <option value="Malay">MY</option>
-            <option value="Indonesian">ID</option>
-            <option value="Thai">TH</option>
-            <option value="Vietnamese">VN</option>
-            <option value="Tagalog">TL</option>
-            <option value="Burmese">MM</option>
-            <option value="Khmer">KH</option>
-            <option value="Lao">LA</option>
+            <option value="Malay">{isMobile ? 'MY' : 'Malay'}</option>
+            <option value="Indonesian">{isMobile ? 'ID' : 'Indonesian'}</option>
+            <option value="Thai">{isMobile ? 'TH' : 'Thai'}</option>
+            <option value="Vietnamese">{isMobile ? 'VN' : 'Vietnamese'}</option>
+            <option value="Tagalog">{isMobile ? 'TL' : 'Tagalog'}</option>
+            <option value="Burmese">{isMobile ? 'MM' : 'Burmese'}</option>
+            <option value="Khmer">{isMobile ? 'KH' : 'Khmer'}</option>
+            <option value="Lao">{isMobile ? 'LA' : 'Lao'}</option>
           </select>
         </div>
 
