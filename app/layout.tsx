@@ -19,7 +19,6 @@ export const metadata: Metadata = {
   keywords: "medicine identification, AI chat, pill scanner, Southeast Asia, pharmacy, drug identification, conversational AI",
   authors: [{ name: "MedWira AI Team" }],
   manifest: "/manifest.json",
-  themeColor: "#00A3B5",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -30,6 +29,7 @@ export const metadata: Metadata = {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#00A3B5",
 };
 
 export default function RootLayout({
