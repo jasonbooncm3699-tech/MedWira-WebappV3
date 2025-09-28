@@ -13,6 +13,12 @@ export default function InstallBanner() {
       return;
     }
 
+    // Only show install banner on mobile and tablet devices (not desktop)
+    const isMobileOrTablet = window.innerWidth <= 1024;
+    if (!isMobileOrTablet) {
+      return;
+    }
+
     // Listen for the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
