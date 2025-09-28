@@ -12,7 +12,7 @@ export default function Home() {
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isTablet, setIsTablet] = useState(false);
   const [sideNavOpen, setSideNavOpen] = useState(false);
-  const [showInstallBanner, setShowInstallBanner] = useState(true);
+  // Removed showInstallBanner state - now handled by CSS only
   const [language, setLanguage] = useState('English');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -60,11 +60,11 @@ export default function Home() {
 
   return (
     <div className="app">
-      {/* Install Banner */}
-      {showInstallBanner && <InstallBanner />}
+      {/* Install Banner - CSS-only responsive behavior */}
+      <InstallBanner />
       
       {/* Header */}
-      <header className={`header ${showInstallBanner ? 'with-banner' : ''}`}>
+      <header className="header">
         <div className="header-left">
           <button 
             className="burger-btn" 
@@ -197,7 +197,7 @@ export default function Home() {
       </nav>
 
       {/* Chat Container */}
-      <div className={`chat-container ${showInstallBanner ? 'with-banner' : ''}`}>
+      <div className="chat-container">
         <div className="chat-window">
           <div className="message ai">
             <div className="message-avatar">

@@ -34,10 +34,17 @@ body {
   animation: slideDown 0.3s ease;
 }
 
-/* Hide install banner on desktop (1025px and above) */
+/* Hide install banner on desktop (1025px and above) - Pure CSS solution */
 @media (min-width: 1025px) {
   .install-banner-top {
     display: none !important;
+  }
+}
+
+/* Ensure banner only shows on mobile and tablet */
+@media (max-width: 1024px) {
+  .install-banner-top {
+    display: block !important;
   }
 }
 
@@ -106,8 +113,17 @@ body {
   height: 60px;
 }
 
-.header.with-banner {
-  top: 40px;
+/* Header positioning - responsive with CSS-only banner */
+@media (max-width: 1024px) {
+  .header {
+    top: 40px; /* Position below banner on mobile/tablet */
+  }
+}
+
+@media (min-width: 1025px) {
+  .header {
+    top: 0; /* Normal position on desktop (no banner) */
+  }
 }
 
 .header-left {
@@ -404,9 +420,19 @@ body {
   transition: all 0.3s ease;
 }
 
-.chat-container.with-banner {
-  margin-top: 100px;
-  height: calc(100vh - 100px);
+/* Chat container positioning - responsive with CSS-only banner */
+@media (max-width: 1024px) {
+  .chat-container {
+    margin-top: 100px; /* Position below header + banner on mobile/tablet */
+    height: calc(100vh - 100px);
+  }
+}
+
+@media (min-width: 1025px) {
+  .chat-container {
+    margin-top: 60px; /* Normal position on desktop */
+    height: calc(100vh - 60px);
+  }
 }
 
 
@@ -1034,13 +1060,9 @@ body {
   
   .chat-container {
     margin-left: 0;
-    margin-top: 60px; /* Position below header */
-    padding: 0;
-  }
-  
-  .chat-container.with-banner {
-    margin-top: 100px; /* 60px header + 40px banner */
+    margin-top: 100px; /* Position below header + banner on mobile */
     height: calc(100vh - 100px);
+    padding: 0;
   }
   
   .chat-window {
