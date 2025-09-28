@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-
-// In-memory storage for demo (replace with database later)
-const users: any[] = [];
+import jwt from 'jsonwebtoken';
+import { users } from '@/lib/users';
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,12 +46,20 @@ export async function POST(request: NextRequest) {
 
     users.push(newUser);
 
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: newUser.id },
+      process.env.JWT_SECRET || 'your_jwt_secret',
+      { expiresIn: '7d' }
+    );
+
     // Return user without password
     const { password: _, ...userWithoutPassword } = newUser;
 
     return NextResponse.json(
       { 
         user: userWithoutPassword,
+        token,
         message: 'Registration successful!' 
       },
       { status: 201 }

@@ -12,7 +12,7 @@ interface SocialAuthModalProps {
 }
 
 export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }: SocialAuthModalProps) {
-  const { login, register } = useAuth();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -28,16 +28,23 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
     setIsLoading(true);
     setMessage('');
 
-    try {
-      let result;
-      if (mode === 'login') {
-        result = await login(formData.email, formData.password);
-      } else {
-        result = await register(formData.email, formData.password, formData.name);
-      }
+    const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
+    const body = mode === 'login' ? { email: formData.email, password: formData.password } : { name: formData.name, email: formData.email, password: formData.password };
 
-      if (result.success) {
-        setMessage(result.message);
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setMessage(data.message);
+        login(data.user, data.token);
         setTimeout(() => {
           onClose();
           setFormData({ name: '', email: '', password: '' });
@@ -45,10 +52,10 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
           setShowEmailForm(false);
         }, 1500);
       } else {
-        setMessage(result.message);
+        setMessage(data.message || 'An unexpected error occurred.');
       }
-    } catch (error) {
-      setMessage('An error occurred. Please try again.');
+    } catch (err) {
+      setMessage('Network error. Please try again.');
     } finally {
       setIsLoading(false);
     }

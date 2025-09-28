@@ -12,11 +12,9 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
-  register: (email: string, password: string, name: string) => Promise<{ success: boolean; message: string }>;
+  login: (userData: User, token: string) => void;
   logout: () => void;
   isLoading: boolean;
-  updateTokens: (tokens: number) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,85 +24,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on app load
-    checkAuthStatus();
+    const loadUser = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const res = await fetch('/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          if (res.ok) {
+            const userData = await res.json();
+            setUser(userData.user);
+          } else {
+            localStorage.removeItem('token');
+          }
+        } catch (error) {
+          console.error('Failed to fetch user data:', error);
+          localStorage.removeItem('token');
+        }
+      }
+      setIsLoading(false);
+    };
+    loadUser();
   }, []);
 
-  const checkAuthStatus = async () => {
-    try {
-      const response = await fetch('/api/auth/me');
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-      }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const login = async (email: string, password: string) => {
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setUser(data.user);
-        return { success: true, message: 'Login successful!' };
-      } else {
-        return { success: false, message: data.message || 'Login failed' };
-      }
-    } catch (error) {
-      return { success: false, message: 'Network error. Please try again.' };
-    }
-  };
-
-  const register = async (email: string, password: string, name: string) => {
-    try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password, name }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setUser(data.user);
-        return { success: true, message: 'Registration successful!' };
-      } else {
-        return { success: false, message: data.message || 'Registration failed' };
-      }
-    } catch (error) {
-      return { success: false, message: 'Network error. Please try again.' };
-    }
+  const login = (userData: User, token: string) => {
+    setUser(userData);
+    localStorage.setItem('token', token);
   };
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-      });
+      await fetch('/api/auth/logout', { method: 'POST' });
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Logout failed:', error);
     } finally {
       setUser(null);
-    }
-  };
-
-  const updateTokens = (tokens: number) => {
-    if (user) {
-      setUser({ ...user, tokens });
+      localStorage.removeItem('token');
     }
   };
 
@@ -112,10 +69,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider value={{ 
       user, 
       login, 
-      register, 
       logout, 
-      isLoading,
-      updateTokens 
+      isLoading
     }}>
       {children}
     </AuthContext.Provider>
