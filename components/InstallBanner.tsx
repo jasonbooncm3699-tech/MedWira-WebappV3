@@ -55,7 +55,7 @@ export default function InstallBanner() {
       <div className="install-content">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Download size={16} />
-          <span>Add MedWira AI to your home screen for faster access!</span>
+          <span>Add MedWira AI to your home screen!</span>
         </div>
         <div className="install-actions">
           <button onClick={handleInstall}>
