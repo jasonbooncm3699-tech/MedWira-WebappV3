@@ -28,23 +28,26 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
     setIsLoading(true);
     setMessage('');
 
-    const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
-    const body = mode === 'login' ? { email: formData.email, password: formData.password } : { name: formData.name, email: formData.email, password: formData.password };
-
-    try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setMessage(data.message);
-        login(data.user, data.token);
+    // Mock authentication for demo purposes
+    setTimeout(() => {
+      if (mode === 'register') {
+        // Mock registration
+        const mockUser = {
+          id: Date.now().toString(),
+          name: formData.name,
+          email: formData.email,
+          tokens: 30,
+          createdAt: new Date().toISOString(),
+        };
+        const mockToken = 'demo_token_' + Date.now();
+        
+        // Store user in demo users list
+        const existingUsers = JSON.parse(localStorage.getItem('demoUsers') || '[]');
+        existingUsers.push(mockUser);
+        localStorage.setItem('demoUsers', JSON.stringify(existingUsers));
+        
+        setMessage('Registration successful!');
+        login(mockUser, mockToken);
         setTimeout(() => {
           onClose();
           setFormData({ name: '', email: '', password: '' });
@@ -52,13 +55,26 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
           setShowEmailForm(false);
         }, 1500);
       } else {
-        setMessage(data.message || 'An unexpected error occurred.');
+        // Mock login - check if user exists in localStorage
+        const existingUsers = JSON.parse(localStorage.getItem('demoUsers') || '[]');
+        const user = existingUsers.find((u: any) => u.email === formData.email);
+        
+        if (user) {
+          const mockToken = 'demo_token_' + Date.now();
+          setMessage('Login successful!');
+          login(user, mockToken);
+          setTimeout(() => {
+            onClose();
+            setFormData({ name: '', email: '', password: '' });
+            setMessage('');
+            setShowEmailForm(false);
+          }, 1500);
+        } else {
+          setMessage('Invalid email or password');
+        }
       }
-    } catch (err) {
-      setMessage('Network error. Please try again.');
-    } finally {
       setIsLoading(false);
-    }
+    }, 1000);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

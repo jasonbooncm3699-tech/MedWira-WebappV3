@@ -24,24 +24,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadUser = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
+    const loadUser = () => {
+      const userData = localStorage.getItem('userData');
+      if (userData) {
         try {
-          const res = await fetch('/api/auth/me', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          });
-          if (res.ok) {
-            const userData = await res.json();
-            setUser(userData.user);
-          } else {
-            localStorage.removeItem('token');
-          }
+          const user = JSON.parse(userData);
+          setUser(user);
         } catch (error) {
-          console.error('Failed to fetch user data:', error);
-          localStorage.removeItem('token');
+          console.error('Failed to parse user data:', error);
+          localStorage.removeItem('userData');
         }
       }
       setIsLoading(false);
@@ -51,18 +42,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = (userData: User, token: string) => {
     setUser(userData);
+    localStorage.setItem('userData', JSON.stringify(userData));
     localStorage.setItem('token', token);
   };
 
-  const logout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-    } catch (error) {
-      console.error('Logout failed:', error);
-    } finally {
-      setUser(null);
-      localStorage.removeItem('token');
-    }
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('userData');
+    localStorage.removeItem('token');
   };
 
   return (
