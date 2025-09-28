@@ -7,16 +7,27 @@ export default function InstallBanner() {
   const [showBanner, setShowBanner] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
+  const checkScreenSize = () => {
+    // Only show install banner on mobile and tablet devices (not desktop)
+    const isMobileOrTablet = window.innerWidth <= 1024;
+    console.log('Screen width:', window.innerWidth, 'Is mobile/tablet:', isMobileOrTablet);
+    
+    // If desktop, hide banner immediately
+    if (!isMobileOrTablet) {
+      setShowBanner(false);
+      return false;
+    }
+    return true;
+  };
+
   useEffect(() => {
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
       return;
     }
 
-    // Only show install banner on mobile and tablet devices (not desktop)
-    const isMobileOrTablet = window.innerWidth <= 1024;
-    console.log('Screen width:', window.innerWidth, 'Is mobile/tablet:', isMobileOrTablet);
-    if (!isMobileOrTablet) {
+    // Initial screen size check
+    if (!checkScreenSize()) {
       return;
     }
 
@@ -24,19 +35,31 @@ export default function InstallBanner() {
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowBanner(true);
+      // Only show if screen size is still mobile/tablet
+      if (checkScreenSize()) {
+        setShowBanner(true);
+      }
+    };
+
+    // Listen for window resize
+    const handleResize = () => {
+      if (!checkScreenSize()) {
+        setShowBanner(false);
+      }
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('resize', handleResize);
 
     // Check if banner was previously dismissed
     const bannerDismissed = localStorage.getItem('install-banner-dismissed');
-    if (!bannerDismissed && deferredPrompt) {
+    if (!bannerDismissed && deferredPrompt && checkScreenSize()) {
       setShowBanner(true);
     }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('resize', handleResize);
     };
   }, [deferredPrompt]);
 

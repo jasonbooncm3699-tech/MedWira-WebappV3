@@ -34,6 +34,13 @@ body {
   animation: slideDown 0.3s ease;
 }
 
+/* Hide install banner on desktop (1025px and above) */
+@media (min-width: 1025px) {
+  .install-banner-top {
+    display: none !important;
+  }
+}
+
 .install-content {
   display: flex;
   align-items: center;
