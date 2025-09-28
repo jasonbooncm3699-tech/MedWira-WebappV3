@@ -1,4 +1,4 @@
-const CACHE_NAME = 'medwira-ai-v12-premium-ux-fixes';
+const CACHE_NAME = 'medwira-ai-v13-world-class-mvp';
 const urlsToCache = [
   '/',
   '/static/js/bundle.js',

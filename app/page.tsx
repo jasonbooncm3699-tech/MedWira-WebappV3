@@ -1,21 +1,55 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Bot, User, Send, Upload, Camera, Menu, X, Plus, MessageSquare, Settings, LogOut, LogIn } from 'lucide-react';
+import { Bot, User, Send, Upload, Camera, Menu, X, Plus, MessageSquare, Settings, LogOut, LogIn, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import SocialAuthModal from '@/components/SocialAuthModal';
 import InstallBanner from '@/components/InstallBanner';
+import { MessageFormatter } from '@/lib/message-formatter';
 
 export default function Home() {
   const { user, logout, isLoading } = useAuth();
+  
+  // Get welcome message in user's language
+  const getWelcomeMessage = (lang: string): string => {
+    const messages: { [key: string]: string } = {
+      'English': '👋 Welcome to MedWira AI! Upload a photo of your medicine for instant identification and detailed analysis.',
+      'Chinese': '👋 欢迎使用MedWira AI！上传您的药品照片即可获得即时识别和详细分析。',
+      'Malay': '👋 Selamat datang ke MedWira AI! Muat naik foto ubat anda untuk pengenalan serta-merta dan analisis terperinci.',
+      'Indonesian': '👋 Selamat datang di MedWira AI! Unggah foto obat Anda untuk identifikasi instan dan analisis mendalam.',
+      'Thai': '👋 ยินดีต้อนรับสู่ MedWira AI! อัปโหลดรูปภาพยาของคุณเพื่อการระบุตัวตนทันทีและการวิเคราะห์โดยละเอียด',
+      'Vietnamese': '👋 Chào mừng đến với MedWira AI! Tải lên hình ảnh thuốc của bạn để nhận dạng tức thì và phân tích chi tiết.',
+      'Tagalog': '👋 Maligayang pagdating sa MedWira AI! I-upload ang larawan ng inyong gamot para sa instant identification at detalyadong analysis.',
+      'Burmese': '👋 MedWira AI မှ ကြိုဆိုပါတယ်! သင့်ဆေးပုံကို တင်ပို့ပြီး အမြန်ခွဲခြားသိမြင်မှုနှင့် အသေးစိတ်ခွဲခြမ်းစိတ်ဖြာမှုရယူပါ။',
+      'Khmer': '👋 សូមស្វាគមន៍មកកាន់ MedWira AI! ផ្ទុករូបភាពថ្នាំរបស់អ្នកឡើងសម្រាប់ការកំណត់អត្តសញ្ញាណភ្លាមៗ និងការវិភាគលម្អិត។',
+      'Lao': '👋 ຍິນດີຕ້ອນຮັບສູ່ MedWira AI! ອັບໂລດຮູບພາບຢາຂອງທ່ານເພື່ອການກວດສອບແລະກຳນົດຕົວຕົນທັນທີ ແລະການວິເຄາະລາຍລະອຽດ.'
+    };
+    return messages[lang] || messages['English'];
+  };
+
   const [showCamera, setShowCamera] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isTablet, setIsTablet] = useState(false);
   const [sideNavOpen, setSideNavOpen] = useState(false);
-  // Removed showInstallBanner state - now handled by CSS only
   const [language, setLanguage] = useState('English');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [allergy, setAllergy] = useState('');
+  const [messages, setMessages] = useState<Array<{
+    id: string;
+    type: 'user' | 'ai';
+    content: string;
+    timestamp: Date;
+    image?: string;
+  }>>([
+    {
+      id: '1',
+      type: 'ai',
+      content: getWelcomeMessage('English'),
+      timestamp: new Date()
+    }
+  ]);
 
   const handleCameraCapture = async () => {
     try {
@@ -56,6 +90,151 @@ export default function Home() {
       setCameraStream(null);
     }
     setShowCamera(false);
+  };
+
+  // Capture photo from camera
+  const capturePhoto = () => {
+    const video = document.querySelector('video') as HTMLVideoElement;
+    if (!video) return;
+
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // For tablets, flip the image
+    if (isTablet) {
+      context.scale(-1, 1);
+      context.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+    } else {
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    }
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      
+      const reader = new FileReader();
+      reader.onload = () => {
+        const imageBase64 = reader.result as string;
+        closeCamera();
+        analyzeMedicineImage(imageBase64);
+      };
+      reader.readAsDataURL(blob);
+    }, 'image/jpeg', 0.9);
+  };
+
+  // Professional AI Image Analysis
+  const analyzeMedicineImage = async (imageBase64: string) => {
+    setIsAnalyzing(true);
+    
+    try {
+      const response = await fetch('/api/analyze-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageBase64,
+          language,
+          allergy
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Format the AI response professionally
+        const formattedMessage = MessageFormatter.formatMedicineAnalysis(result);
+        
+        // Create user message
+        const userMessage = {
+          id: Date.now().toString(),
+          type: 'user' as const,
+          content: getUploadMessage(language),
+          timestamp: new Date(),
+          image: imageBase64
+        };
+
+        // Create AI response message
+        const aiMessage = {
+          id: (Date.now() + 1).toString(),
+          type: 'ai' as const,
+          content: formattedMessage.content,
+          timestamp: new Date()
+        };
+
+        // Add both messages to chat
+        setMessages(prev => [...prev, userMessage, aiMessage]);
+
+      } else {
+        // Handle error response
+        const errorMessage = {
+          id: (Date.now() + 1).toString(),
+          type: 'ai' as const,
+          content: `**Error:** ${result.error}`,
+          timestamp: new Date()
+        };
+        
+        setMessages(prev => [...prev, errorMessage]);
+      }
+
+    } catch (error) {
+      console.error('Analysis error:', error);
+      const errorMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai' as const,
+        content: '**Error:** Analysis failed. Please try again with a clearer image.',
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  // Get upload message in user's language
+  const getUploadMessage = (lang: string): string => {
+    const messages: { [key: string]: string } = {
+      'English': 'I\'ve uploaded an image of a medicine for identification.',
+      'Chinese': '我已上传药品图片进行识别。',
+      'Malay': 'Saya telah memuat naik gambar ubat untuk pengenalan.',
+      'Indonesian': 'Saya telah mengunggah gambar obat untuk identifikasi.',
+      'Thai': 'ฉันได้อัปโหลดรูปภาพยาสำหรับการระบุตัวตน',
+      'Vietnamese': 'Tôi đã tải lên hình ảnh thuốc để nhận dạng.',
+      'Tagalog': 'Nai-upload ko na ang larawan ng gamot para sa pagkilala.',
+      'Burmese': 'ဆေးဝါးများကို ခွဲခြားသိမြင်ရန် ပုံတစ်ပုံကို တင်ပို့ပြီးပါပြီ။',
+      'Khmer': 'ខ្ញុំបានផ្ទុករូបភាពថ្នាំឡើងសម្រាប់ការកំណត់អត្តសញ្ញាណ។',
+      'Lao': 'ຂ້ອຍໄດ້ອັບໂລດຮູບພາບຢາເພື່ອການກວດສອບແລະກຳນົດຕົວຕົນ.'
+    };
+    return messages[lang] || messages['English'];
+  };
+
+  // Handle file upload
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file.');
+      return;
+    }
+
+    // Validate file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Image file is too large. Please select an image smaller than 10MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const imageBase64 = reader.result as string;
+      analyzeMedicineImage(imageBase64);
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -199,44 +378,53 @@ export default function Home() {
       {/* Chat Container */}
       <div className="chat-container">
         <div className="chat-window">
-          <div className="message ai">
-            <div className="message-avatar">
-              <Bot size={20} />
-            </div>
-            <div className="message-content">
-              <div className="message-text">Start this conversation by taking your medicine photo.</div>
-              <div className="message-footer">
-                <div className="message-time">19:46</div>
+          {messages.map((message) => (
+            <div key={message.id} className={`message ${message.type}`}>
+              <div className="message-avatar">
+                {message.type === 'user' ? <User size={20} /> : <Bot size={20} />}
+              </div>
+              <div className="message-content">
+                {message.image && (
+                  <div className="message-image">
+                    <img src={message.image} alt="Uploaded medicine" />
+                  </div>
+                )}
+                <div className="message-text">
+                  {message.content.includes('**') ? (
+                    <div dangerouslySetInnerHTML={{ 
+                      __html: message.content
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n/g, '<br>')
+                        .replace(/⚠️/g, '⚠️')
+                    }} />
+                  ) : (
+                    message.content
+                  )}
+                </div>
+                <div className="message-footer">
+                  <div className="message-time">
+                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          ))}
           
-          <div className="message user">
-            <div className="message-avatar">
-              <User size={20} />
-            </div>
-            <div className="message-content">
-              <div className="message-image">
-                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2NjYyIvPjx0ZXh0IHg9IjUwIiB5PSI1MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjNjY2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+SW1hZ2U8L3RleHQ+PC9zdmc+" alt="Uploaded medicine" />
+          {isAnalyzing && (
+            <div className="message ai">
+              <div className="message-avatar">
+                <Bot size={20} />
               </div>
-              <div className="message-text">I&apos;ve uploaded an image of a medicine for identification.</div>
-              <div className="message-footer">
-                <div className="message-time">19:46</div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="message ai">
-            <div className="message-avatar">
-              <Bot size={20} />
-            </div>
-            <div className="message-content">
-              <div className="message-text">Error: API key not configured. Please upload a clear photo of medicine packaging, pills, or related medical items for proper identification.</div>
-              <div className="message-footer">
-                <div className="message-time">19:46</div>
+              <div className="message-content">
+                <div className="message-text">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Loader2 size={16} className="animate-spin" />
+                    Analyzing your medicine image...
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="input-container">
@@ -246,6 +434,8 @@ export default function Home() {
               type="text"
               placeholder="Enter allergies (e.g., penicillin, paracetamol)"
               className="allergy-input"
+              value={allergy}
+              onChange={(e) => setAllergy(e.target.value)}
             />
           </div>
 
@@ -255,6 +445,7 @@ export default function Home() {
               accept="image/*"
               id="upload"
               className="file-input"
+              onChange={handleFileUpload}
             />
             <label htmlFor="upload" className="upload-btn">
               <Upload size={18} />
@@ -323,19 +514,45 @@ export default function Home() {
               transform: isTablet ? 'scaleX(-1)' : 'none' // Fix mirroring on tablets only
             }}
           />
-          <p style={{ 
+          <div style={{ 
             position: 'absolute', 
             bottom: '20px', 
             left: '50%', 
             transform: 'translateX(-50%)', 
-            color: 'white', 
-            textAlign: 'center', 
-            background: 'rgba(0,0,0,0.7)', 
-            padding: '10px', 
-            borderRadius: '8px' 
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '15px'
           }}>
-            Camera Test - Device: {isTablet ? 'Tablet (mirror fix)' : 'Mobile (normal)'}
-          </p>
+            <button
+              onClick={capturePhoto}
+              style={{
+                background: '#00d4ff',
+                border: 'none',
+                borderRadius: '50%',
+                width: '70px',
+                height: '70px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(0, 212, 255, 0.3)'
+              }}
+            >
+              <Camera size={30} color="white" />
+            </button>
+            <p style={{ 
+              color: 'white', 
+              textAlign: 'center', 
+              background: 'rgba(0,0,0,0.7)', 
+              padding: '8px 16px', 
+              borderRadius: '8px',
+              margin: 0,
+              fontSize: '14px'
+            }}>
+              Tap to capture medicine photo
+            </p>
+          </div>
         </div>
       )}
 
