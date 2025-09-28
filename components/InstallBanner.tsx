@@ -61,18 +61,13 @@ export default function InstallBanner() {
   return (
     <div className="install-banner-top">
       <div className="install-content">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
           <Download size={16} />
           <span>Install MedWira AI to your home screen!</span>
         </div>
-        <div className="install-actions">
-          <button onClick={handleInstall}>
-            Install
-          </button>
-          <button className="close-install" onClick={handleDismiss}>
-            <X size={16} />
-          </button>
-        </div>
+        <button className="close-install" onClick={handleDismiss}>
+          <X size={16} />
+        </button>
       </div>
     </div>
   );

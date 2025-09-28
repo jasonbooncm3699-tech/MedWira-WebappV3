@@ -55,6 +55,7 @@ body {
   padding: 8px 20px;
   font-size: 13px;
   font-weight: 500;
+  gap: 12px;
 }
 
 .install-actions {
