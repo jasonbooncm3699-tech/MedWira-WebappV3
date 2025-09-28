@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { geminiAnalyzer, MedicineAnalysisResult } from '@/lib/gemini-service';
+import { geminiAnalyzer } from '@/lib/gemini-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Analyze the image
-    const result: MedicineAnalysisResult = await geminiAnalyzer.analyzeMedicineImage(
+    const result = await geminiAnalyzer.analyzeMedicineImage(
       imageBase64,
       language,
       allergy || ''
