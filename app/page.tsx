@@ -403,7 +403,11 @@ export default function Home() {
                 </div>
                 <div className="message-footer">
                   <div className="message-time">
-                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {message.timestamp.toLocaleTimeString('en-US', { 
+                      hour: '2-digit', 
+                      minute: '2-digit',
+                      hour12: true 
+                    })}
                   </div>
                 </div>
               </div>

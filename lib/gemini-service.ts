@@ -22,7 +22,7 @@ export class GeminiMedicineAnalyzer {
   private model: any;
 
   constructor() {
-    this.model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    this.model = genAI.getGenerativeModel({ model: 'gemini-pro-vision' });
   }
 
   async analyzeMedicineImage(
