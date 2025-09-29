@@ -111,12 +111,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.user) {
         try {
           // Create user record in our users table
-          await DatabaseService.createUser({
-            email: data.user.email!,
-            name,
-            tokens: 10, // Free tier starts with 10 tokens
-            subscription_tier: 'free',
-          });
+        await DatabaseService.createUser({
+          email: data.user.email!,
+          name,
+          tokens: 30, // Free tier starts with 30 tokens
+          subscription_tier: 'free',
+        });
           console.log('✅ User record created in database');
         } catch (dbError) {
           console.error('💥 Failed to create user record:', dbError);

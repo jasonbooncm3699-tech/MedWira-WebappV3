@@ -147,7 +147,7 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
                   id: data.session.user.id,
                   email: data.session.user.email,
                   name: userName,
-                  tokens: 10,
+                  tokens: 30,
                   subscription_tier: 'free',
                   created_at: new Date().toISOString(),
                   updated_at: new Date().toISOString(),

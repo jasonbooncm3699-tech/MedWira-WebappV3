@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
                 data.session.user.user_metadata?.name || 
                 data.session.user.user_metadata?.user_name ||
                 'User',
-          tokens: 10,
+          tokens: 30,
           subscription_tier: 'free',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
