@@ -8,26 +8,42 @@ export default function InstallBanner() {
   const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
+    // DEBUG: Log current state
+    console.log('🔍 InstallBanner Debug:', {
+      screenWidth: window.innerWidth,
+      isStandalone: window.matchMedia('(display-mode: standalone)').matches,
+      localStorage: localStorage.getItem('install-banner-dismissed'),
+      sessionStorage: sessionStorage.getItem('install-banner-dismissed-session')
+    });
+
     // Check if already installed as PWA
     if (window.matchMedia('(display-mode: standalone)').matches) {
+      console.log('🚫 Banner hidden: App running as PWA');
       return;
     }
 
     // Check if app was permanently installed (not just dismissed)
     const bannerPermanentlyDismissed = localStorage.getItem('install-banner-dismissed');
     if (bannerPermanentlyDismissed === 'installed') {
+      console.log('🚫 Banner hidden: App was permanently installed');
       return; // Don't show banner if app was actually installed
     }
 
     // Show banner on mobile and tablet (1024px and below) - PERSISTENT PROMOTION
     const isMobileOrTablet = window.innerWidth <= 1024;
+    console.log('📱 Device check:', { isMobileOrTablet, screenWidth: window.innerWidth });
+    
     if (isMobileOrTablet) {
+      console.log('✅ Banner should show: Mobile/Tablet detected');
       setShowBanner(true);
+    } else {
+      console.log('🚫 Banner hidden: Desktop detected');
     }
 
     // Check if banner was dismissed in current session only
     const bannerDismissedThisSession = sessionStorage.getItem('install-banner-dismissed-session');
     if (bannerDismissedThisSession) {
+      console.log('🚫 Banner hidden: Dismissed in current session');
       setShowBanner(false);
       // Ensure header is positioned correctly when banner is hidden
       const headerElement = document.querySelector('.header');
