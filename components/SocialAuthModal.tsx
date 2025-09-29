@@ -12,7 +12,7 @@ interface SocialAuthModalProps {
 }
 
 export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }: SocialAuthModalProps) {
-  const { login } = useAuth();
+  const { login, register } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -28,41 +28,13 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
     setIsLoading(true);
     setMessage('');
 
-    // Mock authentication for demo purposes
-    setTimeout(() => {
+    try {
       if (mode === 'register') {
-        // Mock registration
-        const mockUser = {
-          id: Date.now().toString(),
-          name: formData.name,
-          email: formData.email,
-          tokens: 30,
-          createdAt: new Date().toISOString(),
-        };
-        const mockToken = 'demo_token_' + Date.now();
+        // Use Supabase registration
+        const result = await register(formData.email, formData.password, formData.name);
         
-        // Store user in demo users list
-        const existingUsers = JSON.parse(localStorage.getItem('demoUsers') || '[]');
-        existingUsers.push(mockUser);
-        localStorage.setItem('demoUsers', JSON.stringify(existingUsers));
-        
-        setMessage('Registration successful!');
-        login(mockUser, mockToken);
-        setTimeout(() => {
-          onClose();
-          setFormData({ name: '', email: '', password: '' });
-          setMessage('');
-          setShowEmailForm(false);
-        }, 1500);
-      } else {
-        // Mock login - check if user exists in localStorage
-        const existingUsers = JSON.parse(localStorage.getItem('demoUsers') || '[]');
-        const user = existingUsers.find((u: any) => u.email === formData.email);
-        
-        if (user) {
-          const mockToken = 'demo_token_' + Date.now();
-          setMessage('Login successful!');
-          login(user, mockToken);
+        if (result.success) {
+          setMessage('Registration successful! Please check your email to verify your account.');
           setTimeout(() => {
             onClose();
             setFormData({ name: '', email: '', password: '' });
@@ -70,11 +42,29 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
             setShowEmailForm(false);
           }, 1500);
         } else {
-          setMessage('Invalid email or password');
+          setMessage(result.error || 'Registration failed. Please try again.');
+        }
+      } else {
+        // Use Supabase login
+        const result = await login(formData.email, formData.password);
+        
+        if (result.success) {
+          setMessage('Login successful!');
+          setTimeout(() => {
+            onClose();
+            setFormData({ name: '', email: '', password: '' });
+            setMessage('');
+            setShowEmailForm(false);
+          }, 1500);
+        } else {
+          setMessage(result.error || 'Login failed. Please check your credentials.');
         }
       }
+    } catch (error) {
+      setMessage('An error occurred. Please try again.');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
