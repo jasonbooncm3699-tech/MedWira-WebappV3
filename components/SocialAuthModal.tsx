@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Mail, Eye, EyeOff } from 'lucide-react';
+import { X, Mail, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import { supabase } from '@/lib/supabase';
 
 interface SocialAuthModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState<string | null>(null); // Track which social provider is loading
   const [message, setMessage] = useState('');
   const [showEmailForm, setShowEmailForm] = useState(false);
 
@@ -74,11 +76,100 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
     });
   };
 
-  const handleSocialLogin = (provider: 'google' | 'facebook') => {
-    // TODO: Implement social login
-    console.log(`Login with ${provider}`);
-    setMessage(`Social login with ${provider} coming soon!`);
+  const handleSocialLogin = async (provider: 'google' | 'facebook') => {
+    try {
+      setSocialLoading(provider);
+      setMessage('');
+      console.log(`🔐 Starting ${provider} OAuth flow...`);
+
+      // Configure redirect URL for OAuth
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: redirectUrl,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) {
+        console.error(`❌ ${provider} OAuth error:`, error.message);
+        setMessage(`${provider} login failed: ${error.message}`);
+        setSocialLoading(null);
+        return;
+      }
+
+      console.log(`✅ ${provider} OAuth initiated successfully`);
+      // The page will redirect to the OAuth provider, so we don't need to close the modal here
+      
+    } catch (error) {
+      console.error(`💥 ${provider} OAuth exception:`, error);
+      setMessage(`${provider} login failed. Please try again.`);
+      setSocialLoading(null);
+    }
   };
+
+  // Handle OAuth callback when component mounts
+  React.useEffect(() => {
+    const handleAuthCallback = async () => {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const error = hashParams.get('error');
+      const errorDescription = hashParams.get('error_description');
+      
+      if (error) {
+        console.error('❌ OAuth callback error:', error, errorDescription);
+        setMessage(`Authentication failed: ${errorDescription || error}`);
+        return;
+      }
+
+      // Check if we're on the auth callback page
+      if (window.location.pathname === '/auth/callback') {
+        try {
+          const { data, error: callbackError } = await supabase.auth.getSession();
+          
+          if (callbackError) {
+            console.error('❌ Session error after OAuth:', callbackError.message);
+            return;
+          }
+
+          if (data.session?.user) {
+            console.log('✅ OAuth authentication successful for:', data.session.user.email);
+            
+            // Create user record if this is a new user
+            if (data.session.user.user_metadata?.full_name || data.session.user.user_metadata?.name) {
+              try {
+                const userName = data.session.user.user_metadata?.full_name || data.session.user.user_metadata?.name || 'User';
+                await supabase.from('users').upsert({
+                  id: data.session.user.id,
+                  email: data.session.user.email,
+                  name: userName,
+                  tokens: 10,
+                  subscription_tier: 'free',
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                  last_login: new Date().toISOString(),
+                });
+                console.log('✅ User record created/updated');
+              } catch (dbError) {
+                console.warn('⚠️ Failed to create user record:', dbError);
+              }
+            }
+            
+            // Redirect back to home page
+            window.location.href = '/';
+          }
+        } catch (error) {
+          console.error('💥 OAuth callback error:', error);
+        }
+      }
+    };
+
+    handleAuthCallback();
+  }, []);
 
   if (!isOpen) return null;
 
@@ -180,6 +271,7 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
               <button
                 onClick={() => handleSocialLogin('google')}
+                disabled={socialLoading !== null || isLoading}
                 style={{
                   width: '100%',
                   padding: '16px',
@@ -188,32 +280,39 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
                   borderRadius: '8px',
                   color: '#ffffff',
                   fontSize: '16px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <div style={{ 
-                  width: '20px', 
-                  height: '20px', 
-                  background: 'linear-gradient(45deg, #4285f4, #34a853, #fbbc05, #ea4335)',
-                  borderRadius: '4px',
+                  cursor: socialLoading !== null || isLoading ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'white',
-                  fontSize: '12px',
-                  fontWeight: 'bold'
-                }}>
-                  G
-                </div>
-                Continue with Google
+                  gap: '12px',
+                  transition: 'all 0.2s ease',
+                  opacity: socialLoading !== null || isLoading ? 0.6 : 1,
+                }}
+              >
+                {socialLoading === 'google' ? (
+                  <Loader2 size={20} className="animate-spin" />
+                ) : (
+                  <div style={{ 
+                    width: '20px', 
+                    height: '20px', 
+                    background: 'linear-gradient(45deg, #4285f4, #34a853, #fbbc05, #ea4335)',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}>
+                    G
+                  </div>
+                )}
+                {socialLoading === 'google' ? 'Connecting...' : 'Continue with Google'}
               </button>
 
               <button
                 onClick={() => handleSocialLogin('facebook')}
+                disabled={socialLoading !== null || isLoading}
                 style={{
                   width: '100%',
                   padding: '16px',
@@ -222,28 +321,34 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
                   borderRadius: '8px',
                   color: '#ffffff',
                   fontSize: '16px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <div style={{ 
-                  width: '20px', 
-                  height: '20px', 
-                  background: '#1877f2',
-                  borderRadius: '4px',
+                  cursor: socialLoading !== null || isLoading ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'white',
-                  fontSize: '12px',
-                  fontWeight: 'bold'
-                }}>
-                  f
-                </div>
-                Continue with Facebook
+                  gap: '12px',
+                  transition: 'all 0.2s ease',
+                  opacity: socialLoading !== null || isLoading ? 0.6 : 1,
+                }}
+              >
+                {socialLoading === 'facebook' ? (
+                  <Loader2 size={20} className="animate-spin" />
+                ) : (
+                  <div style={{ 
+                    width: '20px', 
+                    height: '20px', 
+                    background: '#1877f2',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}>
+                    f
+                  </div>
+                )}
+                {socialLoading === 'facebook' ? 'Connecting...' : 'Continue with Facebook'}
               </button>
             </div>
 
