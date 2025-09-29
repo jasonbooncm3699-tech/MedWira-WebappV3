@@ -257,16 +257,40 @@ body {
   display: flex;
   flex-direction: column;
   padding-top: 0; /* Remove default padding */
+  overflow-y: auto; /* Allow scrolling if content exceeds height */
 }
 
 /* Adjust side nav position for mobile/tablet */
 @media (max-width: 1024px) {
   .side-nav {
     top: 100px; /* Position below header + banner */
+    height: calc(100vh - 100px); /* Adjust height for banner space */
   }
   
   .side-nav.banner-dismissed {
     top: 60px; /* Position below header only when banner is dismissed */
+    height: calc(100vh - 60px); /* Restore full height when banner dismissed */
+  }
+}
+
+/* Tablet-specific optimizations */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .side-nav {
+    /* Ensure proper height calculation on tablets */
+    height: calc(100vh - 100px);
+    max-height: calc(100vh - 100px);
+  }
+  
+  .side-nav.banner-dismissed {
+    height: calc(100vh - 60px);
+    max-height: calc(100vh - 60px);
+  }
+  
+  .nav-footer {
+    /* Ensure footer is always visible on tablet */
+    position: sticky;
+    bottom: 0;
+    background: rgba(10, 10, 10, 0.95);
   }
 }
 
@@ -382,6 +406,8 @@ body {
 .nav-footer {
   padding: 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: auto; /* Push footer to bottom */
+  flex-shrink: 0; /* Prevent footer from shrinking */
 }
 
 .user-info {
