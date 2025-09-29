@@ -71,11 +71,16 @@ export default function InstallBanner() {
     if (deferredPrompt) {
       console.log('📱 Using native install prompt');
       try {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
+        // Show the native install prompt
+        const result = await deferredPrompt.prompt();
+        console.log('📱 Install prompt shown');
+        
+        // Wait for user choice
+        const { outcome } = await result.userChoice;
+        console.log('📱 User choice:', outcome);
         
         if (outcome === 'accepted') {
-          console.log('✅ User accepted the install prompt');
+          console.log('✅ User accepted the install prompt - PWA will be installed');
           // Permanently hide banner after successful installation
           localStorage.setItem('install-banner-dismissed', 'installed');
           setShowBanner(false);
@@ -83,14 +88,15 @@ export default function InstallBanner() {
           console.log('❌ User dismissed the install prompt');
         }
         
+        // Clear the deferred prompt
         setDeferredPrompt(null);
       } catch (error) {
         console.error('❌ Install prompt error:', error);
-        // Fallback to manual instructions
+        // Fallback to manual instructions if native prompt fails
         showManualInstallInstructions();
       }
     } else {
-      console.log('📱 No deferred prompt available - showing manual instructions');
+      console.log('📱 No native install prompt available - showing manual instructions');
       showManualInstallInstructions();
     }
   };
@@ -103,14 +109,14 @@ export default function InstallBanner() {
     let instructions = '';
     
     if (isIOS) {
-      instructions = 'To install: Tap the Share button (📤) and select "Add to Home Screen"';
+      instructions = '📱 iOS Installation:\n\n1. Tap the Share button (📤) at the bottom\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add" to confirm\n\nYour app will appear on your home screen!';
     } else if (isAndroid) {
-      instructions = 'To install: Tap the menu (⋮) and select "Add to Home Screen" or "Install App"';
+      instructions = '📱 Android Installation:\n\n1. Tap the menu button (⋮) in your browser\n2. Look for "Add to Home Screen" or "Install App"\n3. Tap it and confirm the installation\n\nYour app will appear on your home screen!';
     } else {
-      instructions = 'To install: Look for the install icon in your browser\'s address bar or menu';
+      instructions = '💻 Desktop Installation:\n\n1. Look for the install icon (⊕) in your browser\'s address bar\n2. Or check the browser menu for "Install App"\n3. Click it to install\n\nYour app will be added to your desktop!';
     }
     
-    alert(`Install MedWira AI:\n\n${instructions}\n\nAfter installation, the app will be available on your home screen!`);
+    alert(`Install MedWira AI:\n\n${instructions}`);
   };
 
   const handleDismiss = () => {
