@@ -273,6 +273,28 @@ body {
   }
 }
 
+/* Tablet-specific height adjustments */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .side-nav {
+    top: 104px; /* Account for taller tablet header (64px) + banner (40px) */
+    height: calc(100vh - 104px);
+  }
+  
+  .side-nav.banner-dismissed {
+    top: 64px; /* Account for taller tablet header only */
+    height: calc(100vh - 64px);
+  }
+  
+  /* Update main content margin for tablet */
+  .main-content {
+    margin-top: 104px; /* Account for taller tablet header + banner */
+  }
+  
+  .main-content.banner-dismissed {
+    margin-top: 64px; /* Account for taller tablet header only */
+  }
+}
+
 /* Tablet-specific optimizations */
 @media (min-width: 768px) and (max-width: 1024px) {
   .side-nav {
@@ -291,6 +313,83 @@ body {
     position: sticky;
     bottom: 0;
     background: rgba(10, 10, 10, 0.95);
+  }
+
+  /* TABLET SPACING OPTIMIZATIONS */
+  
+  /* Header - More generous padding for tablet */
+  .header {
+    padding: 16px 24px; /* Increased from 12px 20px */
+    height: 64px; /* Slightly taller for better touch targets */
+  }
+
+  /* Navigation header - Better spacing */
+  .nav-header {
+    padding: 24px; /* Increased from 20px */
+  }
+
+  /* Navigation content - More comfortable spacing */
+  .nav-content {
+    padding: 24px; /* Increased from 20px */
+  }
+
+  /* Navigation footer - Better spacing */
+  .nav-footer {
+    padding: 24px; /* Increased from 20px */
+  }
+
+  /* Chat window - More generous padding */
+  .chat-window {
+    padding: 24px; /* Increased from 20px */
+    gap: 24px; /* Increased from 20px */
+  }
+
+  /* Input container - Better spacing */
+  .input-container {
+    padding: 24px; /* Increased from 20px */
+  }
+
+  /* Button sizing - Better touch targets */
+  .new-chat-btn {
+    padding: 12px 20px; /* Increased from 10px 16px */
+    font-size: 14px; /* Increased from 13px */
+  }
+
+  .auth-btn {
+    padding: 10px 20px; /* Increased from 8px 16px */
+    font-size: 14px; /* Increased from 13px */
+  }
+
+  /* Language selector - Better touch target */
+  .language-select {
+    padding: 8px 16px; /* Increased from 6px 12px */
+    font-size: 14px; /* Increased from 13px */
+    min-height: 44px; /* Minimum touch target size */
+  }
+
+  /* Message spacing - More comfortable */
+  .message {
+    padding: 16px 20px; /* Increased from 12px 16px */
+    margin-bottom: 20px; /* Increased from 16px */
+  }
+
+  /* Input fields - Better touch targets */
+  .input-container input,
+  .input-container textarea {
+    padding: 12px 16px; /* Increased padding */
+    font-size: 16px; /* Prevent zoom on iOS */
+    min-height: 44px; /* Minimum touch target */
+  }
+
+  /* Chat items - Better spacing */
+  .chat-item {
+    padding: 12px 16px; /* Increased from default */
+    margin-bottom: 8px;
+  }
+
+  /* User info - Better spacing */
+  .user-info {
+    margin-bottom: 20px; /* Increased from 16px */
   }
 }
 
