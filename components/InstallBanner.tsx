@@ -5,7 +5,7 @@ import { X } from 'lucide-react';
 
 export default function InstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showBanner, setShowBanner] = useState(false);
+  const [showBanner, setShowBanner] = useState(true); // TEMPORARY: Force show for testing
 
   useEffect(() => {
     // DEBUG: Log current state
@@ -81,6 +81,26 @@ export default function InstallBanner() {
     // STEP 5: All conditions passed - show banner
     console.log('✅ Banner should show: All conditions passed - Fresh page load detected');
     setShowBanner(true);
+    
+    // Add banner-present class to elements
+    setTimeout(() => {
+      const headerElement = document.querySelector('.header');
+      const mainContentElement = document.querySelector('.main-content');
+      const sideNavElement = document.querySelector('.side-nav');
+      
+      if (headerElement) {
+        headerElement.classList.add('banner-present');
+        console.log('📱 Header positioned for banner presence');
+      }
+      if (mainContentElement) {
+        mainContentElement.classList.add('banner-present');
+        console.log('📱 Main content positioned for banner presence');
+      }
+      if (sideNavElement) {
+        sideNavElement.classList.add('banner-present');
+        console.log('📱 Side nav positioned for banner presence');
+      }
+    }, 100);
 
     // Listen for the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: any) => {
@@ -169,18 +189,21 @@ export default function InstallBanner() {
       console.log('🎬 Starting slide-up animation');
       bannerElement.classList.add('slide-up');
       
-      // Add banner-dismissed class to header for smooth animation
+      // Remove banner-present and add banner-dismissed class for smooth animation
       if (headerElement) {
+        headerElement.classList.remove('banner-present');
         headerElement.classList.add('banner-dismissed');
         console.log('📱 Header positioned for banner dismissal');
       }
-      // Add banner-dismissed class to main content for spacing adjustment
+      // Remove banner-present and add banner-dismissed class to main content for spacing adjustment
       if (mainContentElement) {
+        mainContentElement.classList.remove('banner-present');
         mainContentElement.classList.add('banner-dismissed');
         console.log('📱 Main content positioned for banner dismissal');
       }
-      // Add banner-dismissed class to side nav for positioning adjustment
+      // Remove banner-present and add banner-dismissed class to side nav for positioning adjustment
       if (sideNavElement) {
+        sideNavElement.classList.remove('banner-present');
         sideNavElement.classList.add('banner-dismissed');
         console.log('📱 Side nav positioned for banner dismissal');
       }
@@ -201,7 +224,10 @@ export default function InstallBanner() {
   };
 
   // Don't render if not showing
-  if (!showBanner) return null;
+  if (!showBanner) {
+    console.log('🚫 Banner not rendering - showBanner is false');
+    return null;
+  }
 
   return (
     <div className="install-banner-top">

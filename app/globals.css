@@ -126,8 +126,12 @@ body {
 
 /* Main Content Positioning - CRITICAL FIX */
 .main-content {
-  margin-top: 100px; /* With banner on mobile/tablet */
+  margin-top: 60px; /* Default without banner */
   transition: margin-top 0.3s ease;
+}
+
+.main-content.banner-present {
+  margin-top: 100px; /* With banner on mobile/tablet */
 }
 
 .main-content.banner-dismissed {
@@ -143,8 +147,12 @@ body {
 /* Header positioning - responsive with CSS-only banner */
 @media (max-width: 1024px) {
   .header {
-    top: 40px; /* Position below banner on mobile/tablet */
+    top: 0; /* Default position without banner */
     transition: top 0.3s ease;
+  }
+  
+  .header.banner-present {
+    top: 40px; /* Position below banner on mobile/tablet */
   }
   
   .header.banner-dismissed {
@@ -160,6 +168,10 @@ body {
 
 @media (max-width: 1024px) {
   .main-content {
+    margin-top: 60px; /* Default spacing without banner */
+  }
+  
+  .main-content.banner-present {
     margin-top: 100px; /* Extra spacing when banner is present */
   }
   
