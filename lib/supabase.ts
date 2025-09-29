@@ -37,19 +37,24 @@ export interface ScanHistory {
 }
 
 export interface NPRAMedicine {
-  id: string
-  registration_number: string
-  medicine_name: string
-  generic_name: string
+  id: number
+  ref_no: string
+  reg_no: string
+  product: string
+  status: string
+  description?: string | null
+  holder: string
+  holder_osa?: string | null
   manufacturer: string
-  dosage_form: string
-  strength: string
-  active_ingredients: string[]
-  therapeutic_class: string
-  registration_date: string
-  expiry_date?: string
-  status: 'active' | 'expired' | 'suspended'
-  country: string
+  manufacturer_osa?: string | null
+  importer?: string | null
+  importer_osa?: string | null
+  date_reg?: string | null
+  date_end?: string | null
+  active_ingredient: string
+  mdc_code?: string | null
+  generic_name: string
+  created_at?: string
 }
 
 // Database helper functions
@@ -113,13 +118,12 @@ export class DatabaseService {
     return data
   }
 
-  // NPRA medicine database operations
+  // NPRA medicine database operations (using existing 'medicines' table)
   static async searchNPRA(query: string, limit = 20) {
     const { data, error } = await supabase
-      .from('npra_medicines')
+      .from('medicines')
       .select('*')
-      .or(`medicine_name.ilike.%${query}%,generic_name.ilike.%${query}%`)
-      .eq('status', 'active')
+      .or(`product.ilike.%${query}%,generic_name.ilike.%${query}%,active_ingredient.ilike.%${query}%`)
       .limit(limit)
     
     if (error) throw error
@@ -128,9 +132,9 @@ export class DatabaseService {
 
   static async getNPRAMedicine(registrationNumber: string) {
     const { data, error } = await supabase
-      .from('npra_medicines')
+      .from('medicines')
       .select('*')
-      .eq('registration_number', registrationNumber)
+      .or(`reg_no.eq.${registrationNumber},ref_no.eq.${registrationNumber}`)
       .single()
     
     if (error) throw error
