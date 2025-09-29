@@ -24,36 +24,126 @@ export class MessageFormatter {
       return this.formatErrorMessage(result.error || 'Analysis failed', language);
     }
 
+    // Check if this is the new enhanced 11-section format
+    if (result.packagingDetected || result.purpose || result.allergyWarning) {
+      return this.format11SectionAnalysis(result, language);
+    }
+
+    // Fall back to legacy format for backward compatibility
+    return this.formatLegacyAnalysis(result, language);
+  }
+
+  private static format11SectionAnalysis(result: MedicineAnalysisResult, language: string): FormattedMessage {
     const templates = this.getLanguageTemplates(language);
     
     let content = '';
     let structuredData: any = {};
 
-    // Medicine Name
+    // 1. Packaging Detected
+    if (result.packagingDetected) {
+      content += `**${templates.packagingDetected}:** ${result.packagingDetected}\n\n`;
+      structuredData.packagingDetected = result.packagingDetected;
+    }
+
+    // 2. Medicine Name
+    if (result.medicineName) {
+      content += `**${templates.medicineName}:** ${result.medicineName}`;
+      if (result.genericName) {
+        content += ` (${result.genericName})`;
+      }
+      content += '\n\n';
+      structuredData.medicineName = result.medicineName;
+      structuredData.genericName = result.genericName;
+    }
+
+    // 3. Purpose
+    if (result.purpose) {
+      content += `**${templates.purpose}:** ${result.purpose}\n\n`;
+      structuredData.purpose = result.purpose;
+    }
+
+    // 4. Dosage Instructions
+    if (result.dosageInstructions) {
+      content += `**${templates.dosageInstructions}:**\n${result.dosageInstructions}\n\n`;
+      structuredData.dosageInstructions = result.dosageInstructions;
+    }
+
+    // 5. Side Effects
+    if (result.sideEffects && result.sideEffects.length > 0) {
+      content += `**${templates.sideEffects}:** ${result.sideEffects.join('. ')}\n\n`;
+      structuredData.sideEffects = result.sideEffects;
+    }
+
+    // 6. Allergy Warning
+    if (result.allergyWarning) {
+      content += `**${templates.allergyWarning}:** ${result.allergyWarning}\n\n`;
+      structuredData.allergyWarning = result.allergyWarning;
+    }
+
+    // 7. Drug Interactions
+    if (result.drugInteractions) {
+      content += `**${templates.drugInteractions}:** ${result.drugInteractions}\n\n`;
+      structuredData.drugInteractions = result.drugInteractions;
+    }
+
+    // 8. Safety Notes
+    if (result.safetyNotes) {
+      content += `**${templates.safetyNotes}:** ${result.safetyNotes}\n\n`;
+      structuredData.safetyNotes = result.safetyNotes;
+    }
+
+    // 9. Storage
+    if (result.storage) {
+      content += `**${templates.storage}:** ${result.storage}\n\n`;
+      structuredData.storage = result.storage;
+    }
+
+    // 10. Disclaimer
+    if (result.disclaimer) {
+      content += `**${templates.disclaimer}:** ${result.disclaimer}`;
+    } else {
+      content += `**${templates.disclaimer}:** ${templates.defaultDisclaimer}`;
+    }
+
+    // Add confidence if available
+    if (result.confidence) {
+      structuredData.confidence = result.confidence;
+    }
+
+    return {
+      title: `${templates.analysisTitle} - ${result.medicineName || 'Medicine'}`,
+      content,
+      structuredData
+    };
+  }
+
+  private static formatLegacyAnalysis(result: MedicineAnalysisResult, language: string): FormattedMessage {
+    const templates = this.getLanguageTemplates(language);
+    
+    let content = '';
+    let structuredData: any = {};
+
+    // Legacy format (existing logic)
     if (result.medicineName) {
       content += `**${templates.medicineName}:** ${result.medicineName}\n\n`;
       structuredData.medicineName = result.medicineName;
     }
 
-    // Generic Name
     if (result.genericName) {
       content += `**${templates.genericName}:** ${result.genericName}\n\n`;
       structuredData.genericName = result.genericName;
     }
 
-    // Category
     if (result.category) {
       content += `**${templates.category}:** ${result.category}\n\n`;
       structuredData.category = result.category;
     }
 
-    // Dosage Instructions
     if (result.dosage) {
       content += `**${templates.dosageInstructions}:**\n${result.dosage}\n\n`;
       structuredData.dosage = result.dosage;
     }
 
-    // Side Effects
     if (result.sideEffects && result.sideEffects.length > 0) {
       content += `**${templates.sideEffects}:**\n`;
       result.sideEffects.forEach((effect, index) => {
@@ -63,37 +153,9 @@ export class MessageFormatter {
       structuredData.sideEffects = result.sideEffects;
     }
 
-    // Warnings
-    if (result.warnings && result.warnings.length > 0) {
-      content += `**${templates.warnings}:**\n`;
-      result.warnings.forEach((warning, index) => {
-        content += `⚠️ ${warning}\n`;
-      });
-      content += '\n';
-      structuredData.warnings = result.warnings;
-    }
-
-    // Drug Interactions
-    if (result.interactions && result.interactions.length > 0) {
-      content += `**${templates.interactions}:**\n`;
-      result.interactions.forEach((interaction, index) => {
-        content += `${index + 1}. ${interaction}\n`;
-      });
-      content += '\n';
-      structuredData.interactions = result.interactions;
-    }
-
-    // Storage Instructions
     if (result.storage) {
       content += `**${templates.storage}:** ${result.storage}\n\n`;
       structuredData.storage = result.storage;
-    }
-
-    // Confidence and Disclaimer
-    if (result.confidence) {
-      const confidencePercent = Math.round(result.confidence * 100);
-      content += `**${templates.confidence}:** ${confidencePercent}%\n\n`;
-      structuredData.confidence = result.confidence;
     }
 
     content += `**${templates.disclaimer}**`;
@@ -119,16 +181,21 @@ export class MessageFormatter {
     const templates: { [key: string]: any } = {
       'English': {
         analysisTitle: 'Medicine Analysis',
+        packagingDetected: 'Packaging Detected',
         medicineName: 'Medicine Name',
         genericName: 'Generic Name',
-        category: 'Category',
+        purpose: 'Purpose',
         dosageInstructions: 'Dosage Instructions',
         sideEffects: 'Side Effects',
+        allergyWarning: 'Allergy Warning',
+        drugInteractions: 'Drug Interactions',
+        safetyNotes: 'Safety Notes',
+        storage: 'Storage',
         warnings: 'Important Warnings',
         interactions: 'Drug Interactions',
-        storage: 'Storage Instructions',
         confidence: 'Analysis Confidence',
-        disclaimer: '⚠️ **Important Disclaimer:** This information is for educational purposes only. Always consult with a healthcare professional before taking any medication.',
+        disclaimer: 'Disclaimer',
+        defaultDisclaimer: '⚠️ **Important Disclaimer:** This information is sourced from public websites, packaging details, and the NPRA database. For informational purposes only. Not medical advice. Consult a doctor or pharmacist before use.',
         errorTitle: 'Analysis Error',
         error: 'Error',
         tryAgain: 'Please try again with a clearer image or contact support if the problem persists.'
@@ -151,16 +218,21 @@ export class MessageFormatter {
       },
       'Malay': {
         analysisTitle: 'Analisis Ubat',
+        packagingDetected: 'Pembungkusan Dikesan',
         medicineName: 'Nama Ubat',
         genericName: 'Nama Generik',
-        category: 'Kategori',
+        purpose: 'Tujuan',
         dosageInstructions: 'Arahan Dos',
         sideEffects: 'Kesan Sampingan',
+        allergyWarning: 'Amaran Alahan',
+        drugInteractions: 'Interaksi Ubat',
+        safetyNotes: 'Nota Keselamatan',
+        storage: 'Penyimpanan',
         warnings: 'Amaran Penting',
         interactions: 'Interaksi Ubat',
-        storage: 'Arahan Penyimpanan',
         confidence: 'Keyakinan Analisis',
-        disclaimer: '⚠️ **Penafian Penting:** Maklumat ini adalah untuk tujuan pendidikan sahaja. Sentiasa berunding dengan profesional penjagaan kesihatan sebelum mengambil sebarang ubat.',
+        disclaimer: 'Penafian',
+        defaultDisclaimer: '⚠️ **Penafian Penting:** Maklumat ini diperoleh dari laman web awam, butiran pembungkusan, dan pangkalan data NPRA. Untuk tujuan maklumat sahaja. Bukan nasihat perubatan. Rujuk doktor atau ahli farmasi sebelum digunakan.',
         errorTitle: 'Ralat Analisis',
         error: 'Ralat',
         tryAgain: 'Sila cuba lagi dengan imej yang lebih jelas atau hubungi sokongan jika masalah berterusan.'
