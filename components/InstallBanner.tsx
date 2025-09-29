@@ -19,8 +19,11 @@ export default function InstallBanner() {
       return;
     }
 
-    // Show banner automatically on mobile/tablet (CSS will handle visibility)
-    setShowBanner(true);
+    // Show banner on mobile and tablet (1024px and below)
+    const isMobileOrTablet = window.innerWidth <= 1024;
+    if (isMobileOrTablet) {
+      setShowBanner(true);
+    }
 
     // Listen for the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: any) => {
@@ -54,12 +57,22 @@ export default function InstallBanner() {
     // Add slide-up animation class before hiding
     const bannerElement = document.querySelector('.install-banner-top');
     const headerElement = document.querySelector('.header');
+    const mainContentElement = document.querySelector('.main-content');
+    const sideNavElement = document.querySelector('.side-nav');
     
     if (bannerElement) {
       bannerElement.classList.add('slide-up');
       // Add banner-dismissed class to header for smooth animation
       if (headerElement) {
         headerElement.classList.add('banner-dismissed');
+      }
+      // Add banner-dismissed class to main content for spacing adjustment
+      if (mainContentElement) {
+        mainContentElement.classList.add('banner-dismissed');
+      }
+      // Add banner-dismissed class to side nav for positioning adjustment
+      if (sideNavElement) {
+        sideNavElement.classList.add('banner-dismissed');
       }
       // Hide banner after animation completes
       setTimeout(() => {

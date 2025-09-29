@@ -138,6 +138,21 @@ body {
   }
 }
 
+/* Ensure proper spacing for main content */
+.main-content {
+  margin-top: 60px; /* Default spacing for desktop */
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    margin-top: 100px; /* Extra spacing when banner is present */
+  }
+  
+  .main-content.banner-dismissed {
+    margin-top: 60px; /* Normal spacing when banner is dismissed */
+  }
+}
+
 .header-left {
   display: flex;
   align-items: center;
@@ -230,18 +245,29 @@ body {
 /* Side Navigation */
 .side-nav {
   position: fixed;
-  top: 60px;
+  top: 60px; /* Default desktop position */
   left: -280px;
   width: 280px;
   height: calc(100vh - 60px);
   background: rgba(10, 10, 10, 0.95);
   backdrop-filter: blur(20px);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
-  transition: left 0.3s ease;
+  transition: left 0.3s ease, top 0.3s ease;
   z-index: 999;
   display: flex;
   flex-direction: column;
   padding-top: 0; /* Remove default padding */
+}
+
+/* Adjust side nav position for mobile/tablet */
+@media (max-width: 1024px) {
+  .side-nav {
+    top: 100px; /* Position below header + banner */
+  }
+  
+  .side-nav.banner-dismissed {
+    top: 60px; /* Position below header only when banner is dismissed */
+  }
 }
 
 .side-nav.open {
@@ -390,7 +416,7 @@ body {
 
 .tokens {
   font-size: 11px;
-  color: #888;
+  color: #ffffff;
 }
 
 .faq-btn {

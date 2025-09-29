@@ -428,7 +428,7 @@ export default function Home() {
       </nav>
 
       {/* Chat Container */}
-      <div className="chat-container">
+      <div className="main-content chat-container">
         <div className="chat-window">
           {messages.map((message) => (
             <div key={message.id} className={`message ${message.type}`}>
