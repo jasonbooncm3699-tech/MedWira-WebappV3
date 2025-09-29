@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       allergy || ''
     );
 
-    // Save scan history if user is logged in and analysis was successful
+    // Only deduct token and save history if analysis was successful
     if (userId && result.success) {
       try {
         await DatabaseService.saveScanHistory({

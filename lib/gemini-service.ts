@@ -45,12 +45,90 @@ export class GeminiMedicineAnalyzer {
     this.model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
   }
 
+  // Pre-validation to check if image contains medicine
+  async validateMedicineImage(imageBase64: string): Promise<{ isValid: boolean; confidence: number }> {
+    try {
+      const base64Data = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+      
+      const validationPrompt = `You are a medical image validator for MedWira AI.
+
+Analyze this image and determine if it shows a medicine/pharmaceutical product.
+
+Look for these indicators:
+- Pills, tablets, capsules, or medicine packaging
+- Pharmacy labels, blister packs, medicine bottles
+- Prescription labels, dosage information
+- Pharmaceutical company logos or branding
+
+AVOID these non-medicine items:
+- Food items, drinks, supplements
+- Cosmetics, skincare products
+- Household items, electronics
+- Random objects or text
+
+Respond with JSON format:
+{
+  "isMedicine": true/false,
+  "confidence": 0.95,
+  "reason": "Brief explanation"
+}
+
+Be strict - only return true for actual pharmaceutical products.`;
+
+      const imagePart = {
+        inlineData: {
+          data: base64Data,
+          mimeType: 'image/jpeg'
+        }
+      };
+
+      const result = await this.model.generateContent([validationPrompt, imagePart]);
+      const response = await result.response;
+      const text = response.text();
+
+      // Parse validation response
+      const jsonMatch = text.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/) || 
+                       text.match(/(\{[\s\S]*?\})/);
+      
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[1]);
+        return {
+          isValid: parsed.isMedicine === true,
+          confidence: parsed.confidence || 0.8
+        };
+      }
+
+      // Fallback: if we can't parse, assume it's not medicine to be safe
+      return { isValid: false, confidence: 0.5 };
+
+    } catch (error) {
+      console.error('Medicine validation error:', error);
+      // On error, assume invalid to prevent token waste
+      return { isValid: false, confidence: 0.0 };
+    }
+  }
+
   async analyzeMedicineImage(
     imageBase64: string,
     language: string = 'English',
     userAllergies: string = ''
   ): Promise<MedicineAnalysisResult> {
     try {
+      // STEP 0: Pre-validation to ensure image contains medicine
+      console.log('🔍 Validating image for medicine content...');
+      const validation = await this.validateMedicineImage(imageBase64);
+      
+      if (!validation.isValid) {
+        console.log('❌ Image validation failed - not a medicine');
+        return {
+          success: false,
+          error: 'Please upload a clear image of medicine packaging, pills, or tablets. This image does not appear to contain pharmaceutical products.',
+          language
+        };
+      }
+      
+      console.log('✅ Image validation passed - medicine detected');
+
       // Remove data URL prefix if present
       const base64Data = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
       

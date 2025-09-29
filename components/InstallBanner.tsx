@@ -30,8 +30,16 @@ export default function InstallBanner() {
     }
 
     // Show banner on mobile and tablet (1024px and below) - PERSISTENT PROMOTION
-    const isMobileOrTablet = window.innerWidth <= 1024;
-    console.log('📱 Device check:', { isMobileOrTablet, screenWidth: window.innerWidth });
+    const isMobile = window.innerWidth < 768;
+    const isTablet = window.innerWidth >= 768 && window.innerWidth <= 1024;
+    const isMobileOrTablet = isMobile || isTablet;
+    
+    console.log('📱 Device check:', { 
+      isMobile, 
+      isTablet, 
+      isMobileOrTablet, 
+      screenWidth: window.innerWidth 
+    });
     
     if (isMobileOrTablet) {
       console.log('✅ Banner should show: Mobile/Tablet detected');

@@ -120,6 +120,22 @@ body {
   height: 60px;
 }
 
+/* Main Content Positioning - CRITICAL FIX */
+.main-content {
+  margin-top: 100px; /* With banner on mobile/tablet */
+  transition: margin-top 0.3s ease;
+}
+
+.main-content.banner-dismissed {
+  margin-top: 60px; /* Without banner */
+}
+
+@media (min-width: 1025px) {
+  .main-content {
+    margin-top: 60px; /* Desktop - no banner */
+  }
+}
+
 /* Header positioning - responsive with CSS-only banner */
 @media (max-width: 1024px) {
   .header {
@@ -136,11 +152,6 @@ body {
   .header {
     top: 0; /* Normal position on desktop (no banner) */
   }
-}
-
-/* Ensure proper spacing for main content */
-.main-content {
-  margin-top: 60px; /* Default spacing for desktop */
 }
 
 @media (max-width: 1024px) {
@@ -1603,4 +1614,21 @@ select:focus {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* No scans state */
+.no-scans {
+  padding: 20px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.no-scans p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.scan-hint {
+  font-size: 12px !important;
+  color: rgba(255, 255, 255, 0.4) !important;
 }

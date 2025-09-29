@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth-context';
 import SocialAuthModal from '@/components/SocialAuthModal';
 import InstallBanner from '@/components/InstallBanner';
 import { MessageFormatter } from '@/lib/message-formatter';
+import { DatabaseService } from '@/lib/supabase';
 
 export default function Home() {
   const { user, logout, isLoading } = useAuth();
@@ -32,18 +33,18 @@ export default function Home() {
   // Get language display text based on device type
   const getLanguageDisplayText = (lang: string): string => {
     if (isMobile) {
-      const abbreviations: { [key: string]: string } = {
-        'English': 'EN',
-        'Chinese': '中文',
+    const abbreviations: { [key: string]: string } = {
+      'English': 'EN',
+      'Chinese': '中文',
         'Malay': 'MY',
-        'Indonesian': 'ID',
-        'Thai': 'TH',
-        'Vietnamese': 'VN',
-        'Tagalog': 'TL',
-        'Burmese': 'MM',
-        'Khmer': 'KH',
-        'Lao': 'LA'
-      };
+      'Indonesian': 'ID',
+      'Thai': 'TH',
+      'Vietnamese': 'VN',
+      'Tagalog': 'TL',
+      'Burmese': 'MM',
+      'Khmer': 'KH',
+      'Lao': 'LA'
+    };
       return abbreviations[lang] || 'EN';
     }
     return lang;
@@ -59,6 +60,7 @@ export default function Home() {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [allergy, setAllergy] = useState('');
+  const [scanHistory, setScanHistory] = useState<any[]>([]);
   const [messages, setMessages] = useState<Array<{
     id: string;
     type: 'user' | 'ai';
@@ -100,6 +102,26 @@ export default function Home() {
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
+  // Fetch user scan history when user logs in
+  useEffect(() => {
+    const fetchUserScanHistory = async () => {
+      if (user?.id) {
+        try {
+          const history = await DatabaseService.getUserScanHistory(user.id);
+          setScanHistory(history || []);
+          console.log('✅ Scan history loaded:', history?.length || 0, 'scans');
+        } catch (error) {
+          console.error('❌ Failed to fetch scan history:', error);
+          setScanHistory([]);
+        }
+      } else {
+        setScanHistory([]);
+      }
+    };
+
+    fetchUserScanHistory();
+  }, [user]);
+
   const handleCameraCapture = async () => {
     try {
       // Check if getUserMedia is supported
@@ -127,10 +149,10 @@ export default function Home() {
           facingMode: { exact: 'environment' } // Force back camera
         }
       });
-
+      
       setCameraStream(stream);
       setShowCamera(true);
-
+      
     } catch (error) {
       console.error('Camera error:', error);
       alert('Camera access failed: ' + (error as Error).message + '\n\nTry:\n1. Allow camera permission\n2. Use HTTPS (https://localhost:3000)\n3. Use a modern browser');
@@ -291,23 +313,23 @@ export default function Home() {
   };
 
   return (
-    <div className="app">
+      <div className="app">
       {/* Install Banner - CSS-only responsive behavior */}
       <InstallBanner />
-      
+
       {/* Header */}
       <header className="header">
-        <div className="header-left">
+          <div className="header-left">
           <button 
             className="burger-btn" 
             aria-label="Toggle menu"
             onClick={() => setSideNavOpen(!sideNavOpen)}
           >
-            <Menu size={20} />
-          </button>
+              <Menu size={20} />
+            </button>
           <button className="new-chat-header-btn">
-            <Plus size={16} />
-          </button>
+              <Plus size={16} />
+            </button>
           <select 
             className="language-select"
             value={language}
@@ -335,14 +357,14 @@ export default function Home() {
             <option value="Burmese">{isMobile ? 'MM' : 'Burmese'}</option>
             <option value="Khmer">{isMobile ? 'KH' : 'Khmer'}</option>
             <option value="Lao">{isMobile ? 'LA' : 'Lao'}</option>
-          </select>
-        </div>
-
-        <div className="logo">
-          <Bot size={24} />
-        </div>
-
-        <div className="header-right">
+            </select>
+          </div>
+          
+          <div className="logo">
+            <Bot size={24} />
+          </div>
+          
+          <div className="header-right">
           {user ? (
             <button className="auth-btn" onClick={logout}>
               <LogOut size={16} />
@@ -360,66 +382,58 @@ export default function Home() {
               Sign In
             </button>
           )}
-        </div>
+          </div>
       </header>
 
-      {/* Side Navigation */}
-      <nav className={`side-nav ${sideNavOpen ? 'open' : ''}`}>
-        <div className="nav-header">
+        {/* Side Navigation */}
+        <nav className={`side-nav ${sideNavOpen ? 'open' : ''}`}>
+          <div className="nav-header">
           <button className="new-chat-btn" onClick={handleNewChat}>
-            <Plus size={16} />
-            New Chat
-          </button>
+              <Plus size={16} />
+              New Chat
+            </button>
           <button 
             className="close-nav"
             onClick={() => setSideNavOpen(false)}
           >
-            <X size={20} />
-          </button>
-        </div>
+              <X size={20} />
+            </button>
+          </div>
 
-        <div className="nav-content">
-          <div className="recent-chats">
-            <h3>Recent Chats</h3>
-            <div className="chat-list">
-              <div className="chat-item active">
-                <MessageSquare size={16} />
-                <div className="chat-info">
-                  <span className="chat-title">Medicine Identification</span>
-                  <span className="chat-time">26 Sept</span>
-                </div>
-              </div>
-              <div className="chat-item">
-                <MessageSquare size={16} />
-                <div className="chat-info">
-                  <span className="chat-title">Dosage Information</span>
-                  <span className="chat-time">25 Sept</span>
-                </div>
-              </div>
-              <div className="chat-item">
-                <MessageSquare size={16} />
-                <div className="chat-info">
-                  <span className="chat-title">Side Effects Query</span>
-                  <span className="chat-time">23 Sept</span>
-                </div>
-              </div>
-              <div className="chat-item">
-                <MessageSquare size={16} />
-                <div className="chat-info">
-                  <span className="chat-title">Medicine Storage</span>
-                  <span className="chat-time">19 Sept</span>
-                </div>
+          <div className="nav-content">
+            <div className="recent-chats">
+              <h3>Recent Scans</h3>
+              <div className="chat-list">
+                {scanHistory.length > 0 ? (
+                  scanHistory.slice(0, 5).map((scan, index) => (
+                    <div key={scan.id} className="chat-item">
+                      <MessageSquare size={16} />
+                      <div className="chat-info">
+                        <span className="chat-title">
+                          {scan.medicine_name || 'Medicine Scan'}
+                        </span>
+                        <span className="chat-time">
+                          {new Date(scan.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="no-scans">
+                    <p>No scans yet</p>
+                    <p className="scan-hint">Upload a medicine image to get started</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="nav-footer">
-          <div className="user-info">
-            <div className="user-avatar">
-              <User size={20} />
-            </div>
-            <div className="user-details">
+          <div className="nav-footer">
+            <div className="user-info">
+              <div className="user-avatar">
+                <User size={20} />
+              </div>
+              <div className="user-details">
               <span className="username">{user ? user.name : 'Guest'}</span>
               <span className="tokens">{user ? `${user.tokens} tokens` : '0 tokens'}</span>
             </div>
@@ -437,24 +451,24 @@ export default function Home() {
             </button>
           )}
           <p className="copyright">@ 2025 MedWira.com. AI Powered medicine database</p>
-        </div>
-      </nav>
+          </div>
+        </nav>
 
-      {/* Chat Container */}
+        {/* Chat Container */}
       <div className="main-content chat-container">
         <div className="chat-window">
-          {messages.map((message) => (
-            <div key={message.id} className={`message ${message.type}`}>
-              <div className="message-avatar">
-                {message.type === 'user' ? <User size={20} /> : <Bot size={20} />}
-              </div>
-              <div className="message-content">
-                {message.image && (
-                  <div className="message-image">
-                    <img src={message.image} alt="Uploaded medicine" />
-                  </div>
-                )}
-                <div className="message-text">
+            {messages.map((message) => (
+              <div key={message.id} className={`message ${message.type}`}>
+                <div className="message-avatar">
+                  {message.type === 'user' ? <User size={20} /> : <Bot size={20} />}
+                </div>
+                <div className="message-content">
+                  {message.image && (
+                    <div className="message-image">
+                      <img src={message.image} alt="Uploaded medicine" />
+                    </div>
+                  )}
+                  <div className="message-text">
                   {message.content.includes('**') ? (
                     <div dangerouslySetInnerHTML={{ 
                       __html: message.content
@@ -465,8 +479,8 @@ export default function Home() {
                   ) : (
                     message.content
                   )}
-                </div>
-                <div className="message-footer">
+                  </div>
+                  <div className="message-footer">
                   <div className="message-time">
                     {message.timestamp.toLocaleTimeString('en-US', { 
                       hour: '2-digit', 
@@ -474,76 +488,76 @@ export default function Home() {
                       hour12: true 
                     })}
                   </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-          
+            ))}
+            
           {isAnalyzing && (
-            <div className="message ai">
-              <div className="message-avatar">
-                <Bot size={20} />
-              </div>
-              <div className="message-content">
+              <div className="message ai">
+                <div className="message-avatar">
+                  <Bot size={20} />
+                </div>
+                <div className="message-content">
                 <div className="message-text">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Loader2 size={16} className="animate-spin" />
                     Analyzing your medicine image...
                   </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-
-        <div className="input-container">
-          {/* Allergy Input Field */}
-          <div className="allergy-input-wrapper">
-            <input
-              type="text"
-              placeholder="Enter allergies (e.g., penicillin, paracetamol)"
-              className="allergy-input"
-              value={allergy}
-              onChange={(e) => setAllergy(e.target.value)}
-            />
+            )}
           </div>
-
-          <div className="input-wrapper">
-            <input
-              type="file"
-              accept="image/*"
-              id="upload"
-              className="file-input"
-              onChange={handleFileUpload}
-            />
-            <label htmlFor="upload" className="upload-btn">
-              <Upload size={18} />
-            </label>
-
-            <button 
-              className="camera-btn" 
-              title="Take photo with camera" 
-              onClick={handleCameraCapture}
-            >
-              <Camera size={18} />
-            </button>
-
-            <div className="text-input-wrapper">
+          
+          <div className="input-container">
+            {/* Allergy Input Field */}
+            <div className="allergy-input-wrapper">
               <input
                 type="text"
-                placeholder="Ask in English..."
-                className="text-input"
+              placeholder="Enter allergies (e.g., penicillin, paracetamol)"
+              className="allergy-input"
+                value={allergy}
+                onChange={(e) => setAllergy(e.target.value)}
               />
-              <button className="send-btn">
-                <Send size={18} />
+            </div>
+            
+            <div className="input-wrapper">
+              <input
+                type="file"
+                accept="image/*"
+                id="upload"
+                className="file-input"
+              onChange={handleFileUpload}
+              />
+              <label htmlFor="upload" className="upload-btn">
+                <Upload size={18} />
+            </label>
+              
+              <button 
+                className="camera-btn"
+              title="Take photo with camera" 
+                onClick={handleCameraCapture}
+              >
+                <Camera size={18} />
               </button>
+              
+              <div className="text-input-wrapper">
+                <input
+                  type="text"
+                placeholder="Ask in English..."
+                  className="text-input"
+                />
+              <button className="send-btn">
+                  <Send size={18} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
       {/* Camera Modal */}
-      {showCamera && (
+        {showCamera && (
         <div style={{ 
           position: 'fixed', 
           top: 0, 
@@ -567,15 +581,15 @@ export default function Home() {
               borderRadius: '8px' 
             }}
           >
-            Close
-          </button>
-          <video
-            ref={(el) => {
-              if (el && cameraStream) {
-                el.srcObject = cameraStream;
-              }
-            }}
-            autoPlay
+              Close
+            </button>
+            <video
+              ref={(el) => {
+                if (el && cameraStream) {
+                  el.srcObject = cameraStream;
+                }
+              }}
+              autoPlay
             playsInline
             style={{ 
               width: '100%', 
@@ -622,8 +636,8 @@ export default function Home() {
               Tap to capture medicine photo
             </p>
           </div>
-        </div>
-      )}
+          </div>
+        )}
 
       {/* Authentication Modal */}
       <SocialAuthModal
@@ -631,7 +645,7 @@ export default function Home() {
         onClose={() => setShowAuthModal(false)}
         mode={authMode}
         onModeChange={setAuthMode}
-      />
-    </div>
+              />
+            </div>
   );
 }
