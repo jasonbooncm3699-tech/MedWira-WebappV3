@@ -74,6 +74,19 @@ export default function Home() {
     }
   ]);
 
+  // Function to start a new chat
+  const handleNewChat = () => {
+    setMessages([
+      {
+        id: '1',
+        type: 'ai',
+        content: getWelcomeMessage(language),
+        timestamp: new Date()
+      }
+    ]);
+    setSideNavOpen(false); // Close side nav after starting new chat
+  };
+
   // Detect mobile device on initial load
   useEffect(() => {
     const checkDevice = () => {
@@ -353,7 +366,7 @@ export default function Home() {
       {/* Side Navigation */}
       <nav className={`side-nav ${sideNavOpen ? 'open' : ''}`}>
         <div className="nav-header">
-          <button className="new-chat-btn">
+          <button className="new-chat-btn" onClick={handleNewChat}>
             <Plus size={16} />
             New Chat
           </button>
