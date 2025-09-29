@@ -5,23 +5,20 @@ import { X } from 'lucide-react';
 
 export default function InstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showBanner, setShowBanner] = useState(false); // Start as false - no temporary override
+  const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
-    // Single, clear logic - no conflicting updates
     const checkBannerConditions = () => {
       const isPWA = window.matchMedia('(display-mode: standalone)').matches;
       const isPermanentlyInstalled = localStorage.getItem('install-banner-dismissed') === 'installed';
       const isMobileOrTablet = window.innerWidth <= 1024;
-      const isSessionDismissed = sessionStorage.getItem('install-banner-dismissed-session');
       
-      const shouldShow = !isPWA && !isPermanentlyInstalled && isMobileOrTablet && !isSessionDismissed;
+      const shouldShow = !isPWA && !isPermanentlyInstalled && isMobileOrTablet;
       
       console.log('🔍 Banner conditions:', {
         isPWA, 
         isPermanentlyInstalled, 
         isMobileOrTablet, 
-        isSessionDismissed, 
         shouldShow,
         screenWidth: window.innerWidth
       });
@@ -119,47 +116,28 @@ export default function InstallBanner() {
   const handleDismiss = () => {
     console.log('❌ Banner dismissed by user');
     
-    // Add slide-up animation class before hiding
-    const bannerElement = document.querySelector('.install-banner-top');
+    // Simple dismiss - no storage, banner will show again on refresh
+    setShowBanner(false);
+    
+    // Apply CSS classes for animation
     const headerElement = document.querySelector('.header');
     const mainContentElement = document.querySelector('.main-content');
     const sideNavElement = document.querySelector('.side-nav');
     
-    if (bannerElement) {
-      console.log('🎬 Starting slide-up animation');
-      bannerElement.classList.add('slide-up');
-      
-      // Remove banner-present and add banner-dismissed class for smooth animation
-      if (headerElement) {
-        headerElement.classList.remove('banner-present');
-        headerElement.classList.add('banner-dismissed');
-        console.log('📱 Header positioned for banner dismissal');
-      }
-      // Remove banner-present and add banner-dismissed class to main content for spacing adjustment
-      if (mainContentElement) {
-        mainContentElement.classList.remove('banner-present');
-        mainContentElement.classList.add('banner-dismissed');
-        console.log('📱 Main content positioned for banner dismissal');
-      }
-      // Remove banner-present and add banner-dismissed class to side nav for positioning adjustment
-      if (sideNavElement) {
-        sideNavElement.classList.remove('banner-present');
-        sideNavElement.classList.add('banner-dismissed');
-        console.log('📱 Side nav positioned for banner dismissal');
-      }
-      
-      // Hide banner after animation completes
-      setTimeout(() => {
-        setShowBanner(false);
-        // Use sessionStorage - banner will show again on next page refresh
-        sessionStorage.setItem('install-banner-dismissed-session', 'true');
-        console.log('✅ Banner hidden and session marked as dismissed');
-      }, 300);
-    } else {
-      setShowBanner(false);
-      // Use sessionStorage - banner will show again on next page refresh
-      sessionStorage.setItem('install-banner-dismissed-session', 'true');
-      console.log('✅ Banner hidden (no animation) and session marked as dismissed');
+    if (headerElement) {
+      headerElement.classList.remove('banner-present');
+      headerElement.classList.add('banner-dismissed');
+      console.log('📱 Header positioned for banner dismissal');
+    }
+    if (mainContentElement) {
+      mainContentElement.classList.remove('banner-present');
+      mainContentElement.classList.add('banner-dismissed');
+      console.log('📱 Main content positioned for banner dismissal');
+    }
+    if (sideNavElement) {
+      sideNavElement.classList.remove('banner-present');
+      sideNavElement.classList.add('banner-dismissed');
+      console.log('📱 Side nav positioned for banner dismissal');
     }
   };
 
