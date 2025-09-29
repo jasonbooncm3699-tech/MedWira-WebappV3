@@ -51,12 +51,12 @@ export default function InstallBanner() {
     // Check conditions immediately
     checkBannerConditions();
 
-    // Listen for install prompt only
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      console.log('📱 beforeinstallprompt event received');
-    };
+            // Listen for install prompt only
+            const handleBeforeInstallPrompt = (e: Event) => {
+              e.preventDefault();
+              setDeferredPrompt(e as any);
+              console.log('📱 beforeinstallprompt event received');
+            };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     
