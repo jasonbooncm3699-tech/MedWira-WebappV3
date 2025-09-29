@@ -5,128 +5,68 @@ import { X } from 'lucide-react';
 
 export default function InstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showBanner, setShowBanner] = useState(true); // TEMPORARY: Force show for testing
+  const [showBanner, setShowBanner] = useState(false); // Start as false - no temporary override
 
   useEffect(() => {
-    // DEBUG: Log current state
-    console.log('🔍 InstallBanner Debug:', {
-      screenWidth: window.innerWidth,
-      isStandalone: window.matchMedia('(display-mode: standalone)').matches,
-      localStorage: localStorage.getItem('install-banner-dismissed'),
-      sessionStorage: sessionStorage.getItem('install-banner-dismissed-session')
-    });
-
-    // STEP 1: Check if already installed as PWA
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      console.log('🚫 Banner hidden: App running as PWA');
-      setShowBanner(false);
-      return;
-    }
-
-    // STEP 2: Check if app was permanently installed (not just dismissed)
-    const bannerPermanentlyDismissed = localStorage.getItem('install-banner-dismissed');
-    if (bannerPermanentlyDismissed === 'installed') {
-      console.log('🚫 Banner hidden: App was permanently installed');
-      setShowBanner(false);
-      return;
-    }
-
-    // STEP 3: Check device type - only show on mobile/tablet
-    const isMobile = window.innerWidth < 768;
-    const isTablet = window.innerWidth >= 768 && window.innerWidth <= 1024;
-    const isMobileOrTablet = isMobile || isTablet;
-    
-    console.log('📱 Device check:', { 
-      isMobile, 
-      isTablet, 
-      isMobileOrTablet, 
-      screenWidth: window.innerWidth 
-    });
-    
-    if (!isMobileOrTablet) {
-      console.log('🚫 Banner hidden: Desktop detected');
-      setShowBanner(false);
-      return;
-    }
-
-    // STEP 4: Check if banner was dismissed in current session
-    const bannerDismissedThisSession = sessionStorage.getItem('install-banner-dismissed-session');
-    console.log('🔍 Session check:', { 
-      bannerDismissedThisSession, 
-      sessionStorageEmpty: !bannerDismissedThisSession 
-    });
-    
-    if (bannerDismissedThisSession) {
-      console.log('🚫 Banner hidden: Dismissed in current session');
-      setShowBanner(false);
-      // Ensure header is positioned correctly when banner is hidden
-      setTimeout(() => {
-        const headerElement = document.querySelector('.header');
-        const mainContentElement = document.querySelector('.main-content');
-        const sideNavElement = document.querySelector('.side-nav');
-        
-        if (headerElement) {
-          headerElement.classList.add('banner-dismissed');
-        }
-        if (mainContentElement) {
-          mainContentElement.classList.add('banner-dismissed');
-        }
-        if (sideNavElement) {
-          sideNavElement.classList.add('banner-dismissed');
-        }
-      }, 100);
-      return;
-    }
-
-    // STEP 5: All conditions passed - show banner
-    console.log('✅ Banner should show: All conditions passed - Fresh page load detected');
-    setShowBanner(true);
-    
-    // Add banner-present class to elements
-    setTimeout(() => {
-      const headerElement = document.querySelector('.header');
-      const mainContentElement = document.querySelector('.main-content');
-      const sideNavElement = document.querySelector('.side-nav');
+    // Single, clear logic - no conflicting updates
+    const checkBannerConditions = () => {
+      const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+      const isPermanentlyInstalled = localStorage.getItem('install-banner-dismissed') === 'installed';
+      const isMobileOrTablet = window.innerWidth <= 1024;
+      const isSessionDismissed = sessionStorage.getItem('install-banner-dismissed-session');
       
-      if (headerElement) {
-        headerElement.classList.add('banner-present');
-        console.log('📱 Header positioned for banner presence');
+      const shouldShow = !isPWA && !isPermanentlyInstalled && isMobileOrTablet && !isSessionDismissed;
+      
+      console.log('🔍 Banner conditions:', {
+        isPWA, 
+        isPermanentlyInstalled, 
+        isMobileOrTablet, 
+        isSessionDismissed, 
+        shouldShow,
+        screenWidth: window.innerWidth
+      });
+      
+      setShowBanner(shouldShow);
+      
+      // Apply CSS classes based on banner state
+      if (shouldShow) {
+        setTimeout(() => {
+          const headerElement = document.querySelector('.header');
+          const mainContentElement = document.querySelector('.main-content');
+          const sideNavElement = document.querySelector('.side-nav');
+          
+          if (headerElement) {
+            headerElement.classList.add('banner-present');
+            console.log('📱 Header positioned for banner presence');
+          }
+          if (mainContentElement) {
+            mainContentElement.classList.add('banner-present');
+            console.log('📱 Main content positioned for banner presence');
+          }
+          if (sideNavElement) {
+            sideNavElement.classList.add('banner-present');
+            console.log('📱 Side nav positioned for banner presence');
+          }
+        }, 100);
       }
-      if (mainContentElement) {
-        mainContentElement.classList.add('banner-present');
-        console.log('📱 Main content positioned for banner presence');
-      }
-      if (sideNavElement) {
-        sideNavElement.classList.add('banner-present');
-        console.log('📱 Side nav positioned for banner presence');
-      }
-    }, 100);
+    };
 
-    // Listen for the beforeinstallprompt event
-    const handleBeforeInstallPrompt = (e: any) => {
+    // Check conditions immediately
+    checkBannerConditions();
+
+    // Listen for install prompt only
+    const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
       console.log('📱 beforeinstallprompt event received');
     };
 
-    // Also listen for window load to ensure banner shows on fresh page loads
-    const handleWindowLoad = () => {
-      console.log('🔄 Window loaded - checking banner state again');
-      const sessionDismissed = sessionStorage.getItem('install-banner-dismissed-session');
-      if (!sessionDismissed && isMobileOrTablet) {
-        console.log('✅ Window load: Banner should show - no session dismissal');
-        setShowBanner(true);
-      }
-    };
-
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('load', handleWindowLoad);
-
+    
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('load', handleWindowLoad);
     };
-  }, []);
+  }, []); // Empty dependency array - run once only
 
   const handleInstall = async () => {
     console.log('🔧 Install button clicked');
