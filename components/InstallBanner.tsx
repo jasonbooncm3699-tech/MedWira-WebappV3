@@ -8,21 +8,41 @@ export default function InstallBanner() {
   const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
-    // Check if already installed
+    // Check if already installed as PWA
     if (window.matchMedia('(display-mode: standalone)').matches) {
       return;
     }
 
-    // Check if banner was previously dismissed
-    const bannerDismissed = localStorage.getItem('install-banner-dismissed');
-    if (bannerDismissed) {
-      return;
+    // Check if app was permanently installed (not just dismissed)
+    const bannerPermanentlyDismissed = localStorage.getItem('install-banner-dismissed');
+    if (bannerPermanentlyDismissed === 'installed') {
+      return; // Don't show banner if app was actually installed
     }
 
-    // Show banner on mobile and tablet (1024px and below)
+    // Show banner on mobile and tablet (1024px and below) - PERSISTENT PROMOTION
     const isMobileOrTablet = window.innerWidth <= 1024;
     if (isMobileOrTablet) {
       setShowBanner(true);
+    }
+
+    // Check if banner was dismissed in current session only
+    const bannerDismissedThisSession = sessionStorage.getItem('install-banner-dismissed-session');
+    if (bannerDismissedThisSession) {
+      setShowBanner(false);
+      // Ensure header is positioned correctly when banner is hidden
+      const headerElement = document.querySelector('.header');
+      const mainContentElement = document.querySelector('.main-content');
+      const sideNavElement = document.querySelector('.side-nav');
+      
+      if (headerElement) {
+        headerElement.classList.add('banner-dismissed');
+      }
+      if (mainContentElement) {
+        mainContentElement.classList.add('banner-dismissed');
+      }
+      if (sideNavElement) {
+        sideNavElement.classList.add('banner-dismissed');
+      }
     }
 
     // Listen for the beforeinstallprompt event
@@ -45,6 +65,9 @@ export default function InstallBanner() {
       
       if (outcome === 'accepted') {
         console.log('User accepted the install prompt');
+        // Permanently hide banner after successful installation
+        localStorage.setItem('install-banner-dismissed', 'installed');
+        setShowBanner(false);
       } else {
         console.log('User dismissed the install prompt');
       }
@@ -77,11 +100,13 @@ export default function InstallBanner() {
       // Hide banner after animation completes
       setTimeout(() => {
         setShowBanner(false);
-        localStorage.setItem('install-banner-dismissed', 'true');
+        // Use sessionStorage instead of localStorage - banner will show again on next visit
+        sessionStorage.setItem('install-banner-dismissed-session', 'true');
       }, 300);
     } else {
       setShowBanner(false);
-      localStorage.setItem('install-banner-dismissed', 'true');
+      // Use sessionStorage instead of localStorage - banner will show again on next visit
+      sessionStorage.setItem('install-banner-dismissed-session', 'true');
     }
   };
 
