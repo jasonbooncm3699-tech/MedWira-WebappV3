@@ -1388,6 +1388,17 @@ body {
     height: 56px; /* Mobile header height - positioning will adjust automatically */
   }
   
+  /* Mobile-specific banner rules for 56px header */
+  .side-nav.banner-present {
+    top: 96px; /* 40px banner + 56px header */
+    height: calc(100vh - 96px);
+  }
+  
+  .side-nav.banner-dismissed {
+    top: 56px; /* 56px header only */
+    height: calc(100vh - 56px);
+  }
+  
   .logo {
     font-size: 15px;
   }
