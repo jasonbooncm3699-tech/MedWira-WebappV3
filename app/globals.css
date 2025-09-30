@@ -574,9 +574,15 @@ body {
 
 /* Chat container positioning - responsive with CSS-only banner */
 @media (max-width: 1024px) {
-  .chat-container {
-    margin-top: 100px; /* Position below header + banner on mobile/tablet */
+  /* Tablet-specific banner rules for chat container */
+  .chat-container.banner-present {
+    margin-top: 100px;
     height: calc(100vh - 100px);
+  }
+  
+  .chat-container.banner-dismissed {
+    margin-top: 60px;
+    height: calc(100vh - 60px);
   }
 }
 
@@ -1268,9 +1274,19 @@ body {
   .side-nav {
     width: 100%;
     left: -100%;
-    top: 60px; /* Match header height */
-    height: calc(100vh - 60px);
+    /* Remove hardcoded top/height - let banner rules handle positioning */
     padding-top: 0; /* Remove extra padding */
+  }
+  
+  /* Mobile-specific banner rules */
+  .side-nav.banner-present {
+    top: 100px;
+    height: calc(100vh - 100px);
+  }
+  
+  .side-nav.banner-dismissed {
+    top: 60px;
+    height: calc(100vh - 60px);
   }
   
   .side-nav.open {
@@ -1283,9 +1299,19 @@ body {
   
   .chat-container {
     margin-left: 0;
-    margin-top: 100px; /* Position below header + banner on mobile */
-    height: calc(100vh - 100px);
+    /* Remove hardcoded margin-top/height - let banner rules handle positioning */
     padding: 0;
+  }
+  
+  /* Mobile-specific banner rules for chat container */
+  .chat-container.banner-present {
+    margin-top: 100px;
+    height: calc(100vh - 100px);
+  }
+  
+  .chat-container.banner-dismissed {
+    margin-top: 60px;
+    height: calc(100vh - 60px);
   }
   
   .chat-window {
@@ -1382,8 +1408,14 @@ body {
     padding: 5px 10px;
   }
   
-  .chat-container {
-    margin-top: 56px;
+  /* Mobile-specific banner rules for chat container (56px header) */
+  .chat-container.banner-present {
+    margin-top: 96px; /* 40px banner + 56px header */
+    height: calc(100vh - 96px);
+  }
+  
+  .chat-container.banner-dismissed {
+    margin-top: 56px; /* 56px header only */
     height: calc(100vh - 56px);
   }
   
