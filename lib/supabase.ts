@@ -60,7 +60,7 @@ export interface NPRAMedicine {
 // Database helper functions
 export class DatabaseService {
   // User operations
-  static async createUser(userData: Omit<User, 'id' | 'created_at' | 'updated_at' | 'last_login'>) {
+  static async createUser(userData: Omit<User, 'created_at' | 'updated_at' | 'last_login'>) {
     const { data, error } = await supabase
       .from('users')
       .insert([userData])

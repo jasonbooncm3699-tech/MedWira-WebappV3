@@ -110,17 +110,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (data.user) {
         try {
-          // Create user record in our users table
-        await DatabaseService.createUser({
-          email: data.user.email!,
-          name,
-          tokens: 30, // Free tier starts with 30 tokens
-          subscription_tier: 'free',
-        });
+          // Create user record in our users table using Supabase auth user ID
+          await DatabaseService.createUser({
+            id: data.user.id, // Use Supabase auth user ID
+            email: data.user.email!,
+            name,
+            tokens: 30, // Free tier starts with 30 tokens
+            subscription_tier: 'free',
+          });
           console.log('✅ User record created in database');
         } catch (dbError) {
           console.error('💥 Failed to create user record:', dbError);
-          return { success: false, error: 'Registration completed but failed to create user profile. Please contact support.' };
+          console.error('💥 User ID:', data.user.id);
+          console.error('💥 Email:', data.user.email);
+          console.error('💥 Name:', name);
+          return { success: false, error: `Registration completed but failed to create user profile: ${dbError.message || 'Unknown error'}` };
         }
       }
 
