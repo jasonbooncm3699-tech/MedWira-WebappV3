@@ -264,9 +264,9 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
               style={{
                 width: '100%',
                 padding: '16px',
-                background: '#000000',
-                color: 'white',
-                border: 'none',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: '#ffffff',
                 borderRadius: '8px',
                 fontSize: '16px',
                 fontWeight: '500',
@@ -275,7 +275,7 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
                 marginBottom: '24px',
               }}
             >
-{mode === 'login' ? 'Continue to Sign In' : 'Continue to Sign Up'}
+              {mode === 'login' ? 'Continue to Sign In' : 'Continue to Sign Up'}
             </button>
 
             {/* Separator */}
