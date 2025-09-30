@@ -24,15 +24,31 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
   const [message, setMessage] = useState('');
   const [showEmailForm, setShowEmailForm] = useState(false);
 
+  // Add timeout to prevent infinite loading
+  React.useEffect(() => {
+    if (isLoading) {
+      const timeout = setTimeout(() => {
+        console.warn('⚠️ Authentication timeout - resetting loading state');
+        setIsLoading(false);
+        setMessage('Request timed out. Please try again.');
+      }, 30000); // 30 second timeout
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoading]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('🔐 Starting authentication process...', { mode, email: formData.email });
     setIsLoading(true);
     setMessage('');
 
     try {
       if (mode === 'register') {
+        console.log('📝 Attempting registration...');
         // Use Supabase registration
         const result = await register(formData.email, formData.password);
+        console.log('📝 Registration result:', result);
         
         if (result.success) {
           setMessage('Registration successful! Please check your email to verify your account.');
@@ -46,8 +62,10 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
           setMessage(result.error || 'Registration failed. Please try again.');
         }
       } else {
+        console.log('🔑 Attempting login...');
         // Use Supabase login
         const result = await login(formData.email, formData.password);
+        console.log('🔑 Login result:', result);
         
         if (result.success) {
           setMessage('Login successful!');
@@ -62,8 +80,10 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
         }
       }
     } catch (error) {
+      console.error('💥 Authentication error:', error);
       setMessage('An error occurred. Please try again.');
     } finally {
+      console.log('✅ Authentication process completed, resetting loading state');
       setIsLoading(false);
     }
   };
