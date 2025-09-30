@@ -1,108 +1,70 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
 
 export default function InstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showBanner, setShowBanner] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
-    const checkBannerConditions = () => {
+    const checkPromptConditions = () => {
       // Check if PWA is currently running in standalone mode
       const isPWA = window.matchMedia('(display-mode: standalone)').matches;
       
       // Check if PWA was previously installed (even if deleted now)
       const isPermanentlyInstalled = localStorage.getItem('install-banner-dismissed') === 'installed';
       
-      // Enhanced device detection for all orientations
+      // Check if user dismissed the prompt in this session
+      const sessionDismissed = sessionStorage.getItem('native-prompt-dismissed') === 'true';
+      
+      // Device detection for mobile and tablet
       const isMobile = window.innerWidth < 768;
       const isTablet = (window.innerWidth >= 768 && window.innerWidth <= 1366) || 
                        (window.innerHeight >= 768 && window.innerHeight <= 1366);
       const isMobileOrTablet = isMobile || isTablet;
       
-      // Smart banner logic: Only show if PWA not currently installed AND not previously installed AND on mobile/tablet
-      const shouldShow = !isPWA && !isPermanentlyInstalled && isMobileOrTablet;
+      // Only show if PWA not currently installed AND not previously installed AND on mobile/tablet AND not dismissed this session
+      const shouldShow = !isPWA && !isPermanentlyInstalled && isMobileOrTablet && !sessionDismissed;
       
-      console.log('🔍 Enhanced Tablet Detection:', {
+      console.log('🔍 Native Prompt Detection:', {
         isPWA: isPWA ? '✅ Currently installed' : '❌ Not currently installed',
         isPermanentlyInstalled: isPermanentlyInstalled ? '✅ Previously installed' : '❌ Never installed',
+        sessionDismissed: sessionDismissed ? '✅ Dismissed this session' : '❌ Not dismissed',
         deviceType: isMobile ? '📱 Mobile' : isTablet ? '📱 Tablet' : '💻 Desktop',
         isMobileOrTablet: isMobileOrTablet ? '✅ Mobile/Tablet' : '❌ Desktop',
-        shouldShow: shouldShow ? '✅ Show banner' : '❌ Hide banner',
+        shouldShow: shouldShow ? '✅ Show prompt' : '❌ Hide prompt',
         screenWidth: window.innerWidth,
         screenHeight: window.innerHeight,
-        orientation: window.innerWidth > window.innerHeight ? 'Landscape' : 'Portrait',
-        reason: !shouldShow ? (
-          isPWA ? 'PWA currently running' :
-          isPermanentlyInstalled ? 'PWA previously installed' :
-          !isMobileOrTablet ? 'Desktop device' : 'Unknown'
-        ) : 'All conditions met'
+        orientation: window.innerWidth > window.innerHeight ? 'Landscape' : 'Portrait'
       });
       
-      setShowBanner(shouldShow);
-      
-      // Apply CSS classes based on banner state with robust element detection
       if (shouldShow) {
-        const applyBannerClasses = () => {
-          const headerElement = document.querySelector('.header');
-          const mainContentElement = document.querySelector('.main-content');
-          const sideNavElement = document.querySelector('.side-nav');
-          
-          console.log('🔍 Elements found:', {
-            header: !!headerElement,
-            mainContent: !!mainContentElement,
-            sideNav: !!sideNavElement
-          });
-          
-          if (headerElement) {
-            headerElement.classList.add('banner-present');
-            headerElement.classList.remove('banner-dismissed');
-            console.log('📱 Header positioned for banner presence');
-          } else {
-            console.warn('⚠️ Header element not found');
-          }
-          
-          if (mainContentElement) {
-            mainContentElement.classList.add('banner-present');
-            mainContentElement.classList.remove('banner-dismissed');
-            console.log('📱 Main content positioned for banner presence');
-          } else {
-            console.warn('⚠️ Main content element not found');
-          }
-          
-          if (sideNavElement) {
-            sideNavElement.classList.add('banner-present');
-            sideNavElement.classList.remove('banner-dismissed');
-            console.log('📱 Side nav positioned for banner presence');
-          } else {
-            console.warn('⚠️ Side nav element not found');
-          }
-        };
-
-        // Try immediately, then with timeout as fallback
-        applyBannerClasses();
-        setTimeout(applyBannerClasses, 100);
-        setTimeout(applyBannerClasses, 500); // Additional fallback
+        // Show prompt after 3 seconds
+        const timer = setTimeout(() => {
+          setShowPrompt(true);
+        }, 3000);
+        
+        return () => clearTimeout(timer);
       }
     };
 
     // Check conditions immediately
-    checkBannerConditions();
+    checkPromptConditions();
 
-            // Listen for install prompt only
-            const handleBeforeInstallPrompt = (e: Event) => {
-              e.preventDefault();
-              setDeferredPrompt(e as any);
-              console.log('📱 beforeinstallprompt event received');
-            };
+    // Listen for install prompt
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as any);
+      console.log('📱 beforeinstallprompt event received');
+    };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, []); // Empty dependency array - run once only
+  }, []);
 
   const handleInstall = async () => {
     console.log('🔧 Install button clicked');
@@ -120,110 +82,83 @@ export default function InstallBanner() {
         
         if (outcome === 'accepted') {
           console.log('✅ User accepted the install prompt - PWA will be installed');
-          // Permanently hide banner after successful installation
+          // Permanently hide prompt after successful installation
           localStorage.setItem('install-banner-dismissed', 'installed');
-          setShowBanner(false);
+          setShowPrompt(false);
         } else {
-          console.log('❌ User dismissed the install prompt - no manual instructions shown');
-          // User cancelled - do nothing, banner will reappear on refresh as per user request
-          // NO manual instructions shown when user cancels native prompt
+          console.log('❌ User dismissed the install prompt');
+          // User cancelled - dismiss for this session
+          sessionStorage.setItem('native-prompt-dismissed', 'true');
+          setShowPrompt(false);
         }
         
         // Clear the deferred prompt
         setDeferredPrompt(null);
       } catch (error) {
         console.error('❌ Install prompt error:', error);
-        // Fallback to manual instructions ONLY if native prompt fails (not if user cancels)
-        showManualInstallInstructions();
       }
     } else {
       console.log('📱 No native install prompt available');
-      
-      // Check if PWA is already installed
-      const isPWA = window.matchMedia('(display-mode: standalone)').matches;
-      const isPermanentlyInstalled = localStorage.getItem('install-banner-dismissed') === 'installed';
-      
-      if (isPWA) {
-        console.log('✅ PWA is currently running - no action needed');
-        // PWA is already installed and running, no need to show instructions
-        return;
-      } else if (isPermanentlyInstalled) {
-        console.log('✅ PWA was previously installed - no action needed');
-        // PWA was previously installed, no need to show instructions
-        return;
-      } else {
-        console.log('📱 Showing manual instructions as fallback');
-        // Only show manual instructions if PWA was never installed and native prompt unavailable
-        showManualInstallInstructions();
-      }
     }
-  };
-
-  const showManualInstallInstructions = () => {
-    // Show manual installation instructions for browsers that don't support beforeinstallprompt
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isAndroid = /Android/.test(navigator.userAgent);
-    
-    let instructions = '';
-    
-    if (isIOS) {
-      instructions = '📱 iOS Installation:\n\n1. Tap the Share button (📤) at the bottom\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add" to confirm\n\nYour app will appear on your home screen!';
-    } else if (isAndroid) {
-      instructions = '📱 Android Installation:\n\n1. Tap the menu button (⋮) in your browser\n2. Look for "Add to Home Screen" or "Install App"\n3. Tap it and confirm the installation\n\nYour app will appear on your home screen!';
-    } else {
-      instructions = '💻 Desktop Installation:\n\n1. Look for the install icon (⊕) in your browser\'s address bar\n2. Or check the browser menu for "Install App"\n3. Click it to install\n\nYour app will be added to your desktop!';
-    }
-    
-    alert(`Install MedWira AI:\n\n${instructions}`);
   };
 
   const handleDismiss = () => {
-    console.log('❌ Banner dismissed by user');
+    console.log('❌ Prompt dismissed by user');
     
-    // Simple dismiss - no storage, banner will show again on refresh
-    setShowBanner(false);
-    
-    // Apply CSS classes for animation
-    const headerElement = document.querySelector('.header');
-    const mainContentElement = document.querySelector('.main-content');
-    const sideNavElement = document.querySelector('.side-nav');
-    
-    if (headerElement) {
-      headerElement.classList.remove('banner-present');
-      headerElement.classList.add('banner-dismissed');
-      console.log('📱 Header positioned for banner dismissal');
-    }
-    if (mainContentElement) {
-      mainContentElement.classList.remove('banner-present');
-      mainContentElement.classList.add('banner-dismissed');
-      console.log('📱 Main content positioned for banner dismissal');
-    }
-    if (sideNavElement) {
-      sideNavElement.classList.remove('banner-present');
-      sideNavElement.classList.add('banner-dismissed');
-      console.log('📱 Side nav positioned for banner dismissal');
-    }
+    // Dismiss for this session only
+    sessionStorage.setItem('native-prompt-dismissed', 'true');
+    setShowPrompt(false);
+    setIsDismissed(true);
   };
 
+  // Add swipe-to-dismiss functionality
+  useEffect(() => {
+    if (!showPrompt) return;
+
+    let startX = 0;
+    let startY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      
+      const deltaX = endX - startX;
+      const deltaY = endY - startY;
+      
+      // Check if it's a left swipe (deltaX < -50) and not a vertical swipe
+      if (deltaX < -50 && Math.abs(deltaY) < 100) {
+        console.log('👈 Left swipe detected - dismissing prompt');
+        handleDismiss();
+      }
+    };
+
+    // Add touch event listeners to the document
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [showPrompt]);
+
   // Don't render if not showing
-  if (!showBanner) {
-    console.log('🚫 Banner not rendering - showBanner is false');
+  if (!showPrompt || isDismissed) {
     return null;
   }
 
-  return (
-    <div className="install-banner-top">
-      <div className="install-content">
-        <span>Install MedWira AI to your home screen!</span>
-        <div className="install-actions">
-          <button onClick={handleInstall}>
-            {deferredPrompt ? 'Install' : 'Install'}
-          </button>
-          <button className="close-install" onClick={handleDismiss}>
-            <X size={16} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  // The native prompt will be triggered by the browser
+  // This component just handles the logic and timing
+  return null;
 }
+
+// Export a function to manually trigger the install prompt
+export const triggerInstallPrompt = () => {
+  // This can be called from other components if needed
+  console.log('🔧 Manual install prompt trigger');
+};

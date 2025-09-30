@@ -26,91 +26,12 @@ body {
   background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
 }
 
-/* Install Banner Top */
-.install-banner-top {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(135deg, #00d4ff, #0099cc);
-  color: white;
-  z-index: 1001;
-  animation: slideDown 0.3s ease;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
-.install-banner-top.slide-up {
-  transform: translateY(-100%);
-  opacity: 0;
-}
-
-/* Hide install banner on desktop (1367px and above) - Pure CSS solution */
-@media (min-width: 1367px) {
-  .install-banner-top {
-    display: none !important;
-  }
-}
-
-/* Ensure banner shows on mobile and tablet (all orientations) */
-@media (max-width: 1366px) {
-  .install-banner-top {
-    display: block !important;
-  }
-}
-
-.install-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 20px;
-  font-size: 13px;
-  font-weight: 500;
-  gap: 12px;
-}
-
-.install-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.install-actions button {
-  background: white;
-  color: #00d4ff;
-  border: none;
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 11px;
-  transition: all 0.2s ease;
-}
-
-.install-actions button:hover {
-  background: #f0f0f0;
-  transform: translateY(-1px);
-}
-
-.close-install {
-  background: rgba(255, 255, 255, 0.2) !important;
-  color: white !important;
-  padding: 4px !important;
-  border-radius: 50% !important;
-  width: 24px !important;
-  height: 24px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.close-install:hover {
-  background: rgba(255, 255, 255, 0.3) !important;
-}
+/* Custom banner removed - using native PWA prompt */
 
 /* Header */
 .header {
   position: fixed;
-  top: 40px; /* Default: below banner */
+  top: 0; /* Always at top - no banner */
   left: 0;
   right: 0;
   background: rgba(10, 10, 10, 0.95);
@@ -122,50 +43,26 @@ body {
   justify-content: space-between;
   z-index: 1000;
   height: 60px;
-  transition: top 0.3s ease;
 }
 
-/* When banner is present, header stays below banner */
-.header.banner-present {
-  top: 40px;
-}
-
-/* When banner is dismissed, header moves to top */
-.header.banner-dismissed {
-  top: 0;
-}
-
-/* Main Content Positioning - CRITICAL FIX */
+/* Main Content Positioning */
 .main-content {
-  margin-top: 100px; /* Default: below banner + header */
-  transition: margin-top 0.3s ease;
+  margin-top: 60px; /* Always below header - no banner */
 }
 
-/* When banner is present, main content stays below banner + header */
-.main-content.banner-present {
-  margin-top: 100px;
-}
-
-/* When banner is dismissed, main content moves up */
-.main-content.banner-dismissed {
-  margin-top: 60px; /* Without banner */
-}
-
-/* Desktop positioning handled by min-width: 1367px media query below */
-
-/* Desktop: No banner, override all positioning */
+/* Desktop positioning - no banner */
 @media (min-width: 1367px) {
   .header {
-    top: 0 !important; /* Normal position on desktop (no banner) */
+    top: 0; /* Normal position on desktop (no banner) */
   }
   
   .main-content {
-    margin-top: 60px !important; /* Desktop - no banner */
+    margin-top: 60px; /* Desktop - no banner */
   }
   
   .side-nav {
-    top: 60px !important; /* Desktop - below header only */
-    height: calc(100vh - 60px) !important;
+    top: 60px; /* Desktop - below header only */
+    height: calc(100vh - 60px);
   }
 }
 
@@ -263,31 +160,19 @@ body {
 /* Side Navigation */
 .side-nav {
   position: fixed;
-  top: 100px; /* Default: below banner + header */
+  top: 60px; /* Always below header - no banner */
   left: -280px;
   width: 280px;
-  height: calc(100vh - 100px);
+  height: calc(100vh - 60px);
   background: rgba(10, 10, 10, 0.95);
   backdrop-filter: blur(20px);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
-  transition: left 0.3s ease, top 0.3s ease, height 0.3s ease;
+  transition: left 0.3s ease;
   z-index: 999;
   display: flex;
   flex-direction: column;
   padding-top: 0; /* Remove default padding */
   overflow-y: auto; /* Allow scrolling if content exceeds height */
-}
-
-/* When banner is present, side nav stays below banner + header */
-.side-nav.banner-present {
-  top: 100px;
-  height: calc(100vh - 100px);
-}
-
-/* When banner is dismissed, side nav adjusts */
-.side-nav.banner-dismissed {
-  top: 60px; /* Only below header */
-  height: calc(100vh - 60px);
 }
 
 /* Tablet-specific height adjustments - REMOVED CONFLICTING RULES */
@@ -572,15 +457,9 @@ body {
   transition: all 0.3s ease;
 }
 
-/* Chat container positioning - responsive with CSS-only banner */
+/* Chat container positioning - responsive */
 @media (max-width: 1024px) {
-  /* Tablet-specific banner rules for chat container */
-  .chat-container.banner-present {
-    margin-top: 100px;
-    height: calc(100vh - 100px);
-  }
-  
-  .chat-container.banner-dismissed {
+  .chat-container {
     margin-top: 60px;
     height: calc(100vh - 60px);
   }
@@ -1081,38 +960,7 @@ body {
   cursor: not-allowed;
 }
 
-/* Install Banner */
-.install-banner {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(135deg, #00d4ff, #0099cc);
-  color: white;
-  padding: 12px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  z-index: 1001;
-  animation: slideUp 0.3s ease;
-}
-
-.install-banner button {
-  background: white;
-  color: #00d4ff;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 12px;
-  transition: all 0.2s ease;
-}
-
-.install-banner button:hover {
-  background: #f0f0f0;
-  transform: translateY(-1px);
-}
+/* Install banner removed - using native PWA prompt */
 
 /* Modal Styles */
 .modal-overlay {
@@ -1274,19 +1122,9 @@ body {
   .side-nav {
     width: 100%;
     left: -100%;
-    /* Remove hardcoded top/height - let banner rules handle positioning */
-    padding-top: 0; /* Remove extra padding */
-  }
-  
-  /* Mobile-specific banner rules */
-  .side-nav.banner-present {
-    top: 100px;
-    height: calc(100vh - 100px);
-  }
-  
-  .side-nav.banner-dismissed {
-    top: 60px;
+    top: 60px; /* Always below header - no banner */
     height: calc(100vh - 60px);
+    padding-top: 0; /* Remove extra padding */
   }
   
   .side-nav.open {
@@ -1299,19 +1137,9 @@ body {
   
   .chat-container {
     margin-left: 0;
-    /* Remove hardcoded margin-top/height - let banner rules handle positioning */
-    padding: 0;
-  }
-  
-  /* Mobile-specific banner rules for chat container */
-  .chat-container.banner-present {
-    margin-top: 100px;
-    height: calc(100vh - 100px);
-  }
-  
-  .chat-container.banner-dismissed {
-    margin-top: 60px;
+    margin-top: 60px; /* Always below header - no banner */
     height: calc(100vh - 60px);
+    padding: 0;
   }
   
   .chat-window {
@@ -1388,13 +1216,8 @@ body {
     height: 56px; /* Mobile header height - positioning will adjust automatically */
   }
   
-  /* Mobile-specific banner rules for 56px header */
-  .side-nav.banner-present {
-    top: 96px; /* 40px banner + 56px header */
-    height: calc(100vh - 96px);
-  }
-  
-  .side-nav.banner-dismissed {
+  /* Mobile-specific side nav (56px header) */
+  .side-nav {
     top: 56px; /* 56px header only */
     height: calc(100vh - 56px);
   }
@@ -1419,13 +1242,8 @@ body {
     padding: 5px 10px;
   }
   
-  /* Mobile-specific banner rules for chat container (56px header) */
-  .chat-container.banner-present {
-    margin-top: 96px; /* 40px banner + 56px header */
-    height: calc(100vh - 96px);
-  }
-  
-  .chat-container.banner-dismissed {
+  /* Mobile-specific chat container (56px header) */
+  .chat-container {
     margin-top: 56px; /* 56px header only */
     height: calc(100vh - 56px);
   }
