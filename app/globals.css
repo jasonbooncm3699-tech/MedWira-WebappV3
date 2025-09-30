@@ -110,7 +110,7 @@ body {
 /* Header */
 .header {
   position: fixed;
-  top: 0;
+  top: 40px; /* Default: below banner */
   left: 0;
   right: 0;
   background: rgba(10, 10, 10, 0.95);
@@ -122,16 +122,18 @@ body {
   justify-content: space-between;
   z-index: 1000;
   height: 60px;
+  transition: top 0.3s ease;
+}
+
+/* When banner is dismissed, header moves to top */
+.banner-dismissed .header {
+  top: 0;
 }
 
 /* Main Content Positioning - CRITICAL FIX */
 .main-content {
-  margin-top: 60px; /* Default without banner */
+  margin-top: 100px; /* Default: below banner + header */
   transition: margin-top 0.3s ease;
-}
-
-.main-content.banner-present {
-  margin-top: 100px; /* With banner on mobile/tablet */
 }
 
 .main-content.banner-dismissed {
@@ -144,74 +146,23 @@ body {
   }
 }
 
-/* Header positioning - mobile and tablet portrait: apply mobile-style positioning */
-@media (max-width: 1366px) and (orientation: portrait) {
-  .header {
-    top: 40px !important; /* FORCE position below banner on tablets */
-    transition: top 0.3s ease;
-  }
-  
-  .header.banner-present {
-    top: 40px !important; /* Position below banner on mobile/tablet portrait */
-  }
-  
-  .header.banner-dismissed {
-    top: 0 !important; /* Slide up when banner is dismissed */
-  }
-}
-
-/* Header positioning - tablet landscape: apply mobile-style positioning */
-@media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
-  .header {
-    top: 40px !important; /* FORCE position below banner on tablets */
-    transition: top 0.3s ease;
-  }
-  
-  .header.banner-present {
-    top: 40px !important; /* Position below banner when banner is present */
-  }
-  
-  .header.banner-dismissed {
-    top: 0 !important; /* Slide up when banner is dismissed */
-  }
-}
-
-/* Header positioning - desktop: no banner */
+/* Desktop: No banner, header at top */
 @media (min-width: 1367px) {
   .header {
     top: 0; /* Normal position on desktop (no banner) */
   }
-}
-
-/* Main content positioning - mobile and tablet portrait: apply mobile-style positioning */
-@media (max-width: 1366px) and (orientation: portrait) {
+  
   .main-content {
-    margin-top: 60px; /* Default spacing without banner */
+    margin-top: 60px; /* Desktop - no banner */
   }
   
-  .main-content.banner-present {
-    margin-top: 100px; /* Extra spacing when banner is present */
-  }
-  
-  .main-content.banner-dismissed {
-    margin-top: 60px; /* Normal spacing when banner is dismissed */
+  .side-nav {
+    top: 60px; /* Desktop - below header only */
+    height: calc(100vh - 60px);
   }
 }
 
-/* Main content positioning - tablet landscape: apply mobile-style positioning */
-@media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
-  .main-content {
-    margin-top: 60px; /* Default spacing without banner */
-  }
-  
-  .main-content.banner-present {
-    margin-top: 100px; /* Extra spacing when banner is present */
-  }
-  
-  .main-content.banner-dismissed {
-    margin-top: 60px; /* Normal spacing when banner is dismissed */
-  }
-}
+/* Removed conflicting main content rules - now handled by global rules */
 
 .header-left {
   display: flex;
@@ -305,14 +256,14 @@ body {
 /* Side Navigation */
 .side-nav {
   position: fixed;
-  top: 60px; /* Default desktop position */
+  top: 100px; /* Default: below banner + header */
   left: -280px;
   width: 280px;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 100px);
   background: rgba(10, 10, 10, 0.95);
   backdrop-filter: blur(20px);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
-  transition: left 0.3s ease, top 0.3s ease;
+  transition: left 0.3s ease, top 0.3s ease, height 0.3s ease;
   z-index: 999;
   display: flex;
   flex-direction: column;
@@ -320,30 +271,10 @@ body {
   overflow-y: auto; /* Allow scrolling if content exceeds height */
 }
 
-/* Adjust side nav position for mobile and tablet portrait: apply mobile-style positioning */
-@media (max-width: 1366px) and (orientation: portrait) {
-  .side-nav {
-    top: 100px !important; /* Position below header + banner - FORCE positioning */
-    height: calc(100vh - 100px) !important; /* Adjust height for banner space */
-  }
-  
-  .side-nav.banner-dismissed {
-    top: 60px !important; /* Position below header only when banner is dismissed */
-    height: calc(100vh - 60px) !important; /* Restore full height when banner dismissed */
-  }
-}
-
-/* Adjust side nav position for tablet landscape: apply mobile-style positioning */
-@media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
-  .side-nav {
-    top: 100px !important; /* Position below header + banner - FORCE positioning */
-    height: calc(100vh - 100px) !important; /* Adjust height for banner space */
-  }
-  
-  .side-nav.banner-dismissed {
-    top: 60px !important; /* Position below header only when banner is dismissed */
-    height: calc(100vh - 60px) !important; /* Restore full height when banner dismissed */
-  }
+/* When banner is dismissed, side nav adjusts */
+.banner-dismissed .side-nav {
+  top: 60px; /* Only below header */
+  height: calc(100vh - 60px);
 }
 
 /* Tablet-specific height adjustments - REMOVED CONFLICTING RULES */
