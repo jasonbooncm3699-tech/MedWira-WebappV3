@@ -6,7 +6,7 @@ import { supabase, DatabaseService, User } from './supabase';
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
+  register: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   isLoading: boolean;
   updateTokens: (newTokenCount: number) => Promise<void>;
@@ -92,9 +92,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (email: string, password: string, name: string) => {
+  const register = async (email: string, password: string) => {
     try {
-      console.log('📝 Attempting registration for:', email, 'name:', name);
+      console.log('📝 Attempting registration for:', email);
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -114,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await DatabaseService.createUser({
             id: data.user.id, // Use Supabase auth user ID
             email: data.user.email!,
-            name,
+            name: '', // No name required - will use email as display name
             tokens: 30, // Free tier starts with 30 tokens
             subscription_tier: 'free',
           });
@@ -123,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('💥 Failed to create user record:', dbError);
           console.error('💥 User ID:', data.user.id);
           console.error('💥 Email:', data.user.email);
-          console.error('💥 Name:', name);
+          console.error('💥 Name: (empty)');
           return { success: false, error: `Registration completed but failed to create user profile: ${dbError.message || 'Unknown error'}` };
         }
       }

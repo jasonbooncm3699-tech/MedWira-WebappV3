@@ -15,7 +15,6 @@ interface SocialAuthModalProps {
 export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }: SocialAuthModalProps) {
   const { login, register } = useAuth();
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
     password: '',
   });
@@ -33,13 +32,13 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
     try {
       if (mode === 'register') {
         // Use Supabase registration
-        const result = await register(formData.email, formData.password, formData.name);
+        const result = await register(formData.email, formData.password);
         
         if (result.success) {
           setMessage('Registration successful! Please check your email to verify your account.');
           setTimeout(() => {
             onClose();
-            setFormData({ name: '', email: '', password: '' });
+            setFormData({ email: '', password: '' });
             setMessage('');
             setShowEmailForm(false);
           }, 1500);
@@ -54,7 +53,7 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
           setMessage('Login successful!');
           setTimeout(() => {
             onClose();
-            setFormData({ name: '', email: '', password: '' });
+            setFormData({ email: '', password: '' });
             setMessage('');
             setShowEmailForm(false);
           }, 1500);
@@ -393,32 +392,6 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
         ) : (
           /* Email Form */
           <form onSubmit={handleSubmit}>
-            {mode === 'register' && (
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#ccc' }}>
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  placeholder="Enter your full name"
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '12px 12px 12px 40px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '8px',
-                    color: '#ffffff',
-                    fontSize: '14px',
-                    outline: 'none',
-                    transition: 'all 0.2s ease',
-                  }}
-                />
-              </div>
-            )}
 
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#ccc' }}>

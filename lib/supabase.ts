@@ -9,7 +9,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 export interface User {
   id: string
   email: string
-  name: string
+  name?: string
   avatar_url?: string
   tokens: number
   subscription_tier: 'free' | 'premium' | 'pro'

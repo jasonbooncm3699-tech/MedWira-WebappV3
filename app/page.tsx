@@ -365,7 +365,7 @@ export default function Home() {
             <div className="user-dropdown">
               <button className="auth-btn user-profile-btn">
                 <User size={16} />
-                {user.name}
+                {user.name || user.email}
               </button>
               <div className="dropdown-menu">
                 <div className="dropdown-item">
