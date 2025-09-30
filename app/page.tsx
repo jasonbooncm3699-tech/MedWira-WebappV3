@@ -362,10 +362,29 @@ export default function Home() {
           
           <div className="header-right">
           {user ? (
-            <button className="auth-btn" onClick={logout}>
-              <LogOut size={16} />
-              Sign Out
-            </button>
+            <div className="user-dropdown">
+              <button className="auth-btn user-profile-btn">
+                <User size={16} />
+                {user.name}
+              </button>
+              <div className="dropdown-menu">
+                <div className="dropdown-item">
+                  <User size={16} />
+                  Profile
+                </div>
+                <div className="dropdown-item">
+                  <span>Tokens: {user.tokens}</span>
+                </div>
+                <div className="dropdown-item">
+                  <span>Tier: {user.subscription_tier}</span>
+                </div>
+                <div className="dropdown-divider"></div>
+                <div className="dropdown-item" onClick={logout}>
+                  <LogOut size={16} />
+                  Sign Out
+                </div>
+              </div>
+            </div>
           ) : (
             <button 
               className="auth-btn" 
@@ -375,7 +394,7 @@ export default function Home() {
               }}
             >
               <LogIn size={16} />
-              Sign In
+              Sign In / Sign Up
             </button>
           )}
           </div>
@@ -403,8 +422,8 @@ export default function Home() {
                 {scanHistory.length > 0 ? (
                   scanHistory.slice(0, 5).map((scan, index) => (
                     <div key={scan.id} className="chat-item">
-                      <MessageSquare size={16} />
-                      <div className="chat-info">
+                    <MessageSquare size={16} />
+                    <div className="chat-info">
                         <span className="chat-title">
                           {scan.medicine_name || 'Medicine Scan'}
                         </span>
@@ -434,18 +453,6 @@ export default function Home() {
               <span className="tokens">{user ? `${user.tokens} tokens` : '0 tokens'}</span>
             </div>
           </div>
-          {!user && (
-            <button 
-              className="faq-btn"
-              onClick={() => {
-                setAuthMode('register');
-                setShowAuthModal(true);
-              }}
-            >
-              <LogIn size={16} />
-              Sign Up
-            </button>
-          )}
           <p className="copyright">@ 2025 MedWira.com. AI Powered medicine database</p>
           </div>
         </nav>

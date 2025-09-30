@@ -176,16 +176,41 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ 
-            fontFamily: 'serif', 
-            fontSize: '24px', 
-            fontWeight: '400',
-            color: '#ffffff',
-            margin: 0
-          }}>
-            Log in or create an account
-          </h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => onModeChange('login')}
+              style={{
+                background: mode === 'login' ? '#00d4ff' : 'transparent',
+                border: '1px solid #00d4ff',
+                color: mode === 'login' ? '#000000' : '#00d4ff',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => onModeChange('register')}
+              style={{
+                background: mode === 'register' ? '#00d4ff' : 'transparent',
+                border: '1px solid #00d4ff',
+                color: mode === 'register' ? '#000000' : '#00d4ff',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              Sign Up
+            </button>
+          </div>
           <button
             onClick={onClose}
             style={{
@@ -251,7 +276,7 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onModeChange }:
                 marginBottom: '24px',
               }}
             >
-              Continue
+{mode === 'login' ? 'Continue to Sign In' : 'Continue to Sign Up'}
             </button>
 
             {/* Separator */}
