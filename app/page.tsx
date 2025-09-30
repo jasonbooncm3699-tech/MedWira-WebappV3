@@ -6,7 +6,6 @@ import React, { useState, useEffect } from 'react';
 import { Bot, User, Send, Upload, Camera, Menu, X, Plus, MessageSquare, Settings, LogOut, LogIn, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import SocialAuthModal from '@/components/SocialAuthModal';
-import InstallBanner from '@/components/InstallBanner';
 import { MessageFormatter } from '@/lib/message-formatter';
 import { DatabaseService } from '@/lib/supabase';
 
@@ -314,9 +313,6 @@ export default function Home() {
 
   return (
       <div className="app">
-      {/* Install Banner - CSS-only responsive behavior */}
-      <InstallBanner />
-
       {/* Header */}
       <header className="header">
           <div className="header-left">
