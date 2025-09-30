@@ -85,14 +85,16 @@ export default function InstallBanner() {
           localStorage.setItem('install-banner-dismissed', 'installed');
           setShowBanner(false);
         } else {
-          console.log('❌ User dismissed the install prompt');
+          console.log('❌ User dismissed the install prompt - no manual instructions shown');
+          // User cancelled - do nothing, banner will reappear on refresh as per user request
+          // NO manual instructions shown when user cancels native prompt
         }
         
         // Clear the deferred prompt
         setDeferredPrompt(null);
       } catch (error) {
         console.error('❌ Install prompt error:', error);
-        // Fallback to manual instructions if native prompt fails
+        // Fallback to manual instructions ONLY if native prompt fails (not if user cancels)
         showManualInstallInstructions();
       }
     } else {
