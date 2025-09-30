@@ -160,10 +160,19 @@ body {
   }
 }
 
-/* Header positioning - tablet landscape: keep existing behavior */
+/* Header positioning - tablet landscape: apply mobile-style positioning */
 @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
   .header {
-    top: 0; /* Keep existing positioning - no changes */
+    top: 0; /* Default position without banner */
+    transition: top 0.3s ease;
+  }
+  
+  .header.banner-present {
+    top: 40px; /* Position below banner when banner is present */
+  }
+  
+  .header.banner-dismissed {
+    top: 0; /* Slide up when banner is dismissed */
   }
 }
 
@@ -189,10 +198,18 @@ body {
   }
 }
 
-/* Main content positioning - tablet landscape: keep existing behavior */
+/* Main content positioning - tablet landscape: apply mobile-style positioning */
 @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
   .main-content {
-    margin-top: 60px; /* Keep existing positioning - no changes */
+    margin-top: 60px; /* Default spacing without banner */
+  }
+  
+  .main-content.banner-present {
+    margin-top: 100px; /* Extra spacing when banner is present */
+  }
+  
+  .main-content.banner-dismissed {
+    margin-top: 60px; /* Normal spacing when banner is dismissed */
   }
 }
 
@@ -316,48 +333,25 @@ body {
   }
 }
 
-/* Adjust side nav position for tablet landscape: keep existing behavior */
+/* Adjust side nav position for tablet landscape: apply mobile-style positioning */
 @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
   .side-nav {
-    top: 60px; /* Keep existing positioning - no changes */
-    height: calc(100vh - 60px);
-  }
-}
-
-/* Tablet-specific height adjustments */
-@media (min-width: 768px) and (max-width: 1024px) {
-  .side-nav {
-    top: 104px; /* Account for taller tablet header (64px) + banner (40px) */
-    height: calc(100vh - 104px);
+    top: 100px; /* Position below header + banner */
+    height: calc(100vh - 100px); /* Adjust height for banner space */
   }
   
   .side-nav.banner-dismissed {
-    top: 64px; /* Account for taller tablet header only */
-    height: calc(100vh - 64px);
-  }
-  
-  /* Update main content margin for tablet */
-  .main-content {
-    margin-top: 104px; /* Account for taller tablet header + banner */
-  }
-  
-  .main-content.banner-dismissed {
-    margin-top: 64px; /* Account for taller tablet header only */
+    top: 60px; /* Position below header only when banner is dismissed */
+    height: calc(100vh - 60px); /* Restore full height when banner dismissed */
   }
 }
+
+/* Tablet-specific height adjustments - REMOVED CONFLICTING RULES */
+/* These rules were conflicting with orientation-specific positioning */
 
 /* Tablet-specific optimizations */
 @media (min-width: 768px) and (max-width: 1024px) {
-  .side-nav {
-    /* Ensure proper height calculation on tablets */
-    height: calc(100vh - 100px);
-    max-height: calc(100vh - 100px);
-  }
-  
-  .side-nav.banner-dismissed {
-    height: calc(100vh - 60px);
-    max-height: calc(100vh - 60px);
-  }
+  /* Removed conflicting height rules - now handled by orientation-specific rules */
   
   .nav-footer {
     /* Ensure footer is always visible on tablet */
