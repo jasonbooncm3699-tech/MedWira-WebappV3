@@ -19,8 +19,6 @@ export default function ScreenshotButton({ className = '' }: ScreenshotButtonPro
       const canvas = await html2canvas(document.body, {
         useCORS: true,
         allowTaint: true,
-        scale: 1,
-        logging: false,
       });
       
       const dataURL = canvas.toDataURL('image/png', 0.9);
