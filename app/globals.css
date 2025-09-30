@@ -125,8 +125,13 @@ body {
   transition: top 0.3s ease;
 }
 
+/* When banner is present, header stays below banner */
+.header.banner-present {
+  top: 40px;
+}
+
 /* When banner is dismissed, header moves to top */
-.banner-dismissed .header {
+.header.banner-dismissed {
   top: 0;
 }
 
@@ -136,29 +141,31 @@ body {
   transition: margin-top 0.3s ease;
 }
 
+/* When banner is present, main content stays below banner + header */
+.main-content.banner-present {
+  margin-top: 100px;
+}
+
+/* When banner is dismissed, main content moves up */
 .main-content.banner-dismissed {
   margin-top: 60px; /* Without banner */
 }
 
-@media (min-width: 1025px) {
-  .main-content {
-    margin-top: 60px; /* Desktop - no banner */
-  }
-}
+/* Desktop positioning handled by min-width: 1367px media query below */
 
-/* Desktop: No banner, header at top */
+/* Desktop: No banner, override all positioning */
 @media (min-width: 1367px) {
   .header {
-    top: 0; /* Normal position on desktop (no banner) */
+    top: 0 !important; /* Normal position on desktop (no banner) */
   }
   
   .main-content {
-    margin-top: 60px; /* Desktop - no banner */
+    margin-top: 60px !important; /* Desktop - no banner */
   }
   
   .side-nav {
-    top: 60px; /* Desktop - below header only */
-    height: calc(100vh - 60px);
+    top: 60px !important; /* Desktop - below header only */
+    height: calc(100vh - 60px) !important;
   }
 }
 
@@ -271,8 +278,14 @@ body {
   overflow-y: auto; /* Allow scrolling if content exceeds height */
 }
 
+/* When banner is present, side nav stays below banner + header */
+.side-nav.banner-present {
+  top: 100px;
+  height: calc(100vh - 100px);
+}
+
 /* When banner is dismissed, side nav adjusts */
-.banner-dismissed .side-nav {
+.side-nav.banner-dismissed {
   top: 60px; /* Only below header */
   height: calc(100vh - 60px);
 }
@@ -1346,7 +1359,7 @@ body {
 @media (max-width: 480px) {
   .header {
     padding: 10px 12px;
-    height: 56px;
+    height: 56px; /* Mobile header height - positioning will adjust automatically */
   }
   
   .logo {
