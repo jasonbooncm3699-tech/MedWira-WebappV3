@@ -9,18 +9,29 @@ export default function InstallBanner() {
 
   useEffect(() => {
     const checkBannerConditions = () => {
+      // Check if PWA is currently running in standalone mode
       const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+      
+      // Check if PWA was previously installed (even if deleted now)
       const isPermanentlyInstalled = localStorage.getItem('install-banner-dismissed') === 'installed';
+      
+      // Check if user is on mobile/tablet
       const isMobileOrTablet = window.innerWidth <= 1024;
       
+      // Smart banner logic: Only show if PWA not currently installed AND not previously installed AND on mobile/tablet
       const shouldShow = !isPWA && !isPermanentlyInstalled && isMobileOrTablet;
       
-      console.log('🔍 Banner conditions:', {
-        isPWA, 
-        isPermanentlyInstalled, 
-        isMobileOrTablet, 
-        shouldShow,
-        screenWidth: window.innerWidth
+      console.log('🔍 Smart PWA Detection:', {
+        isPWA: isPWA ? '✅ Currently installed' : '❌ Not currently installed',
+        isPermanentlyInstalled: isPermanentlyInstalled ? '✅ Previously installed' : '❌ Never installed',
+        isMobileOrTablet: isMobileOrTablet ? '✅ Mobile/Tablet' : '❌ Desktop',
+        shouldShow: shouldShow ? '✅ Show banner' : '❌ Hide banner',
+        screenWidth: window.innerWidth,
+        reason: !shouldShow ? (
+          isPWA ? 'PWA currently running' :
+          isPermanentlyInstalled ? 'PWA previously installed' :
+          !isMobileOrTablet ? 'Desktop device' : 'Unknown'
+        ) : 'All conditions met'
       });
       
       setShowBanner(shouldShow);
@@ -98,8 +109,25 @@ export default function InstallBanner() {
         showManualInstallInstructions();
       }
     } else {
-      console.log('📱 No native install prompt available - showing manual instructions');
-      showManualInstallInstructions();
+      console.log('📱 No native install prompt available');
+      
+      // Check if PWA is already installed
+      const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+      const isPermanentlyInstalled = localStorage.getItem('install-banner-dismissed') === 'installed';
+      
+      if (isPWA) {
+        console.log('✅ PWA is currently running - no action needed');
+        // PWA is already installed and running, no need to show instructions
+        return;
+      } else if (isPermanentlyInstalled) {
+        console.log('✅ PWA was previously installed - no action needed');
+        // PWA was previously installed, no need to show instructions
+        return;
+      } else {
+        console.log('📱 Showing manual instructions as fallback');
+        // Only show manual instructions if PWA was never installed and native prompt unavailable
+        showManualInstallInstructions();
+      }
     }
   };
 
