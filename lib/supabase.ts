@@ -61,13 +61,36 @@ export interface NPRAMedicine {
 export class DatabaseService {
   // User operations
   static async createUser(userData: Omit<User, 'created_at' | 'updated_at' | 'last_login'>) {
+    console.log('🔍 Creating user with data:', userData);
+    
+    // First, check if user already exists
+    const { data: existingUser, error: checkError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userData.id)
+      .single();
+    
+    if (existingUser && !checkError) {
+      console.log('⚠️ User already exists, returning existing user:', existingUser);
+      return existingUser;
+    }
+    
     const { data, error } = await supabase
       .from('users')
-      .insert([userData])
+      .insert([{
+        ...userData,
+        // Ensure we're using the Supabase Auth user ID
+        id: userData.id
+      }])
       .select()
       .single()
     
-    if (error) throw error
+    if (error) {
+      console.error('❌ Database createUser error:', error);
+      throw error;
+    }
+    
+    console.log('✅ User created successfully:', data);
     return data
   }
 
