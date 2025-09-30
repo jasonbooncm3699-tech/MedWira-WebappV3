@@ -42,26 +42,48 @@ export default function InstallBanner() {
       
       setShowBanner(shouldShow);
       
-      // Apply CSS classes based on banner state
+      // Apply CSS classes based on banner state with robust element detection
       if (shouldShow) {
-        setTimeout(() => {
+        const applyBannerClasses = () => {
           const headerElement = document.querySelector('.header');
           const mainContentElement = document.querySelector('.main-content');
           const sideNavElement = document.querySelector('.side-nav');
           
+          console.log('🔍 Elements found:', {
+            header: !!headerElement,
+            mainContent: !!mainContentElement,
+            sideNav: !!sideNavElement
+          });
+          
           if (headerElement) {
             headerElement.classList.add('banner-present');
+            headerElement.classList.remove('banner-dismissed');
             console.log('📱 Header positioned for banner presence');
+          } else {
+            console.warn('⚠️ Header element not found');
           }
+          
           if (mainContentElement) {
             mainContentElement.classList.add('banner-present');
+            mainContentElement.classList.remove('banner-dismissed');
             console.log('📱 Main content positioned for banner presence');
+          } else {
+            console.warn('⚠️ Main content element not found');
           }
+          
           if (sideNavElement) {
             sideNavElement.classList.add('banner-present');
+            sideNavElement.classList.remove('banner-dismissed');
             console.log('📱 Side nav positioned for banner presence');
+          } else {
+            console.warn('⚠️ Side nav element not found');
           }
-        }, 100);
+        };
+
+        // Try immediately, then with timeout as fallback
+        applyBannerClasses();
+        setTimeout(applyBannerClasses, 100);
+        setTimeout(applyBannerClasses, 500); // Additional fallback
       }
     };
 

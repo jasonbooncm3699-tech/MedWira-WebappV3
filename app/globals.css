@@ -147,32 +147,32 @@ body {
 /* Header positioning - mobile and tablet portrait: apply mobile-style positioning */
 @media (max-width: 1366px) and (orientation: portrait) {
   .header {
-    top: 0; /* Default position without banner */
+    top: 40px !important; /* FORCE position below banner on tablets */
     transition: top 0.3s ease;
   }
   
   .header.banner-present {
-    top: 40px; /* Position below banner on mobile/tablet portrait */
+    top: 40px !important; /* Position below banner on mobile/tablet portrait */
   }
   
   .header.banner-dismissed {
-    top: 0; /* Slide up when banner is dismissed */
+    top: 0 !important; /* Slide up when banner is dismissed */
   }
 }
 
 /* Header positioning - tablet landscape: apply mobile-style positioning */
 @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
   .header {
-    top: 0; /* Default position without banner */
+    top: 40px !important; /* FORCE position below banner on tablets */
     transition: top 0.3s ease;
   }
   
   .header.banner-present {
-    top: 40px; /* Position below banner when banner is present */
+    top: 40px !important; /* Position below banner when banner is present */
   }
   
   .header.banner-dismissed {
-    top: 0; /* Slide up when banner is dismissed */
+    top: 0 !important; /* Slide up when banner is dismissed */
   }
 }
 
@@ -323,26 +323,26 @@ body {
 /* Adjust side nav position for mobile and tablet portrait: apply mobile-style positioning */
 @media (max-width: 1366px) and (orientation: portrait) {
   .side-nav {
-    top: 100px; /* Position below header + banner */
-    height: calc(100vh - 100px); /* Adjust height for banner space */
+    top: 100px !important; /* Position below header + banner - FORCE positioning */
+    height: calc(100vh - 100px) !important; /* Adjust height for banner space */
   }
   
   .side-nav.banner-dismissed {
-    top: 60px; /* Position below header only when banner is dismissed */
-    height: calc(100vh - 60px); /* Restore full height when banner dismissed */
+    top: 60px !important; /* Position below header only when banner is dismissed */
+    height: calc(100vh - 60px) !important; /* Restore full height when banner dismissed */
   }
 }
 
 /* Adjust side nav position for tablet landscape: apply mobile-style positioning */
 @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
   .side-nav {
-    top: 100px; /* Position below header + banner */
-    height: calc(100vh - 100px); /* Adjust height for banner space */
+    top: 100px !important; /* Position below header + banner - FORCE positioning */
+    height: calc(100vh - 100px) !important; /* Adjust height for banner space */
   }
   
   .side-nav.banner-dismissed {
-    top: 60px; /* Position below header only when banner is dismissed */
-    height: calc(100vh - 60px); /* Restore full height when banner dismissed */
+    top: 60px !important; /* Position below header only when banner is dismissed */
+    height: calc(100vh - 60px) !important; /* Restore full height when banner dismissed */
   }
 }
 
