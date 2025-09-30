@@ -120,11 +120,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
           console.log('✅ User record created in database');
         } catch (dbError) {
-          console.error('💥 Failed to create user record:', dbError);
+          console.error('💥 Failed to create user record with empty name, trying with default name...');
           console.error('💥 User ID:', data.user.id);
           console.error('💥 Email:', data.user.email);
-          console.error('💥 Name: (empty)');
-          return { success: false, error: `Registration completed but failed to create user profile: ${dbError instanceof Error ? dbError.message : 'Unknown error'}` };
+          console.error('💥 Database Error Type:', typeof dbError);
+          console.error('💥 Database Error Details:', JSON.stringify(dbError, null, 2));
+          
+          // Try again with a default name in case the database requires it
+          try {
+            await DatabaseService.createUser({
+              id: data.user.id,
+              email: data.user.email!,
+              name: 'User', // Default name fallback
+              tokens: 30,
+              subscription_tier: 'free',
+            });
+            console.log('✅ User record created in database with default name');
+          } catch (secondError) {
+            console.error('💥 Failed to create user record even with default name:', secondError);
+            return { success: false, error: `Registration completed but failed to create user profile: ${secondError instanceof Error ? secondError.message : 'Database connection error'}` };
+          }
         }
       }
 
