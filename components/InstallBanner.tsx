@@ -4,15 +4,16 @@ import React, { useState, useEffect } from 'react';
 
 export default function InstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as any);
-      
+    const checkBannerConditions = () => {
       // Check if PWA is currently running
       const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
                     (window.navigator as any).standalone === true;
+      
+      // Check if PWA was previously installed
+      const wasInstalled = localStorage.getItem('pwa-installed') === 'true';
       
       // Device detection for mobile and tablet
       const isMobile = window.innerWidth < 768;
@@ -20,13 +21,19 @@ export default function InstallBanner() {
                        (window.innerHeight >= 768 && window.innerHeight <= 1366);
       const isMobileOrTablet = isMobile || isTablet;
       
-      // Show prompt immediately if conditions are met
-      if (e && !isPWA && isMobileOrTablet) {
-        // Small delay to ensure UI is ready
-        setTimeout(() => {
-          (e as any).prompt();
-        }, 100);
-      }
+      // Show banner if not PWA, on mobile/tablet, and not previously installed
+      const shouldShow = !isPWA && isMobileOrTablet && !wasInstalled;
+      
+      setShowBanner(shouldShow);
+    };
+
+    // Check conditions immediately
+    checkBannerConditions();
+
+    // Listen for install prompt
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as any);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -36,61 +43,52 @@ export default function InstallBanner() {
     };
   }, []);
 
-  // Track installation attempts
-  useEffect(() => {
+  const handleInstall = async () => {
     if (deferredPrompt) {
-      const handleInstall = async () => {
-        try {
-          const result = await deferredPrompt.prompt();
-          const { outcome } = await result.userChoice;
-          
-          if (outcome === 'accepted') {
-            // Track successful installation
-            localStorage.setItem('pwa-installed', 'true');
-          } else {
-            // Track declined installation
-            const attempts = parseInt(localStorage.getItem('pwa-attempts') || '0') + 1;
-            localStorage.setItem('pwa-attempts', attempts.toString());
-          }
-          
-          // Clear the deferred prompt
-          setDeferredPrompt(null);
-        } catch (error) {
-          // Track failed installation
-          const attempts = parseInt(localStorage.getItem('pwa-attempts') || '0') + 1;
-          localStorage.setItem('pwa-attempts', attempts.toString());
+      try {
+        const result = await deferredPrompt.prompt();
+        const { outcome } = await result.userChoice;
+        
+        if (outcome === 'accepted') {
+          localStorage.setItem('pwa-installed', 'true');
+          setShowBanner(false);
         }
-      };
-
-      // Auto-trigger install prompt
-      handleInstall();
-    }
-  }, [deferredPrompt]);
-
-  // Handle PWA deletion detection
-  useEffect(() => {
-    const checkPWAStatus = () => {
-      const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
-                    (window.navigator as any).standalone === true;
-      const wasInstalled = localStorage.getItem('pwa-installed') === 'true';
-      
-      // If PWA was installed but now running in browser, it was deleted
-      if (!isPWA && wasInstalled) {
-        localStorage.removeItem('pwa-installed');
+        
+        setDeferredPrompt(null);
+      } catch (error) {
+        console.error('Install prompt error:', error);
       }
-    };
+    }
+  };
 
-    // Check on page load
-    checkPWAStatus();
-    
-    // Check on focus (when user returns to tab)
-    window.addEventListener('focus', checkPWAStatus);
-    
-    return () => {
-      window.removeEventListener('focus', checkPWAStatus);
-    };
-  }, []);
+  const handleDismiss = () => {
+    setShowBanner(false);
+  };
 
-  // This component doesn't render anything - it just handles the native prompt logic
-  return null;
+  // Don't render if not showing
+  if (!showBanner) {
+    return null;
+  }
+
+  return (
+    <div className="install-banner">
+      <div className="install-content">
+        <div className="install-info">
+          <div className="install-icon">M</div>
+          <div className="install-text">
+            <div className="install-title">Install MedWira AI</div>
+            <div className="install-url">medwira.com</div>
+          </div>
+        </div>
+        <div className="install-actions">
+          <button className="install-btn" onClick={handleInstall}>
+            Install
+          </button>
+          <button className="dismiss-btn" onClick={handleDismiss}>
+            ×
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -26,12 +26,167 @@ body {
   background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
 }
 
-/* Custom banner removed - using native PWA prompt */
+/* Install Banner - Product Hunt Style */
+.install-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #2d2d2d;
+  color: white;
+  z-index: 1001;
+  border-bottom: 1px solid #404040;
+  animation: slideDown 0.3s ease;
+}
+
+.install-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  gap: 12px;
+}
+
+.install-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.install-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #00d4ff, #0099cc);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+}
+
+.install-text {
+  flex: 1;
+}
+
+.install-title {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.install-url {
+  font-size: 12px;
+  color: #a0a0a0;
+}
+
+.install-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.install-btn {
+  background: #00d4ff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.install-btn:hover {
+  background: #0099cc;
+}
+
+.dismiss-btn {
+  background: transparent;
+  color: #a0a0a0;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.dismiss-btn:hover {
+  background: #404040;
+}
+
+/* Hide on desktop */
+@media (min-width: 1367px) {
+  .install-banner {
+    display: none;
+  }
+}
+
+/* Adjust header positioning when banner is present */
+.header {
+  top: 64px; /* Below banner */
+}
+
+.main-content {
+  margin-top: 124px; /* Below banner + header */
+}
+
+.side-nav {
+  top: 124px; /* Below banner + header */
+  height: calc(100vh - 124px);
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+  .install-content {
+    padding: 10px 12px;
+  }
+  
+  .install-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+  
+  .install-title {
+    font-size: 15px;
+  }
+  
+  .install-url {
+    font-size: 11px;
+  }
+  
+  .install-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  
+  .header {
+    top: 56px; /* Mobile header height */
+  }
+  
+  .main-content {
+    margin-top: 112px; /* Mobile banner + header */
+  }
+  
+  .side-nav {
+    top: 112px;
+    height: calc(100vh - 112px);
+  }
+}
 
 /* Header */
 .header {
   position: fixed;
-  top: 0; /* Always at top - no banner */
+  top: 64px; /* Below banner */
   left: 0;
   right: 0;
   background: rgba(10, 10, 10, 0.95);
@@ -47,7 +202,7 @@ body {
 
 /* Main Content Positioning */
 .main-content {
-  margin-top: 60px; /* Always below header - no banner */
+  margin-top: 124px; /* Below banner + header */
 }
 
 /* Desktop positioning - no banner */
@@ -160,10 +315,10 @@ body {
 /* Side Navigation */
 .side-nav {
   position: fixed;
-  top: 60px; /* Always below header - no banner */
+  top: 124px; /* Below banner + header */
   left: -280px;
   width: 280px;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 124px);
   background: rgba(10, 10, 10, 0.95);
   backdrop-filter: blur(20px);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
