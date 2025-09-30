@@ -19,7 +19,6 @@ export default function ScreenshotButton({ className = '' }: ScreenshotButtonPro
       const canvas = await html2canvas(document.body, {
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#0a0a0a',
         scale: 1,
         logging: false,
       });
@@ -70,6 +69,7 @@ export default function ScreenshotButton({ className = '' }: ScreenshotButtonPro
             </div>
             
             <div className="screenshot-preview">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={screenshotData} alt="Screenshot" />
             </div>
             
