@@ -15,18 +15,24 @@ export default function InstallBanner() {
       // Check if PWA was previously installed (even if deleted now)
       const isPermanentlyInstalled = localStorage.getItem('install-banner-dismissed') === 'installed';
       
-      // Check if user is on mobile/tablet
-      const isMobileOrTablet = window.innerWidth <= 1024;
+      // Enhanced device detection for all orientations
+      const isMobile = window.innerWidth < 768;
+      const isTablet = (window.innerWidth >= 768 && window.innerWidth <= 1366) || 
+                       (window.innerHeight >= 768 && window.innerHeight <= 1366);
+      const isMobileOrTablet = isMobile || isTablet;
       
       // Smart banner logic: Only show if PWA not currently installed AND not previously installed AND on mobile/tablet
       const shouldShow = !isPWA && !isPermanentlyInstalled && isMobileOrTablet;
       
-      console.log('🔍 Smart PWA Detection:', {
+      console.log('🔍 Enhanced Tablet Detection:', {
         isPWA: isPWA ? '✅ Currently installed' : '❌ Not currently installed',
         isPermanentlyInstalled: isPermanentlyInstalled ? '✅ Previously installed' : '❌ Never installed',
+        deviceType: isMobile ? '📱 Mobile' : isTablet ? '📱 Tablet' : '💻 Desktop',
         isMobileOrTablet: isMobileOrTablet ? '✅ Mobile/Tablet' : '❌ Desktop',
         shouldShow: shouldShow ? '✅ Show banner' : '❌ Hide banner',
         screenWidth: window.innerWidth,
+        screenHeight: window.innerHeight,
+        orientation: window.innerWidth > window.innerHeight ? 'Landscape' : 'Portrait',
         reason: !shouldShow ? (
           isPWA ? 'PWA currently running' :
           isPermanentlyInstalled ? 'PWA previously installed' :

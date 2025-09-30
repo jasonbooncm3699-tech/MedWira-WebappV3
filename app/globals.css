@@ -44,15 +44,15 @@ body {
   opacity: 0;
 }
 
-/* Hide install banner on desktop (1025px and above) - Pure CSS solution */
-@media (min-width: 1025px) {
+/* Hide install banner on desktop (1367px and above) - Pure CSS solution */
+@media (min-width: 1367px) {
   .install-banner-top {
     display: none !important;
   }
 }
 
-/* Ensure banner only shows on mobile and tablet */
-@media (max-width: 1024px) {
+/* Ensure banner shows on mobile and tablet (all orientations) */
+@media (max-width: 1366px) {
   .install-banner-top {
     display: block !important;
   }
@@ -144,15 +144,15 @@ body {
   }
 }
 
-/* Header positioning - responsive with CSS-only banner */
-@media (max-width: 1024px) {
+/* Header positioning - mobile and tablet portrait: apply mobile-style positioning */
+@media (max-width: 1366px) and (orientation: portrait) {
   .header {
     top: 0; /* Default position without banner */
     transition: top 0.3s ease;
   }
   
   .header.banner-present {
-    top: 40px; /* Position below banner on mobile/tablet */
+    top: 40px; /* Position below banner on mobile/tablet portrait */
   }
   
   .header.banner-dismissed {
@@ -160,13 +160,22 @@ body {
   }
 }
 
-@media (min-width: 1025px) {
+/* Header positioning - tablet landscape: keep existing behavior */
+@media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
+  .header {
+    top: 0; /* Keep existing positioning - no changes */
+  }
+}
+
+/* Header positioning - desktop: no banner */
+@media (min-width: 1367px) {
   .header {
     top: 0; /* Normal position on desktop (no banner) */
   }
 }
 
-@media (max-width: 1024px) {
+/* Main content positioning - mobile and tablet portrait: apply mobile-style positioning */
+@media (max-width: 1366px) and (orientation: portrait) {
   .main-content {
     margin-top: 60px; /* Default spacing without banner */
   }
@@ -177,6 +186,13 @@ body {
   
   .main-content.banner-dismissed {
     margin-top: 60px; /* Normal spacing when banner is dismissed */
+  }
+}
+
+/* Main content positioning - tablet landscape: keep existing behavior */
+@media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
+  .main-content {
+    margin-top: 60px; /* Keep existing positioning - no changes */
   }
 }
 
@@ -287,8 +303,8 @@ body {
   overflow-y: auto; /* Allow scrolling if content exceeds height */
 }
 
-/* Adjust side nav position for mobile/tablet */
-@media (max-width: 1024px) {
+/* Adjust side nav position for mobile and tablet portrait: apply mobile-style positioning */
+@media (max-width: 1366px) and (orientation: portrait) {
   .side-nav {
     top: 100px; /* Position below header + banner */
     height: calc(100vh - 100px); /* Adjust height for banner space */
@@ -297,6 +313,14 @@ body {
   .side-nav.banner-dismissed {
     top: 60px; /* Position below header only when banner is dismissed */
     height: calc(100vh - 60px); /* Restore full height when banner dismissed */
+  }
+}
+
+/* Adjust side nav position for tablet landscape: keep existing behavior */
+@media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
+  .side-nav {
+    top: 60px; /* Keep existing positioning - no changes */
+    height: calc(100vh - 60px);
   }
 }
 
