@@ -393,7 +393,6 @@ export default function Home() {
                 setShowAuthModal(true);
               }}
             >
-              <LogIn size={16} />
               Sign In / Sign Up
             </button>
           )}
