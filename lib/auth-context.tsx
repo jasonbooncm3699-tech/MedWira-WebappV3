@@ -124,7 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('💥 User ID:', data.user.id);
           console.error('💥 Email:', data.user.email);
           console.error('💥 Name: (empty)');
-          return { success: false, error: `Registration completed but failed to create user profile: ${dbError.message || 'Unknown error'}` };
+          return { success: false, error: `Registration completed but failed to create user profile: ${dbError instanceof Error ? dbError.message : 'Unknown error'}` };
         }
       }
 
