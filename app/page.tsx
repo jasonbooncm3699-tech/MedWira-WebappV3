@@ -158,6 +158,41 @@ Facebook OAuth: ${facebookResult.success ? '✅ Success' : '❌ Failed - ' + fac
     });
   }, [user, isLoading]);
 
+  // Add global OAuth test function for console debugging
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).testOAuthConfig = async () => {
+        console.log('🧪 Testing OAuth Configuration from console...');
+        
+        try {
+          const googleResult = await testOAuthConfiguration();
+          const facebookResult = await testFacebookOAuth();
+          
+          console.log('🧪 OAuth Test Results:');
+          console.log('Google OAuth:', googleResult.success ? '✅ Success' : '❌ Failed - ' + googleResult.error);
+          console.log('Facebook OAuth:', facebookResult.success ? '✅ Success' : '❌ Failed - ' + facebookResult.error);
+          
+          return { googleResult, facebookResult };
+        } catch (error) {
+          console.error('🧪 OAuth Test Error:', error);
+          return { error: error instanceof Error ? error.message : 'Unknown error' };
+        }
+      };
+      
+      console.log('🧪 OAuth test function available! Run: testOAuthConfig()');
+      
+      // Also add a simple test for the auth modal
+      (window as any).testAuthModal = () => {
+        console.log('🔐 Testing auth modal...');
+        setAuthMode('login');
+        setShowAuthModal(true);
+        console.log('🔐 Auth modal should be opening...');
+      };
+      
+      console.log('🔐 Auth modal test function available! Run: testAuthModal()');
+    }
+  }, []);
+
   // Fetch user scan history when user logs in
   useEffect(() => {
     const fetchUserScanHistory = async () => {
