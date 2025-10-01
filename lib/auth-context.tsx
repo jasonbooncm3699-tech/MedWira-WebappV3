@@ -81,14 +81,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const sessionData = data?.session;
       const sessionUser = sessionData?.user;
       
-      // Additional debugging: Check localStorage directly
+      // Additional debugging: Check all storage locations directly
       let localStorageSession = null;
+      let sessionStorageSession = null;
+      let cookieSession = null;
+      
       if (typeof window !== 'undefined') {
         try {
+          // Check localStorage
           const storedSession = localStorage.getItem('medwira-auth-token');
           localStorageSession = storedSession ? JSON.parse(storedSession) : null;
+          
+          // Check sessionStorage
+          const sessionStoredSession = sessionStorage.getItem('medwira-auth-token');
+          sessionStorageSession = sessionStoredSession ? JSON.parse(sessionStoredSession) : null;
+          
+          // Check cookies
+          const cookieValue = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('medwira-auth-token='))
+            ?.split('=')[1];
+          cookieSession = cookieValue ? JSON.parse(decodeURIComponent(cookieValue)) : null;
         } catch (e) {
-          console.log('⚠️ Error reading localStorage session:', e);
+          console.log('⚠️ Error reading storage sessions:', e);
         }
       }
       
@@ -109,10 +124,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         sessionNullCheck: sessionData === null,
         sessionUndefinedCheck: sessionData === undefined,
         sessionObjectCheck: sessionData && typeof sessionData === 'object',
-        // localStorage debugging
+        // Storage debugging - check all locations
         hasLocalStorageSession: !!localStorageSession,
         localStorageSessionType: typeof localStorageSession,
-        localStorageKeys: localStorageSession ? Object.keys(localStorageSession) : 'no-localstorage'
+        localStorageKeys: localStorageSession ? Object.keys(localStorageSession) : 'no-localstorage',
+        hasSessionStorageSession: !!sessionStorageSession,
+        sessionStorageSessionType: typeof sessionStorageSession,
+        sessionStorageKeys: sessionStorageSession ? Object.keys(sessionStorageSession) : 'no-sessionstorage',
+        hasCookieSession: !!cookieSession,
+        cookieSessionType: typeof cookieSession,
+        cookieKeys: cookieSession ? Object.keys(cookieSession) : 'no-cookies'
       });
       
       if (error) {

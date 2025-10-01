@@ -3,6 +3,82 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
 
+// Custom storage adapter for robust session persistence across OAuth redirects
+const createCustomStorage = () => {
+  return {
+    getItem: (key: string) => {
+      if (typeof window === 'undefined') return null;
+      
+      try {
+        // Try localStorage first
+        const localStorageValue = window.localStorage.getItem(key);
+        if (localStorageValue) {
+          console.log('📦 Retrieved from localStorage:', key);
+          return localStorageValue;
+        }
+        
+        // Fallback to sessionStorage
+        const sessionStorageValue = window.sessionStorage.getItem(key);
+        if (sessionStorageValue) {
+          console.log('📦 Retrieved from sessionStorage:', key);
+          return sessionStorageValue;
+        }
+        
+        // Fallback to cookies
+        const cookieValue = document.cookie
+          .split('; ')
+          .find(row => row.startsWith(`${key}=`))
+          ?.split('=')[1];
+        
+        if (cookieValue) {
+          console.log('📦 Retrieved from cookies:', key);
+          return decodeURIComponent(cookieValue);
+        }
+        
+        console.log('📦 No value found for key:', key);
+        return null;
+      } catch (error) {
+        console.error('❌ Error retrieving from storage:', error);
+        return null;
+      }
+    },
+    
+    setItem: (key: string, value: string) => {
+      if (typeof window === 'undefined') return;
+      
+      try {
+        // Store in localStorage
+        window.localStorage.setItem(key, value);
+        console.log('💾 Stored in localStorage:', key);
+        
+        // Also store in sessionStorage as backup
+        window.sessionStorage.setItem(key, value);
+        console.log('💾 Stored in sessionStorage:', key);
+        
+        // Also store in cookies for maximum compatibility
+        const cookieOptions = 'path=/; max-age=604800; samesite=lax; secure';
+        document.cookie = `${key}=${encodeURIComponent(value)}; ${cookieOptions}`;
+        console.log('💾 Stored in cookies:', key);
+      } catch (error) {
+        console.error('❌ Error storing in storage:', error);
+      }
+    },
+    
+    removeItem: (key: string) => {
+      if (typeof window === 'undefined') return;
+      
+      try {
+        window.localStorage.removeItem(key);
+        window.sessionStorage.removeItem(key);
+        document.cookie = `${key}=; path=/; max-age=0`;
+        console.log('🗑️ Removed from all storage:', key);
+      } catch (error) {
+        console.error('❌ Error removing from storage:', error);
+      }
+    }
+  };
+};
+
 // Enhanced Supabase client configuration for better session handling
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -14,10 +90,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     // Storage key for session persistence
     storageKey: 'medwira-auth-token',
-    // Storage mechanism
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    // CRITICAL: Use custom storage adapter for robust session persistence
+    storage: createCustomStorage(),
     // Flow type for OAuth
-    flowType: 'pkce'
+    flowType: 'pkce',
+    // Additional auth options for better OAuth handling
+    debug: process.env.NODE_ENV === 'development'
   },
   // Global configuration
   global: {
