@@ -9,7 +9,6 @@ import { useAuth } from '@/lib/auth-context';
 import SocialAuthModal from '@/components/SocialAuthModal';
 import { MessageFormatter } from '@/lib/message-formatter';
 import { DatabaseService } from '@/lib/supabase';
-import { testOAuthConfiguration, testFacebookOAuth } from '@/lib/oauth-test';
 
 export default function Home() {
   const { user, logout, isLoading, refreshUser } = useAuth();
@@ -63,7 +62,6 @@ export default function Home() {
   const [allergy, setAllergy] = useState('');
   const [showFAQ, setShowFAQ] = useState(false);
   const [scanHistory, setScanHistory] = useState<any[]>([]);
-  const [testResults, setTestResults] = useState<string>('');
   const [messages, setMessages] = useState<Array<{
     id: string;
     type: 'user' | 'ai';
@@ -92,29 +90,6 @@ export default function Home() {
     setSideNavOpen(false); // Close side nav after starting new chat
   };
 
-  // Test OAuth configuration
-  const testOAuth = async () => {
-    console.log('🧪 Testing OAuth Configuration...');
-    setTestResults('Testing OAuth configuration...');
-    
-    try {
-      const googleResult = await testOAuthConfiguration();
-      const facebookResult = await testFacebookOAuth();
-      
-      const results = `
-Google OAuth: ${googleResult.success ? '✅ Success' : '❌ Failed - ' + googleResult.error}
-Facebook OAuth: ${facebookResult.success ? '✅ Success' : '❌ Failed - ' + facebookResult.error}
-      `.trim();
-      
-      setTestResults(results);
-      console.log('🧪 OAuth Test Results:', results);
-      
-    } catch (error) {
-      const errorMsg = `Test failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
-      setTestResults(errorMsg);
-      console.error('🧪 OAuth Test Error:', error);
-    }
-  };
 
   // Detect mobile device on initial load
   useEffect(() => {
@@ -158,40 +133,6 @@ Facebook OAuth: ${facebookResult.success ? '✅ Success' : '❌ Failed - ' + fac
     });
   }, [user, isLoading]);
 
-  // Add global OAuth test function for console debugging
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      (window as any).testOAuthConfig = async () => {
-        console.log('🧪 Testing OAuth Configuration from console...');
-        
-        try {
-          const googleResult = await testOAuthConfiguration();
-          const facebookResult = await testFacebookOAuth();
-          
-          console.log('🧪 OAuth Test Results:');
-          console.log('Google OAuth:', googleResult.success ? '✅ Success' : '❌ Failed - ' + googleResult.error);
-          console.log('Facebook OAuth:', facebookResult.success ? '✅ Success' : '❌ Failed - ' + facebookResult.error);
-          
-          return { googleResult, facebookResult };
-        } catch (error) {
-          console.error('🧪 OAuth Test Error:', error);
-          return { error: error instanceof Error ? error.message : 'Unknown error' };
-        }
-      };
-      
-      console.log('🧪 OAuth test function available! Run: testOAuthConfig()');
-      
-      // Also add a simple test for the auth modal
-      (window as any).testAuthModal = () => {
-        console.log('🔐 Testing auth modal...');
-        setAuthMode('login');
-        setShowAuthModal(true);
-        console.log('🔐 Auth modal should be opening...');
-      };
-      
-      console.log('🔐 Auth modal test function available! Run: testAuthModal()');
-    }
-  }, []);
 
   // Fetch user scan history when user logs in
   useEffect(() => {
@@ -523,31 +464,17 @@ Facebook OAuth: ${facebookResult.success ? '✅ Success' : '❌ Failed - ' + fac
               </div>
             </div>
           ) : (
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <button 
-                className="auth-btn" 
-                onClick={() => {
-                  console.log('🔐 Sign In / Sign Up button clicked');
-                  setAuthMode('login');
-                  setShowAuthModal(true);
-                  console.log('🔐 Auth modal should be opening...');
-                }}
-              >
-                Sign In / Sign Up
-              </button>
-              <button 
-                className="auth-btn" 
-                onClick={testOAuth}
-                style={{ 
-                  background: 'rgba(255, 152, 0, 0.8)', 
-                  fontSize: '11px',
-                  padding: '6px 8px'
-                }}
-                title="Test OAuth Configuration"
-              >
-                🧪 Test OAuth
-              </button>
-            </div>
+            <button 
+              className="auth-btn" 
+              onClick={() => {
+                console.log('🔐 Sign In / Sign Up button clicked');
+                setAuthMode('login');
+                setShowAuthModal(true);
+                console.log('🔐 Auth modal should be opening...');
+              }}
+            >
+              Sign In / Sign Up
+            </button>
           )}
           </div>
       </header>
@@ -725,45 +652,6 @@ Facebook OAuth: ${facebookResult.success ? '✅ Success' : '❌ Failed - ' + fac
           </div>
         )}
 
-        {/* Test Results Display */}
-        {testResults && (
-          <div style={{
-            position: 'fixed',
-            top: '70px',
-            left: '20px',
-            right: '20px',
-            background: 'rgba(0, 0, 0, 0.9)',
-            border: '1px solid rgba(255, 152, 0, 0.5)',
-            borderRadius: '8px',
-            padding: '12px',
-            color: '#ffa726',
-            fontSize: '12px',
-            fontFamily: 'monospace',
-            zIndex: 1000,
-            maxHeight: '200px',
-            overflow: 'auto'
-          }}>
-            <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>🧪 OAuth Test Results:</div>
-            <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{testResults}</pre>
-            <button 
-              onClick={() => setTestResults('')}
-              style={{
-                position: 'absolute',
-                top: '8px',
-                right: '8px',
-                background: 'rgba(255, 152, 0, 0.2)',
-                border: '1px solid rgba(255, 152, 0, 0.5)',
-                color: '#ffa726',
-                borderRadius: '4px',
-                padding: '4px 8px',
-                fontSize: '10px',
-                cursor: 'pointer'
-              }}
-            >
-              ✕
-            </button>
-          </div>
-        )}
 
         {/* Chat Container */}
       <div className="main-content chat-container">
