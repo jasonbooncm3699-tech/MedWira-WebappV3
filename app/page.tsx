@@ -60,6 +60,7 @@ export default function Home() {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [allergy, setAllergy] = useState('');
+  const [showFAQ, setShowFAQ] = useState(false);
   const [scanHistory, setScanHistory] = useState<any[]>([]);
   const [messages, setMessages] = useState<Array<{
     id: string;
@@ -489,20 +490,122 @@ export default function Home() {
                 )}
               </div>
             </div>
-            {!user && (
-              <button 
-                className="nav-signin-btn"
-                onClick={() => {
-                  setAuthMode('login');
-                  setShowAuthModal(true);
-                }}
-              >
-                Sign In to Get Started
-              </button>
-            )}
+            <button 
+              className="nav-faq-btn"
+              onClick={() => setShowFAQ(!showFAQ)}
+            >
+              {showFAQ ? 'Hide FAQ' : 'FAQ'}
+            </button>
             <p className="copyright">@ 2025 MedWira.com. AI Powered medicine database</p>
           </div>
         </nav>
+
+        {/* FAQ Modal */}
+        {showFAQ && (
+          <div className="faq-modal">
+            <div className="faq-content">
+              <div className="faq-header">
+                <h2>Frequently Asked Questions</h2>
+                <button 
+                  className="faq-close"
+                  onClick={() => setShowFAQ(false)}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="faq-section">
+                <h3>📱 How to Use MedWira AI</h3>
+                <div className="faq-item">
+                  <h4>How do I scan a medicine?</h4>
+                  <p>Click the camera button (📷) or upload button (📁) in the input area. Take a clear photo of the medicine packaging, label, or pill. Our AI will analyze it instantly.</p>
+                </div>
+                
+                <div className="faq-item">
+                  <h4>What information will I get?</h4>
+                  <p>You'll receive detailed information including medicine name, active ingredients, dosage, side effects, interactions, and usage instructions.</p>
+                </div>
+                
+                <div className="faq-item">
+                  <h4>Is the camera feature free?</h4>
+                  <p>Yes! Camera scanning is free for all users. You get 10 free scans per day, with additional scans available through our token system.</p>
+                </div>
+              </div>
+
+              <div className="faq-section">
+                <h3>🔐 Account & Authentication</h3>
+                <div className="faq-item">
+                  <h4>Do I need to sign up?</h4>
+                  <p>No! You can use MedWira AI without an account. However, signing up allows you to save scan history and get more tokens.</p>
+                </div>
+                
+                <div className="faq-item">
+                  <h4>How do I sign up?</h4>
+                  <p>Click "Sign In / Sign Up" in the header, then choose "Sign Up". You can use Google, Apple, or email to create your account.</p>
+                </div>
+                
+                <div className="faq-item">
+                  <h4>What are tokens?</h4>
+                  <p>Tokens are used for additional scans beyond your free daily limit. You earn tokens by signing up, referring friends, or purchasing premium plans.</p>
+                </div>
+              </div>
+
+              <div className="faq-section">
+                <h3>💊 Medicine Information</h3>
+                <div className="faq-item">
+                  <h4>How accurate is the medicine identification?</h4>
+                  <p>Our AI is trained on extensive medicine databases and achieves high accuracy. However, always consult healthcare professionals for medical decisions.</p>
+                </div>
+                
+                <div className="faq-item">
+                  <h4>Can I scan any medicine?</h4>
+                  <p>Yes! MedWira can identify prescription drugs, over-the-counter medicines, supplements, and herbal products from around the world.</p>
+                </div>
+                
+                <div className="faq-item">
+                  <h4>What if the medicine isn't recognized?</h4>
+                  <p>If our AI can't identify the medicine, try taking a clearer photo of the packaging or label. You can also describe the medicine in text.</p>
+                </div>
+              </div>
+
+              <div className="faq-section">
+                <h3>🌍 Language & Support</h3>
+                <div className="faq-item">
+                  <h4>What languages are supported?</h4>
+                  <p>Currently, MedWira responds in English, but you can ask questions in your preferred language. We're working on multi-language support.</p>
+                </div>
+                
+                <div className="faq-item">
+                  <h4>How do I change the language?</h4>
+                  <p>Use the language selector in the header to choose your preferred language. The AI will respond in the selected language.</p>
+                </div>
+                
+                <div className="faq-item">
+                  <h4>Is this a replacement for medical advice?</h4>
+                  <p>No! MedWira provides information only. Always consult healthcare professionals for medical advice, diagnosis, or treatment decisions.</p>
+                </div>
+              </div>
+
+              <div className="faq-section">
+                <h3>📱 Technical Support</h3>
+                <div className="faq-item">
+                  <h4>Camera not working?</h4>
+                  <p>Make sure you're using HTTPS or localhost. Allow camera permissions in your browser. Try refreshing the page or using the upload button instead.</p>
+                </div>
+                
+                <div className="faq-item">
+                  <h4>App not loading?</h4>
+                  <p>Check your internet connection. Clear your browser cache. Try refreshing the page or using a different browser.</p>
+                </div>
+                
+                <div className="faq-item">
+                  <h4>Need more help?</h4>
+                  <p>Contact us through the app or visit our support page. We're here to help with any technical issues or questions.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Chat Container */}
       <div className="main-content chat-container">
