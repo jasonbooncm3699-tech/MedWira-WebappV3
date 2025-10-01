@@ -169,26 +169,40 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
       if (sessionRefresh === 'true') {
         console.log('🔄 Session refresh detected, checking auth state...');
         
-        // Give Supabase a moment to set cookies
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Give Supabase more time to set cookies and process session
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
         // Check if we have a valid session
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('❌ Session error after OAuth:', sessionError);
+          setErrorMessage('Session error. Please try logging in again.');
+          setSocialLoading(null);
+          return;
+        }
         
         if (session?.user) {
-          console.log('✅ Session confirmed after OAuth, closing modal...');
-          // Session exists, auth-context will handle user load
+          console.log('✅ Session confirmed after OAuth:', {
+            userId: session.user.id,
+            email: session.user.email,
+            provider: session.user.app_metadata?.provider
+          });
+          
+          // Close modal and let auth-context handle user state
+          setSocialLoading(null);
+          setErrorMessage('');
+          onClose();
+          
           // Clean up URL
           window.history.replaceState({}, document.title, window.location.pathname);
         } else {
-          console.warn('⚠️ No session found after OAuth redirect, may need reload');
-          // Force reload if session not picked up (rare edge case)
-          setTimeout(() => {
-            if (!session) {
-              console.log('🔄 Forcing reload to ensure session is picked up...');
-              window.location.href = window.location.pathname;
-            }
-          }, 1000);
+          console.warn('⚠️ No session found after OAuth redirect');
+          setErrorMessage('Authentication failed. Please try again.');
+          setSocialLoading(null);
+          
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
       }
       

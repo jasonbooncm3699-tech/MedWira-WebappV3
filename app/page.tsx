@@ -106,22 +106,27 @@ export default function Home() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('session_refresh') === 'true') {
-      console.log('🔄 Session refresh detected, updating user state...');
-      refreshUser();
-      // Clean up URL parameter
-      window.history.replaceState({}, '', window.location.pathname);
+      console.log('🔄 Session refresh detected in page.tsx, updating user state...');
+      
+      // Give auth context time to process the session
+      setTimeout(() => {
+        refreshUser();
+        // Clean up URL parameter
+        window.history.replaceState({}, '', window.location.pathname);
+      }, 1000);
     }
   }, [refreshUser]);
 
   // Force UI re-render when user state changes
   useEffect(() => {
-    console.log('👤 User state changed:', {
+    console.log('👤 User state changed in page.tsx:', {
       isAuthenticated: !!user,
       email: user?.email,
       tokens: user?.tokens,
-      name: user?.name
+      name: user?.name,
+      isLoading: isLoading
     });
-  }, [user]);
+  }, [user, isLoading]);
 
   // Fetch user scan history when user logs in
   useEffect(() => {
@@ -477,11 +482,25 @@ export default function Home() {
                 <User size={20} />
               </div>
               <div className="user-details">
-              <span className="username">{user ? user.name : 'Guest'}</span>
-              <span className="tokens">{user ? `${user.tokens} tokens` : '0 tokens'}</span>
+                <span className="username">{user ? (user.name || user.email) : 'Guest'}</span>
+                <span className="tokens">{user ? `${user.tokens} tokens` : '0 tokens'}</span>
+                {user && (
+                  <span className="tier">{user.subscription_tier}</span>
+                )}
+              </div>
             </div>
-          </div>
-          <p className="copyright">@ 2025 MedWira.com. AI Powered medicine database</p>
+            {!user && (
+              <button 
+                className="nav-signin-btn"
+                onClick={() => {
+                  setAuthMode('login');
+                  setShowAuthModal(true);
+                }}
+              >
+                Sign In to Get Started
+              </button>
+            )}
+            <p className="copyright">@ 2025 MedWira.com. AI Powered medicine database</p>
           </div>
         </nav>
 
@@ -678,37 +697,6 @@ export default function Home() {
         onModeChange={setAuthMode}
       />
 
-      {/* Footer with User Info */}
-      <footer className="app-footer">
-        {user ? (
-          <div className="footer-content">
-            <span className="footer-welcome">
-              Welcome, <strong>{user.name || user.email}</strong>!
-            </span>
-            <span className="footer-tokens">
-              Tokens: <strong>{user.tokens}</strong>
-            </span>
-            <span className="footer-tier">
-              Tier: <strong>{user.subscription_tier}</strong>
-            </span>
-          </div>
-        ) : (
-          <div className="footer-content">
-            <span className="footer-guest">
-              Guest with <strong>0 Tokens</strong>
-            </span>
-            <button 
-              className="footer-signin-btn"
-              onClick={() => {
-                setAuthMode('login');
-                setShowAuthModal(true);
-              }}
-            >
-              Sign In to Get Started
-            </button>
-          </div>
-        )}
-      </footer>
     </div>
   );
 }

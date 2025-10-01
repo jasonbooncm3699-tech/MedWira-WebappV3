@@ -65,32 +65,87 @@ export async function GET(request: NextRequest) {
       tokensToAward: 30
     });
 
-    const { data: upsertData, error: upsertError } = await supabase
-      .from('users')
-      .upsert({
-        id: user.id,
-        email: user.email,
-        name: userName,
-        tokens: 30, // Award 30 free tokens to new users
-        subscription_tier: 'free'
-      }, {
-        onConflict: 'id',
-        ignoreDuplicates: false
-      })
-      .select()
-      .single();
+    // Retry logic for database operations
+    let upsertSuccess = false;
+    let finalUserData = null;
+    const maxRetries = 3;
 
-    if (upsertError) {
-      console.error('❌ Database upsert failed:', upsertError);
-      // Continue with redirect - auth succeeded even if DB failed
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`💾 Database upsert attempt ${attempt}/${maxRetries}...`);
+
+        const { data: upsertData, error: upsertError } = await supabase
+          .from('users')
+          .upsert({
+            id: user.id,
+            email: user.email,
+            name: userName,
+            tokens: 30, // Award 30 free tokens to new users
+            subscription_tier: 'free',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            last_login: new Date().toISOString(),
+          }, {
+            onConflict: 'id',
+            ignoreDuplicates: false
+          })
+          .select()
+          .single();
+
+        if (upsertError) {
+          console.error(`⚠️ Upsert attempt ${attempt} failed:`, {
+            error: upsertError.message,
+            code: upsertError.code,
+            details: upsertError.details
+          });
+
+          if (attempt < maxRetries) {
+            const delay = attempt * 500; // 500ms, 1000ms, 1500ms
+            console.log(`⏳ Retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          } else {
+            console.error('❌ All database upsert attempts failed');
+            break;
+          }
+        }
+
+        // Success!
+        console.log('✅ User record created/updated successfully:', {
+          userId: upsertData?.id,
+          email: upsertData?.email,
+          name: upsertData?.name,
+          tokens: upsertData?.tokens,
+          tier: upsertData?.subscription_tier,
+          attempt: attempt
+        });
+
+        finalUserData = upsertData;
+        upsertSuccess = true;
+        break;
+
+      } catch (dbException) {
+        console.error(`💥 Database exception on attempt ${attempt}:`, {
+          error: dbException instanceof Error ? dbException.message : 'Unknown',
+          stack: dbException instanceof Error ? dbException.stack : undefined
+        });
+
+        if (attempt < maxRetries) {
+          const delay = attempt * 500;
+          console.log(`⏳ Retrying after exception in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          console.error('❌ All database attempts failed with exceptions');
+        }
+      }
+    }
+
+    // Log final database operation status
+    if (upsertSuccess) {
+      console.log('🎯 Database operation completed successfully');
     } else {
-      console.log('✅ User record created/updated successfully:', {
-        userId: upsertData?.id,
-        email: upsertData?.email,
-        name: upsertData?.name,
-        tokens: upsertData?.tokens,
-        tier: upsertData?.subscription_tier
-      });
+      console.warn('⚠️ Database operation failed - user authenticated but DB record may not exist');
+      console.warn('⚠️ Auth-context will attempt to create user record on client side');
     }
 
     // Set session cookie with proper domain and secure flag
