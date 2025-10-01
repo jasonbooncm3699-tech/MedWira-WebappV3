@@ -13,41 +13,6 @@ import { DatabaseService } from '@/lib/supabase';
 export default function Home() {
   const { user, logout, isLoading, refreshUser } = useAuth();
   
-  // CRITICAL FIX: Implement strict rendering gate to prevent React error #418 (hydration mismatch)
-  if (isLoading) {
-    // RENDER ONLY A STABLE, SIMPLE LOADER TO PREVENT HYDRATION MISMATCH
-    return (
-      <div className="app">
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          background: '#0a0a0a',
-          color: '#ffffff'
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            fontSize: '16px'
-          }}>
-            <Loader2 size={24} className="animate-spin" />
-            <span>Initializing MedWira AI...</span>
-          </div>
-          <p style={{
-            marginTop: '16px',
-            fontSize: '14px',
-            opacity: 0.7
-          }}>
-            Setting up your medicine assistant
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   // Get welcome message in user's language
   const getWelcomeMessage = (lang: string): string => {
     const messages: { [key: string]: string } = {
@@ -376,6 +341,42 @@ export default function Home() {
     };
     reader.readAsDataURL(file);
   };
+
+  // CRITICAL FIX: Implement strict rendering gate to prevent React error #418 (hydration mismatch)
+  // This must be placed AFTER all hooks to comply with Rules of Hooks
+  if (isLoading) {
+    // RENDER ONLY A STABLE, SIMPLE LOADER TO PREVENT HYDRATION MISMATCH
+    return (
+      <div className="app">
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          background: '#0a0a0a',
+          color: '#ffffff'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            fontSize: '16px'
+          }}>
+            <Loader2 size={24} className="animate-spin" />
+            <span>Initializing MedWira AI...</span>
+          </div>
+          <p style={{
+            marginTop: '16px',
+            fontSize: '14px',
+            opacity: 0.7
+          }}>
+            Setting up your medicine assistant
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // RENDER THE MAIN APPLICATION ONLY WHEN LOADING IS COMPLETE
   // This prevents React error #418 (hydration mismatch) by ensuring consistent rendering
