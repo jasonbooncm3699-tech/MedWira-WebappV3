@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabase = await createClient();
 
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
@@ -148,13 +145,38 @@ export async function GET(request: NextRequest) {
       console.warn('⚠️ Auth-context will attempt to create user record on client side');
     }
 
-    // Set session cookie with proper domain and secure flag
+    // CRITICAL: Set session data in multiple storage mechanisms
     const response = NextResponse.redirect(new URL('/?session_refresh=true', request.url));
     
     // Set secure cookie for production
     const isProduction = process.env.NODE_ENV === 'production';
     const domain = isProduction ? 'medwira.com' : 'localhost';
     
+    // Store the complete session data as JSON in cookies for client-side retrieval
+    const sessionData = {
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+      expires_at: data.session.expires_at,
+      expires_in: data.session.expires_in,
+      token_type: data.session.token_type,
+      user: {
+        id: data.session.user.id,
+        email: data.session.user.email,
+        user_metadata: data.session.user.user_metadata,
+        app_metadata: data.session.user.app_metadata
+      }
+    };
+    
+    // Set the main session cookie with our custom key
+    response.cookies.set('medwira-auth-token', JSON.stringify(sessionData), {
+      domain: domain,
+      secure: isProduction,
+      httpOnly: false, // Allow client-side access
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7 // 7 days
+    });
+    
+    // Also set individual token cookies for Supabase compatibility
     response.cookies.set('sb-access-token', data.session.access_token, {
       domain: domain,
       secure: isProduction,
@@ -171,7 +193,13 @@ export async function GET(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 30 // 30 days
     });
 
-    console.log('🍪 Session cookies set with domain:', domain);
+    console.log('🍪 Session data stored in multiple formats with domain:', domain);
+    console.log('📦 Session data preview:', {
+      hasAccessToken: !!data.session.access_token,
+      hasRefreshToken: !!data.session.refresh_token,
+      userId: data.session.user.id,
+      email: data.session.user.email
+    });
     console.log('🏠 Redirecting to home page with session refresh...');
 
     return response;

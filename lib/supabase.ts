@@ -13,7 +13,32 @@ const createCustomStorage = () => {
         // CRITICAL: Handle all Supabase auth keys with custom prefix
         const customKey = key.startsWith('medwira-') ? key : `medwira-${key}`;
         
-        // Try localStorage first with custom key
+        // CRITICAL: For auth tokens, prioritize cookies (set by OAuth callback)
+        if (key.includes('auth-token') || customKey.includes('auth-token')) {
+          // Try cookies first for auth tokens (set by OAuth callback)
+          const cookieValue = document.cookie
+            .split('; ')
+            .find(row => row.startsWith(`${customKey}=`))
+            ?.split('=')[1];
+          
+          if (cookieValue) {
+            console.log('📦 Retrieved auth token from cookies:', customKey);
+            return decodeURIComponent(cookieValue);
+          }
+          
+          // Fallback to original key in cookies
+          const cookieValueOriginal = document.cookie
+            .split('; ')
+            .find(row => row.startsWith(`${key}=`))
+            ?.split('=')[1];
+          
+          if (cookieValueOriginal) {
+            console.log('📦 Retrieved auth token from cookies (original key):', key);
+            return decodeURIComponent(cookieValueOriginal);
+          }
+        }
+        
+        // Try localStorage with custom key
         const localStorageValue = window.localStorage.getItem(customKey);
         if (localStorageValue) {
           console.log('📦 Retrieved from localStorage:', customKey);
@@ -41,7 +66,7 @@ const createCustomStorage = () => {
           return sessionStorageValueOriginal;
         }
         
-        // Fallback to cookies with custom key
+        // Final fallback to cookies with custom key
         const cookieValue = document.cookie
           .split('; ')
           .find(row => row.startsWith(`${customKey}=`))
@@ -52,7 +77,7 @@ const createCustomStorage = () => {
           return decodeURIComponent(cookieValue);
         }
         
-        // Fallback to cookies with original key
+        // Final fallback to cookies with original key
         const cookieValueOriginal = document.cookie
           .split('; ')
           .find(row => row.startsWith(`${key}=`))
@@ -77,6 +102,17 @@ const createCustomStorage = () => {
       try {
         // CRITICAL: Use custom key for consistency
         const customKey = key.startsWith('medwira-') ? key : `medwira-${key}`;
+        
+        // CRITICAL: For auth tokens, prioritize cookies (for OAuth compatibility)
+        if (key.includes('auth-token') || customKey.includes('auth-token')) {
+          const cookieOptions = 'path=/; max-age=604800; samesite=lax; secure';
+          document.cookie = `${customKey}=${encodeURIComponent(value)}; ${cookieOptions}`;
+          console.log('💾 Stored auth token in cookies (priority):', customKey);
+          
+          // Also store with original key in cookies
+          document.cookie = `${key}=${encodeURIComponent(value)}; ${cookieOptions}`;
+          console.log('💾 Stored auth token in cookies (original key):', key);
+        }
         
         // Store in localStorage with custom key
         window.localStorage.setItem(customKey, value);
