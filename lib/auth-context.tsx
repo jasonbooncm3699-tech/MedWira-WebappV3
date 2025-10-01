@@ -5,8 +5,6 @@ import { supabase, DatabaseService, User } from './supabase';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   isLoading: boolean;
   updateTokens: (newTokenCount: number) => Promise<void>;
@@ -48,18 +46,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     getSession();
 
-    // Listen for auth changes
+    // Listen for auth changes (OAuth login, logout, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('🔄 Auth state changed:', event);
+        
         if (event === 'SIGNED_IN' && session?.user) {
           try {
-            const userData = await DatabaseService.getUser(session.user.id);
+            // Check if user exists in database, if not create them
+            let userData;
+            try {
+              userData = await DatabaseService.getUser(session.user.id);
+            } catch (error) {
+              // User doesn't exist, create them (OAuth new user)
+              console.log('📝 Creating new user record for OAuth user...');
+              const userName = session.user.user_metadata?.full_name || 
+                              session.user.user_metadata?.name || 
+                              session.user.user_metadata?.user_name ||
+                              'User';
+              
+              await DatabaseService.createUser({
+                id: session.user.id,
+                email: session.user.email!,
+                name: userName,
+                tokens: 30,
+                subscription_tier: 'free',
+              });
+              
+              userData = await DatabaseService.getUser(session.user.id);
+            }
+            
             setUser(userData);
+            console.log('✅ User authenticated:', userData.email);
           } catch (error) {
-            console.error('Error fetching user data:', error);
+            console.error('❌ Error fetching user data:', error);
           }
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
+          console.log('👋 User signed out');
         }
         setIsLoading(false);
       }
@@ -68,95 +92,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
-      // Update last login
-      if (data.user) {
-        await DatabaseService.updateUser(data.user.id, {
-          last_login: new Date().toISOString()
-        });
-      }
-
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: 'Login failed. Please try again.' };
-    }
-  };
-
-  const register = async (email: string, password: string) => {
-    try {
-      console.log('📝 Attempting registration for:', email);
-      
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) {
-        console.error('❌ Registration error:', error.message);
-        return { success: false, error: error.message };
-      }
-
-      console.log('✅ Supabase registration successful');
-
-      if (data.user) {
-        try {
-          // Create user record in our users table using Supabase auth user ID
-          await DatabaseService.createUser({
-            id: data.user.id, // Use Supabase auth user ID
-            email: data.user.email!,
-            name: '', // No name required - will use email as display name
-            tokens: 30, // Free tier starts with 30 tokens
-            subscription_tier: 'free',
-          });
-          console.log('✅ User record created in database');
-        } catch (dbError) {
-          console.error('💥 Failed to create user record with empty name, trying with default name...');
-          console.error('💥 User ID:', data.user.id);
-          console.error('💥 Email:', data.user.email);
-          console.error('💥 Database Error Type:', typeof dbError);
-          console.error('💥 Database Error Details:', JSON.stringify(dbError, null, 2));
-          
-          // Try again with a default name in case the database requires it
-          try {
-            await DatabaseService.createUser({
-              id: data.user.id,
-              email: data.user.email!,
-              name: 'User', // Default name fallback
-              tokens: 30,
-              subscription_tier: 'free',
-            });
-            console.log('✅ User record created in database with default name');
-          } catch (secondError) {
-            console.error('💥 Failed to create user record even with default name:', secondError);
-            return { success: false, error: `Registration completed but failed to create user profile: ${secondError instanceof Error ? secondError.message : 'Database connection error'}` };
-          }
-        }
-      }
-
-      console.log('✅ Registration fully successful');
-      return { success: true };
-    } catch (error) {
-      console.error('💥 Registration exception:', error);
-      return { success: false, error: 'Registration failed. Please try again.' };
-    }
-  };
-
   const logout = async () => {
     try {
+      console.log('🚪 Logging out...');
       await supabase.auth.signOut();
       setUser(null);
+      console.log('✅ Logout successful');
     } catch (error) {
-      console.error('Error logging out:', error);
+      console.error('❌ Error logging out:', error);
     }
   };
 
@@ -168,16 +111,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         tokens: newTokenCount
       });
       setUser(updatedUser);
+      console.log('✅ Tokens updated:', newTokenCount);
     } catch (error) {
-      console.error('Error updating tokens:', error);
+      console.error('❌ Error updating tokens:', error);
     }
   };
 
   return (
     <AuthContext.Provider value={{ 
       user, 
-      login, 
-      register,
       logout, 
       isLoading,
       updateTokens
