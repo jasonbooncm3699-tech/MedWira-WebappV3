@@ -158,11 +158,39 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
     }
   };
 
-  // Handle OAuth callback errors from URL
+  // Handle OAuth callback and session refresh
   useEffect(() => {
     const handleAuthCallback = async () => {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const urlParams = new URLSearchParams(window.location.search);
+      
+      // Check if this is a session refresh after OAuth callback
+      const sessionRefresh = urlParams.get('session_refresh');
+      if (sessionRefresh === 'true') {
+        console.log('🔄 Session refresh detected, checking auth state...');
+        
+        // Give Supabase a moment to set cookies
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Check if we have a valid session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          console.log('✅ Session confirmed after OAuth, closing modal...');
+          // Session exists, auth-context will handle user load
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } else {
+          console.warn('⚠️ No session found after OAuth redirect, may need reload');
+          // Force reload if session not picked up (rare edge case)
+          setTimeout(() => {
+            if (!session) {
+              console.log('🔄 Forcing reload to ensure session is picked up...');
+              window.location.href = window.location.pathname;
+            }
+          }, 1000);
+        }
+      }
       
       // Check for both old and new error parameter names
       const hashError = hashParams.get('error') || hashParams.get('auth_error');
