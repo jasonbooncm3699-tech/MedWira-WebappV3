@@ -81,40 +81,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const sessionData = data?.session;
       const sessionUser = sessionData?.user;
       
-      // Additional debugging: Check all storage locations directly
-      let localStorageSession = null;
-      let sessionStorageSession = null;
-      let cookieSession = null;
-      
+      // Simplified debugging: Supabase SSR handles cookie management automatically
       if (typeof window !== 'undefined') {
         try {
-          // Check localStorage with multiple possible keys
-          const storedSession = localStorage.getItem('medwira-auth-token') || 
-                               localStorage.getItem('sb-auth-token') ||
-                               localStorage.getItem('supabase.auth.token');
-          localStorageSession = storedSession ? JSON.parse(storedSession) : null;
-          
-          // Check sessionStorage with multiple possible keys
-          const sessionStoredSession = sessionStorage.getItem('medwira-auth-token') || 
-                                      sessionStorage.getItem('sb-auth-token') ||
-                                      sessionStorage.getItem('supabase.auth.token');
-          sessionStorageSession = sessionStoredSession ? JSON.parse(sessionStoredSession) : null;
-          
-          // Check cookies with multiple possible keys
-          const cookieValue = document.cookie
-            .split('; ')
-            .find(row => row.startsWith('medwira-auth-token=') || 
-                        row.startsWith('sb-auth-token=') ||
-                        row.startsWith('supabase.auth.token='))
-            ?.split('=')[1];
-          cookieSession = cookieValue ? JSON.parse(decodeURIComponent(cookieValue)) : null;
-          
-          // Debug: List all localStorage keys to see what's actually stored
-          console.log('🔍 All localStorage keys:', Object.keys(localStorage));
-          console.log('🔍 All sessionStorage keys:', Object.keys(sessionStorage));
+          // Debug: List all cookies to see what Supabase SSR has set
           console.log('🔍 All cookies:', document.cookie);
+          console.log('🔍 Cookie keys:', document.cookie.split(';').map(c => c.trim().split('=')[0]));
         } catch (e) {
-          console.log('⚠️ Error reading storage sessions:', e);
+          console.log('⚠️ Error reading cookies:', e);
         }
       }
       
@@ -135,16 +109,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         sessionNullCheck: sessionData === null,
         sessionUndefinedCheck: sessionData === undefined,
         sessionObjectCheck: sessionData && typeof sessionData === 'object',
-        // Storage debugging - check all locations
-        hasLocalStorageSession: !!localStorageSession,
-        localStorageSessionType: typeof localStorageSession,
-        localStorageKeys: localStorageSession ? Object.keys(localStorageSession) : 'no-localstorage',
-        hasSessionStorageSession: !!sessionStorageSession,
-        sessionStorageSessionType: typeof sessionStorageSession,
-        sessionStorageKeys: sessionStorageSession ? Object.keys(sessionStorageSession) : 'no-sessionstorage',
-        hasCookieSession: !!cookieSession,
-        cookieSessionType: typeof cookieSession,
-        cookieKeys: cookieSession ? Object.keys(cookieSession) : 'no-cookies'
+        // Cookie debugging - Supabase SSR manages cookies automatically
+        cookieCount: typeof window !== 'undefined' ? document.cookie.split(';').filter(c => c.trim()).length : 0,
+        hasCookies: typeof window !== 'undefined' ? document.cookie.length > 0 : false
       });
       
       if (error) {
