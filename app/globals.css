@@ -1528,3 +1528,117 @@ select:focus {
   font-size: 12px !important;
   color: rgba(255, 255, 255, 0.4) !important;
 }
+
+/* App Footer */
+.app-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(10, 10, 10, 0.98);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 20px;
+  z-index: 900;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-welcome,
+.footer-tokens,
+.footer-tier,
+.footer-guest {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.footer-welcome strong,
+.footer-tokens strong,
+.footer-tier strong,
+.footer-guest strong {
+  color: #00d4ff;
+  font-weight: 600;
+}
+
+.footer-signin-btn {
+  background: linear-gradient(135deg, #00d4ff, #0099cc);
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  margin-left: 12px;
+}
+
+.footer-signin-btn:hover {
+  background: linear-gradient(135deg, #0099cc, #007aa3);
+  transform: translateY(-1px);
+}
+
+/* Adjust chat container to account for footer */
+.chat-container {
+  padding-bottom: 50px;
+}
+
+/* Desktop - adjust for side nav */
+@media (min-width: 769px) {
+  .app-footer {
+    left: 280px;
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .footer-content {
+    gap: 12px;
+    font-size: 12px;
+  }
+  
+  .footer-welcome,
+  .footer-tokens,
+  .footer-tier,
+  .footer-guest {
+    font-size: 12px;
+  }
+  
+  .footer-signin-btn {
+    font-size: 11px;
+    padding: 5px 12px;
+    margin-left: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-footer {
+    padding: 10px 12px;
+  }
+  
+  .footer-content {
+    gap: 8px;
+    flex-direction: column;
+  }
+  
+  .footer-welcome,
+  .footer-tokens,
+  .footer-tier,
+  .footer-guest {
+    font-size: 11px;
+  }
+  
+  .footer-signin-btn {
+    margin-left: 0;
+    margin-top: 4px;
+  }
+}

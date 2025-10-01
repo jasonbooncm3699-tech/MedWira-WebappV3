@@ -11,7 +11,7 @@ import { MessageFormatter } from '@/lib/message-formatter';
 import { DatabaseService } from '@/lib/supabase';
 
 export default function Home() {
-  const { user, logout, isLoading } = useAuth();
+  const { user, logout, isLoading, refreshUser } = useAuth();
   
   // Get welcome message in user's language
   const getWelcomeMessage = (lang: string): string => {
@@ -101,6 +101,27 @@ export default function Home() {
     
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
+
+  // Handle session refresh from OAuth callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('session_refresh') === 'true') {
+      console.log('🔄 Session refresh detected, updating user state...');
+      refreshUser();
+      // Clean up URL parameter
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [refreshUser]);
+
+  // Force UI re-render when user state changes
+  useEffect(() => {
+    console.log('👤 User state changed:', {
+      isAuthenticated: !!user,
+      email: user?.email,
+      tokens: user?.tokens,
+      name: user?.name
+    });
+  }, [user]);
 
   // Fetch user scan history when user logs in
   useEffect(() => {
@@ -655,7 +676,39 @@ export default function Home() {
         onClose={() => setShowAuthModal(false)}
         mode={authMode}
         onModeChange={setAuthMode}
-              />
-            </div>
+      />
+
+      {/* Footer with User Info */}
+      <footer className="app-footer">
+        {user ? (
+          <div className="footer-content">
+            <span className="footer-welcome">
+              Welcome, <strong>{user.name || user.email}</strong>!
+            </span>
+            <span className="footer-tokens">
+              Tokens: <strong>{user.tokens}</strong>
+            </span>
+            <span className="footer-tier">
+              Tier: <strong>{user.subscription_tier}</strong>
+            </span>
+          </div>
+        ) : (
+          <div className="footer-content">
+            <span className="footer-guest">
+              Guest with <strong>0 Tokens</strong>
+            </span>
+            <button 
+              className="footer-signin-btn"
+              onClick={() => {
+                setAuthMode('login');
+                setShowAuthModal(true);
+              }}
+            >
+              Sign In to Get Started
+            </button>
+          </div>
+        )}
+      </footer>
+    </div>
   );
 }
