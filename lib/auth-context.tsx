@@ -62,10 +62,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.auth.getSession();
-      console.log('📡 Session check result:', {
-        hasSession: !!data.session,
+      
+      // Enhanced session debugging
+      console.log('📡 Raw session data:', {
+        hasData: !!data,
+        hasSession: !!data?.session,
+        hasUser: !!data?.session?.user,
+        sessionKeys: data?.session ? Object.keys(data.session) : 'no-session',
+        userKeys: data?.session?.user ? Object.keys(data.session.user) : 'no-user',
+        emailValue: data?.session?.user?.email,
+        emailType: typeof data?.session?.user?.email,
+        userId: data?.session?.user?.id,
         hasError: !!error,
-        email: data.session?.user?.email || 'none'
+        errorMessage: error?.message
       });
       
       if (error) {
@@ -75,15 +84,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      if (!data.session || !data.session.user) {
-        console.log('ℹ️ No active session found');
+      // More robust session validation
+      if (!data?.session) {
+        console.log('ℹ️ No session object found');
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
+      if (!data.session.user) {
+        console.log('ℹ️ No user object in session');
         setUser(null);
         setIsLoading(false);
         return;
       }
 
       const { user: sessionUser } = data.session;
-      console.log('✅ Active session found for:', sessionUser.email || 'unknown');
+      
+      // Validate session user object
+      if (!sessionUser.id || typeof sessionUser.id !== 'string') {
+        console.error('❌ Invalid session user ID:', sessionUser.id);
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
+      if (!sessionUser.email || typeof sessionUser.email !== 'string' || !sessionUser.email.includes('@')) {
+        console.error('❌ Invalid session user email:', sessionUser.email);
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('✅ Valid session found for:', sessionUser.email);
       
       // Fetch user data from users table
       const userData = await fetchUserData(sessionUser.id);
@@ -142,24 +175,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser();
     
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Only log significant events to reduce noise
-      if (event !== 'INITIAL_SESSION') {
-        console.log('🔄 Auth state changed:', event, {
-          hasSession: !!session,
-          email: session?.user?.email || 'none',
-          userId: session?.user?.id || 'none'
-        });
-      }
+      console.log('🔄 Auth state changed:', event, {
+        hasSession: !!session,
+        sessionType: typeof session,
+        sessionKeys: session ? Object.keys(session) : 'no-session',
+        hasUser: !!session?.user,
+        userKeys: session?.user ? Object.keys(session.user) : 'no-user',
+        email: session?.user?.email,
+        emailType: typeof session?.user?.email,
+        userId: session?.user?.id
+      });
       
-      if (event === 'SIGNED_IN' && session?.user) {
+      if (event === 'SIGNED_IN') {
         console.log('🎉 User signed in event detected!');
         setIsLoading(true);
         
         try {
+          // Validate session before processing
+          if (!session?.user) {
+            console.error('❌ SIGNED_IN event but no user in session');
+            setIsLoading(false);
+            return;
+          }
+
+          const { user: sessionUser } = session;
+          
+          // Validate session user
+          if (!sessionUser.id || typeof sessionUser.id !== 'string') {
+            console.error('❌ Invalid user ID in SIGNED_IN event:', sessionUser.id);
+            setIsLoading(false);
+            return;
+          }
+
+          if (!sessionUser.email || typeof sessionUser.email !== 'string' || !sessionUser.email.includes('@')) {
+            console.error('❌ Invalid user email in SIGNED_IN event:', sessionUser.email);
+            setIsLoading(false);
+            return;
+          }
+
+          console.log('✅ Valid SIGNED_IN session for:', sessionUser.email);
+          
           // Wait a moment for database to be updated
           await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          const { user: sessionUser } = session;
           
           // Fetch user data from users table
           const userData = await fetchUserData(sessionUser.id);
@@ -201,11 +258,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Refresh user data when token is refreshed
         if (session?.user) {
           const { user: sessionUser } = session;
-          const userData = await fetchUserData(sessionUser.id);
-          if (userData) {
-            setUser(userData);
+          
+          // Validate session user
+          if (sessionUser.id && typeof sessionUser.id === 'string' && 
+              sessionUser.email && typeof sessionUser.email === 'string' && 
+              sessionUser.email.includes('@')) {
+            const userData = await fetchUserData(sessionUser.id);
+            if (userData) {
+              setUser(userData);
+            }
+          } else {
+            console.error('❌ Invalid session user in TOKEN_REFRESHED:', {
+              id: sessionUser.id,
+              email: sessionUser.email
+            });
           }
         }
+      } else if (event === 'INITIAL_SESSION') {
+        console.log('🔄 INITIAL_SESSION event - session state:', {
+          hasSession: !!session,
+          hasUser: !!session?.user,
+          email: session?.user?.email
+        });
+        // Don't process INITIAL_SESSION - let refreshUser handle it
       }
     });
     
