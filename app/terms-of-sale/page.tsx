@@ -1,332 +1,543 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
-import { ArrowLeft, Mail } from 'lucide-react';
+import LegalPageLayout from '@/components/LegalPageLayout';
 
+/**
+ * Terms of Sale Page - Enhanced with Shopee-inspired pricing cards
+ * Visual token packages with gradient designs
+ * Clear refund policy with prominent warnings
+ */
 export default function TermsOfSale() {
+  const sections = [
+    { id: 'packages', title: 'Token Packages & Pricing' },
+    { id: 'purchase', title: 'Purchase Process' },
+    { id: 'token-usage', title: 'Token Usage & Validity' },
+    { id: 'refund', title: 'Refund & Cancellation' },
+    { id: 'referral', title: 'Referral Program' },
+    { id: 'taxes', title: 'Taxes & Fees' },
+    { id: 'service-changes', title: 'Service Availability' },
+    { id: 'subscriptions', title: 'Future Subscriptions' },
+    { id: 'billing-disputes', title: 'Billing Disputes' },
+    { id: 'promo-codes', title: 'Promotional Codes' },
+    { id: 'security', title: 'Payment Security' },
+    { id: 'contact', title: 'Contact & Support' },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] to-[#1a1a1a] text-white">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 bg-[rgba(10,10,10,0.95)] backdrop-blur-xl border-b border-[rgba(255,255,255,0.1)] z-50">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link 
-            href="/" 
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft size={20} />
-            <span>Back to Home</span>
-          </Link>
-          <div className="text-xl font-bold bg-gradient-to-r from-[#00d4ff] to-[#0099cc] bg-clip-text text-transparent">
-            MedWira
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-6 pt-24 pb-16">
-        {/* Title */}
-        <div className="mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-[#00d4ff] to-[#0099cc] bg-clip-text text-transparent">
-            Terms of Sale
-          </h1>
-          <p className="text-gray-400">Last Updated: January 2025</p>
-        </div>
-
-        {/* Content */}
-        <div className="space-y-8 text-gray-300 leading-relaxed">
-          
-          {/* Section 1 */}
-          <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">1. Token Packages and Pricing</h2>
-            <p className="mb-4">
-              MedWira offers token-based access to medicine identification and analysis services. All prices are in Malaysian Ringgit (RM) and include applicable taxes.
-            </p>
-            
-            <div className="grid md:grid-cols-3 gap-4">
-              {/* Starter Pack */}
-              <div className="bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-lg p-6">
-                <div className="text-center mb-4">
-                  <div className="text-3xl mb-2">🥉</div>
-                  <h3 className="text-xl font-semibold text-[#00d4ff]">Starter Pack</h3>
-                </div>
-                <div className="space-y-2 text-center">
-                  <p className="text-3xl font-bold">RM 19.90</p>
-                  <p className="text-gray-400">50 Tokens</p>
-                  <p className="text-sm text-gray-500">RM 0.398 per token</p>
-                </div>
-              </div>
-
-              {/* Standard Pack */}
-              <div className="bg-gradient-to-br from-[#00d4ff]/20 to-[#0099cc]/20 border border-[#00d4ff]/30 rounded-lg p-6">
-                <div className="text-center mb-4">
-                  <div className="text-3xl mb-2">🥈</div>
-                  <h3 className="text-xl font-semibold text-[#00d4ff]">Standard Pack</h3>
-                  <span className="inline-block bg-[#00d4ff] text-black text-xs px-2 py-1 rounded-full mt-1">
-                    BEST VALUE
-                  </span>
-                </div>
-                <div className="space-y-2 text-center">
-                  <p className="text-3xl font-bold">RM 49.90</p>
-                  <p className="text-gray-400">200 Tokens</p>
-                  <p className="text-sm text-gray-500">RM 0.250 per token (37% off)</p>
-                </div>
-              </div>
-
-              {/* Premium Pack */}
-              <div className="bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-lg p-6">
-                <div className="text-center mb-4">
-                  <div className="text-3xl mb-2">🥇</div>
-                  <h3 className="text-xl font-semibold text-[#00d4ff]">Premium Pack</h3>
-                </div>
-                <div className="space-y-2 text-center">
-                  <p className="text-3xl font-bold">RM 99.90</p>
-                  <p className="text-gray-400">500 Tokens</p>
-                  <p className="text-sm text-gray-500">RM 0.200 per token (50% off)</p>
-                </div>
+    <LegalPageLayout
+      title="Terms of Sale"
+      lastUpdated="October 1, 2025"
+      sections={sections}
+      currentPage="terms-of-sale"
+    >
+      {/* Section 1: Token Packages - Shopee-inspired pricing cards */}
+      <section id="packages" className="mb-12 scroll-mt-24">
+        <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="w-1 h-8 bg-[#4FD1C5] rounded-full"></span>
+          Token Packages & Pricing
+        </h2>
+        <p className="text-[#CBD5E0] mb-6">
+          MedWira offers token-based access to medicine identification services. All prices are in Malaysian Ringgit (RM) and include applicable taxes.
+        </p>
+        
+        <div className="grid md:grid-cols-3 gap-6">
+          {/* Starter Pack */}
+          <div className="group bg-gradient-to-br from-[#2D3748] to-[#1A202C] rounded-2xl p-6 border border-[#4A5568] hover:border-[#4FD1C5] transition-all hover:shadow-lg hover:shadow-[#4FD1C5]/20 transform hover:scale-105">
+            <div className="text-center mb-4">
+              <div className="text-5xl mb-3">🥉</div>
+              <h3 className="text-2xl font-bold text-white mb-1">Starter Pack</h3>
+              <div className="inline-block px-3 py-1 bg-[#4A5568] rounded-full text-xs text-[#CBD5E0]">
+                For Casual Users
               </div>
             </div>
-          </section>
-
-          {/* Section 2 */}
-          <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">2. Purchase Process</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-xl font-medium text-[#00d4ff] mb-2">2.1 Payment Methods</h3>
-                <p className="mb-2">We accept the following payment methods via Stripe:</p>
-                <ul className="list-disc list-inside space-y-2 ml-4">
-                  <li>Credit Cards (Visa, Mastercard, American Express)</li>
-                  <li>Debit Cards</li>
-                  <li>Online Banking (FPX for Malaysian users)</li>
-                  <li>Digital Wallets (where available)</li>
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="text-xl font-medium text-[#00d4ff] mb-2">2.2 Order Confirmation</h3>
-                <ul className="list-disc list-inside space-y-2 ml-4">
-                  <li>All purchases require a verified account (Google or Facebook OAuth)</li>
-                  <li>You will receive an email confirmation upon successful purchase</li>
-                  <li>Tokens are added to your account instantly after payment confirmation</li>
-                  <li>Payment processing is handled securely by Stripe</li>
-                </ul>
-              </div>
+            <div className="text-center py-6 border-y border-[#4A5568]">
+              <div className="text-4xl font-bold text-[#4FD1C5] mb-2">RM 19.90</div>
+              <div className="text-[#A0AEC0] mb-1">50 Tokens</div>
+              <div className="text-sm text-[#718096]">RM 0.398 per token</div>
             </div>
-          </section>
-
-          {/* Section 3 */}
-          <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">3. Token Usage and Validity</h2>
-            <div className="space-y-3">
-              <ul className="list-disc list-inside space-y-2 ml-4">
-                <li><strong>Token Consumption:</strong> Each medicine scan consumes 1 token</li>
-                <li><strong>Non-Expiring:</strong> Purchased tokens do not expire while your account is active</li>
-                <li><strong>Non-Transferable:</strong> Tokens cannot be transferred between accounts</li>
-                <li><strong>No Cash Value:</strong> Tokens have no monetary value and cannot be exchanged for cash</li>
-                <li><strong>Account Closure:</strong> Unused tokens are forfeited if you close your account</li>
-              </ul>
-            </div>
-          </section>
-
-          {/* Section 4 */}
-          <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">4. Refund and Cancellation Policy</h2>
-            <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-6 space-y-3">
-              <p className="font-semibold text-yellow-400">⚠️ IMPORTANT REFUND POLICY</p>
-              <div className="space-y-3">
-                <div>
-                  <h3 className="text-lg font-medium text-white mb-2">4.1 No Refunds</h3>
-                  <p>
-                    All token purchases are <strong>final and non-refundable</strong>. Once tokens are added to your account, they cannot be refunded, even if unused.
-                  </p>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium text-white mb-2">4.2 Exceptions</h3>
-                  <p className="mb-2">Refunds may be considered ONLY in the following cases:</p>
-                  <ul className="list-disc list-inside space-y-1 ml-4 text-sm">
-                    <li>Duplicate charges due to technical error</li>
-                    <li>Tokens not credited within 24 hours of payment</li>
-                    <li>Service unavailability for extended periods (7+ days)</li>
-                    <li>Fraudulent or unauthorized transactions (with proof)</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-medium text-white mb-2">4.3 Refund Requests</h3>
-                  <p>
-                    To request a refund under exceptional circumstances, contact{' '}
-                    <a href="mailto:billing@medwira.com" className="text-[#00d4ff] hover:underline">
-                      billing@medwira.com
-                    </a>{' '}
-                    within 7 days of purchase with transaction details.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Section 5 */}
-          <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">5. Referral Program</h2>
-            <div className="space-y-3">
-              <p className="mb-3">
-                MedWira offers a referral program to reward users who invite friends:
-              </p>
-              <div className="bg-[rgba(0,212,255,0.1)] border border-[rgba(0,212,255,0.3)] rounded-lg p-6">
-                <ul className="space-y-2">
-                  <li><strong>Referrer Reward:</strong> 30 free tokens for each successful referral</li>
-                  <li><strong>New User Bonus:</strong> 30 free tokens for signing up via referral link</li>
-                  <li><strong>Eligibility:</strong> Referral must create an account and verify via OAuth</li>
-                  <li><strong>Limitations:</strong> No limit on referrals, but abuse may result in account suspension</li>
-                  <li><strong>Token Distribution:</strong> Tokens credited within 24 hours of referral signup</li>
-                </ul>
-              </div>
-            </div>
-          </section>
-
-          {/* Section 6 */}
-          <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">6. Taxes and Fees</h2>
-            <div className="space-y-3">
-              <p>
-                <strong>6.1 Pricing Includes Taxes:</strong> All displayed prices include applicable Malaysian taxes (SST/GST as required by law).
-              </p>
-              <p>
-                <strong>6.2 Payment Processing Fees:</strong> Stripe payment processing fees are absorbed by MedWira. You pay only the displayed price.
-              </p>
-              <p>
-                <strong>6.3 Currency:</strong> All transactions are processed in Malaysian Ringgit (RM). International users may incur currency conversion fees from their bank.
-              </p>
-            </div>
-          </section>
-
-          {/* Section 7 */}
-          <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">7. Service Availability and Changes</h2>
-            <div className="space-y-3">
-              <p>
-                MedWira reserves the right to:
-              </p>
-              <ul className="list-disc list-inside space-y-2 ml-4">
-                <li>Modify token pricing with 30 days&apos; notice to existing users</li>
-                <li>Adjust token allocations for new packages (existing tokens unaffected)</li>
-                <li>Discontinue specific token packages (existing tokens remain valid)</li>
-                <li>Offer promotional pricing or limited-time discounts</li>
-                <li>Change the number of tokens consumed per scan with notice</li>
-              </ul>
-              <p className="mt-3">
-                <strong>Grandfather Clause:</strong> Tokens purchased before pricing changes retain their original value and terms.
-              </p>
-            </div>
-          </section>
-
-          {/* Section 8 */}
-          <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">8. Subscription Plans (Future)</h2>
-            <p>
-              MedWira may introduce subscription plans in the future. Current token purchases are one-time payments and do NOT constitute recurring subscriptions. Any future subscription offerings will be subject to separate terms.
-            </p>
-          </section>
-
-          {/* Section 9 */}
-          <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">9. Billing Disputes</h2>
-            <div className="space-y-3">
-              <p className="mb-3">
-                If you believe there is an error in your billing:
-              </p>
-              <ol className="list-decimal list-inside space-y-2 ml-4">
-                <li>Contact our billing support at <a href="mailto:billing@medwira.com" className="text-[#00d4ff] hover:underline">billing@medwira.com</a> within 30 days</li>
-                <li>Provide transaction ID, date, and description of the issue</li>
-                <li>We will investigate and respond within 5 business days</li>
-                <li>If dispute is valid, we will issue a refund or credit tokens</li>
-              </ol>
-              <p className="mt-3 text-sm text-gray-400">
-                Chargebacks initiated without contacting us may result in account suspension.
-              </p>
-            </div>
-          </section>
-
-          {/* Section 10 */}
-          <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">10. Promotional Codes and Discounts</h2>
-            <div className="space-y-3">
-              <ul className="list-disc list-inside space-y-2 ml-4">
-                <li>Promotional codes are subject to specific terms and expiration dates</li>
-                <li>Codes cannot be combined with other offers unless stated</li>
-                <li>One-time use per account unless specified as multi-use</li>
-                <li>MedWira reserves the right to revoke codes obtained fraudulently</li>
-                <li>Discounts apply only to the specified token package</li>
-              </ul>
-            </div>
-          </section>
-
-          {/* Section 11 */}
-          <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">11. Data Security and Privacy</h2>
-            <p className="mb-3">
-              Payment information security:
-            </p>
-            <ul className="list-disc list-inside space-y-2 ml-4">
-              <li><strong>PCI DSS Compliance:</strong> All payments processed through Stripe (PCI Level 1 certified)</li>
-              <li><strong>No Card Storage:</strong> MedWira does NOT store credit card information</li>
-              <li><strong>Encrypted Transactions:</strong> All payment data encrypted using TLS/SSL</li>
-              <li><strong>Privacy Policy:</strong> See our <Link href="/privacy" className="text-[#00d4ff] hover:underline">Privacy Policy</Link> for data handling details</li>
+            <ul className="mt-6 space-y-3">
+              <li className="text-[#CBD5E0] flex items-center gap-2 text-sm">
+                <span className="text-[#4FD1C5]">✓</span>
+                50 medicine scans
+              </li>
+              <li className="text-[#CBD5E0] flex items-center gap-2 text-sm">
+                <span className="text-[#4FD1C5]">✓</span>
+                ~2-3 months usage
+              </li>
+              <li className="text-[#CBD5E0] flex items-center gap-2 text-sm">
+                <span className="text-[#4FD1C5]">✓</span>
+                Instant activation
+              </li>
             </ul>
-          </section>
+          </div>
 
-          {/* Section 12 */}
-          <section>
-            <h2 className="text-2xl font-semibold text-white mb-4">12. Contact and Support</h2>
-            <p className="mb-4">
-              For billing, payment, or sales inquiries:
-            </p>
-            <div className="bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-lg p-6 space-y-2">
-              <p><strong>Billing Support:</strong> <a href="mailto:billing@medwira.com" className="text-[#00d4ff] hover:underline">billing@medwira.com</a></p>
-              <p><strong>General Support:</strong> <a href="mailto:support@medwira.com" className="text-[#00d4ff] hover:underline">support@medwira.com</a></p>
-              <p><strong>Sales Inquiries:</strong> <a href="mailto:sales@medwira.com" className="text-[#00d4ff] hover:underline">sales@medwira.com</a></p>
-              <p><strong>Website:</strong> <a href="https://medwira.com" className="text-[#00d4ff] hover:underline">https://medwira.com</a></p>
+          {/* Standard Pack - BEST VALUE */}
+          <div className="group bg-gradient-to-br from-[#4FD1C5]/20 via-[#2D3748] to-[#1A202C] rounded-2xl p-6 border-2 border-[#4FD1C5] hover:shadow-2xl hover:shadow-[#4FD1C5]/40 transform scale-105 md:scale-110 z-10">
+            <div className="text-center mb-4">
+              <div className="inline-block px-3 py-1 bg-[#4FD1C5] text-[#1A202C] rounded-full text-xs font-bold mb-3">
+                BEST VALUE ⭐
+              </div>
+              <div className="text-5xl mb-3">🥈</div>
+              <h3 className="text-2xl font-bold text-white mb-1">Standard Pack</h3>
+              <div className="inline-block px-3 py-1 bg-[#4FD1C5]/20 rounded-full text-xs text-[#4FD1C5]">
+                Most Popular
+              </div>
             </div>
-          </section>
+            <div className="text-center py-6 border-y border-[#4FD1C5]/30">
+              <div className="text-4xl font-bold text-[#4FD1C5] mb-2">RM 49.90</div>
+              <div className="text-[#CBD5E0] mb-1">200 Tokens</div>
+              <div className="text-sm text-[#81E6D9]">RM 0.250 per token</div>
+              <div className="inline-block mt-2 px-2 py-1 bg-[#4FD1C5]/20 rounded text-xs text-[#4FD1C5] font-semibold">
+                37% OFF
+              </div>
+            </div>
+            <ul className="mt-6 space-y-3">
+              <li className="text-[#CBD5E0] flex items-center gap-2 text-sm">
+                <span className="text-[#4FD1C5]">✓</span>
+                200 medicine scans
+              </li>
+              <li className="text-[#CBD5E0] flex items-center gap-2 text-sm">
+                <span className="text-[#4FD1C5]">✓</span>
+                ~6-8 months usage
+              </li>
+              <li className="text-[#CBD5E0] flex items-center gap-2 text-sm">
+                <span className="text-[#4FD1C5]">✓</span>
+                Best value per token
+              </li>
+            </ul>
+          </div>
 
-          {/* Acceptance */}
-          <section className="bg-[#00d4ff]/10 border border-[#00d4ff]/30 rounded-lg p-6">
-            <p className="font-semibold text-[#00d4ff] mb-2">
-              BY PURCHASING TOKENS, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREE TO THESE TERMS OF SALE.
-            </p>
-            <p className="text-sm text-gray-400">
-              These Terms of Sale supplement our Terms of Service and Privacy Policy.
-            </p>
-          </section>
-
+          {/* Premium Pack */}
+          <div className="group bg-gradient-to-br from-[#2D3748] to-[#1A202C] rounded-2xl p-6 border border-[#4A5568] hover:border-[#4FD1C5] transition-all hover:shadow-lg hover:shadow-[#4FD1C5]/20 transform hover:scale-105">
+            <div className="text-center mb-4">
+              <div className="text-5xl mb-3">🥇</div>
+              <h3 className="text-2xl font-bold text-white mb-1">Premium Pack</h3>
+              <div className="inline-block px-3 py-1 bg-[#4A5568] rounded-full text-xs text-[#CBD5E0]">
+                For Power Users
+              </div>
+            </div>
+            <div className="text-center py-6 border-y border-[#4A5568]">
+              <div className="text-4xl font-bold text-[#4FD1C5] mb-2">RM 99.90</div>
+              <div className="text-[#A0AEC0] mb-1">500 Tokens</div>
+              <div className="text-sm text-[#718096]">RM 0.200 per token</div>
+              <div className="inline-block mt-2 px-2 py-1 bg-[#81E6D9]/20 rounded text-xs text-[#81E6D9] font-semibold">
+                50% OFF
+              </div>
+            </div>
+            <ul className="mt-6 space-y-3">
+              <li className="text-[#CBD5E0] flex items-center gap-2 text-sm">
+                <span className="text-[#4FD1C5]">✓</span>
+                500 medicine scans
+              </li>
+              <li className="text-[#CBD5E0] flex items-center gap-2 text-sm">
+                <span className="text-[#4FD1C5]">✓</span>
+                ~12-18 months usage
+              </li>
+              <li className="text-[#CBD5E0] flex items-center gap-2 text-sm">
+                <span className="text-[#4FD1C5]">✓</span>
+                Maximum savings
+              </li>
+            </ul>
+          </div>
         </div>
-      </main>
+      </section>
 
-      {/* Footer */}
-      <footer className="border-t border-[rgba(255,255,255,0.1)] bg-[rgba(10,10,10,0.95)] backdrop-blur-xl">
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-gray-400 text-sm">
-              © 2025 MedWira. All rights reserved.
-            </p>
-            <div className="flex gap-6 text-sm">
-              <Link href="/privacy" className="text-gray-400 hover:text-[#00d4ff] transition-colors">
-                Privacy Policy
-              </Link>
-              <Link href="/terms" className="text-gray-400 hover:text-[#00d4ff] transition-colors">
-                Terms of Service
-              </Link>
-              <a href="mailto:support@medwira.com" className="text-gray-400 hover:text-[#00d4ff] transition-colors flex items-center gap-1">
-                <Mail size={14} />
-                Support
-              </a>
+      {/* Section 2: Purchase Process */}
+      <section id="purchase" className="mb-12 scroll-mt-24">
+        <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="w-1 h-8 bg-[#4FD1C5] rounded-full"></span>
+          Purchase Process
+        </h2>
+        
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-xl font-medium text-[#81E6D9] mb-3">Payment Methods</h3>
+            <p className="text-[#CBD5E0] mb-3">We accept the following via Stripe:</p>
+            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-[#2D3748] p-4 rounded-lg text-center border border-[#4A5568]">
+                <div className="text-3xl mb-2">💳</div>
+                <p className="text-[#CBD5E0] text-sm font-medium">Credit Cards</p>
+                <p className="text-[#718096] text-xs">Visa, Mastercard, Amex</p>
+              </div>
+              <div className="bg-[#2D3748] p-4 rounded-lg text-center border border-[#4A5568]">
+                <div className="text-3xl mb-2">🏦</div>
+                <p className="text-[#CBD5E0] text-sm font-medium">Debit Cards</p>
+                <p className="text-[#718096] text-xs">All major banks</p>
+              </div>
+              <div className="bg-[#2D3748] p-4 rounded-lg text-center border border-[#4A5568]">
+                <div className="text-3xl mb-2">🇲🇾</div>
+                <p className="text-[#CBD5E0] text-sm font-medium">Online Banking</p>
+                <p className="text-[#718096] text-xs">FPX for Malaysia</p>
+              </div>
+              <div className="bg-[#2D3748] p-4 rounded-lg text-center border border-[#4A5568]">
+                <div className="text-3xl mb-2">📱</div>
+                <p className="text-[#CBD5E0] text-sm font-medium">Digital Wallets</p>
+                <p className="text-[#718096] text-xs">Where available</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-xl font-medium text-[#81E6D9] mb-3">Order Confirmation</h3>
+            <div className="bg-[#2D3748] p-4 rounded-lg border border-[#4A5568]">
+              <ul className="space-y-2 text-[#CBD5E0]">
+                <li className="flex items-center gap-2">
+                  <span className="text-[#4FD1C5]">→</span>
+                  Verified account required (Google/Facebook OAuth)
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-[#4FD1C5]">→</span>
+                  Email confirmation sent upon successful purchase
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-[#4FD1C5]">→</span>
+                  Tokens added <strong className="text-white">instantly</strong> after payment
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-[#4FD1C5]">→</span>
+                  Secure processing by Stripe
+                </li>
+              </ul>
             </div>
           </div>
         </div>
-      </footer>
-    </div>
+      </section>
+
+      {/* Section 3: Token Usage */}
+      <section id="token-usage" className="mb-12 scroll-mt-24">
+        <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="w-1 h-8 bg-[#4FD1C5] rounded-full"></span>
+          Token Usage & Validity
+        </h2>
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="bg-gradient-to-br from-[#4FD1C5]/10 to-transparent p-5 rounded-lg border border-[#4FD1C5]/30">
+            <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
+              <span className="text-2xl">⚡</span>
+              Usage
+            </h4>
+            <ul className="space-y-2 text-[#CBD5E0] text-sm">
+              <li>• Each medicine scan = <strong className="text-white">1 token</strong></li>
+              <li>• Tokens <strong className="text-white">never expire</strong> (while account active)</li>
+              <li>• Instant deduction upon scan</li>
+            </ul>
+          </div>
+          <div className="bg-gradient-to-br from-[#4FD1C5]/10 to-transparent p-5 rounded-lg border border-[#4FD1C5]/30">
+            <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
+              <span className="text-2xl">🔒</span>
+              Restrictions
+            </h4>
+            <ul className="space-y-2 text-[#CBD5E0] text-sm">
+              <li>• <strong className="text-white">Non-transferable</strong> between accounts</li>
+              <li>• <strong className="text-white">No cash value</strong> - cannot be exchanged</li>
+              <li>• Forfeited if account closed</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 4: Refund Policy - PROMINENT WARNING */}
+      <section id="refund" className="mb-12 scroll-mt-24">
+        <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="w-1 h-8 bg-yellow-500 rounded-full animate-pulse"></span>
+          Refund & Cancellation Policy
+        </h2>
+        <div className="bg-gradient-to-r from-yellow-900/30 to-yellow-800/20 border-2 border-yellow-500/50 rounded-xl p-6 shadow-lg shadow-yellow-500/20">
+          <div className="flex items-start gap-4 mb-6">
+            <div className="text-5xl">⚠️</div>
+            <div>
+              <h3 className="text-yellow-400 font-bold text-xl mb-3">IMPORTANT REFUND POLICY</h3>
+              <div className="bg-yellow-950/40 p-4 rounded-lg border border-yellow-500/30 mb-4">
+                <p className="text-yellow-100 font-semibold text-lg">
+                  All token purchases are <span className="text-yellow-300">FINAL and NON-REFUNDABLE</span>
+                </p>
+                <p className="text-yellow-200/80 text-sm mt-2">
+                  Once tokens are added to your account, they cannot be refunded, even if unused.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <h4 className="text-white font-semibold mb-2">Exceptions (Refunds MAY be considered):</h4>
+              <ul className="space-y-2 text-yellow-100/90 text-sm">
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-400">✓</span>
+                  <span>Duplicate charges due to technical error</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-400">✓</span>
+                  <span>Tokens not credited within 24 hours of payment</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-400">✓</span>
+                  <span>Service unavailability for extended periods (7+ days)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-400">✓</span>
+                  <span>Fraudulent or unauthorized transactions (with proof)</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-yellow-950/40 p-4 rounded-lg border border-yellow-500/20">
+              <p className="text-yellow-200 text-sm">
+                <strong>To request a refund:</strong> Contact{' '}
+                <a href="mailto:billing@medwira.com" className="text-yellow-400 hover:underline font-semibold">
+                  billing@medwira.com
+                </a>{' '}
+                within 7 days of purchase with transaction details.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 5: Referral Program - Highlighted */}
+      <section id="referral" className="mb-12 scroll-mt-24">
+        <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="w-1 h-8 bg-[#4FD1C5] rounded-full"></span>
+          Referral Program
+        </h2>
+        <div className="bg-gradient-to-r from-[#4FD1C5]/20 to-[#81E6D9]/10 rounded-2xl p-8 border-2 border-[#4FD1C5]/40">
+          <div className="flex items-start gap-4 mb-6">
+            <div className="text-5xl">🎁</div>
+            <div>
+              <h3 className="text-[#4FD1C5] font-bold text-2xl mb-2">Earn Free Tokens!</h3>
+              <p className="text-[#CBD5E0]">Invite friends and both of you get rewarded</p>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-[#2D3748] p-5 rounded-xl border border-[#4FD1C5]/30">
+              <div className="text-3xl mb-3">👥</div>
+              <h4 className="text-white font-semibold mb-2">Referrer Reward</h4>
+              <p className="text-[#4FD1C5] text-2xl font-bold mb-1">30 Tokens</p>
+              <p className="text-[#CBD5E0] text-sm">For each successful referral</p>
+            </div>
+            <div className="bg-[#2D3748] p-5 rounded-xl border border-[#4FD1C5]/30">
+              <div className="text-3xl mb-3">🆕</div>
+              <h4 className="text-white font-semibold mb-2">New User Bonus</h4>
+              <p className="text-[#4FD1C5] text-2xl font-bold mb-1">30 Tokens</p>
+              <p className="text-[#CBD5E0] text-sm">For signing up via referral</p>
+            </div>
+          </div>
+
+          <div className="mt-6 bg-[#1A202C]/50 p-4 rounded-lg">
+            <ul className="space-y-2 text-[#CBD5E0] text-sm">
+              <li className="flex items-center gap-2">
+                <span className="text-[#4FD1C5]">•</span>
+                <span><strong className="text-white">No limit</strong> on referrals</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-[#4FD1C5]">•</span>
+                <span>Tokens credited within <strong className="text-white">24 hours</strong></span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-[#4FD1C5]">•</span>
+                <span>Referral must <strong className="text-white">create account & verify</strong> via OAuth</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 6: Taxes & Fees */}
+      <section id="taxes" className="mb-12 scroll-mt-24">
+        <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="w-1 h-8 bg-[#4FD1C5] rounded-full"></span>
+          Taxes & Fees
+        </h2>
+        <div className="space-y-4">
+          <div className="bg-[#2D3748] p-4 rounded-lg border-l-4 border-[#4FD1C5]">
+            <h4 className="text-white font-medium mb-2">💰 Pricing Includes Taxes</h4>
+            <p className="text-[#CBD5E0] text-sm">
+              All displayed prices include applicable Malaysian taxes (SST/GST as required by law).
+            </p>
+          </div>
+          <div className="bg-[#2D3748] p-4 rounded-lg border-l-4 border-[#81E6D9]">
+            <h4 className="text-white font-medium mb-2">🔒 No Hidden Fees</h4>
+            <p className="text-[#CBD5E0] text-sm">
+              Stripe payment processing fees are absorbed by MedWira. You pay only the displayed price.
+            </p>
+          </div>
+          <div className="bg-[#2D3748] p-4 rounded-lg border-l-4 border-[#38B2AC]">
+            <h4 className="text-white font-medium mb-2">🌍 Currency</h4>
+            <p className="text-[#CBD5E0] text-sm">
+              All transactions in Malaysian Ringgit (RM). International users may incur bank conversion fees.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Remaining sections continue with similar enhanced styling... */}
+      <section id="service-changes" className="mb-12 scroll-mt-24">
+        <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="w-1 h-8 bg-[#4FD1C5] rounded-full"></span>
+          Service Availability & Changes
+        </h2>
+        <div className="bg-[#2D3748] p-5 rounded-lg border border-[#4A5568]">
+          <p className="text-[#CBD5E0] mb-3">MedWira reserves the right to:</p>
+          <ul className="space-y-2 text-[#CBD5E0]">
+            <li className="flex items-start gap-2">
+              <span className="text-[#4FD1C5]">•</span>
+              <span>Modify token pricing with <strong className="text-white">30 days&apos; notice</strong></span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-[#4FD1C5]">•</span>
+              <span>Adjust token allocations (existing tokens unaffected)</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-[#4FD1C5]">•</span>
+              <span>Discontinue packages (existing tokens remain valid)</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-[#4FD1C5]">•</span>
+              <span>Offer promotional pricing or discounts</span>
+            </li>
+          </ul>
+          <p className="text-[#81E6D9] text-sm mt-4 font-medium">
+            ✓ Grandfather Clause: Tokens purchased before pricing changes retain original value
+          </p>
+        </div>
+      </section>
+
+      <section id="subscriptions" className="mb-12 scroll-mt-24">
+        <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="w-1 h-8 bg-[#4FD1C5] rounded-full"></span>
+          Future Subscription Plans
+        </h2>
+        <p className="text-[#CBD5E0]">
+          MedWira may introduce subscription plans in the future. Current token purchases are <strong className="text-white">one-time payments</strong> and do NOT constitute recurring subscriptions. Any future subscription offerings will be subject to separate terms.
+        </p>
+      </section>
+
+      <section id="billing-disputes" className="mb-12 scroll-mt-24">
+        <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="w-1 h-8 bg-[#4FD1C5] rounded-full"></span>
+          Billing Disputes
+        </h2>
+        <div className="bg-[#2D3748] p-5 rounded-lg border border-[#4A5568]">
+          <p className="text-[#CBD5E0] mb-3">If you believe there is an error in your billing:</p>
+          <ol className="space-y-2 text-[#CBD5E0]">
+            <li className="flex items-start gap-2">
+              <span className="text-[#4FD1C5] font-semibold">1.</span>
+              <span>Contact <a href="mailto:billing@medwira.com" className="text-[#4FD1C5] hover:underline">billing@medwira.com</a> within 30 days</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-[#4FD1C5] font-semibold">2.</span>
+              <span>Provide transaction ID, date, and issue description</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-[#4FD1C5] font-semibold">3.</span>
+              <span>We investigate and respond within <strong className="text-white">5 business days</strong></span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-[#4FD1C5] font-semibold">4.</span>
+              <span>Valid disputes receive refund or token credit</span>
+            </li>
+          </ol>
+          <p className="text-[#A0AEC0] text-sm mt-3 italic">
+            Note: Chargebacks without contacting us may result in account suspension
+          </p>
+        </div>
+      </section>
+
+      <section id="promo-codes" className="mb-12 scroll-mt-24">
+        <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="w-1 h-8 bg-[#4FD1C5] rounded-full"></span>
+          Promotional Codes & Discounts
+        </h2>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div className="bg-[#2D3748] p-4 rounded-lg">
+            <p className="text-[#CBD5E0] text-sm">🎟️ Subject to specific terms & expiration</p>
+          </div>
+          <div className="bg-[#2D3748] p-4 rounded-lg">
+            <p className="text-[#CBD5E0] text-sm">🚫 Cannot combine with other offers</p>
+          </div>
+          <div className="bg-[#2D3748] p-4 rounded-lg">
+            <p className="text-[#CBD5E0] text-sm">1️⃣ One-time use per account</p>
+          </div>
+          <div className="bg-[#2D3748] p-4 rounded-lg">
+            <p className="text-[#CBD5E0] text-sm">⚡ MedWira reserves right to revoke fraud</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="security" className="mb-12 scroll-mt-24">
+        <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="w-1 h-8 bg-[#4FD1C5] rounded-full"></span>
+          Payment Security & Privacy
+        </h2>
+        <div className="bg-gradient-to-br from-[#4FD1C5]/10 to-transparent p-6 rounded-xl border border-[#4FD1C5]/30">
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <div className="text-3xl mb-2">🛡️</div>
+              <h4 className="text-white font-semibold mb-2">PCI DSS Level 1</h4>
+              <p className="text-[#CBD5E0] text-sm">All payments via Stripe (highest security certification)</p>
+            </div>
+            <div>
+              <div className="text-3xl mb-2">🔒</div>
+              <h4 className="text-white font-semibold mb-2">No Card Storage</h4>
+              <p className="text-[#CBD5E0] text-sm">MedWira does NOT store credit card information</p>
+            </div>
+            <div>
+              <div className="text-3xl mb-2">🔐</div>
+              <h4 className="text-white font-semibold mb-2">Encrypted Transactions</h4>
+              <p className="text-[#CBD5E0] text-sm">All payment data encrypted using TLS/SSL</p>
+            </div>
+            <div>
+              <div className="text-3xl mb-2">📋</div>
+              <h4 className="text-white font-semibold mb-2">Privacy Policy</h4>
+              <p className="text-[#CBD5E0] text-sm">
+                See our <a href="/privacy" className="text-[#4FD1C5] hover:underline">Privacy Policy</a> for details
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" className="mb-12 scroll-mt-24">
+        <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="w-1 h-8 bg-[#4FD1C5] rounded-full"></span>
+          Contact & Support
+        </h2>
+        <p className="text-[#CBD5E0] mb-4">For billing, payment, or sales inquiries:</p>
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="bg-[#2D3748] p-5 rounded-lg text-center border border-[#4A5568] hover:border-[#4FD1C5] transition-colors">
+            <div className="text-3xl mb-2">💰</div>
+            <p className="text-[#A0AEC0] text-xs mb-1">Billing Support</p>
+            <a href="mailto:billing@medwira.com" className="text-[#4FD1C5] hover:underline text-sm">
+              billing@medwira.com
+            </a>
+          </div>
+          <div className="bg-[#2D3748] p-5 rounded-lg text-center border border-[#4A5568] hover:border-[#4FD1C5] transition-colors">
+            <div className="text-3xl mb-2">💬</div>
+            <p className="text-[#A0AEC0] text-xs mb-1">General Support</p>
+            <a href="mailto:support@medwira.com" className="text-[#4FD1C5] hover:underline text-sm">
+              support@medwira.com
+            </a>
+          </div>
+          <div className="bg-[#2D3748] p-5 rounded-lg text-center border border-[#4A5568] hover:border-[#4FD1C5] transition-colors">
+            <div className="text-3xl mb-2">📊</div>
+            <p className="text-[#A0AEC0] text-xs mb-1">Sales Inquiries</p>
+            <a href="mailto:sales@medwira.com" className="text-[#4FD1C5] hover:underline text-sm">
+              sales@medwira.com
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Final Acknowledgment */}
+      <div className="bg-gradient-to-r from-[#4FD1C5]/20 to-transparent p-6 rounded-xl border-2 border-[#4FD1C5]/40 text-center">
+        <p className="text-[#4FD1C5] font-semibold text-lg mb-2">
+          BY PURCHASING TOKENS, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREE TO THESE TERMS OF SALE.
+        </p>
+        <p className="text-[#A0AEC0] text-sm">
+          These Terms of Sale supplement our Terms of Service and Privacy Policy.
+        </p>
+      </div>
+    </LegalPageLayout>
   );
 }
-
