@@ -303,9 +303,9 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
           borderTop: '1px solid rgba(255, 255, 255, 0.1)'
         }}>
           By continuing, you agree to the updated{' '}
-          <a href="#" style={{ color: '#00d4ff', textDecoration: 'underline' }}>Terms of Sale</a>,{' '}
-          <a href="#" style={{ color: '#00d4ff', textDecoration: 'underline' }}>Terms of Service</a>, and{' '}
-          <a href="#" style={{ color: '#00d4ff', textDecoration: 'underline' }}>Privacy Policy</a>.
+          <a href="/terms-of-sale" target="_blank" rel="noopener noreferrer" style={{ color: '#00d4ff', textDecoration: 'underline' }}>Terms of Sale</a>,{' '}
+          <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#00d4ff', textDecoration: 'underline' }}>Terms of Service</a>, and{' '}
+          <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#00d4ff', textDecoration: 'underline' }}>Privacy Policy</a>.
         </p>
 
         {/* Info Note */}
