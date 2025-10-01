@@ -105,6 +105,9 @@ export default function Home() {
 
   // Handle session refresh from OAuth callback
   useEffect(() => {
+    // Only run on client side after hydration
+    if (typeof window === 'undefined') return;
+    
     const params = new URLSearchParams(window.location.search);
     if (params.get('session_refresh') === 'true') {
       console.log('🔄 Session refresh detected in page.tsx, updating user state...');

@@ -23,6 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // Fetch user data from Supabase users table
   const fetchUserData = useCallback(async (userId: string): Promise<User | null> => {
@@ -127,7 +128,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Handle hydration
   useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    // Only initialize auth after hydration
+    if (!isHydrated) return;
+    
     console.log('🚀 AuthProvider initializing...');
     refreshUser();
     
@@ -200,7 +209,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('🧹 Cleaning up auth listener');
       authListener.subscription.unsubscribe();
     };
-  }, [refreshUser, fetchUserData]);
+  }, [refreshUser, fetchUserData, isHydrated]);
 
   const contextValue: AuthContextType = {
     user,
