@@ -101,25 +101,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { user: sessionUser } = data.session;
       
-      // Validate session user object
-      if (!sessionUser.id || typeof sessionUser.id !== 'string') {
-        console.error('❌ Invalid session user ID:', sessionUser.id);
+      // DEFENSIVE: Safe property access using optional chaining
+      const userId = sessionUser?.id;
+      const userEmail = sessionUser?.email;
+      
+      // DEFENSIVE: Validate session user object properties individually
+      if (!userId || typeof userId !== 'string') {
+        console.error('❌ Invalid session user ID:', userId);
         setUser(null);
         setIsLoading(false);
         return;
       }
 
-      if (!sessionUser.email || typeof sessionUser.email !== 'string' || !sessionUser.email.includes('@')) {
-        console.error('❌ Invalid session user email:', sessionUser.email);
+      if (!userEmail || typeof userEmail !== 'string' || !userEmail.includes('@')) {
+        console.error('❌ Invalid session user email:', userEmail);
         setUser(null);
         setIsLoading(false);
         return;
       }
 
-      console.log('✅ Valid session found for:', sessionUser.email);
+      console.log('✅ Valid session found for:', userEmail);
       
       // Fetch user data from users table
-      const userData = await fetchUserData(sessionUser.id);
+      const userData = await fetchUserData(userId);
       if (userData) {
         console.log('✅ User data loaded from database:', {
           name: userData.name,
@@ -129,13 +133,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(userData);
       } else {
         console.log('⚠️ No user data in database, creating fallback user');
-        // Fallback to session user if no DB record
+        // DEFENSIVE: Safe property access for fallback user creation
         const fallbackUser = {
-          id: sessionUser.id,
-          email: sessionUser.email || '',
-          name: sessionUser.user_metadata?.full_name || 
-                sessionUser.user_metadata?.name || 
-                sessionUser.email?.split('@')[0] || 
+          id: userId,
+          email: userEmail,
+          name: sessionUser?.user_metadata?.full_name || 
+                sessionUser?.user_metadata?.name || 
+                userEmail?.split('@')[0] || 
                 'User',
           tokens: 0,
           subscription_tier: 'free'
@@ -191,35 +195,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(true);
         
         try {
-          // Validate session before processing
-          if (!session?.user) {
-            console.error('❌ SIGNED_IN event but no user in session');
+          // DEFENSIVE: Comprehensive session validation before any property access
+          if (!session) {
+            console.error('❌ SIGNED_IN event but session is null/undefined');
             setIsLoading(false);
             return;
           }
 
-          const { user: sessionUser } = session;
+          if (!session.user) {
+            console.error('❌ SIGNED_IN event but session.user is null/undefined');
+            setIsLoading(false);
+            return;
+          }
+
+          // DEFENSIVE: Safe property access using optional chaining
+          const sessionUser = session.user;
+          const userId = sessionUser?.id;
+          const userEmail = sessionUser?.email;
           
-          // Validate session user
-          if (!sessionUser.id || typeof sessionUser.id !== 'string') {
-            console.error('❌ Invalid user ID in SIGNED_IN event:', sessionUser.id);
+          // DEFENSIVE: Validate each property individually
+          if (!userId || typeof userId !== 'string') {
+            console.error('❌ Invalid user ID in SIGNED_IN event:', userId);
             setIsLoading(false);
             return;
           }
 
-          if (!sessionUser.email || typeof sessionUser.email !== 'string' || !sessionUser.email.includes('@')) {
-            console.error('❌ Invalid user email in SIGNED_IN event:', sessionUser.email);
+          if (!userEmail || typeof userEmail !== 'string' || !userEmail.includes('@')) {
+            console.error('❌ Invalid user email in SIGNED_IN event:', userEmail);
             setIsLoading(false);
             return;
           }
 
-          console.log('✅ Valid SIGNED_IN session for:', sessionUser.email);
+          console.log('✅ Valid SIGNED_IN session for:', userEmail);
           
           // Wait a moment for database to be updated
           await new Promise(resolve => setTimeout(resolve, 1000));
           
           // Fetch user data from users table
-          const userData = await fetchUserData(sessionUser.id);
+          const userData = await fetchUserData(userId);
           if (userData) {
             console.log('✅ User data loaded after sign-in:', {
               name: userData.name,
@@ -230,13 +243,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(userData);
           } else {
             console.log('⚠️ No user data found, creating fallback user');
-            // Fallback to session user if no DB record
+            // DEFENSIVE: Safe property access for fallback user creation
             const fallbackUser = {
-              id: sessionUser.id,
-              email: sessionUser.email || '',
-              name: sessionUser.user_metadata?.full_name || 
-                    sessionUser.user_metadata?.name || 
-                    sessionUser.email?.split('@')[0] || 
+              id: userId,
+              email: userEmail,
+              name: sessionUser?.user_metadata?.full_name || 
+                    sessionUser?.user_metadata?.name || 
+                    userEmail?.split('@')[0] || 
                     'User',
               tokens: 0,
               subscription_tier: 'free'
@@ -255,22 +268,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
       } else if (event === 'TOKEN_REFRESHED') {
         console.log('🔄 Token refreshed, updating user data...');
-        // Refresh user data when token is refreshed
+        // DEFENSIVE: Safe session validation for token refresh
         if (session?.user) {
-          const { user: sessionUser } = session;
+          const sessionUser = session.user;
+          const userId = sessionUser?.id;
+          const userEmail = sessionUser?.email;
           
-          // Validate session user
-          if (sessionUser.id && typeof sessionUser.id === 'string' && 
-              sessionUser.email && typeof sessionUser.email === 'string' && 
-              sessionUser.email.includes('@')) {
-            const userData = await fetchUserData(sessionUser.id);
+          // DEFENSIVE: Validate session user properties
+          if (userId && typeof userId === 'string' && 
+              userEmail && typeof userEmail === 'string' && 
+              userEmail.includes('@')) {
+            const userData = await fetchUserData(userId);
             if (userData) {
               setUser(userData);
             }
           } else {
             console.error('❌ Invalid session user in TOKEN_REFRESHED:', {
-              id: sessionUser.id,
-              email: sessionUser.email
+              id: userId,
+              email: userEmail
             });
           }
         }
@@ -280,7 +295,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           hasUser: !!session?.user,
           email: session?.user?.email
         });
-        // Don't process INITIAL_SESSION - let refreshUser handle it
+        // DEFENSIVE: Don't process INITIAL_SESSION - let refreshUser handle it safely
       }
     });
     
