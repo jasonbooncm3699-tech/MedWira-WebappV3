@@ -41,6 +41,42 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="MedWira AI" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
+        
+        {/* Screenshot and media capture permissions */}
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="msapplication-tap-highlight" content="no" />
+        
+        {/* Allow screenshots and screen recording */}
+        <meta name="screen-capture" content="allowed" />
+        <meta name="screenshot" content="allowed" />
+        
+        {/* Prevent screenshot blocking */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            * {
+              -webkit-user-select: text !important;
+              -moz-user-select: text !important;
+              -ms-user-select: text !important;
+              user-select: text !important;
+            }
+            
+            /* Ensure content is screenshot-friendly */
+            body, html {
+              -webkit-touch-callout: default !important;
+              -webkit-user-select: text !important;
+              -khtml-user-select: text !important;
+              -moz-user-select: text !important;
+              -ms-user-select: text !important;
+              user-select: text !important;
+            }
+            
+            /* Remove any screenshot blocking styles */
+            .no-screenshot, .no-capture, .screenshot-blocked {
+              display: none !important;
+            }
+          `
+        }} />
         <script
           dangerouslySetInnerHTML={{
             __html: `
