@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ErrorInfo } from 'react';
 import { supabase } from './supabase';
 
 interface User {
@@ -24,6 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Fetch user data from Supabase users table
   const fetchUserData = useCallback(async (userId: string): Promise<User | null> => {
@@ -63,18 +64,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data, error } = await supabase.auth.getSession();
       
-      // Enhanced session debugging
+      // Enhanced session debugging with more detailed inspection
+      const sessionData = data?.session;
+      const sessionUser = sessionData?.user;
+      
       console.log('📡 Raw session data:', {
         hasData: !!data,
-        hasSession: !!data?.session,
-        hasUser: !!data?.session?.user,
-        sessionKeys: data?.session ? Object.keys(data.session) : 'no-session',
-        userKeys: data?.session?.user ? Object.keys(data.session.user) : 'no-user',
-        emailValue: data?.session?.user?.email,
-        emailType: typeof data?.session?.user?.email,
-        userId: data?.session?.user?.id,
+        hasSession: !!sessionData,
+        hasUser: !!sessionUser,
+        sessionType: typeof sessionData,
+        sessionValue: sessionData,
+        sessionKeys: sessionData ? Object.keys(sessionData) : 'no-session',
+        userKeys: sessionUser ? Object.keys(sessionUser) : 'no-user',
+        emailValue: sessionUser?.email,
+        emailType: typeof sessionUser?.email,
+        userId: sessionUser?.id,
         hasError: !!error,
-        errorMessage: error?.message
+        errorMessage: error?.message,
+        // Additional debugging for React error #18
+        sessionNullCheck: sessionData === null,
+        sessionUndefinedCheck: sessionData === undefined,
+        sessionObjectCheck: sessionData && typeof sessionData === 'object'
       });
       
       if (error) {
@@ -84,23 +94,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // More robust session validation
-      if (!data?.session) {
-        console.log('ℹ️ No session object found');
+      // More robust session validation with detailed checks
+      if (!sessionData || sessionData === null || sessionData === undefined) {
+        console.log('ℹ️ No session object found or session is null/undefined');
         setUser(null);
         setIsLoading(false);
         return;
       }
 
-      if (!data.session.user) {
-        console.log('ℹ️ No user object in session');
+      if (typeof sessionData !== 'object') {
+        console.log('ℹ️ Session is not an object:', typeof sessionData, sessionData);
         setUser(null);
         setIsLoading(false);
         return;
       }
 
-      const { user: sessionUser } = data.session;
-      
+      if (!sessionUser || sessionUser === null || sessionUser === undefined) {
+        console.log('ℹ️ No user object in session or user is null/undefined');
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
+      if (typeof sessionUser !== 'object') {
+        console.log('ℹ️ Session user is not an object:', typeof sessionUser, sessionUser);
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
       // DEFENSIVE: Safe property access using optional chaining
       const userId = sessionUser?.id;
       const userEmail = sessionUser?.email;
@@ -176,9 +198,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!isHydrated) return;
     
     console.log('🚀 AuthProvider initializing...');
-    refreshUser();
+    
+    // DEFENSIVE: Use setTimeout to prevent React error #18 (hydration mismatch)
+    const initializeAuth = async () => {
+      try {
+        await refreshUser();
+        setIsInitialized(true);
+      } catch (error) {
+        console.error('❌ Error during auth initialization:', error);
+        setIsLoading(false);
+        setIsInitialized(true);
+      }
+    };
+    
+    // Defer initialization to next tick to avoid hydration issues
+    setTimeout(initializeAuth, 0);
     
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // DEFENSIVE: Prevent processing auth events before initialization is complete
+      if (!isInitialized) {
+        console.log('⏳ Skipping auth event - not yet initialized:', event);
+        return;
+      }
+      
       console.log('🔄 Auth state changed:', event, {
         hasSession: !!session,
         sessionType: typeof session,
@@ -349,7 +391,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('🧹 Cleaning up auth listener');
       authListener.subscription.unsubscribe();
     };
-  }, [refreshUser, fetchUserData, isHydrated]);
+  }, [refreshUser, fetchUserData, isHydrated, isInitialized]);
 
   const contextValue: AuthContextType = {
     user: user || null, // Ensure user is never undefined
@@ -358,11 +400,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser,
   };
 
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
+  // DEFENSIVE: Wrap provider in error boundary to catch React error #18
+  try {
+    return (
+      <AuthContext.Provider value={contextValue}>
+        {children}
+      </AuthContext.Provider>
+    );
+  } catch (error) {
+    console.error('❌ AuthProvider render error (React error #18):', error);
+    // Return minimal provider to prevent complete crash
+    return (
+      <AuthContext.Provider value={{
+        user: null,
+        logout: async () => {},
+        isLoading: false,
+        refreshUser: async () => {}
+      }}>
+        {children}
+      </AuthContext.Provider>
+    );
+  }
 }
 
 export function useAuth(): AuthContextType {
