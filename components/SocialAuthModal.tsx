@@ -164,22 +164,33 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const urlParams = new URLSearchParams(window.location.search);
       
-      const hashError = hashParams.get('error');
-      const hashErrorDescription = hashParams.get('error_description');
-      const urlError = urlParams.get('error');
-      const urlErrorDescription = urlParams.get('error_description');
+      // Check for both old and new error parameter names
+      const hashError = hashParams.get('error') || hashParams.get('auth_error');
+      const hashErrorDescription = hashParams.get('error_description') || hashParams.get('auth_error_description');
+      const urlError = urlParams.get('error') || urlParams.get('auth_error');
+      const urlErrorDescription = urlParams.get('error_description') || urlParams.get('auth_error_description');
       
       const error = hashError || urlError;
       const errorDescription = hashErrorDescription || urlErrorDescription;
       
       if (error) {
-        console.error('❌ OAuth callback error:', error, errorDescription);
+        console.error('❌ OAuth callback error:', {
+          error,
+          description: errorDescription,
+          timestamp: new Date().toISOString()
+        });
         
         // User-friendly error messages
         let friendlyMessage = 'Authentication failed. Please try again.';
         
         if (error === 'access_denied') {
           friendlyMessage = 'Login cancelled. You can try again or use another method.';
+        } else if (error === 'exchange_failed') {
+          friendlyMessage = 'Authentication failed. Please check your internet connection and try again.';
+        } else if (error === 'no_code') {
+          friendlyMessage = 'OAuth code missing. Please try again.';
+        } else if (error === 'callback_exception') {
+          friendlyMessage = 'An error occurred during login. Please try again.';
         } else if (errorDescription) {
           friendlyMessage = `Authentication failed: ${errorDescription}`;
         }
