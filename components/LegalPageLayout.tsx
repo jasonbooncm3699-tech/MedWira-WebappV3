@@ -71,11 +71,14 @@ export default function LegalPageLayout({
           <div className="flex items-center justify-between h-16">
             {/* Logo - MedWira branding with actual logo */}
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 flex items-center justify-center transform transition-transform group-hover:scale-110">
-                <img 
-                  src="/medwira-icon.svg" 
+              <div className="relative w-10 h-10 flex items-center justify-center transform transition-transform group-hover:scale-110">
+                <Image 
+                  src="/medwira-logo.png" 
                   alt="MedWira Logo" 
-                  className="w-full h-full object-contain"
+                  width={40}
+                  height={40}
+                  className="object-contain"
+                  priority
                 />
               </div>
               <span className="text-xl font-bold text-white hidden sm:block">MedWira</span>

@@ -3,6 +3,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Bot, User, Send, Upload, Camera, Menu, X, Plus, MessageSquare, Settings, LogOut, LogIn, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import SocialAuthModal from '@/components/SocialAuthModal';
@@ -357,10 +358,13 @@ export default function Home() {
           </div>
           
           <div className="logo">
-            <img 
-              src="/medwira-icon.svg" 
+            <Image 
+              src="/medwira-logo.png" 
               alt="MedWira" 
-              style={{ width: '32px', height: '32px' }}
+              width={32}
+              height={32}
+              className="object-contain"
+              priority
             />
           </div>
           
