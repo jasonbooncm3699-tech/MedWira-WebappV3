@@ -104,6 +104,8 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
       authStartTimeRef.current = Date.now();
       
       console.log(`🔐 Starting ${provider} OAuth flow...`);
+      console.log(`🌐 Current origin: ${window.location.origin}`);
+      console.log(`🔗 Redirect URL: ${window.location.origin}/auth/callback`);
 
       // Set a timeout to reset loading state if OAuth takes too long
       // This handles cases where the redirect doesn't happen
@@ -117,6 +119,12 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
       // Configure redirect URL for OAuth
       const redirectUrl = `${window.location.origin}/auth/callback`;
       
+      console.log(`🚀 Calling supabase.auth.signInWithOAuth with:`, {
+        provider,
+        redirectTo: redirectUrl,
+        timestamp: new Date().toISOString()
+      });
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
@@ -127,6 +135,8 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
           },
         },
       });
+
+      console.log(`📡 OAuth response:`, { data, error });
 
       if (error) {
         console.error(`❌ ${provider} OAuth error:`, error.message);
@@ -142,6 +152,8 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
       }
 
       console.log(`✅ ${provider} OAuth initiated successfully`);
+      console.log(`🔄 Expected redirect to: ${data.url || 'OAuth provider'}`);
+      
       // Browser will redirect to OAuth provider
       // If redirect doesn't happen, timeout will handle it
       
