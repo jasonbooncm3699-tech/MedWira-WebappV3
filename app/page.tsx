@@ -357,7 +357,11 @@ export default function Home() {
           </div>
           
           <div className="logo">
-            <Bot size={24} />
+            <img 
+              src="/medwira-icon.svg" 
+              alt="MedWira" 
+              style={{ width: '32px', height: '32px' }}
+            />
           </div>
           
           <div className="header-right">

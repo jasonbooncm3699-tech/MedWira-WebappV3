@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Menu, X, ChevronRight, Mail, Facebook, Instagram, Twitter } from 'lucide-react';
 
 interface Section {
@@ -68,10 +69,14 @@ export default function LegalPageLayout({
       <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-[#4FD1C5] to-[#2D3748] shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo - MedWira branding */}
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center transform transition-transform group-hover:scale-110">
-                <span className="text-[#4FD1C5] font-bold text-xl">M</span>
+            {/* Logo - MedWira branding with actual logo */}
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="w-10 h-10 flex items-center justify-center transform transition-transform group-hover:scale-110">
+                <img 
+                  src="/medwira-icon.svg" 
+                  alt="MedWira Logo" 
+                  className="w-full h-full object-contain"
+                />
               </div>
               <span className="text-xl font-bold text-white hidden sm:block">MedWira</span>
             </Link>
