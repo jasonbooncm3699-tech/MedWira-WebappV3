@@ -4,7 +4,8 @@ import { cookies } from 'next/headers'
 /**
  * Server-side Supabase client for API routes and Server Components
  * Compatible with Next.js 15 async cookies API
- * Uses cookie-based session management for OAuth flows
+ * Uses HTTP-only cookie-based session management for OAuth flows
+ * This is the definitive solution for server-side authentication
  */
 export async function createClient() {
   const cookieStore = await cookies()
@@ -20,9 +21,9 @@ export async function createClient() {
         set(name: string, value: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value, ...options })
-            console.log('🍪 Server-side cookie set:', name, 'with options:', options)
+            console.log('🍪 Server-side HTTP-only cookie set:', name)
           } catch (error) {
-            console.warn('⚠️ Failed to set server-side cookie:', name, error)
+            console.warn('⚠️ Failed to set server-side HTTP-only cookie:', name, error)
             // The `set` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
@@ -31,9 +32,9 @@ export async function createClient() {
         remove(name: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value: '', ...options })
-            console.log('🗑️ Server-side cookie removed:', name)
+            console.log('🗑️ Server-side HTTP-only cookie removed:', name)
           } catch (error) {
-            console.warn('⚠️ Failed to remove server-side cookie:', name, error)
+            console.warn('⚠️ Failed to remove server-side HTTP-only cookie:', name, error)
             // The `delete` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.

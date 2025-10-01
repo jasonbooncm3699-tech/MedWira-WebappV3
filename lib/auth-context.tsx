@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ErrorInfo } from 'react';
-import { supabase } from './supabase';
+import { createClient } from './supabase-browser';
 
 interface User {
   id: string;
@@ -25,6 +25,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  
+  // CRITICAL: Create Supabase client instance for cookie-based authentication
+  const supabase = createClient();
 
   // Fetch user data from Supabase users table
   const fetchUserData = useCallback(async (userId: string): Promise<User | null> => {

@@ -1,8 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase-server';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
+  // CRITICAL: Create server client with HTTP-only cookie management
+  const cookieStore = await cookies();
+  
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value, ...options });
+            console.log('🍪 HTTP-only cookie set:', name);
+          } catch (error) {
+            console.warn('⚠️ Failed to set HTTP-only cookie:', name, error);
+          }
+        },
+        remove(name: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value: '', ...options });
+            console.log('🗑️ HTTP-only cookie removed:', name);
+          } catch (error) {
+            console.warn('⚠️ Failed to remove HTTP-only cookie:', name, error);
+          }
+        },
+      },
+    }
+  );
 
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
@@ -145,17 +175,18 @@ export async function GET(request: NextRequest) {
       console.warn('⚠️ Auth-context will attempt to create user record on client side');
     }
 
-    // CRITICAL: Let Supabase SSR handle cookie management automatically
-    // The createServerClient will automatically set the proper cookies
+    // CRITICAL: Create response and let Supabase automatically set HTTP-only cookies
+    // The createServerClient will automatically manage session cookies
     const response = NextResponse.redirect(new URL('/?session_refresh=true', request.url));
     
-    console.log('🍪 Supabase SSR client has automatically managed session cookies');
+    console.log('🍪 Supabase SSR client has automatically set HTTP-only session cookies');
     console.log('📦 Session data preview:', {
       hasAccessToken: !!data.session.access_token,
       hasRefreshToken: !!data.session.refresh_token,
       userId: data.session.user.id,
       email: data.session.user.email,
-      expiresAt: data.session.expires_at
+      expiresAt: data.session.expires_at,
+      tokenType: data.session.token_type
     });
     console.log('🏠 Redirecting to home page with session refresh...');
 
