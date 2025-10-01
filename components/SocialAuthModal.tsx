@@ -106,6 +106,8 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
       console.log(`🔐 Starting ${provider} OAuth flow...`);
       console.log(`🌐 Current origin: ${window.location.origin}`);
       console.log(`🔗 Redirect URL: ${window.location.origin}/auth/callback`);
+      console.log(`🔑 Supabase URL: ${process.env.NEXT_PUBLIC_SUPABASE_URL}`);
+      console.log(`🔑 Supabase Key present: ${!!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`);
 
       // Set a timeout to reset loading state if OAuth takes too long
       // This handles cases where the redirect doesn't happen
@@ -140,6 +142,7 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
 
       if (error) {
         console.error(`❌ ${provider} OAuth error:`, error.message);
+        console.error(`❌ ${provider} OAuth error details:`, error);
         setErrorMessage(`${provider} login failed: ${error.message}`);
         setSocialLoading(null);
         authStartTimeRef.current = null;
@@ -154,8 +157,18 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
       console.log(`✅ ${provider} OAuth initiated successfully`);
       console.log(`🔄 Expected redirect to: ${data.url || 'OAuth provider'}`);
       
-      // Browser will redirect to OAuth provider
-      // If redirect doesn't happen, timeout will handle it
+      // CRITICAL: If we get here, the OAuth should redirect
+      // If no redirect happens, there might be an issue with the OAuth provider configuration
+      if (data.url) {
+        console.log(`🌐 Redirecting to: ${data.url}`);
+        // The browser should automatically redirect, but let's ensure it happens
+        window.location.href = data.url;
+      } else {
+        console.error(`❌ No redirect URL returned from OAuth`);
+        setErrorMessage('OAuth redirect failed. Please try again.');
+        setSocialLoading(null);
+        authStartTimeRef.current = null;
+      }
       
     } catch (error) {
       console.error(`💥 ${provider} OAuth exception:`, error);
@@ -304,6 +317,8 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
     handleAuthCallback();
   }, [onClose]);
 
+  console.log('🔐 SocialAuthModal render:', { isOpen, mode, socialLoading });
+  
   if (!isOpen) return null;
 
   const modalTitle = mode === 'login' ? 'Sign In to MedWira' : 'Sign Up for MedWira';

@@ -468,9 +468,13 @@ export default function Home() {
               className="auth-btn" 
               onClick={() => {
                 console.log('🔐 Sign In / Sign Up button clicked');
+                console.log('🔐 Current showAuthModal state:', showAuthModal);
+                console.log('🔐 Current authMode state:', authMode);
                 setAuthMode('login');
                 setShowAuthModal(true);
                 console.log('🔐 Auth modal should be opening...');
+                console.log('🔐 New showAuthModal state:', true);
+                console.log('🔐 New authMode state:', 'login');
               }}
             >
               Sign In / Sign Up
