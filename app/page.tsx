@@ -300,7 +300,7 @@ export default function Home() {
   // Get upload message in user's language
   const getUploadMessage = (lang: string): string => {
     const messages: { [key: string]: string } = {
-      'English': 'I\'ve uploaded an image of a medicine for identification.',
+      'English': 'I&apos;ve uploaded an image of a medicine for identification.',
       'Chinese': '我已上传药品图片进行识别。',
       'Malay': 'Saya telah memuat naik gambar ubat untuk pengenalan.',
       'Indonesian': 'Saya telah mengunggah gambar obat untuk identifikasi.',
@@ -622,7 +622,7 @@ export default function Home() {
                     </div>
                   )}
                   <div className="message-text">
-                  {message.content.includes('**') ? (
+                  {message.content && message.content.includes('**') ? (
                     <div dangerouslySetInnerHTML={{ 
                       __html: message.content
                         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -630,7 +630,7 @@ export default function Home() {
                         .replace(/⚠️/g, '⚠️')
                     }} />
                   ) : (
-                    <span>{message.content}</span>
+                    <span>{message.content || ''}</span>
                   )}
                   </div>
                   <div className="message-footer">

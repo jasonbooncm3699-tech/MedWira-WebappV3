@@ -1,9 +1,9 @@
-const CACHE_NAME = 'medwira-ai-v17-persistent-banner';
+const CACHE_NAME = 'medwira-ai-v18-persistent-banner';
 const urlsToCache = [
   '/',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
-  '/manifest.json'
+  '/manifest.json',
+  '/medwira-logo.png',
+  '/medwira-icon.svg'
 ];
 
 self.addEventListener('install', (event) => {
@@ -11,7 +11,15 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Opened cache');
-        return cache.addAll(urlsToCache);
+        // Cache each resource individually to handle failures gracefully
+        return Promise.all(
+          urlsToCache.map((url) => {
+            return cache.add(url).catch((error) => {
+              console.warn(`Failed to cache ${url}:`, error);
+              // Don't fail the entire cache operation for one resource
+            });
+          })
+        );
       })
   );
 });
