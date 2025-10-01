@@ -75,17 +75,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      if (!data.session) {
+      if (!data.session || !data.session.user) {
         console.log('ℹ️ No active session found');
         setUser(null);
         setIsLoading(false);
         return;
       }
 
-      console.log('✅ Active session found for:', data.session.user.email);
+      const { user: sessionUser } = data.session;
+      console.log('✅ Active session found for:', sessionUser.email || 'unknown');
       
       // Fetch user data from users table
-      const userData = await fetchUserData(data.session.user.id);
+      const userData = await fetchUserData(sessionUser.id);
       if (userData) {
         console.log('✅ User data loaded from database:', {
           name: userData.name,
@@ -97,11 +98,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('⚠️ No user data in database, creating fallback user');
         // Fallback to session user if no DB record
         const fallbackUser = {
-          id: data.session.user.id,
-          email: data.session.user.email || '',
-          name: data.session.user.user_metadata?.full_name || 
-                data.session.user.user_metadata?.name || 
-                data.session.user.email?.split('@')[0] || 
+          id: sessionUser.id,
+          email: sessionUser.email || '',
+          name: sessionUser.user_metadata?.full_name || 
+                sessionUser.user_metadata?.name || 
+                sessionUser.email?.split('@')[0] || 
                 'User',
           tokens: 0,
           subscription_tier: 'free'
@@ -158,8 +159,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Wait a moment for database to be updated
           await new Promise(resolve => setTimeout(resolve, 1000));
           
+          const { user: sessionUser } = session;
+          
           // Fetch user data from users table
-          const userData = await fetchUserData(session.user.id);
+          const userData = await fetchUserData(sessionUser.id);
           if (userData) {
             console.log('✅ User data loaded after sign-in:', {
               name: userData.name,
@@ -172,11 +175,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log('⚠️ No user data found, creating fallback user');
             // Fallback to session user if no DB record
             const fallbackUser = {
-              id: session.user.id,
-              email: session.user.email || '',
-              name: session.user.user_metadata?.full_name || 
-                    session.user.user_metadata?.name || 
-                    session.user.email?.split('@')[0] || 
+              id: sessionUser.id,
+              email: sessionUser.email || '',
+              name: sessionUser.user_metadata?.full_name || 
+                    sessionUser.user_metadata?.name || 
+                    sessionUser.email?.split('@')[0] || 
                     'User',
               tokens: 0,
               subscription_tier: 'free'
@@ -197,7 +200,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('🔄 Token refreshed, updating user data...');
         // Refresh user data when token is refreshed
         if (session?.user) {
-          const userData = await fetchUserData(session.user.id);
+          const { user: sessionUser } = session;
+          const userData = await fetchUserData(sessionUser.id);
           if (userData) {
             setUser(userData);
           }
