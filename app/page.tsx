@@ -523,7 +523,7 @@ export default function Home() {
                 
                 <div className="faq-item">
                   <h4>What information will I get?</h4>
-                  <p>You'll receive detailed information including medicine name, active ingredients, dosage, side effects, interactions, and usage instructions.</p>
+                  <p>You&apos;ll receive detailed information including medicine name, active ingredients, dosage, side effects, interactions, and usage instructions.</p>
                 </div>
                 
                 <div className="faq-item">
@@ -541,7 +541,7 @@ export default function Home() {
                 
                 <div className="faq-item">
                   <h4>How do I sign up?</h4>
-                  <p>Click "Sign In / Sign Up" in the header, then choose "Sign Up". You can use Google, Apple, or email to create your account.</p>
+                  <p>Click &quot;Sign In / Sign Up&quot; in the header, then choose &quot;Sign Up&quot;. You can use Google, Apple, or email to create your account.</p>
                 </div>
                 
                 <div className="faq-item">
@@ -563,8 +563,8 @@ export default function Home() {
                 </div>
                 
                 <div className="faq-item">
-                  <h4>What if the medicine isn't recognized?</h4>
-                  <p>If our AI can't identify the medicine, try taking a clearer photo of the packaging or label. You can also describe the medicine in text.</p>
+                  <h4>What if the medicine isn&apos;t recognized?</h4>
+                  <p>If our AI can&apos;t identify the medicine, try taking a clearer photo of the packaging or label. You can also describe the medicine in text.</p>
                 </div>
               </div>
 
@@ -572,7 +572,7 @@ export default function Home() {
                 <h3>🌍 Language & Support</h3>
                 <div className="faq-item">
                   <h4>What languages are supported?</h4>
-                  <p>Currently, MedWira responds in English, but you can ask questions in your preferred language. We're working on multi-language support.</p>
+                  <p>Currently, MedWira responds in English, but you can ask questions in your preferred language. We&apos;re working on multi-language support.</p>
                 </div>
                 
                 <div className="faq-item">
@@ -590,7 +590,7 @@ export default function Home() {
                 <h3>📱 Technical Support</h3>
                 <div className="faq-item">
                   <h4>Camera not working?</h4>
-                  <p>Make sure you're using HTTPS or localhost. Allow camera permissions in your browser. Try refreshing the page or using the upload button instead.</p>
+                  <p>Make sure you&apos;re using HTTPS or localhost. Allow camera permissions in your browser. Try refreshing the page or using the upload button instead.</p>
                 </div>
                 
                 <div className="faq-item">
@@ -600,7 +600,7 @@ export default function Home() {
                 
                 <div className="faq-item">
                   <h4>Need more help?</h4>
-                  <p>Contact us through the app or visit our support page. We're here to help with any technical issues or questions.</p>
+                  <p>Contact us through the app or visit our support page. We&apos;re here to help with any technical issues or questions.</p>
                 </div>
               </div>
             </div>
@@ -618,7 +618,7 @@ export default function Home() {
                 <div className="message-content">
                   {message.image && (
                     <div className="message-image">
-                      <img src={message.image} alt="Uploaded medicine" />
+                      <Image src={message.image} alt="Uploaded medicine" width={200} height={200} />
                     </div>
                   )}
                   <div className="message-text">

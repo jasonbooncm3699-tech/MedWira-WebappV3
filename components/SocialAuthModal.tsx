@@ -290,7 +290,7 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
     };
 
     handleAuthCallback();
-  }, []);
+  }, [onClose]);
 
   if (!isOpen) return null;
 
