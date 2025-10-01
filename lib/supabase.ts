@@ -10,32 +10,60 @@ const createCustomStorage = () => {
       if (typeof window === 'undefined') return null;
       
       try {
-        // Try localStorage first
-        const localStorageValue = window.localStorage.getItem(key);
+        // CRITICAL: Handle all Supabase auth keys with custom prefix
+        const customKey = key.startsWith('medwira-') ? key : `medwira-${key}`;
+        
+        // Try localStorage first with custom key
+        const localStorageValue = window.localStorage.getItem(customKey);
         if (localStorageValue) {
-          console.log('📦 Retrieved from localStorage:', key);
+          console.log('📦 Retrieved from localStorage:', customKey);
           return localStorageValue;
         }
         
-        // Fallback to sessionStorage
-        const sessionStorageValue = window.sessionStorage.getItem(key);
+        // Try original key as fallback
+        const localStorageValueOriginal = window.localStorage.getItem(key);
+        if (localStorageValueOriginal) {
+          console.log('📦 Retrieved from localStorage (original key):', key);
+          return localStorageValueOriginal;
+        }
+        
+        // Fallback to sessionStorage with custom key
+        const sessionStorageValue = window.sessionStorage.getItem(customKey);
         if (sessionStorageValue) {
-          console.log('📦 Retrieved from sessionStorage:', key);
+          console.log('📦 Retrieved from sessionStorage:', customKey);
           return sessionStorageValue;
         }
         
-        // Fallback to cookies
+        // Fallback to sessionStorage with original key
+        const sessionStorageValueOriginal = window.sessionStorage.getItem(key);
+        if (sessionStorageValueOriginal) {
+          console.log('📦 Retrieved from sessionStorage (original key):', key);
+          return sessionStorageValueOriginal;
+        }
+        
+        // Fallback to cookies with custom key
         const cookieValue = document.cookie
+          .split('; ')
+          .find(row => row.startsWith(`${customKey}=`))
+          ?.split('=')[1];
+        
+        if (cookieValue) {
+          console.log('📦 Retrieved from cookies:', customKey);
+          return decodeURIComponent(cookieValue);
+        }
+        
+        // Fallback to cookies with original key
+        const cookieValueOriginal = document.cookie
           .split('; ')
           .find(row => row.startsWith(`${key}=`))
           ?.split('=')[1];
         
-        if (cookieValue) {
-          console.log('📦 Retrieved from cookies:', key);
-          return decodeURIComponent(cookieValue);
+        if (cookieValueOriginal) {
+          console.log('📦 Retrieved from cookies (original key):', key);
+          return decodeURIComponent(cookieValueOriginal);
         }
         
-        console.log('📦 No value found for key:', key);
+        console.log('📦 No value found for key:', key, '(tried custom key:', customKey, ')');
         return null;
       } catch (error) {
         console.error('❌ Error retrieving from storage:', error);
@@ -47,18 +75,27 @@ const createCustomStorage = () => {
       if (typeof window === 'undefined') return;
       
       try {
-        // Store in localStorage
-        window.localStorage.setItem(key, value);
-        console.log('💾 Stored in localStorage:', key);
+        // CRITICAL: Use custom key for consistency
+        const customKey = key.startsWith('medwira-') ? key : `medwira-${key}`;
         
-        // Also store in sessionStorage as backup
-        window.sessionStorage.setItem(key, value);
-        console.log('💾 Stored in sessionStorage:', key);
+        // Store in localStorage with custom key
+        window.localStorage.setItem(customKey, value);
+        console.log('💾 Stored in localStorage:', customKey);
         
-        // Also store in cookies for maximum compatibility
+        // Also store in sessionStorage as backup with custom key
+        window.sessionStorage.setItem(customKey, value);
+        console.log('💾 Stored in sessionStorage:', customKey);
+        
+        // Also store in cookies for maximum compatibility with custom key
         const cookieOptions = 'path=/; max-age=604800; samesite=lax; secure';
+        document.cookie = `${customKey}=${encodeURIComponent(value)}; ${cookieOptions}`;
+        console.log('💾 Stored in cookies:', customKey);
+        
+        // Also store with original key for backward compatibility
+        window.localStorage.setItem(key, value);
+        window.sessionStorage.setItem(key, value);
         document.cookie = `${key}=${encodeURIComponent(value)}; ${cookieOptions}`;
-        console.log('💾 Stored in cookies:', key);
+        console.log('💾 Stored with original key for compatibility:', key);
       } catch (error) {
         console.error('❌ Error storing in storage:', error);
       }
@@ -68,10 +105,20 @@ const createCustomStorage = () => {
       if (typeof window === 'undefined') return;
       
       try {
+        // CRITICAL: Remove from both custom and original keys
+        const customKey = key.startsWith('medwira-') ? key : `medwira-${key}`;
+        
+        // Remove custom key
+        window.localStorage.removeItem(customKey);
+        window.sessionStorage.removeItem(customKey);
+        document.cookie = `${customKey}=; path=/; max-age=0`;
+        console.log('🗑️ Removed custom key from all storage:', customKey);
+        
+        // Remove original key for backward compatibility
         window.localStorage.removeItem(key);
         window.sessionStorage.removeItem(key);
         document.cookie = `${key}=; path=/; max-age=0`;
-        console.log('🗑️ Removed from all storage:', key);
+        console.log('🗑️ Removed original key from all storage:', key);
       } catch (error) {
         console.error('❌ Error removing from storage:', error);
       }

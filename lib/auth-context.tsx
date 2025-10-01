@@ -88,20 +88,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (typeof window !== 'undefined') {
         try {
-          // Check localStorage
-          const storedSession = localStorage.getItem('medwira-auth-token');
+          // Check localStorage with multiple possible keys
+          const storedSession = localStorage.getItem('medwira-auth-token') || 
+                               localStorage.getItem('sb-auth-token') ||
+                               localStorage.getItem('supabase.auth.token');
           localStorageSession = storedSession ? JSON.parse(storedSession) : null;
           
-          // Check sessionStorage
-          const sessionStoredSession = sessionStorage.getItem('medwira-auth-token');
+          // Check sessionStorage with multiple possible keys
+          const sessionStoredSession = sessionStorage.getItem('medwira-auth-token') || 
+                                      sessionStorage.getItem('sb-auth-token') ||
+                                      sessionStorage.getItem('supabase.auth.token');
           sessionStorageSession = sessionStoredSession ? JSON.parse(sessionStoredSession) : null;
           
-          // Check cookies
+          // Check cookies with multiple possible keys
           const cookieValue = document.cookie
             .split('; ')
-            .find(row => row.startsWith('medwira-auth-token='))
+            .find(row => row.startsWith('medwira-auth-token=') || 
+                        row.startsWith('sb-auth-token=') ||
+                        row.startsWith('supabase.auth.token='))
             ?.split('=')[1];
           cookieSession = cookieValue ? JSON.parse(decodeURIComponent(cookieValue)) : null;
+          
+          // Debug: List all localStorage keys to see what's actually stored
+          console.log('🔍 All localStorage keys:', Object.keys(localStorage));
+          console.log('🔍 All sessionStorage keys:', Object.keys(sessionStorage));
+          console.log('🔍 All cookies:', document.cookie);
         } catch (e) {
           console.log('⚠️ Error reading storage sessions:', e);
         }
