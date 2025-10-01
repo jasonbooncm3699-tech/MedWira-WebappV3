@@ -1,12 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from './supabase';
 
 interface User {
   id: string;
@@ -137,11 +132,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser();
     
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔄 Auth state changed:', event, {
-        hasSession: !!session,
-        email: session?.user?.email || 'none',
-        userId: session?.user?.id || 'none'
-      });
+      // Only log significant events to reduce noise
+      if (event !== 'INITIAL_SESSION') {
+        console.log('🔄 Auth state changed:', event, {
+          hasSession: !!session,
+          email: session?.user?.email || 'none',
+          userId: session?.user?.id || 'none'
+        });
+      }
       
       if (event === 'SIGNED_IN' && session?.user) {
         console.log('🎉 User signed in event detected!');

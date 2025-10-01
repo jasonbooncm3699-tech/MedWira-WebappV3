@@ -630,7 +630,7 @@ export default function Home() {
                         .replace(/⚠️/g, '⚠️')
                     }} />
                   ) : (
-                    message.content
+                    <span>{message.content}</span>
                   )}
                   </div>
                   <div className="message-footer">
