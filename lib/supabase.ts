@@ -3,7 +3,29 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Enhanced Supabase client configuration for better session handling
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    // Ensure sessions persist across browser sessions
+    persistSession: true,
+    // Auto refresh tokens
+    autoRefreshToken: true,
+    // Detect session in URL (important for OAuth redirects)
+    detectSessionInUrl: true,
+    // Storage key for session persistence
+    storageKey: 'medwira-auth-token',
+    // Storage mechanism
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    // Flow type for OAuth
+    flowType: 'pkce'
+  },
+  // Global configuration
+  global: {
+    headers: {
+      'X-Client-Info': 'medwira-webapp'
+    }
+  }
+})
 
 // Database types
 export interface User {

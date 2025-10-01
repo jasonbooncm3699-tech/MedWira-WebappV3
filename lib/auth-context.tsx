@@ -62,11 +62,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('🔄 refreshUser called - checking session...');
     setIsLoading(true);
     try {
+      // CRITICAL: Check for session in URL first (OAuth redirects)
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasAuthCode = urlParams.has('code') || urlParams.has('access_token');
+        
+        if (hasAuthCode) {
+          console.log('🔗 OAuth redirect detected in URL, processing session...');
+          // Let Supabase handle the URL session detection
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+      
+      // Enhanced session retrieval with better error handling
       const { data, error } = await supabase.auth.getSession();
       
       // Enhanced session debugging with more detailed inspection
       const sessionData = data?.session;
       const sessionUser = sessionData?.user;
+      
+      // Additional debugging: Check localStorage directly
+      let localStorageSession = null;
+      if (typeof window !== 'undefined') {
+        try {
+          const storedSession = localStorage.getItem('medwira-auth-token');
+          localStorageSession = storedSession ? JSON.parse(storedSession) : null;
+        } catch (e) {
+          console.log('⚠️ Error reading localStorage session:', e);
+        }
+      }
       
       console.log('📡 Raw session data:', {
         hasData: !!data,
@@ -84,7 +108,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Additional debugging for React error #18
         sessionNullCheck: sessionData === null,
         sessionUndefinedCheck: sessionData === undefined,
-        sessionObjectCheck: sessionData && typeof sessionData === 'object'
+        sessionObjectCheck: sessionData && typeof sessionData === 'object',
+        // localStorage debugging
+        hasLocalStorageSession: !!localStorageSession,
+        localStorageSessionType: typeof localStorageSession,
+        localStorageKeys: localStorageSession ? Object.keys(localStorageSession) : 'no-localstorage'
       });
       
       if (error) {
@@ -202,8 +230,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // DEFENSIVE: Use setTimeout to prevent React error #18 (hydration mismatch)
     const initializeAuth = async () => {
       try {
+        console.log('🚀 Starting auth initialization...');
+        
+        // First, let Supabase detect any session in the URL
+        if (typeof window !== 'undefined') {
+          const urlParams = new URLSearchParams(window.location.search);
+          if (urlParams.has('code') || urlParams.has('access_token')) {
+            console.log('🔗 URL session detected, waiting for processing...');
+            // Give Supabase time to process the URL session
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
+        
         await refreshUser();
         setIsInitialized(true);
+        console.log('✅ Auth initialization completed');
       } catch (error) {
         console.error('❌ Error during auth initialization:', error);
         setIsLoading(false);
