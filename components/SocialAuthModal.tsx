@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface SocialAuthModalProps {
@@ -13,13 +13,106 @@ interface SocialAuthModalProps {
 
 export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthModalProps) {
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
-  const [message, setMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const authTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const authStartTimeRef = useRef<number | null>(null);
+
+  // Monitor auth state changes to detect cancellation
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔄 Auth state changed:', event, session?.user?.email || 'No session');
+
+      // If we were loading and user comes back without a session, they likely cancelled
+      if (socialLoading && !session && event === 'SIGNED_OUT') {
+        const timeSinceStart = authStartTimeRef.current 
+          ? Date.now() - authStartTimeRef.current 
+          : 0;
+
+        // If less than 30 seconds passed, it's likely a cancellation (not a timeout)
+        if (timeSinceStart < 30000) {
+          console.log('⚠️ OAuth likely cancelled by user');
+          setErrorMessage('Login cancelled. Please try again or use another method.');
+          setSocialLoading(null);
+        }
+      }
+
+      // If successfully signed in, close modal
+      if (event === 'SIGNED_IN' && session) {
+        console.log('✅ User signed in successfully');
+        setSocialLoading(null);
+        setErrorMessage('');
+        onClose();
+      }
+    });
+
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+      if (authTimeoutRef.current) {
+        clearTimeout(authTimeoutRef.current);
+      }
+    };
+  }, [socialLoading, onClose]);
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setSocialLoading(null);
+      setErrorMessage('');
+      if (authTimeoutRef.current) {
+        clearTimeout(authTimeoutRef.current);
+      }
+      authStartTimeRef.current = null;
+    }
+  }, [isOpen]);
+
+  // Handle visibility change (user switching tabs/windows)
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && socialLoading) {
+        console.log('👁️ Page became visible, checking auth status...');
+        
+        // Check if user has a session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          // User came back without completing OAuth
+          const timeSinceStart = authStartTimeRef.current 
+            ? Date.now() - authStartTimeRef.current 
+            : 0;
+
+          if (timeSinceStart > 1000) { // Give at least 1 second
+            console.log('⚠️ User returned without session - likely cancelled');
+            setErrorMessage('Login cancelled. Please try again or use another method.');
+            setSocialLoading(null);
+            authStartTimeRef.current = null;
+          }
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [socialLoading]);
 
   const handleSocialLogin = async (provider: 'google' | 'facebook') => {
     try {
+      // Reset any previous error messages
+      setErrorMessage('');
       setSocialLoading(provider);
-      setMessage('');
+      authStartTimeRef.current = Date.now();
+      
       console.log(`🔐 Starting ${provider} OAuth flow...`);
+
+      // Set a timeout to reset loading state if OAuth takes too long
+      // This handles cases where the redirect doesn't happen
+      authTimeoutRef.current = setTimeout(() => {
+        console.log('⏱️ OAuth timeout - resetting state');
+        setErrorMessage('Authentication timeout. Please try again.');
+        setSocialLoading(null);
+        authStartTimeRef.current = null;
+      }, 60000); // 60 second timeout
 
       // Configure redirect URL for OAuth
       const redirectUrl = `${window.location.origin}/auth/callback`;
@@ -37,31 +130,65 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
 
       if (error) {
         console.error(`❌ ${provider} OAuth error:`, error.message);
-        setMessage(`${provider} login failed: ${error.message}`);
+        setErrorMessage(`${provider} login failed: ${error.message}`);
         setSocialLoading(null);
+        authStartTimeRef.current = null;
+        
+        if (authTimeoutRef.current) {
+          clearTimeout(authTimeoutRef.current);
+          authTimeoutRef.current = null;
+        }
         return;
       }
 
       console.log(`✅ ${provider} OAuth initiated successfully`);
-      // The page will redirect to the OAuth provider, so we don't need to close the modal here
+      // Browser will redirect to OAuth provider
+      // If redirect doesn't happen, timeout will handle it
       
     } catch (error) {
       console.error(`💥 ${provider} OAuth exception:`, error);
-      setMessage(`${provider} login failed. Please try again.`);
+      setErrorMessage(`${provider} login failed. Please try again.`);
       setSocialLoading(null);
+      authStartTimeRef.current = null;
+      
+      if (authTimeoutRef.current) {
+        clearTimeout(authTimeoutRef.current);
+        authTimeoutRef.current = null;
+      }
     }
   };
 
-  // Handle OAuth callback when component mounts
-  React.useEffect(() => {
+  // Handle OAuth callback errors from URL
+  useEffect(() => {
     const handleAuthCallback = async () => {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const error = hashParams.get('error');
-      const errorDescription = hashParams.get('error_description');
+      const urlParams = new URLSearchParams(window.location.search);
+      
+      const hashError = hashParams.get('error');
+      const hashErrorDescription = hashParams.get('error_description');
+      const urlError = urlParams.get('error');
+      const urlErrorDescription = urlParams.get('error_description');
+      
+      const error = hashError || urlError;
+      const errorDescription = hashErrorDescription || urlErrorDescription;
       
       if (error) {
         console.error('❌ OAuth callback error:', error, errorDescription);
-        setMessage(`Authentication failed: ${errorDescription || error}`);
+        
+        // User-friendly error messages
+        let friendlyMessage = 'Authentication failed. Please try again.';
+        
+        if (error === 'access_denied') {
+          friendlyMessage = 'Login cancelled. You can try again or use another method.';
+        } else if (errorDescription) {
+          friendlyMessage = `Authentication failed: ${errorDescription}`;
+        }
+        
+        setErrorMessage(friendlyMessage);
+        setSocialLoading(null);
+        
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
         return;
       }
 
@@ -72,6 +199,7 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
           
           if (callbackError) {
             console.error('❌ Session error after OAuth:', callbackError.message);
+            setErrorMessage('Session error. Please try logging in again.');
             return;
           }
 
@@ -103,6 +231,7 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
           }
         } catch (error) {
           console.error('💥 OAuth callback error:', error);
+          setErrorMessage('An error occurred. Please try again.');
         }
       }
     };
@@ -146,21 +275,49 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
           </div>
           <button
             onClick={onClose}
+            disabled={socialLoading !== null}
             style={{
               background: 'none',
               border: 'none',
-              color: '#888',
-              cursor: 'pointer',
+              color: socialLoading !== null ? '#555' : '#888',
+              cursor: socialLoading !== null ? 'not-allowed' : 'pointer',
               padding: '8px',
               borderRadius: '4px',
               transition: 'color 0.2s ease',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
-            onMouseLeave={(e) => e.currentTarget.style.color = '#888'}
+            onMouseEnter={(e) => {
+              if (socialLoading === null) {
+                e.currentTarget.style.color = '#ffffff';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (socialLoading === null) {
+                e.currentTarget.style.color = '#888';
+              }
+            }}
           >
             <X size={20} />
           </button>
         </div>
+
+        {/* Error Message - Show at top for better visibility */}
+        {errorMessage && (
+          <div style={{ 
+            marginBottom: '24px',
+            padding: '12px 16px', 
+            borderRadius: '8px', 
+            fontSize: '14px',
+            background: 'rgba(255, 152, 0, 0.1)',
+            border: '1px solid rgba(255, 152, 0, 0.3)',
+            color: '#ffa726',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <AlertCircle size={18} />
+            <span>{errorMessage}</span>
+          </div>
+        )}
 
         {/* Social Login Buttons */}
         <div style={{ 
@@ -275,22 +432,6 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
             {socialLoading === 'facebook' ? 'Connecting...' : 'Continue with Facebook'}
           </button>
         </div>
-
-        {/* Error Message */}
-        {message && (
-          <div style={{ 
-            marginTop: '20px',
-            padding: '12px 16px', 
-            borderRadius: '8px', 
-            fontSize: '14px',
-            background: 'rgba(255, 68, 68, 0.1)',
-            border: '1px solid rgba(255, 68, 68, 0.3)',
-            color: '#ff4444',
-            textAlign: 'center'
-          }}>
-            {message}
-          </div>
-        )}
 
         {/* Terms and Privacy */}
         <p style={{ 
