@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ErrorInfo } from 'react';
-import { createClient } from './supabase-browser';
+import { createClient, getSessionFromCookies } from './supabase-browser';
 
 interface User {
   id: string;
@@ -116,6 +116,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         cookieCount: typeof window !== 'undefined' ? document.cookie.split(';').filter(c => c.trim()).length : 0,
         hasCookies: typeof window !== 'undefined' ? document.cookie.length > 0 : false
       });
+      
+      // CRITICAL: If no session from Supabase, try to get it from cookies
+      if (!sessionData && typeof window !== 'undefined') {
+        console.log('🔄 No session from Supabase, checking cookies...');
+        const cookieSession = getSessionFromCookies();
+        
+        if (cookieSession && cookieSession.user) {
+          console.log('✅ Found session in cookies, using fallback method');
+          
+          // Set the user from cookie session
+          const cookieUser: User = {
+            id: cookieSession.user.id,
+            email: cookieSession.user.email || '',
+            name: cookieSession.user.user_metadata?.full_name || 
+                  cookieSession.user.user_metadata?.name || 
+                  cookieSession.user.email?.split('@')[0] || 
+                  'User',
+            tokens: 30, // Default tokens for new users
+            subscription_tier: 'free' // Default subscription tier
+          };
+          
+          setUser(cookieUser);
+          setIsLoading(false);
+          return;
+        }
+      }
       
       if (error) {
         console.error('❌ Session error:', error);

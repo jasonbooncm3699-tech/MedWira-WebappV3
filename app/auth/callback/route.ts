@@ -175,18 +175,62 @@ export async function GET(request: NextRequest) {
       console.warn('⚠️ Auth-context will attempt to create user record on client side');
     }
 
-    // CRITICAL: Create response and let Supabase automatically set HTTP-only cookies
-    // The createServerClient will automatically manage session cookies
+    // CRITICAL: Create response and manually set session cookies
+    // The createServerClient cookie methods should have been called automatically
+    // but we need to ensure the session is properly persisted
     const response = NextResponse.redirect(new URL('/?session_refresh=true', request.url));
     
-    console.log('🍪 Supabase SSR client has automatically set HTTP-only session cookies');
-    console.log('📦 Session data preview:', {
-      hasAccessToken: !!data.session.access_token,
-      hasRefreshToken: !!data.session.refresh_token,
+    // CRITICAL: Explicitly set the session cookies to ensure persistence
+    const isProduction = process.env.NODE_ENV === 'production';
+    const domain = isProduction ? 'medwira.com' : 'localhost';
+    
+    // Set access token cookie
+    response.cookies.set('sb-access-token', data.session.access_token, {
+      domain: domain,
+      secure: isProduction,
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7 // 7 days
+    });
+
+    // Set refresh token cookie
+    response.cookies.set('sb-refresh-token', data.session.refresh_token, {
+      domain: domain,
+      secure: isProduction,
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30 // 30 days
+    });
+
+    // Set session cookie for client-side access
+    response.cookies.set('sb-session', JSON.stringify({
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+      expires_at: data.session.expires_at,
+      expires_in: data.session.expires_in,
+      token_type: data.session.token_type,
+      user: {
+        id: data.session.user.id,
+        email: data.session.user.email,
+        user_metadata: data.session.user.user_metadata,
+        app_metadata: data.session.user.app_metadata
+      }
+    }), {
+      domain: domain,
+      secure: isProduction,
+      httpOnly: false, // Allow client-side access
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7 // 7 days
+    });
+    
+    console.log('🍪 Session cookies explicitly set:', {
+      accessTokenLength: data.session.access_token?.length || 0,
+      refreshTokenLength: data.session.refresh_token?.length || 0,
       userId: data.session.user.id,
       email: data.session.user.email,
       expiresAt: data.session.expires_at,
-      tokenType: data.session.token_type
+      tokenType: data.session.token_type,
+      domain: domain
     });
     console.log('🏠 Redirecting to home page with session refresh...');
 
