@@ -16,16 +16,16 @@ export default function Home() {
   // Get welcome message in user's language
   const getWelcomeMessage = (lang: string): string => {
     const messages: { [key: string]: string } = {
-      'English': '👋 Welcome to MedWira AI! Upload a photo of your medicine for instant identification and detailed analysis.',
-      'Chinese': '👋 欢迎使用MedWira AI！上传您的药品照片即可获得即时识别和详细分析。',
-      'Malay': '👋 Selamat datang ke MedWira AI! Muat naik foto ubat anda untuk pengenalan serta-merta dan analisis terperinci.',
-      'Indonesian': '👋 Selamat datang di MedWira AI! Unggah foto obat Anda untuk identifikasi instan dan analisis mendalam.',
-      'Thai': '👋 ยินดีต้อนรับสู่ MedWira AI! อัปโหลดรูปภาพยาของคุณเพื่อการระบุตัวตนทันทีและการวิเคราะห์โดยละเอียด',
-      'Vietnamese': '👋 Chào mừng đến với MedWira AI! Tải lên hình ảnh thuốc của bạn để nhận dạng tức thì và phân tích chi tiết.',
-      'Tagalog': '👋 Maligayang pagdating sa MedWira AI! I-upload ang larawan ng inyong gamot para sa instant identification at detalyadong analysis.',
-      'Burmese': '👋 MedWira AI မှ ကြိုဆိုပါတယ်! သင့်ဆေးပုံကို တင်ပို့ပြီး အမြန်ခွဲခြားသိမြင်မှုနှင့် အသေးစိတ်ခွဲခြမ်းစိတ်ဖြာမှုရယူပါ။',
-      'Khmer': '👋 សូមស្វាគមន៍មកកាន់ MedWira AI! ផ្ទុករូបភាពថ្នាំរបស់អ្នកឡើងសម្រាប់ការកំណត់អត្តសញ្ញាណភ្លាមៗ និងការវិភាគលម្អិត។',
-      'Lao': '👋 ຍິນດີຕ້ອນຮັບສູ່ MedWira AI! ອັບໂລດຮູບພາບຢາຂອງທ່ານເພື່ອການກວດສອບແລະກຳນົດຕົວຕົນທັນທີ ແລະການວິເຄາະລາຍລະອຽດ.'
+      'English': 'Hi👋 Start this conversation by taking your medicine photo.',
+      'Chinese': '你好👋 通过拍摄您的药品照片开始这次对话。',
+      'Malay': 'Hai👋 Mulakan perbualan ini dengan mengambil foto ubat anda.',
+      'Indonesian': 'Hai👋 Mulai percakapan ini dengan mengambil foto obat Anda.',
+      'Thai': 'สวัสดี👋 เริ่มการสนทนานี้โดยถ่ายภาพยาของคุณ',
+      'Vietnamese': 'Xin chào👋 Bắt đầu cuộc trò chuyện này bằng cách chụp ảnh thuốc của bạn.',
+      'Tagalog': 'Kumusta👋 Simulan ang usapang ito sa pamamagitan ng pagkuha ng larawan ng inyong gamot.',
+      'Burmese': 'မင်္ဂလာပါ👋 သင့်ဆေးပုံကို ရိုက်ယူခြင်းဖြင့် ဤစကားပြောဆိုမှုကို စတင်ပါ။',
+      'Khmer': 'សួស្តី👋 ចាប់ផ្តើមការសន្ទនានេះដោយថតរូបថ្នាំរបស់អ្នក។',
+      'Lao': 'ສະບາຍດີ👋 ເລີ່ມການສົນທະນານີ້ໂດຍການຖ່າຍຮູບຢາຂອງທ່ານ.'
     };
     return messages[lang] || messages['English'];
   };
