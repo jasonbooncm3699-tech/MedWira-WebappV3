@@ -295,7 +295,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           hasUser: !!session?.user,
           email: session?.user?.email
         });
-        // DEFENSIVE: Don't process INITIAL_SESSION - let refreshUser handle it safely
+        
+        // DEFENSIVE: Handle INITIAL_SESSION safely
+        if (session && session.user) {
+          console.log('✅ INITIAL_SESSION has valid session, processing...');
+          setIsLoading(true);
+          try {
+            const sessionUser = session.user;
+            const userId = sessionUser?.id;
+            const userEmail = sessionUser?.email;
+            
+            // DEFENSIVE: Validate session user properties
+            if (userId && typeof userId === 'string' && 
+                userEmail && typeof userEmail === 'string' && 
+                userEmail.includes('@')) {
+              const userData = await fetchUserData(userId);
+              if (userData) {
+                setUser(userData);
+                console.log('✅ User data loaded from INITIAL_SESSION');
+              } else {
+                console.log('⚠️ No user data found in INITIAL_SESSION, creating fallback');
+                const fallbackUser = {
+                  id: userId,
+                  email: userEmail,
+                  name: sessionUser?.user_metadata?.full_name || 
+                        sessionUser?.user_metadata?.name || 
+                        userEmail?.split('@')[0] || 
+                        'User',
+                  tokens: 0,
+                  subscription_tier: 'free'
+                };
+                setUser(fallbackUser);
+              }
+            } else {
+              console.log('⚠️ Invalid session user in INITIAL_SESSION, setting to null');
+              setUser(null);
+            }
+          } catch (error) {
+            console.error('❌ Error handling INITIAL_SESSION:', error);
+            setUser(null);
+          } finally {
+            setIsLoading(false);
+          }
+        } else {
+          console.log('ℹ️ INITIAL_SESSION has no valid session, setting user to null');
+          setUser(null);
+          setIsLoading(false);
+        }
       }
     });
     
@@ -306,7 +352,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refreshUser, fetchUserData, isHydrated]);
 
   const contextValue: AuthContextType = {
-    user,
+    user: user || null, // Ensure user is never undefined
     logout,
     isLoading,
     refreshUser,

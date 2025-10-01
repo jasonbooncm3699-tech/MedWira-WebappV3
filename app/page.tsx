@@ -403,7 +403,7 @@ export default function Home() {
             <div className="user-dropdown">
               <button className="auth-btn user-profile-btn">
                 <User size={16} />
-                {user.name || user.email}
+{user?.name || user?.email || 'User'}
               </button>
               <div className="dropdown-menu">
                 <div className="dropdown-item">
@@ -411,10 +411,10 @@ export default function Home() {
                   Profile
                 </div>
                 <div className="dropdown-item">
-                  <span>Tokens: {user.tokens}</span>
+                  <span>Tokens: {user?.tokens || 0}</span>
                 </div>
                 <div className="dropdown-item">
-                  <span>Tier: {user.subscription_tier}</span>
+                  <span>Tier: {user?.subscription_tier || 'free'}</span>
                 </div>
                 <div className="dropdown-divider"></div>
                 <div className="dropdown-item" onClick={logout}>
@@ -486,10 +486,10 @@ export default function Home() {
                 <User size={20} />
               </div>
               <div className="user-details">
-                <span className="username">{user ? (user.name || user.email) : 'Guest'}</span>
-                <span className="tokens">{user ? `${user.tokens} tokens` : '0 tokens'}</span>
+                <span className="username">{user ? (user?.name || user?.email || 'User') : 'Guest'}</span>
+                <span className="tokens">{user ? `${user?.tokens || 0} tokens` : '0 tokens'}</span>
                 {user && (
-                  <span className="tier">{user.subscription_tier}</span>
+                  <span className="tier">{user?.subscription_tier || 'free'}</span>
                 )}
               </div>
             </div>
