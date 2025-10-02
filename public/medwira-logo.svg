@@ -3,7 +3,5 @@
   <path d="M20 10 L50 90 L70 10 L100 90 L120 10 L100 100 L70 160 L50 100 L20 10Z" fill="#5BC4D4"/>
   <path d="M50 90 L70 10 L100 90 L70 160 L50 90Z" fill="#4FB3C3"/>
   
-  <!-- Medwira Text -->
-  <text x="140" y="75" font-family="Arial, sans-serif" font-size="48" font-weight="500" fill="#8B8B8B">Medwira</text>
 </svg>
 
