@@ -246,7 +246,16 @@ export default function Home() {
     if (user?.tokens !== undefined) {
       setUserTokens(user.tokens);
     }
-  }, [user, isLoading]);
+    
+    // If user is authenticated but has 0 tokens, try to refresh user data
+    // This handles cases where the user data wasn't properly loaded initially
+    if (user && user.tokens === 0 && !isLoading) {
+      console.log('🔄 User has 0 tokens, attempting to refresh user data...');
+      setTimeout(() => {
+        refreshUserData();
+      }, 1000);
+    }
+  }, [user, isLoading, refreshUserData]);
 
 
   // Fetch user chat history when user logs in
