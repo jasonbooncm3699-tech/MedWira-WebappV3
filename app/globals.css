@@ -1643,6 +1643,56 @@ p, h1, h2, h3, h4, h5, h6, span, div, a {
   letter-spacing: 0.5px;
 }
 
+/* Navigation Referral Section */
+.nav-referral-section {
+  margin: 16px 0;
+  padding: 0 16px;
+}
+
+.nav-referral-display {
+  margin: 0 !important;
+}
+
+.nav-referral-display .referral-header {
+  margin-bottom: 12px;
+}
+
+.nav-referral-display .referral-header h4 {
+  font-size: 14px;
+  margin: 0 0 2px 0;
+}
+
+.nav-referral-display .referral-header p {
+  font-size: 12px;
+}
+
+.nav-referral-display .referral-code-value code {
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+
+.nav-referral-display .referral-actions {
+  gap: 6px;
+}
+
+.nav-referral-display .copy-btn,
+.nav-referral-display .share-btn {
+  padding: 6px 10px;
+  font-size: 11px;
+}
+
+.nav-referral-display .referral-benefits {
+  display: none; /* Hide benefits in nav to save space */
+}
+
+.nav-referral-display .referral-stats {
+  margin-bottom: 8px;
+}
+
+.nav-referral-display .referral-stat {
+  font-size: 12px;
+}
+
 /* FAQ Styles */
 .nav-faq-btn {
   background: linear-gradient(135deg, #00d4ff, #0099cc);

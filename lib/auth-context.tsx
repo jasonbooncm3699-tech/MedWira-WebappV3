@@ -20,6 +20,7 @@ interface AuthContextType {
   isLoading: boolean;
   refreshUser: () => Promise<void>;
   refreshUserData: () => Promise<void>;
+  forceFetchUserProfile: (userId: string, userEmail: string, userName: string) => Promise<User | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -318,6 +319,105 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user?.id, user?.email, user?.name, fetchUserData, supabase]);
 
+  // CRITICAL: Force fetch user profile data from user_profiles table
+  const forceFetchUserProfile = useCallback(async (userId: string, userEmail: string, userName: string) => {
+    console.log('🚀 FORCE FETCHING user profile data for:', userEmail);
+    
+    let userData = null;
+    let retryCount = 0;
+    const maxRetries = 8; // Increased retries for critical data fetch
+    
+    while (!userData && retryCount < maxRetries) {
+      // Wait progressively longer on each retry
+      const waitTime = 500 + (retryCount * 250); // 0.5s, 0.75s, 1s, 1.25s, etc.
+      console.log(`⏳ Force fetching user profile (attempt ${retryCount + 1}/${maxRetries}) - waiting ${waitTime}ms...`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      
+      // Fetch user data from user_profiles table
+      userData = await fetchUserData(userId);
+      
+      if (!userData) {
+        retryCount++;
+        console.log(`⚠️ User profile not found, retrying... (${retryCount}/${maxRetries})`);
+      } else {
+        console.log('✅ User profile found after force fetch:', {
+          tokens: userData.tokens,
+          referral_code: userData.referral_code
+        });
+      }
+    }
+    
+    if (userData) {
+      // Combine user_profiles data with auth user data
+      const completeUserData: User = {
+        ...userData,
+        email: userEmail,
+        name: userName
+      };
+      
+      console.log('🎉 Force fetch successful - setting user data:', {
+        name: completeUserData.name,
+        email: completeUserData.email,
+        tokens: completeUserData.tokens,
+        referral_code: completeUserData.referral_code
+      });
+      
+      setUser(completeUserData);
+      return completeUserData;
+    } else {
+      console.error('❌ Force fetch failed after all retries - attempting manual provisioning...');
+      
+      // Last resort: try manual provisioning
+      try {
+        const { data: provisionResult, error: provisionError } = await supabase
+          .rpc('provision_user_profile_manually', {
+            user_id: userId,
+            user_email: userEmail,
+            user_name: userName,
+            referral_code_param: null
+          });
+        
+        if (provisionResult && provisionResult.success) {
+          console.log('✅ Manual provisioning successful during force fetch:', provisionResult);
+          
+          // Try to fetch the newly created data
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          const newUserData = await fetchUserData(userId);
+          
+          if (newUserData) {
+            const completeUserData: User = {
+              ...newUserData,
+              email: userEmail,
+              name: userName
+            };
+            setUser(completeUserData);
+            return completeUserData;
+          }
+        } else {
+          console.error('❌ Manual provisioning failed during force fetch:', provisionError);
+        }
+      } catch (provisionError) {
+        console.error('❌ Error during manual provisioning:', provisionError);
+      }
+      
+      // Ultimate fallback
+      const fallbackUser: User = {
+        id: userId,
+        email: userEmail,
+        name: userName,
+        tokens: 30, // Default to 30 tokens
+        subscription_tier: 'free',
+        referral_code: undefined,
+        referral_count: 0,
+        referred_by: undefined
+      };
+      
+      console.log('🆘 Using fallback user data:', fallbackUser);
+      setUser(fallbackUser);
+      return fallbackUser;
+    }
+  }, [fetchUserData, supabase]);
+
   // Handle hydration
   useEffect(() => {
     setIsHydrated(true);
@@ -421,108 +521,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           console.log('✅ Valid SIGNED_IN session for:', userEmail);
           
-          // Wait for database to be updated (auth callback should have run)
-          // Increased wait time and added retry logic for user_profiles creation
-          let userData = null;
-          let retryCount = 0;
-          const maxRetries = 5;
-          
-          while (!userData && retryCount < maxRetries) {
-            // Wait progressively longer on each retry
-            const waitTime = 1000 + (retryCount * 500);
-            console.log(`⏳ Waiting ${waitTime}ms for user_profiles to be created (attempt ${retryCount + 1}/${maxRetries})...`);
-            await new Promise(resolve => setTimeout(resolve, waitTime));
-            
-            // Fetch user data from user_profiles table
-            userData = await fetchUserData(userId);
-            
-            if (!userData) {
-              retryCount++;
-              console.log(`⚠️ User data not found, retrying... (${retryCount}/${maxRetries})`);
-            } else {
-              console.log('✅ User data found after retry:', retryCount);
-            }
-          }
-          if (userData) {
-            // Combine user_profiles data with auth user data
-            const completeUserData: User = {
-              ...userData,
-              email: userEmail,
-              name: sessionUser?.user_metadata?.full_name || 
-                    sessionUser?.user_metadata?.name || 
-                    userEmail?.split('@')[0] || 
-                    'User'
-            };
-            
-            console.log('✅ User data loaded after sign-in:', {
-              name: completeUserData.name,
-              email: completeUserData.email,
-              tokens: completeUserData.tokens,
-              tier: completeUserData.subscription_tier,
-              referral_code: completeUserData.referral_code,
-              referral_count: completeUserData.referral_count,
-              referred_by: completeUserData.referred_by
-            });
-            setUser(completeUserData);
-          } else {
-            console.log('⚠️ No user data found after all retries, attempting manual provisioning...');
-            
-            try {
-              // Try to manually provision the user as a last resort
-              const { data: provisionResult, error: provisionError } = await supabase
-                .rpc('provision_user_profile_manually', {
-                  user_id: userId,
-                  user_email: userEmail,
-                  user_name: sessionUser?.user_metadata?.full_name || 
-                            sessionUser?.user_metadata?.name || 
-                            userEmail?.split('@')[0] || 
-                            'User',
-                  referral_code_param: null
-                });
-              
-              if (provisionResult && provisionResult.success) {
-                console.log('✅ Manual provisioning successful:', provisionResult);
-                
-                // Try to fetch the user data again after provisioning
-                const newUserData = await fetchUserData(userId);
-                if (newUserData) {
-                  const completeUserData: User = {
-                    ...newUserData,
-                    email: userEmail,
-                    name: sessionUser?.user_metadata?.full_name || 
+          // CRITICAL: Use force fetch to ensure we get user profile data
+          const userName = sessionUser?.user_metadata?.full_name || 
                           sessionUser?.user_metadata?.name || 
                           userEmail?.split('@')[0] || 
-                          'User'
-                  };
-                  console.log('✅ User data loaded after manual provisioning:', completeUserData);
-                  setUser(completeUserData);
-                } else {
-                  throw new Error('Failed to fetch user data after provisioning');
-                }
-              } else {
-                throw new Error(provisionError?.message || 'Manual provisioning failed');
-              }
-            } catch (provisionError) {
-              console.error('❌ Manual provisioning failed:', provisionError);
-              
-              // Create fallback user with default values
-              const fallbackUser = {
-                id: userId,
-                email: userEmail,
-                name: sessionUser?.user_metadata?.full_name || 
-                      sessionUser?.user_metadata?.name || 
-                      userEmail?.split('@')[0] || 
-                      'User',
-                tokens: 30, // Default to 30 tokens for new users
-                subscription_tier: 'free',
-                referral_code: undefined,
-                referral_count: 0,
-                referred_by: undefined
-              };
-              console.log('📝 Setting fallback user after failed provisioning:', fallbackUser);
-              setUser(fallbackUser);
-            }
-          }
+                          'User';
+          
+          await forceFetchUserProfile(userId, userEmail, userName);
         } catch (error) {
           console.error('❌ Error handling sign-in:', error);
         } finally {
@@ -623,6 +628,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading,
     refreshUser,
     refreshUserData,
+    forceFetchUserProfile,
   };
 
   // DEFENSIVE: Wrap provider in error boundary to catch React error #18
@@ -641,7 +647,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout: async () => {},
         isLoading: false,
         refreshUser: async () => {},
-        refreshUserData: async () => {}
+        refreshUserData: async () => {},
+        forceFetchUserProfile: async () => null
       }}>
         {children}
       </AuthContext.Provider>

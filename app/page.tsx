@@ -8,6 +8,7 @@ import { Bot, User, Send, Upload, Camera, Menu, X, Plus, MessageSquare, Settings
 import { useAuth } from '@/lib/auth-context';
 import SocialAuthModal from '@/components/SocialAuthModal';
 import StructuredMedicineReply from '@/components/StructuredMedicineReply';
+import ReferralCodeDisplay from '@/components/ReferralCodeDisplay';
 import { MessageFormatter } from '@/lib/message-formatter';
 import { DatabaseService } from '@/lib/supabase';
 
@@ -703,6 +704,18 @@ export default function Home() {
                 )}
               </div>
             </div>
+            
+            {/* Referral Code Display */}
+            {user?.referral_code && (
+              <div className="nav-referral-section">
+                <ReferralCodeDisplay 
+                  referralCode={user.referral_code}
+                  referralCount={user.referral_count || 0}
+                  className="nav-referral-display"
+                />
+              </div>
+            )}
+            
             <button 
               className="nav-faq-btn"
               onClick={() => setShowFAQ(!showFAQ)}
