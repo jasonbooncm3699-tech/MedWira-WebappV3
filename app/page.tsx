@@ -431,8 +431,6 @@ export default function Home() {
             <Image 
               src="/medwira-logo.svg" 
               alt="MedWira" 
-              width={32}
-              height={32}
               className="header-logo"
               priority
             />
