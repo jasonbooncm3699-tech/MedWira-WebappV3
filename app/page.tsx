@@ -245,9 +245,9 @@ export default function Home() {
   }, [user, isLoading]);
 
 
-  // Fetch user scan history when user logs in
+  // Fetch user chat history when user logs in
   useEffect(() => {
-    const fetchUserScanHistory = async () => {
+    const fetchUserChatHistory = async () => {
       if (user?.id) {
         try {
           const history = await DatabaseService.getUserScanHistory(user.id);
@@ -262,7 +262,7 @@ export default function Home() {
       }
     };
 
-    fetchUserScanHistory();
+    fetchUserChatHistory();
   }, [user]);
 
   const handleCameraCapture = async () => {
