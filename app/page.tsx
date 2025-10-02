@@ -9,7 +9,6 @@ import { useAuth } from '@/lib/auth-context';
 import SocialAuthModal from '@/components/SocialAuthModal';
 import { MessageFormatter } from '@/lib/message-formatter';
 import { DatabaseService } from '@/lib/supabase';
-import { testOAuthConfig } from '@/lib/oauth-debug';
 
 export default function Home() {
   const { user, logout, isLoading, refreshUser } = useAuth();
@@ -465,39 +464,21 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <button 
-                className="auth-btn" 
-                onClick={() => {
-                  console.log('🔐 Sign In / Sign Up button clicked');
-                  console.log('🔐 Current showAuthModal state:', showAuthModal);
-                  console.log('🔐 Current authMode state:', authMode);
-                  setAuthMode('login');
-                  setShowAuthModal(true);
-                  console.log('🔐 Auth modal should be opening...');
-                  console.log('🔐 New showAuthModal state:', true);
-                  console.log('🔐 New authMode state:', 'login');
-                }}
-              >
-                Sign In / Sign Up
-              </button>
-              <button 
-                className="auth-btn" 
-                onClick={async () => {
-                  console.log('🧪 Testing OAuth configuration...');
-                  const result = await testOAuthConfig();
-                  console.log('🧪 OAuth test result:', result);
-                }}
-                style={{ 
-                  background: 'rgba(255, 152, 0, 0.8)', 
-                  fontSize: '11px',
-                  padding: '6px 8px'
-                }}
-                title="Test OAuth Configuration"
-              >
-                🧪 Test
-              </button>
-            </div>
+            <button 
+              className="auth-btn" 
+              onClick={() => {
+                console.log('🔐 Sign In / Sign Up button clicked');
+                console.log('🔐 Current showAuthModal state:', showAuthModal);
+                console.log('🔐 Current authMode state:', authMode);
+                setAuthMode('login');
+                setShowAuthModal(true);
+                console.log('🔐 Auth modal should be opening...');
+                console.log('🔐 New showAuthModal state:', true);
+                console.log('🔐 New authMode state:', 'login');
+              }}
+            >
+              Sign In / Sign Up
+            </button>
           )}
           </div>
       </header>
