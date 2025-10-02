@@ -429,11 +429,11 @@ export default function Home() {
           
           <div className="logo">
             <Image 
-              src="/medwira-logo.png" 
+              src="/medwira-logo.svg" 
               alt="MedWira" 
               width={32}
               height={32}
-              className="object-contain"
+              className="header-logo"
               priority
             />
           </div>
