@@ -1,4 +1,5 @@
-import { createServerClient } from '@supabase/ssr';
+// CANONICAL CODE FOR app/auth/callback/route.ts
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
@@ -21,39 +22,18 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL('/?error=auth_failed', request.url));
   }
 
-  // Verify authorization code exists
-  if (!code) {
-    console.error('❌ No authorization code received');
-    return NextResponse.redirect(new URL('/?error=no_code', request.url));
-  }
-
-  try {
-    // CRITICAL: Create server client with proper cookie handling for Next.js App Router
-    const cookieStore = await cookies();
-    
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: '', ...options });
-          },
-        },
-      }
-    );
+  if (code) {
+    // CRITICAL: This initialization is what enables the server to SET THE SECURE COOKIE.
+    const supabase = createRouteHandlerClient({ cookies });
     
     console.log('🔄 Exchanging OAuth code for session...');
+    
+    // Exchange the temporary code for a permanent session and set the cookie.
     const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-
+    
     if (exchangeError) {
-      console.error('❌ Code exchange failed:', exchangeError);
+      console.error("❌ Supabase code exchange failed:", exchangeError.message);
+      console.error("❌ Exchange error details:", exchangeError);
       return NextResponse.redirect(new URL('/?error=exchange_failed', request.url));
     }
 
@@ -83,7 +63,7 @@ export async function GET(request: Request) {
       name: userName
     });
 
-    // Create user record (simplified - no retry logic needed)
+    // Create user record
     try {
       await supabase
         .from('users')
@@ -109,14 +89,11 @@ export async function GET(request: Request) {
 
     console.log('✅ OAuth callback completed successfully');
     console.log('🏠 Redirecting to home page...');
-
-    // Redirect the user back to the main authenticated route
-    return NextResponse.redirect(new URL('/', request.url));
-
-  } catch (error) {
-    console.error('💥 OAuth callback exception:', error);
-    return NextResponse.redirect(
-      new URL('/?error=callback_exception', request.url)
-    );
+  } else {
+    console.error('❌ No authorization code received');
+    return NextResponse.redirect(new URL('/?error=no_code', request.url));
   }
+
+  // Always redirect the user back to the main authenticated route.
+  return NextResponse.redirect(new URL('/', request.url));
 }
