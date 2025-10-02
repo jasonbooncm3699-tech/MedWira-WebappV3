@@ -62,6 +62,7 @@ export default function Home() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [allergy, setAllergy] = useState('');
   const [showFAQ, setShowFAQ] = useState(false);
+  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
   const [scanHistory, setScanHistory] = useState<any[]>([]);
   const [userTokens, setUserTokens] = useState<number>(user?.tokens || 0);
   const [messages, setMessages] = useState<Array<{
@@ -79,6 +80,15 @@ export default function Home() {
       timestamp: new Date()
     }
   ]);
+
+  // Function to check authentication before allowing actions
+  const checkAuthentication = (): boolean => {
+    if (!user) {
+      setShowRegistrationModal(true);
+      return false;
+    }
+    return true;
+  };
 
   // Function to start a new chat
   const handleNewChat = () => {
@@ -209,6 +219,12 @@ export default function Home() {
 
   // Capture photo from camera
   const capturePhoto = () => {
+    // Check authentication before proceeding
+    if (!checkAuthentication()) {
+      closeCamera();
+      return;
+    }
+
     const video = document.querySelector('video') as HTMLVideoElement;
     if (!video) return;
 
@@ -352,6 +368,13 @@ export default function Home() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Check authentication before proceeding
+    if (!checkAuthentication()) {
+      // Reset the file input
+      e.target.value = '';
+      return;
+    }
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
@@ -897,6 +920,141 @@ export default function Home() {
         mode={authMode}
         onModeChange={setAuthMode}
       />
+
+      {/* Registration Wall Modal */}
+      {showRegistrationModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '20px'
+            }}>
+              <h2 style={{
+                color: '#00d4ff',
+                fontSize: '20px',
+                fontWeight: '600',
+                margin: 0
+              }}>
+                🔐 Registration Required
+              </h2>
+              <button
+                onClick={() => setShowRegistrationModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#888',
+                  cursor: 'pointer',
+                  fontSize: '20px',
+                  padding: '4px'
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div style={{
+              marginBottom: '24px',
+              lineHeight: '1.6'
+            }}>
+              <p style={{
+                color: '#ffffff',
+                fontSize: '16px',
+                marginBottom: '16px'
+              }}>
+                Please Register to continue. Sign up now to receive your <strong style={{color: '#00d4ff'}}>free 30 tokens</strong> for medicine scans!
+              </p>
+              
+              <div style={{
+                background: 'rgba(0, 212, 255, 0.1)',
+                border: '1px solid rgba(0, 212, 255, 0.3)',
+                borderRadius: '8px',
+                padding: '16px',
+                marginBottom: '20px'
+              }}>
+                <h3 style={{
+                  color: '#00d4ff',
+                  fontSize: '16px',
+                  marginBottom: '8px',
+                  margin: '0 0 8px 0'
+                }}>
+                  🎁 What you get with registration:
+                </h3>
+                <ul style={{
+                  color: '#ccc',
+                  fontSize: '14px',
+                  margin: 0,
+                  paddingLeft: '20px'
+                }}>
+                  <li>30 free tokens for medicine scans</li>
+                  <li>Save your chat history</li>
+                  <li>Access to premium features</li>
+                  <li>Priority customer support</li>
+                </ul>
+              </div>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              justifyContent: 'center'
+            }}>
+              <button
+                onClick={() => {
+                  setShowRegistrationModal(false);
+                  setAuthMode('register');
+                  setShowAuthModal(true);
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, #00d4ff, #0099cc)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #0099cc, #007aa3)';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #00d4ff, #0099cc)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                Sign Up Now - Free 30 Tokens
+              </button>
+              
+              <button
+                onClick={() => setShowRegistrationModal(false)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  color: '#ffffff',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                }}
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
