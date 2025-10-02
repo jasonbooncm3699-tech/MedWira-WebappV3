@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Copy, Check, Share2, Users, Gift } from 'lucide-react';
+import { Copy, Check, Share2, Users, Gift, MessageCircle } from 'lucide-react';
 
 interface ReferralCodeDisplayProps {
   referralCode?: string;
@@ -46,7 +46,7 @@ export default function ReferralCodeDisplay({
 
   const handleShareReferral = async () => {
     const shareUrl = `${window.location.origin}?ref=${referralCode}`;
-    const shareText = `Join me on MedWira AI and get 30 free tokens for medicine scans! Use my referral code: ${referralCode}`;
+    const shareText = `Hey! Check out MedWira for instant medicine photo scanning. Sign up using my referral link and get your first 30 scans free! ${shareUrl}`;
 
     if (navigator.share) {
       try {
@@ -68,6 +68,20 @@ export default function ReferralCodeDisplay({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
+  };
+
+  const handleWhatsAppShare = () => {
+    const shareUrl = `${window.location.origin}?ref=${referralCode}`;
+    const shareText = `Hey! Check out MedWira for instant medicine photo scanning. Sign up using my referral link and get your first 30 scans free! ${shareUrl}`;
+    
+    // Encode the message for URL
+    const encodedMessage = encodeURIComponent(shareText);
+    
+    // Create WhatsApp share URL
+    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+    
+    // Open WhatsApp in new tab/window
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -96,6 +110,14 @@ export default function ReferralCodeDisplay({
           >
             {copied ? <Check size={14} /> : <Copy size={14} />}
             {copied ? 'Copied!' : 'Copy'}
+          </button>
+          <button
+            onClick={handleWhatsAppShare}
+            className="whatsapp-btn"
+            title="Share on WhatsApp"
+          >
+            <MessageCircle size={14} />
+            WhatsApp
           </button>
           <button
             onClick={handleShareReferral}
@@ -194,7 +216,7 @@ export default function ReferralCodeDisplay({
           gap: 8px;
         }
 
-        .copy-btn, .share-btn {
+        .copy-btn, .share-btn, .whatsapp-btn {
           background: rgba(0, 212, 255, 0.2);
           border: 1px solid rgba(0, 212, 255, 0.3);
           color: #00d4ff;
@@ -209,7 +231,7 @@ export default function ReferralCodeDisplay({
           transition: all 0.2s ease;
         }
 
-        .copy-btn:hover, .share-btn:hover {
+        .copy-btn:hover, .share-btn:hover, .whatsapp-btn:hover {
           background: rgba(0, 212, 255, 0.3);
           border-color: rgba(0, 212, 255, 0.5);
           transform: translateY(-1px);
@@ -219,6 +241,17 @@ export default function ReferralCodeDisplay({
           background: rgba(34, 197, 94, 0.2);
           border-color: rgba(34, 197, 94, 0.3);
           color: #22c55e;
+        }
+
+        .whatsapp-btn {
+          background: rgba(37, 211, 102, 0.2);
+          border-color: rgba(37, 211, 102, 0.3);
+          color: #25d366;
+        }
+
+        .whatsapp-btn:hover {
+          background: rgba(37, 211, 102, 0.3);
+          border-color: rgba(37, 211, 102, 0.5);
         }
 
         .referral-stats {
@@ -260,7 +293,7 @@ export default function ReferralCodeDisplay({
             justify-content: center;
           }
 
-          .copy-btn, .share-btn {
+          .copy-btn, .share-btn, .whatsapp-btn {
             flex: 1;
             justify-content: center;
           }
