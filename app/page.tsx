@@ -9,7 +9,6 @@ import { useAuth } from '@/lib/auth-context';
 import SocialAuthModal from '@/components/SocialAuthModal';
 import StructuredMedicineReply from '@/components/StructuredMedicineReply';
 import ReferralCodeDisplay from '@/components/ReferralCodeDisplay';
-import DebugProvisionButton from '@/components/DebugProvisionButton';
 import { MessageFormatter } from '@/lib/message-formatter';
 import { DatabaseService } from '@/lib/supabase';
 
@@ -706,13 +705,6 @@ export default function Home() {
               </div>
             </div>
             
-            {/* Debug Provision Button - Temporary for testing */}
-            {user && (
-              <div className="nav-debug-section">
-                <DebugProvisionButton className="nav-debug-button" />
-              </div>
-            )}
-
             {/* Referral Code Display */}
             {user?.referral_code && (
               <div className="nav-referral-section">
