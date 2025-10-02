@@ -248,13 +248,17 @@ export default function Home() {
       setUserTokens(user.tokens);
     }
     
-    // If user is authenticated but has 0 tokens, try to refresh user data
-    // This handles cases where the user data wasn't properly loaded initially
-    if (user && user.tokens === 0 && !isLoading) {
-      console.log('🔄 User has 0 tokens, attempting to refresh user data...');
-      setTimeout(() => {
-        refreshUserData();
-      }, 1000);
+    // CRITICAL: If user is authenticated but missing tokens or referral code, refresh data
+    if (user && !isLoading) {
+      if (user.tokens === 0 || !user.referral_code) {
+        console.log('🔄 User missing tokens or referral code, attempting to refresh user data...', {
+          tokens: user.tokens,
+          hasReferralCode: !!user.referral_code
+        });
+        setTimeout(() => {
+          refreshUserData();
+        }, 1000);
+      }
     }
   }, [user, isLoading, refreshUserData]);
 

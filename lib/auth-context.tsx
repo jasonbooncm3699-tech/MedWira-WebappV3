@@ -325,13 +325,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     let userData = null;
     let retryCount = 0;
-    const maxRetries = 8; // Increased retries for critical data fetch
+    const maxRetries = 10; // Increased retries for critical data fetch
     
     while (!userData && retryCount < maxRetries) {
-      // Wait progressively longer on each retry
-      const waitTime = 500 + (retryCount * 250); // 0.5s, 0.75s, 1s, 1.25s, etc.
-      console.log(`⏳ Force fetching user profile (attempt ${retryCount + 1}/${maxRetries}) - waiting ${waitTime}ms...`);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      // Start with immediate fetch, then wait progressively longer
+      if (retryCount > 0) {
+        const waitTime = 300 + (retryCount * 200); // 0.3s, 0.5s, 0.7s, 0.9s, etc.
+        console.log(`⏳ Force fetching user profile (attempt ${retryCount + 1}/${maxRetries}) - waiting ${waitTime}ms...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      } else {
+        console.log(`⏳ Force fetching user profile (attempt ${retryCount + 1}/${maxRetries}) - immediate fetch...`);
+      }
       
       // Fetch user data from user_profiles table
       userData = await fetchUserData(userId);
@@ -342,7 +346,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         console.log('✅ User profile found after force fetch:', {
           tokens: userData.tokens,
-          referral_code: userData.referral_code
+          referral_code: userData.referral_code,
+          referral_count: userData.referral_count
         });
       }
     }
@@ -621,6 +626,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       authListener.subscription.unsubscribe();
     };
   }, [refreshUser, fetchUserData, isHydrated, isInitialized, supabase]);
+
+  // CRITICAL: Auto-refresh user data when user is authenticated but has no tokens
+  useEffect(() => {
+    if (isHydrated && user?.id && !isLoading) {
+      console.log('🔍 Checking user data completeness...', {
+        userId: user.id,
+        tokens: user.tokens,
+        hasReferralCode: !!user.referral_code
+      });
+      
+      // If user is authenticated but has 0 tokens or no referral code, try to refresh
+      if (user.tokens === 0 || !user.referral_code) {
+        console.log('⚠️ User missing tokens or referral code, attempting refresh...');
+        setTimeout(() => {
+          refreshUserData();
+        }, 1000);
+      }
+    }
+  }, [isHydrated, user?.id, user?.tokens, user?.referral_code, isLoading, refreshUserData]);
 
   const contextValue: AuthContextType = {
     user: user || null, // Ensure user is never undefined
