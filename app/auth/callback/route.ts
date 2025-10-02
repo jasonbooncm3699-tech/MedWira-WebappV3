@@ -90,9 +90,9 @@ export async function GET(request: Request) {
 
       if (provisionError) {
         console.error('❌ User provisioning failed:', provisionError);
-        // Fallback to direct insert into user_profiles table
+        // Fallback to direct insert into profiles table
         await supabase
-          .from('user_profiles')
+          .from('profiles')
           .upsert({
             id: user.id,
             token_count: 30,
