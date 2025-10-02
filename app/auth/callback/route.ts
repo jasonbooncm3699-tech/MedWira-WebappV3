@@ -63,25 +63,48 @@ export async function GET(request: Request) {
       name: userName
     });
 
-    // Create user record
+    // Create user record using the new provisioning function
     try {
-      await supabase
-        .from('users')
-        .upsert({
-          id: user.id,
-          email: user.email,
-          name: userName,
-          tokens: 30,
-          subscription_tier: 'free',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          last_login: new Date().toISOString(),
-        }, {
-          onConflict: 'id',
-          ignoreDuplicates: false
-        });
+      // Check for referral code in URL parameters
+      const referralCode = requestUrl.searchParams.get('ref');
       
-      console.log('✅ User record created/updated successfully');
+      console.log('💾 Provisioning user with database function:', {
+        userId: user.id,
+        email: user.email,
+        name: userName,
+        referralCode: referralCode || 'none'
+      });
+
+      const { data: provisionResult, error: provisionError } = await supabase
+        .rpc('provision_user_manually', {
+          user_id: user.id,
+          user_email: user.email,
+          user_name: userName,
+          referral_code_param: referralCode
+        });
+
+      if (provisionError) {
+        console.error('❌ User provisioning failed:', provisionError);
+        // Fallback to direct insert
+        await supabase
+          .from('users')
+          .upsert({
+            id: user.id,
+            email: user.email,
+            name: userName,
+            tokens: 30,
+            subscription_tier: 'free',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            last_login: new Date().toISOString(),
+          }, {
+            onConflict: 'id',
+            ignoreDuplicates: false
+          });
+        console.log('✅ User record created/updated via fallback method');
+      } else {
+        console.log('✅ User provisioned successfully:', provisionResult);
+      }
     } catch (dbError) {
       console.warn('⚠️ Database operation failed:', dbError);
       // Continue anyway - user is authenticated
