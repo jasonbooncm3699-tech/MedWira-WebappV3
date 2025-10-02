@@ -710,10 +710,12 @@ export default function Home() {
             <div className="user-info">
               <div className="user-avatar">
                 {user?.avatar_url ? (
-                  <img 
+                  <Image 
                     src={user.avatar_url} 
                     alt={user.display_name || user.name} 
                     className="nav-avatar-image"
+                    width={32}
+                    height={32}
                   />
                 ) : (
                   <User size={20} />

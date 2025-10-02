@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/lib/auth-context';
 import ReferralCodeDisplay from './ReferralCodeDisplay';
 import { User, Coins, Crown, RefreshCw } from 'lucide-react';
@@ -47,10 +48,12 @@ export default function UserProfile({
       <div className="profile-header">
         <div className="user-avatar">
           {user.avatar_url ? (
-            <img 
+            <Image 
               src={user.avatar_url} 
               alt={user.display_name || user.name} 
               className="avatar-image"
+              width={32}
+              height={32}
             />
           ) : (
             <User size={24} />
