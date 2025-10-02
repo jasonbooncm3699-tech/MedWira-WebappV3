@@ -429,7 +429,7 @@ export default function Home() {
           
           <div className="logo">
             <Image 
-              src="/medwira-logo.svg" 
+              src="/MedWira logo.001.svg" 
               alt="MedWira" 
               className="header-logo"
               priority
