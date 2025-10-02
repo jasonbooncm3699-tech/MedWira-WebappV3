@@ -3,6 +3,11 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
+// Helper function to generate random referral code for fallback
+function generateRandomCode(): string {
+  return Math.random().toString(36).substring(2, 10).toUpperCase();
+}
+
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
@@ -76,7 +81,7 @@ export async function GET(request: Request) {
       });
 
       const { data: provisionResult, error: provisionError } = await supabase
-        .rpc('provision_user_manually', {
+        .rpc('provision_user_profile_manually', {
           user_id: user.id,
           user_email: user.email,
           user_name: userName,
@@ -85,18 +90,17 @@ export async function GET(request: Request) {
 
       if (provisionError) {
         console.error('❌ User provisioning failed:', provisionError);
-        // Fallback to direct insert
+        // Fallback to direct insert into user_profiles table
         await supabase
-          .from('users')
+          .from('user_profiles')
           .upsert({
             id: user.id,
-            email: user.email,
-            name: userName,
-            tokens: 30,
-            subscription_tier: 'free',
+            token_count: 30,
+            referral_code: generateRandomCode(),
+            referral_count: 0,
+            referred_by: referralCode || null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-            last_login: new Date().toISOString(),
           }, {
             onConflict: 'id',
             ignoreDuplicates: false

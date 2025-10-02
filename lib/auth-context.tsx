@@ -33,12 +33,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // CRITICAL: Create Supabase client instance for cookie-based authentication
   const supabase = createClient();
 
-  // Fetch user data from Supabase users table
+  // Fetch user data from Supabase user_profiles table
   const fetchUserData = useCallback(async (userId: string): Promise<User | null> => {
     try {
-      console.log('📡 Fetching user data from users table...');
+      console.log('📡 Fetching user data from user_profiles table...');
       const { data, error } = await supabase
-        .from('users')
+        .from('user_profiles')
         .select('*')
         .eq('id', userId)
         .single();
@@ -49,16 +49,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data) {
-        console.log('✅ User data loaded:', {
-          email: data.email,
-          name: data.name,
-          tokens: data.tokens,
-          tier: data.subscription_tier,
+        // Map user_profiles data to User interface
+        const userData: User = {
+          id: data.id,
+          email: '', // Will be fetched from auth.users if needed
+          name: '', // Will be fetched from auth.users if needed
+          tokens: data.token_count || 0,
+          subscription_tier: 'free', // Default tier
           referral_code: data.referral_code,
-          referral_count: data.referral_count,
+          referral_count: data.referral_count || 0,
           referred_by: data.referred_by
+        };
+        
+        console.log('✅ User data loaded from user_profiles:', {
+          tokens: userData.tokens,
+          referral_code: userData.referral_code,
+          referral_count: userData.referral_count,
+          referred_by: userData.referred_by
         });
-        return data as User;
+        
+        return userData;
       }
 
       return null;
@@ -377,19 +387,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Wait a moment for database to be updated (auth callback should have run)
           await new Promise(resolve => setTimeout(resolve, 1000));
           
-          // Fetch user data from users table
+          // Fetch user data from user_profiles table
           const userData = await fetchUserData(userId);
           if (userData) {
+            // Combine user_profiles data with auth user data
+            const completeUserData: User = {
+              ...userData,
+              email: userEmail,
+              name: sessionUser?.user_metadata?.full_name || 
+                    sessionUser?.user_metadata?.name || 
+                    userEmail?.split('@')[0] || 
+                    'User'
+            };
+            
             console.log('✅ User data loaded after sign-in:', {
-              name: userData.name,
-              email: userData.email,
-              tokens: userData.tokens,
-              tier: userData.subscription_tier,
-              referral_code: userData.referral_code,
-              referral_count: userData.referral_count,
-              referred_by: userData.referred_by
+              name: completeUserData.name,
+              email: completeUserData.email,
+              tokens: completeUserData.tokens,
+              tier: completeUserData.subscription_tier,
+              referral_code: completeUserData.referral_code,
+              referral_count: completeUserData.referral_count,
+              referred_by: completeUserData.referred_by
             });
-            setUser(userData);
+            setUser(completeUserData);
           } else {
             console.log('⚠️ No user data found, creating fallback user');
             // DEFENSIVE: Safe property access for fallback user creation
