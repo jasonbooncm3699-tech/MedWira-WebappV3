@@ -113,9 +113,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  font-weight: 600;
-  color: #00d4ff;
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
@@ -1171,9 +1168,6 @@ body {
     padding: 12px 16px;
   }
   
-  .logo {
-    font-size: 17px;
-  }
   
   .language-select {
     font-size: 12px;
@@ -1286,9 +1280,6 @@ body {
     height: calc(100vh - 56px);
   }
   
-  .logo {
-    font-size: 15px;
-  }
   
   .header-right {
     gap: 8px;
