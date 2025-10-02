@@ -12,6 +12,8 @@ interface User {
   referral_code?: string;
   referral_count?: number;
   referred_by?: string;
+  display_name?: string;
+  avatar_url?: string;
 }
 
 interface AuthContextType {
@@ -34,12 +36,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // CRITICAL: Create Supabase client instance for cookie-based authentication
   const supabase = createClient();
 
-  // Fetch user data from Supabase user_profiles table
+  // Fetch user data from Supabase profiles table
   const fetchUserData = useCallback(async (userId: string): Promise<User | null> => {
     try {
-      console.log('📡 Fetching user data from user_profiles table...');
+      console.log('📡 Fetching user data from profiles table...');
       const { data, error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
@@ -50,23 +52,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data) {
-        // Map user_profiles data to User interface
+        // Map profiles data to User interface
         const userData: User = {
           id: data.id,
           email: '', // Will be fetched from auth.users if needed
-          name: '', // Will be fetched from auth.users if needed
+          name: data.display_name || '', // Use display_name from profiles table
           tokens: data.token_count || 0,
           subscription_tier: 'free', // Default tier
           referral_code: data.referral_code,
           referral_count: data.referral_count || 0,
-          referred_by: data.referred_by
+          referred_by: data.referred_by,
+          display_name: data.display_name,
+          avatar_url: data.avatar_url
         };
         
-        console.log('✅ User data loaded from user_profiles:', {
+        console.log('✅ User data loaded from profiles:', {
           tokens: userData.tokens,
           referral_code: userData.referral_code,
           referral_count: userData.referral_count,
-          referred_by: userData.referred_by
+          referred_by: userData.referred_by,
+          display_name: userData.display_name,
+          avatar_url: userData.avatar_url
         });
         
         return userData;

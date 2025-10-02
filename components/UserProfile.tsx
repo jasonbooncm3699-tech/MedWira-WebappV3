@@ -46,10 +46,18 @@ export default function UserProfile({
     <div className={`user-profile ${compact ? 'compact' : ''} ${className}`}>
       <div className="profile-header">
         <div className="user-avatar">
-          <User size={24} />
+          {user.avatar_url ? (
+            <img 
+              src={user.avatar_url} 
+              alt={user.display_name || user.name} 
+              className="avatar-image"
+            />
+          ) : (
+            <User size={24} />
+          )}
         </div>
         <div className="user-info">
-          <h3 className="user-name">{user.name}</h3>
+          <h3 className="user-name">{user.display_name || user.name}</h3>
           <p className="user-email">{user.email}</p>
         </div>
         <button 
@@ -160,6 +168,16 @@ export default function UserProfile({
           display: flex;
           align-items: center;
           justify-content: center;
+          width: 48px;
+          height: 48px;
+          overflow: hidden;
+        }
+
+        .avatar-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 50%;
         }
 
         .user-info {

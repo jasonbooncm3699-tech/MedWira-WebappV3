@@ -72,7 +72,21 @@ export default function ReferralCodeDisplay({
 
   const handleWhatsAppShare = () => {
     const shareUrl = `${window.location.origin}?ref=${referralCode}`;
-    const shareText = `Hey! Check out MedWira for instant medicine photo scanning. Sign up using my referral link and get your first 30 scans free! ${shareUrl}`;
+    const shareText = `🔬 *MedWira AI - Instant Medicine Scanner* 🔬
+
+Hey! I found this amazing AI-powered medicine scanner that can instantly identify any medicine just by taking a photo!
+
+✨ *What you get:*
+• 30 FREE scans when you sign up
+• Instant medicine identification
+• Detailed drug information & interactions
+• Support for multiple languages
+
+📱 *Sign up now:* ${shareUrl}
+
+Use my referral code: *${referralCode}*
+
+Perfect for healthcare professionals, students, and anyone who needs quick medicine information! 🏥💊`;
     
     // Encode the message for URL
     const encodedMessage = encodeURIComponent(shareText);

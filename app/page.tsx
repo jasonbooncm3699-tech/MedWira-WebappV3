@@ -695,16 +695,21 @@ export default function Home() {
           <div className="nav-footer">
             <div className="user-info">
               <div className="user-avatar">
-                <User size={20} />
+                {user?.avatar_url ? (
+                  <img 
+                    src={user.avatar_url} 
+                    alt={user.display_name || user.name} 
+                    className="nav-avatar-image"
+                  />
+                ) : (
+                  <User size={20} />
+                )}
               </div>
               <div className="user-details">
-                <span className="username">{user ? (user?.name || user?.email || 'User') : 'Guest'}</span>
+                <span className="username">{user ? (user?.display_name || user?.name || user?.email || 'User') : 'Guest'}</span>
                 <span className="tokens">{user ? `${user?.tokens || 0} tokens` : '0 tokens'}</span>
                 {user && (
                   <span className="tier">{user?.subscription_tier || 'free'}</span>
-                )}
-                {user?.referral_code && (
-                  <span className="referral-code">Ref: {user.referral_code}</span>
                 )}
               </div>
             </div>
