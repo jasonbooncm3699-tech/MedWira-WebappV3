@@ -65,6 +65,7 @@ export default function Home() {
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
   const [scanHistory, setScanHistory] = useState<any[]>([]);
   const [userTokens, setUserTokens] = useState<number>(user?.tokens || 0);
+  const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState<Array<{
     id: string;
     type: 'user' | 'ai' | 'structured';
@@ -88,6 +89,98 @@ export default function Home() {
       return false;
     }
     return true;
+  };
+
+  // Handle text input submission
+  const handleTextSubmit = async () => {
+    if (!inputText.trim()) return;
+    
+    // Check authentication before proceeding
+    if (!checkAuthentication()) {
+      return;
+    }
+
+    const userMessage = inputText.trim();
+    setInputText('');
+    
+    // Add user message to chat
+    const newUserMessage = {
+      id: Date.now().toString(),
+      type: 'user' as const,
+      content: userMessage,
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, newUserMessage]);
+    setIsAnalyzing(true);
+    
+    try {
+      const response = await fetch('/api/scan-medicine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          text: userMessage,
+          language,
+          allergy: allergy.trim() || undefined
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to analyze medicine');
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Add AI response
+        const aiMessage = {
+          id: (Date.now() + 1).toString(),
+          type: 'ai' as const,
+          content: result.message || 'Analysis complete',
+          timestamp: new Date()
+        };
+        
+        setMessages(prev => [...prev, aiMessage]);
+        
+        // Add structured data if available
+        if (result.structuredData) {
+          const structuredMessage = {
+            id: (Date.now() + 2).toString(),
+            type: 'structured' as const,
+            content: '',
+            timestamp: new Date(),
+            structuredData: result.structuredData
+          };
+          setMessages(prev => [...prev, structuredMessage]);
+        }
+        
+        // Update user tokens
+        if (result.tokensRemaining !== undefined) {
+          setUserTokens(result.tokensRemaining);
+        }
+      } else {
+        throw new Error(result.error || 'Analysis failed');
+      }
+    } catch (error) {
+      console.error('Error analyzing medicine:', error);
+      const errorMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai' as const,
+        content: 'Sorry, I encountered an error while analyzing your medicine. Please try again.',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  // Handle Enter key press
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleTextSubmit();
+    }
   };
 
   // Function to start a new chat
@@ -819,10 +912,17 @@ export default function Home() {
               <div className="text-input-wrapper">
                 <input
                   type="text"
-                placeholder="Ask in English..."
+                  placeholder="Ask in English..."
                   className="text-input"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyPress={handleKeyPress}
                 />
-              <button className="send-btn">
+                <button 
+                  className="send-btn"
+                  onClick={handleTextSubmit}
+                  disabled={!inputText.trim() || isAnalyzing}
+                >
                   <Send size={18} />
                 </button>
               </div>
@@ -937,7 +1037,7 @@ export default function Home() {
                 fontWeight: '600',
                 margin: 0
               }}>
-                🔐 Registration Required
+                🔐 Register to continue
               </h2>
               <button
                 onClick={() => setShowRegistrationModal(false)}
@@ -963,7 +1063,7 @@ export default function Home() {
                 fontSize: '16px',
                 marginBottom: '16px'
               }}>
-                Please Register to continue. Sign up now to receive your <strong style={{color: '#00d4ff'}}>free 30 tokens</strong> for medicine scans!
+                <strong style={{color: '#00d4ff'}}>Free 30 tokens, No credit card</strong>
               </p>
               
               <div style={{
@@ -1026,7 +1126,7 @@ export default function Home() {
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
-                Sign Up Now - Free 30 Tokens
+                Sign Up
               </button>
               
               <button
