@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth-context';
 import SocialAuthModal from '@/components/SocialAuthModal';
 import StructuredMedicineReply from '@/components/StructuredMedicineReply';
 import ReferralCodeDisplay from '@/components/ReferralCodeDisplay';
+import AIStatusDisplay from '@/components/AIStatusDisplay';
 import { MessageFormatter } from '@/lib/message-formatter';
 import { DatabaseService } from '@/lib/supabase';
 
@@ -67,6 +68,7 @@ export default function Home() {
   const [scanHistory, setScanHistory] = useState<any[]>([]);
   const [userTokens, setUserTokens] = useState<number>(user?.tokens || 0);
   const [inputText, setInputText] = useState('');
+  const [aiStatus, setAiStatus] = useState<'idle' | 'Analyzing Image...' | 'Checking Medicine Database...' | 'Augmenting Data via Web Search...' | 'Summarizing and Formatting Response...'>('idle');
   const [messages, setMessages] = useState<Array<{
     id: string;
     type: 'user' | 'ai' | 'structured';
@@ -367,46 +369,67 @@ export default function Home() {
     }, 'image/jpeg', 0.9);
   };
 
-  // Professional AI Image Analysis with new scan-medicine API
+  // Enhanced AI Image Analysis with Real-Time Status Display
   const analyzeMedicineImage = async (imageBase64: string) => {
+    if (!checkAuthentication()) return;
+
     setIsAnalyzing(true);
-    
+    setAiStatus('Analyzing Image...');
+
+    // Create user message immediately
+    const userMessage = {
+      id: Date.now().toString(),
+      type: 'user' as const,
+      content: "I've uploaded an image of a medicine for identification.",
+      timestamp: new Date(),
+      image: imageBase64
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+
     try {
-      // First, upload the image to get a URL (you may need to implement this)
-      // For now, we'll use the base64 directly in the API call
-      const imageUrl = imageBase64; // This should be replaced with actual image upload service
-      
-      const response = await fetch('/api/scan-medicine', {
+      // Phase 1: Image Analysis
+      setAiStatus('Analyzing Image...');
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Visual delay
+
+      // Phase 2: Database Check
+      setAiStatus('Checking Medicine Database...');
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Phase 3: Web Search Augmentation
+      setAiStatus('Augmenting Data via Web Search...');
+      await new Promise(resolve => setTimeout(resolve, 1200));
+
+      // Phase 4: Final Analysis
+      setAiStatus('Summarizing and Formatting Response...');
+      await new Promise(resolve => setTimeout(resolve, 600));
+
+      const response = await fetch('/api/analyze-medicine-enhanced', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          image_url: imageUrl,
-          allergies: allergy,
-          language
+          imageBase64,
+          language,
+          allergy,
+          userId: user?.id
         }),
       });
 
       const result = await response.json();
       
-      if (response.status === 200 && result.success) {
-        // Create user message
-        const userMessage = {
-          id: Date.now().toString(),
-          type: 'user' as const,
-          content: getUploadMessage(language),
-          timestamp: new Date(),
-          image: imageBase64
-        };
-
-        // Create structured AI response message
+      // Reset AI status
+      setAiStatus('idle');
+      
+      if (response.status === 200 && result.success && result.status === 'SUCCESS') {
+        // Create structured AI response message with comprehensive data
         const structuredMessage = {
           id: (Date.now() + 1).toString(),
           type: 'structured' as const,
-          content: `**Medicine Analysis Complete**\n\n**Medicine:** ${result.medicine.name}\n**Generic Name:** ${result.medicine.genericName || 'N/A'}\n**Purpose:** ${result.medicine.purpose || 'N/A'}\n**Confidence:** ${Math.round((result.medicine.confidence || 0) * 100)}%`,
+          content: `**Medicine Analysis Complete**\n\n**Medicine:** ${result.data?.medicineName || 'N/A'}\n**Purpose:** ${result.data?.purpose || 'N/A'}`,
           timestamp: new Date(),
-          structuredData: result.structuredData
+          structuredData: result.data
         };
 
         // Update user tokens
@@ -418,25 +441,15 @@ export default function Home() {
           }
         }
 
-        // Add both messages to chat
-        setMessages(prev => [...prev, userMessage, structuredMessage]);
+        // Add structured message to chat
+        setMessages(prev => [...prev, structuredMessage]);
 
-      } else if (response.status === 402) {
-        // Handle insufficient tokens error
-        const errorMessage = {
-          id: (Date.now() + 1).toString(),
-          type: 'ai' as const,
-          content: `**⚠️ Insufficient Tokens**\n\n${result.message || 'Please purchase more scans to continue.'}\n\n**Current Tokens:** ${result.tokens || userTokens}\n**Required:** ${result.required || 1}`,
-          timestamp: new Date()
-        };
-        
-        setMessages(prev => [...prev, errorMessage]);
       } else {
-        // Handle other error responses
+        // Handle error responses (including insufficient tokens)
         const errorMessage = {
           id: (Date.now() + 1).toString(),
           type: 'ai' as const,
-          content: `**Error:** ${result.error || 'Analysis failed. Please try again.'}`,
+          content: `**${response.status === 402 ? '⚠️ Insufficient Tokens' : 'Error'}**\n\n${result.message || result.error || 'Analysis failed. Please try again.'}\n\n${result.tokensRemaining !== undefined ? `**Tokens Remaining:** ${result.tokensRemaining}` : ''}`,
           timestamp: new Date()
         };
         
@@ -455,6 +468,7 @@ export default function Home() {
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsAnalyzing(false);
+      setAiStatus('idle');
     }
   };
 
@@ -904,20 +918,8 @@ export default function Home() {
             ))}
             
           {isAnalyzing && (
-              <div className="message ai">
-                <div className="message-avatar">
-                  <Bot size={20} />
-                </div>
-                <div className="message-content">
-                <div className="message-text">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Loader2 size={16} className="animate-spin" />
-                    Analyzing your medicine image...
-                  </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            <AIStatusDisplay status={aiStatus} />
+          )}
           </div>
           
           <div className="input-container">
