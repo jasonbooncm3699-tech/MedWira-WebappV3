@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Pill, AlertTriangle, Shield, ExclamationTriangle } from 'lucide-react';
+import { ChevronDown, ChevronRight, Pill, AlertTriangle, Shield, AlertCircle } from 'lucide-react';
 
 interface StructuredMedicineData {
   dosage?: {
@@ -110,7 +110,7 @@ const StructuredMedicineReply: React.FC<StructuredMedicineReplyProps> = ({ respo
     {
       id: 'warnings',
       title: 'Warnings & Contraindications',
-      icon: <ExclamationTriangle className="w-5 h-5" />,
+      icon: <AlertCircle className="w-5 h-5" />,
       data: response.warnings,
       textColor: 'text-red-400'
     }

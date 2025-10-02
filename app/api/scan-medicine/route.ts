@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
         medicine_name: analysisResult.medicineName,
         generic_name: analysisResult.genericName,
         dosage: analysisResult.dosageInstructions,
-        side_effects: Array.isArray(analysisResult.sideEffects) ? analysisResult.sideEffects : [analysisResult.sideEffects].filter(Boolean),
+        side_effects: Array.isArray(analysisResult.sideEffects) ? analysisResult.sideEffects : (analysisResult.sideEffects ? [analysisResult.sideEffects] : []),
         interactions: analysisResult.interactions || [],
         warnings: analysisResult.warnings || [],
         storage: analysisResult.storage,
