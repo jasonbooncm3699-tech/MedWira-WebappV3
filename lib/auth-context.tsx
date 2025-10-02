@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('❌ Exception fetching user data:', error);
       return null;
     }
-  }, []);
+  }, [supabase]);
 
   const refreshUser = useCallback(async () => {
     console.log('🔄 refreshUser called - checking session...');
@@ -252,7 +252,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [fetchUserData]);
+  }, [fetchUserData, supabase]);
 
   const logout = useCallback(async () => {
     try {
@@ -263,7 +263,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('❌ Error logging out:', error);
     }
-  }, []);
+  }, [supabase]);
 
   const refreshUserData = useCallback(async () => {
     if (!user?.id) {
@@ -620,7 +620,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('🧹 Cleaning up auth listener');
       authListener.subscription.unsubscribe();
     };
-  }, [refreshUser, fetchUserData, isHydrated, isInitialized]);
+  }, [refreshUser, fetchUserData, isHydrated, isInitialized, supabase]);
 
   const contextValue: AuthContextType = {
     user: user || null, // Ensure user is never undefined

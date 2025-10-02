@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { DatabaseService } from '@/lib/supabase';
-
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+import { createClient } from '@/lib/supabase-server';
 
 // Interface for user profile data
 interface UserProfile {
@@ -19,7 +13,7 @@ interface UserProfile {
 }
 
 // Function to generate unique referral code
-async function generateUniqueReferralCode(): Promise<string> {
+async function generateUniqueReferralCode(supabase: any): Promise<string> {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let referralCode = '';
   
@@ -54,6 +48,9 @@ async function generateUniqueReferralCode(): Promise<string> {
 export async function POST(request: NextRequest) {
   try {
     console.log('🔧 Debug provision user endpoint called');
+    
+    // Create Supabase client
+    const supabase = await createClient();
     
     // Get the Authorization header
     const authHeader = request.headers.get('authorization');
@@ -131,7 +128,7 @@ export async function POST(request: NextRequest) {
     console.log('⚠️ User profile not found, creating new profile...');
     
     // Generate unique referral code
-    const referralCode = await generateUniqueReferralCode();
+    const referralCode = await generateUniqueReferralCode(supabase);
     console.log('🎯 Generated referral code:', referralCode);
     
     // Extract user name from metadata or email
