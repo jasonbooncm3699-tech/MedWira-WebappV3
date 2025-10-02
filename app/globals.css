@@ -119,13 +119,13 @@ body {
 }
 
 .header-logo {
-  width: auto;           /* Allow width to scale */
-  max-height: 40px;      /* Default for desktop/tablet header */
+  width: auto !important;
+  max-height: 40px !important;
 }
 
 @media (max-width: 768px) {
   .header-logo {
-    max-height: 32px;    /* Smaller size for mobile screens */
+    max-height: 32px !important;
   }
 }
 
