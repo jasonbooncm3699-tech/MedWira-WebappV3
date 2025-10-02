@@ -9,6 +9,9 @@ interface User {
   name: string;
   tokens: number;
   subscription_tier: string;
+  referral_code?: string;
+  referral_count?: number;
+  referred_by?: string;
 }
 
 interface AuthContextType {
@@ -16,6 +19,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isLoading: boolean;
   refreshUser: () => Promise<void>;
+  refreshUserData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,7 +53,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: data.email,
           name: data.name,
           tokens: data.tokens,
-          tier: data.subscription_tier
+          tier: data.subscription_tier,
+          referral_code: data.referral_code,
+          referral_count: data.referral_count,
+          referred_by: data.referred_by
         });
         return data as User;
       }
@@ -134,7 +141,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   cookieSession.user.email?.split('@')[0] || 
                   'User',
             tokens: 30, // Default tokens for new users
-            subscription_tier: 'free' // Default subscription tier
+            subscription_tier: 'free', // Default subscription tier
+            referral_code: undefined, // Will be fetched from database
+            referral_count: 0,
+            referred_by: undefined
           };
           
           setUser(cookieUser);
@@ -244,6 +254,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const refreshUserData = useCallback(async () => {
+    if (!user?.id) {
+      console.log('⚠️ No user ID available for data refresh');
+      return;
+    }
+
+    try {
+      console.log('🔄 Refreshing user data...');
+      const userData = await fetchUserData(user.id);
+      if (userData) {
+        console.log('✅ User data refreshed:', {
+          name: userData.name,
+          tokens: userData.tokens,
+          referral_code: userData.referral_code,
+          referral_count: userData.referral_count
+        });
+        setUser(userData);
+      } else {
+        console.log('⚠️ No user data found during refresh');
+      }
+    } catch (error) {
+      console.error('❌ Error refreshing user data:', error);
+    }
+  }, [user?.id, fetchUserData]);
+
   // Handle hydration
   useEffect(() => {
     setIsHydrated(true);
@@ -339,7 +374,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           console.log('✅ Valid SIGNED_IN session for:', userEmail);
           
-          // Wait a moment for database to be updated
+          // Wait a moment for database to be updated (auth callback should have run)
           await new Promise(resolve => setTimeout(resolve, 1000));
           
           // Fetch user data from users table
@@ -349,7 +384,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               name: userData.name,
               email: userData.email,
               tokens: userData.tokens,
-              tier: userData.subscription_tier
+              tier: userData.subscription_tier,
+              referral_code: userData.referral_code,
+              referral_count: userData.referral_count,
+              referred_by: userData.referred_by
             });
             setUser(userData);
           } else {
@@ -363,7 +401,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     userEmail?.split('@')[0] || 
                     'User',
               tokens: 0,
-              subscription_tier: 'free'
+              subscription_tier: 'free',
+              referral_code: undefined,
+              referral_count: 0,
+              referred_by: undefined
             };
             console.log('📝 Setting fallback user after sign-in:', fallbackUser);
             setUser(fallbackUser);
@@ -467,6 +508,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logout,
     isLoading,
     refreshUser,
+    refreshUserData,
   };
 
   // DEFENSIVE: Wrap provider in error boundary to catch React error #18
@@ -484,7 +526,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user: null,
         logout: async () => {},
         isLoading: false,
-        refreshUser: async () => {}
+        refreshUser: async () => {},
+        refreshUserData: async () => {}
       }}>
         {children}
       </AuthContext.Provider>

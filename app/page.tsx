@@ -12,7 +12,7 @@ import { MessageFormatter } from '@/lib/message-formatter';
 import { DatabaseService } from '@/lib/supabase';
 
 export default function Home() {
-  const { user, logout, isLoading, refreshUser } = useAuth();
+  const { user, logout, isLoading, refreshUser, refreshUserData } = useAuth();
   
   // Get welcome message in user's language
   const getWelcomeMessage = (lang: string): string => {
@@ -157,6 +157,8 @@ export default function Home() {
         // Update user tokens
         if (result.tokensRemaining !== undefined) {
           setUserTokens(result.tokensRemaining);
+          // Also refresh user data to get latest tokens and referral info
+          await refreshUserData();
         }
       } else {
         throw new Error(result.error || 'Analysis failed');
@@ -235,6 +237,8 @@ export default function Home() {
       email: user?.email,
       tokens: user?.tokens,
       name: user?.name,
+      referral_code: user?.referral_code,
+      referral_count: user?.referral_count,
       isLoading: isLoading
     });
     
@@ -394,9 +398,9 @@ export default function Home() {
         // Update user tokens
         if (result.tokensRemaining !== undefined) {
           setUserTokens(result.tokensRemaining);
-          // Also update the user context if available
+          // Also refresh user data to get latest tokens and referral info
           if (user) {
-            refreshUser();
+            await refreshUserData();
           }
         }
 
@@ -594,11 +598,16 @@ export default function Home() {
                   Profile
                 </div>
                 <div className="dropdown-item">
-                  <span>Tokens: {userTokens}</span>
+                  <span>Tokens: {user?.tokens || 0}</span>
                 </div>
                 <div className="dropdown-item">
                   <span>Tier: {user?.subscription_tier || 'free'}</span>
                 </div>
+                {user?.referral_code && (
+                  <div className="dropdown-item">
+                    <span>Referral: {user.referral_code}</span>
+                  </div>
+                )}
                 <div className="dropdown-divider"></div>
                 <div className="dropdown-item" onClick={logout}>
                   <LogOut size={16} />
@@ -676,9 +685,12 @@ export default function Home() {
               </div>
               <div className="user-details">
                 <span className="username">{user ? (user?.name || user?.email || 'User') : 'Guest'}</span>
-                <span className="tokens">{user ? `${userTokens} tokens` : '0 tokens'}</span>
+                <span className="tokens">{user ? `${user?.tokens || 0} tokens` : '0 tokens'}</span>
                 {user && (
                   <span className="tier">{user?.subscription_tier || 'free'}</span>
+                )}
+                {user?.referral_code && (
+                  <span className="referral-code">Ref: {user.referral_code}</span>
                 )}
               </div>
             </div>

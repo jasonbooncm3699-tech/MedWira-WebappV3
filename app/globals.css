@@ -1636,6 +1636,13 @@ p, h1, h2, h3, h4, h5, h6, span, div, a {
   letter-spacing: 0.5px;
 }
 
+.user-details .referral-code {
+  font-size: 10px;
+  color: #00d4ff;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
 /* FAQ Styles */
 .nav-faq-btn {
   background: linear-gradient(135deg, #00d4ff, #0099cc);
