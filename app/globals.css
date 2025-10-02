@@ -1693,6 +1693,33 @@ p, h1, h2, h3, h4, h5, h6, span, div, a {
   font-size: 12px;
 }
 
+/* Debug Provision Button */
+.nav-debug-section {
+  margin: 16px 0;
+  padding: 0 16px;
+}
+
+.nav-debug-button {
+  margin: 0 !important;
+}
+
+.nav-debug-button .debug-provision-btn {
+  width: 100%;
+  justify-content: center;
+  font-size: 12px;
+  padding: 8px 12px;
+}
+
+.nav-debug-button .debug-result {
+  margin-top: 12px;
+  padding: 12px;
+}
+
+.nav-debug-button .result-profile {
+  padding: 8px;
+  font-size: 11px;
+}
+
 /* FAQ Styles */
 .nav-faq-btn {
   background: linear-gradient(135deg, #00d4ff, #0099cc);
