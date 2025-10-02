@@ -149,9 +149,9 @@ export default function Home() {
         try {
           const history = await DatabaseService.getUserScanHistory(user.id);
           setScanHistory(history || []);
-          console.log('✅ Scan history loaded:', history?.length || 0, 'scans');
+          console.log('✅ Chat history loaded:', history?.length || 0, 'conversations');
         } catch (error) {
-          console.error('❌ Failed to fetch scan history:', error);
+          console.error('❌ Failed to fetch chat history:', error);
           setScanHistory([]);
         }
       } else {
@@ -527,7 +527,7 @@ export default function Home() {
 
           <div className="nav-content">
             <div className="recent-chats">
-              <h3>Recent Scans</h3>
+              <h3>Chat History</h3>
               <div className="chat-list">
                 {scanHistory.length > 0 ? (
                   scanHistory.slice(0, 5).map((scan, index) => (
@@ -612,7 +612,7 @@ export default function Home() {
                 <h3>🔐 Account & Authentication</h3>
                 <div className="faq-item">
                   <h4>Do I need to sign up?</h4>
-                  <p>No! You can use MedWira AI without an account. However, signing up allows you to save scan history and get more tokens.</p>
+                  <p>No! You can use MedWira AI without an account. However, signing up allows you to save chat history and get more tokens.</p>
                 </div>
                 
                 <div className="faq-item">
