@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { Bot, User, Send, Upload, Camera, Menu, X, Plus, MessageSquare, Settings, LogOut, LogIn, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import SocialAuthModal from '@/components/SocialAuthModal';
+import StructuredMedicineReply from '@/components/StructuredMedicineReply';
 import { MessageFormatter } from '@/lib/message-formatter';
 import { DatabaseService } from '@/lib/supabase';
 
@@ -62,12 +63,14 @@ export default function Home() {
   const [allergy, setAllergy] = useState('');
   const [showFAQ, setShowFAQ] = useState(false);
   const [scanHistory, setScanHistory] = useState<any[]>([]);
+  const [userTokens, setUserTokens] = useState<number>(user?.tokens || 0);
   const [messages, setMessages] = useState<Array<{
     id: string;
-    type: 'user' | 'ai';
+    type: 'user' | 'ai' | 'structured';
     content: string;
     timestamp: Date;
     image?: string;
+    structuredData?: any;
   }>>([
     {
       id: '1',
@@ -131,6 +134,11 @@ export default function Home() {
       name: user?.name,
       isLoading: isLoading
     });
+    
+    // Update local token state when user changes
+    if (user?.tokens !== undefined) {
+      setUserTokens(user.tokens);
+    }
   }, [user, isLoading]);
 
 
@@ -232,29 +240,30 @@ export default function Home() {
     }, 'image/jpeg', 0.9);
   };
 
-  // Professional AI Image Analysis
+  // Professional AI Image Analysis with new scan-medicine API
   const analyzeMedicineImage = async (imageBase64: string) => {
     setIsAnalyzing(true);
     
     try {
-      const response = await fetch('/api/analyze-image', {
+      // First, upload the image to get a URL (you may need to implement this)
+      // For now, we'll use the base64 directly in the API call
+      const imageUrl = imageBase64; // This should be replaced with actual image upload service
+      
+      const response = await fetch('/api/scan-medicine', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          imageBase64,
-          language,
-          allergy
+          image_url: imageUrl,
+          allergies: allergy,
+          language
         }),
       });
 
       const result = await response.json();
       
-      if (result.success) {
-        // Format the AI response professionally
-        const formattedMessage = MessageFormatter.formatMedicineAnalysis(result);
-        
+      if (response.status === 200 && result.success) {
         // Create user message
         const userMessage = {
           id: Date.now().toString(),
@@ -264,23 +273,43 @@ export default function Home() {
           image: imageBase64
         };
 
-        // Create AI response message
-        const aiMessage = {
+        // Create structured AI response message
+        const structuredMessage = {
           id: (Date.now() + 1).toString(),
-          type: 'ai' as const,
-          content: formattedMessage.content,
-          timestamp: new Date()
+          type: 'structured' as const,
+          content: `**Medicine Analysis Complete**\n\n**Medicine:** ${result.medicine.name}\n**Generic Name:** ${result.medicine.genericName || 'N/A'}\n**Purpose:** ${result.medicine.purpose || 'N/A'}\n**Confidence:** ${Math.round((result.medicine.confidence || 0) * 100)}%`,
+          timestamp: new Date(),
+          structuredData: result.structuredData
         };
 
-        // Add both messages to chat
-        setMessages(prev => [...prev, userMessage, aiMessage]);
+        // Update user tokens
+        if (result.tokensRemaining !== undefined) {
+          setUserTokens(result.tokensRemaining);
+          // Also update the user context if available
+          if (user) {
+            refreshUser();
+          }
+        }
 
-      } else {
-        // Handle error response
+        // Add both messages to chat
+        setMessages(prev => [...prev, userMessage, structuredMessage]);
+
+      } else if (response.status === 402) {
+        // Handle insufficient tokens error
         const errorMessage = {
           id: (Date.now() + 1).toString(),
           type: 'ai' as const,
-          content: `**Error:** ${result.error}`,
+          content: `**⚠️ Insufficient Tokens**\n\n${result.message || 'Please purchase more scans to continue.'}\n\n**Current Tokens:** ${result.tokens || userTokens}\n**Required:** ${result.required || 1}`,
+          timestamp: new Date()
+        };
+        
+        setMessages(prev => [...prev, errorMessage]);
+      } else {
+        // Handle other error responses
+        const errorMessage = {
+          id: (Date.now() + 1).toString(),
+          type: 'ai' as const,
+          content: `**Error:** ${result.error || 'Analysis failed. Please try again.'}`,
           timestamp: new Date()
         };
         
@@ -449,7 +478,7 @@ export default function Home() {
                   Profile
                 </div>
                 <div className="dropdown-item">
-                  <span>Tokens: {user?.tokens || 0}</span>
+                  <span>Tokens: {userTokens}</span>
                 </div>
                 <div className="dropdown-item">
                   <span>Tier: {user?.subscription_tier || 'free'}</span>
@@ -531,7 +560,7 @@ export default function Home() {
               </div>
               <div className="user-details">
                 <span className="username">{user ? (user?.name || user?.email || 'User') : 'Guest'}</span>
-                <span className="tokens">{user ? `${user?.tokens || 0} tokens` : '0 tokens'}</span>
+                <span className="tokens">{user ? `${userTokens} tokens` : '0 tokens'}</span>
                 {user && (
                   <span className="tier">{user?.subscription_tier || 'free'}</span>
                 )}
@@ -669,18 +698,39 @@ export default function Home() {
                       <Image src={message.image} alt="Uploaded medicine" width={200} height={200} />
                     </div>
                   )}
-                  <div className="message-text">
-                  {message.content && message.content.includes('**') ? (
-                    <div dangerouslySetInnerHTML={{ 
-                      __html: message.content
-                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                        .replace(/\n/g, '<br>')
-                        .replace(/⚠️/g, '⚠️')
-                    }} />
+                  
+                  {/* Render structured medicine reply for structured messages */}
+                  {message.type === 'structured' && message.structuredData ? (
+                    <div className="structured-medicine-response">
+                      <div className="message-text">
+                        {message.content && message.content.includes('**') ? (
+                          <div dangerouslySetInnerHTML={{ 
+                            __html: message.content
+                              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                              .replace(/\n/g, '<br>')
+                              .replace(/⚠️/g, '⚠️')
+                          }} />
+                        ) : (
+                          <span>{message.content || ''}</span>
+                        )}
+                      </div>
+                      <StructuredMedicineReply response={message.structuredData} />
+                    </div>
                   ) : (
-                    <span>{message.content || ''}</span>
+                    <div className="message-text">
+                      {message.content && message.content.includes('**') ? (
+                        <div dangerouslySetInnerHTML={{ 
+                          __html: message.content
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\n/g, '<br>')
+                            .replace(/⚠️/g, '⚠️')
+                        }} />
+                      ) : (
+                        <span>{message.content || ''}</span>
+                      )}
+                    </div>
                   )}
-                  </div>
+                  
                   <div className="message-footer">
                   <div className="message-time">
                     {message.timestamp.toLocaleTimeString('en-US', { 
@@ -689,7 +739,7 @@ export default function Home() {
                       hour12: true 
                     })}
                   </div>
-                  </div>
+                </div>
                 </div>
               </div>
             ))}
