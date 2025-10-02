@@ -526,13 +526,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           console.log('✅ Valid SIGNED_IN session for:', userEmail);
           
-          // CRITICAL: Use force fetch to ensure we get user profile data
+          // CRITICAL: Use force fetch to ensure we get user profile data with tokens and referral code
           const userName = sessionUser?.user_metadata?.full_name || 
                           sessionUser?.user_metadata?.name || 
                           userEmail?.split('@')[0] || 
                           'User';
           
-          await forceFetchUserProfile(userId, userEmail, userName);
+          console.log('🚀 Force fetching user profile data after sign-in...');
+          const userProfileData = await forceFetchUserProfile(userId, userEmail, userName);
+          
+          if (userProfileData) {
+            console.log('✅ User profile data loaded after sign-in:', {
+              tokens: userProfileData.tokens,
+              referral_code: userProfileData.referral_code,
+              referral_count: userProfileData.referral_count,
+              name: userProfileData.name,
+              email: userProfileData.email
+            });
+          } else {
+            console.warn('⚠️ No user profile data returned after sign-in');
+          }
         } catch (error) {
           console.error('❌ Error handling sign-in:', error);
         } finally {
@@ -627,13 +640,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [refreshUser, fetchUserData, isHydrated, isInitialized, supabase]);
 
-  // CRITICAL: Auto-refresh user data when user is authenticated but has no tokens
+  // CRITICAL: Auto-refresh user data when user is authenticated but has no tokens or referral code
   useEffect(() => {
     if (isHydrated && user?.id && !isLoading) {
       console.log('🔍 Checking user data completeness...', {
         userId: user.id,
         tokens: user.tokens,
-        hasReferralCode: !!user.referral_code
+        hasReferralCode: !!user.referral_code,
+        referralCount: user.referral_count
       });
       
       // If user is authenticated but has 0 tokens or no referral code, try to refresh
@@ -644,7 +658,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }, 1000);
       }
     }
-  }, [isHydrated, user?.id, user?.tokens, user?.referral_code, isLoading, refreshUserData]);
+  }, [isHydrated, user?.id, user?.tokens, user?.referral_code, user?.referral_count, isLoading, refreshUserData]);
+
+  // CRITICAL: Force refresh user data on component mount if user is authenticated
+  useEffect(() => {
+    if (isHydrated && user?.id && !isLoading) {
+      console.log('🔄 Force refreshing user data on mount for authenticated user...');
+      // Small delay to ensure auth state is fully settled
+      setTimeout(() => {
+        refreshUserData();
+      }, 500);
+    }
+  }, [isHydrated, user?.id, isLoading, refreshUserData]);
 
   const contextValue: AuthContextType = {
     user: user || null, // Ensure user is never undefined

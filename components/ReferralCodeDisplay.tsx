@@ -1,18 +1,22 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Copy, Check, Share2, Users } from 'lucide-react';
+import { Copy, Check, Share2, Users, Gift } from 'lucide-react';
 
 interface ReferralCodeDisplayProps {
   referralCode?: string;
   referralCount?: number;
   className?: string;
+  showHeader?: boolean;
+  compact?: boolean;
 }
 
 export default function ReferralCodeDisplay({ 
   referralCode, 
   referralCount = 0, 
-  className = '' 
+  className = '',
+  showHeader = true,
+  compact = false
 }: ReferralCodeDisplayProps) {
   const [copied, setCopied] = useState(false);
 
@@ -67,16 +71,18 @@ export default function ReferralCodeDisplay({
   };
 
   return (
-    <div className={`referral-code-display ${className}`}>
-      <div className="referral-header">
-        <div className="referral-icon">
-          <Share2 size={16} />
+    <div className={`referral-code-display ${compact ? 'compact' : ''} ${className}`}>
+      {showHeader && (
+        <div className="referral-header">
+          <div className="referral-icon">
+            <Gift size={16} />
+          </div>
+          <div className="referral-info">
+            <h4>Your Referral Code</h4>
+            <p>Share with friends to earn rewards</p>
+          </div>
         </div>
-        <div className="referral-info">
-          <h4>Your Referral Code</h4>
-          <p>Share with friends to earn rewards</p>
-        </div>
-      </div>
+      )}
 
       <div className="referral-code-container">
         <div className="referral-code-value">
@@ -111,11 +117,13 @@ export default function ReferralCodeDisplay({
         </div>
       )}
 
-      <div className="referral-benefits">
-        <p className="referral-note">
-          <strong>Earn rewards:</strong> Get tokens for each friend who signs up with your code!
-        </p>
-      </div>
+      {!compact && (
+        <div className="referral-benefits">
+          <p className="referral-note">
+            <strong>Earn rewards:</strong> Get tokens for each friend who signs up with your code!
+          </p>
+        </div>
+      )}
 
       <style jsx>{`
         .referral-code-display {
@@ -124,6 +132,11 @@ export default function ReferralCodeDisplay({
           border-radius: 12px;
           padding: 16px;
           margin: 16px 0;
+        }
+
+        .referral-code-display.compact {
+          padding: 12px;
+          margin: 8px 0;
         }
 
         .referral-header {
