@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Get profile data via API endpoint with enhanced error handling
-      let userData: User;
+      let userData: User | null = null;
       
       try {
         const profileResponse = await fetch(`/api/user-profile?user_id=${userId}`, {
@@ -63,9 +63,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         
         if (profileResponse.ok) {
-          const profileApiData = await profileResponse.json();
-          console.log('✅ Profile data retrieved via API:', profileApiData);
-          userData = profileApiData;
+          // CRITICAL: Safe JSON parsing with error handling
+          let profileApiData;
+          try {
+            profileApiData = await profileResponse.json();
+            console.log('✅ Profile data retrieved via API:', profileApiData);
+          } catch (jsonError) {
+            console.error('❌ CRITICAL: Failed to parse API response JSON:', jsonError);
+            // Create safe fallback when JSON parsing fails
+            const googleData = authUser.user.user_metadata || {};
+            const displayName = googleData.full_name || googleData.name || '';
+            const avatarUrl = googleData.avatar_url || googleData.picture || '';
+            
+            userData = {
+              id: userId,
+              email: userEmail || authUser.user.email || '',
+              name: displayName ? displayName.split(' ')[0] : '',
+              tokens: 0, // NO TOKENS when JSON parsing fails
+              subscription_tier: 'free',
+              referral_code: '', // NO REFERRAL CODE when JSON parsing fails
+              referral_count: 0,
+              referred_by: null,
+              display_name: displayName,
+              avatar_url: avatarUrl
+            };
+          }
+          
+          // CRITICAL: Validate that the API response has required fields
+          if (profileApiData && typeof profileApiData === 'object' && 
+              typeof profileApiData.tokens === 'number' && 
+              typeof profileApiData.id === 'string') {
+            userData = profileApiData;
+          } else if (profileApiData) {
+            console.error('❌ CRITICAL: Invalid API response format:', profileApiData);
+            // Create safe fallback when API returns invalid data
+            const googleData = authUser.user.user_metadata || {};
+            const displayName = googleData.full_name || googleData.name || '';
+            const avatarUrl = googleData.avatar_url || googleData.picture || '';
+            
+            userData = {
+              id: userId,
+              email: userEmail || authUser.user.email || '',
+              name: displayName ? displayName.split(' ')[0] : '',
+              tokens: 0, // NO TOKENS when API returns invalid data
+              subscription_tier: 'free',
+              referral_code: '', // NO REFERRAL CODE when API returns invalid data
+              referral_count: 0,
+              referred_by: null,
+              display_name: displayName,
+              avatar_url: avatarUrl
+            };
+          }
         } else {
           const errorData = await profileResponse.json().catch(() => ({}));
           console.warn('⚠️ Profile API failed:', {
@@ -126,6 +174,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           display_name: displayName,
           avatar_url: avatarUrl
         };
+      }
+      
+      // CRITICAL: Check if userData is null before accessing properties
+      if (!userData) {
+        console.error('❌ CRITICAL: userData is null - this should not happen');
+        return null;
       }
       
       console.log('✅ User data loaded directly from auth.users + profiles:', {
