@@ -1,12 +1,20 @@
 /**
- * Next.js API Route for MedGemma 4B Medicine Analysis
+ * Next.js API Route for Gemini 1.5 Pro Medicine Analysis
  * 
- * This endpoint integrates with the MedGemma pipeline for medicine analysis
+ * This endpoint integrates with the Gemini pipeline for medicine analysis
  * with NPRA database integration and token management.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { runGeminiPipeline } from '@/src/services/geminiAgent';
+
+// Type definitions for the Gemini pipeline response
+interface GeminiPipelineResponse {
+  status: "SUCCESS" | "ERROR";
+  message?: string;
+  data?: any;
+  httpStatus?: number;
+}
 
 export async function POST(request: NextRequest) {
   console.log('🔍 MedGemma Medicine Analysis API Request received');
@@ -43,14 +51,14 @@ export async function POST(request: NextRequest) {
     console.log(`🚀 Starting Gemini 1.5 Pro pipeline for user: ${user_id}`);
     
     // Call the Gemini 1.5 Pro pipeline
-    const result = await runGeminiPipeline(image_data, text_query, user_id);
+    const result = await runGeminiPipeline(image_data, text_query, user_id) as GeminiPipelineResponse;
     
     console.log(`📊 Pipeline result status: ${result.status}`);
     
     if (result.status === "ERROR") {
       // Use httpStatus if available (from token check), otherwise default to 500
-      const statusCode = result.httpStatus || (result.message.includes('tokens') ? 402 : 500);
-      console.log(`❌ Pipeline error (${statusCode}): ${result.message}`);
+      const statusCode = result.httpStatus || (result.message?.includes('tokens') ? 402 : 500);
+      console.log(`❌ Pipeline error (${statusCode}): ${result.message || 'Unknown error'}`);
       return NextResponse.json(result, { status: statusCode });
     }
 

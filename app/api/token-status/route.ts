@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     console.log(`🔍 Checking token status for user: ${userId}`);
     
     // Create Supabase client
-    const supabase = createClient();
+    const supabase = await createClient();
     
     // Query user's token count
     const { data: profile, error } = await supabase

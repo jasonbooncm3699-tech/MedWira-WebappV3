@@ -108,7 +108,7 @@ export async function testMedGemmaPipeline(): Promise<void> {
     console.log(`👤 User ID: ${testUserId}`);
     
     // Run the pipeline
-    const result = await runGeminiPipeline(mockImageBase64, testQuery, testUserId);
+    const result = await runGeminiPipeline(mockImageBase64, testQuery, testUserId) as any;
     
     console.log('📊 Gemini Pipeline Result:', {
       status: result.status,
