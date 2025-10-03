@@ -390,21 +390,8 @@ export default function Home() {
     setMessages(prev => [...prev, userMessage]);
 
     try {
-      // Phase 1: Image Analysis
+      // Real AI processing - no fake delays
       setAiStatus('Analyzing Image...');
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Visual delay
-
-      // Phase 2: Database Check
-      setAiStatus('Checking Medicine Database...');
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      // Phase 3: Web Search Augmentation
-      setAiStatus('Augmenting Data via Web Search...');
-      await new Promise(resolve => setTimeout(resolve, 1200));
-
-      // Phase 4: Final Analysis
-      setAiStatus('Summarizing and Formatting Response...');
-      await new Promise(resolve => setTimeout(resolve, 600));
 
       const response = await fetch('/api/analyze-medicine-medgemma', {
         method: 'POST',

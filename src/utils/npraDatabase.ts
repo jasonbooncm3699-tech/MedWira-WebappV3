@@ -249,6 +249,32 @@ export async function batchNpraLookup(productNames: string[]): Promise<NPRAProdu
  * @param userId - The unique user ID (UID from auth.users).
  * @returns True if the token was successfully decremented, False if user is out of tokens or failed.
  */
+export async function checkTokenAvailability(userId: string): Promise<boolean> {
+    console.log(`🔍 Checking token availability for user: ${userId}`);
+    
+    const supabase = getSupabaseClient();
+    
+    // Check current tokens
+    const { data: profile, error: selectError } = await supabase
+        .from('profiles')
+        .select('token_count')
+        .eq('id', userId)
+        .single();
+
+    if (selectError) {
+        console.error('❌ Token check error:', selectError);
+        return false;
+    }
+
+    if (!profile || profile.token_count <= 0) {
+        console.log(`⚠️ User ${userId} has insufficient tokens (current: ${profile?.token_count || 0})`);
+        return false;
+    }
+
+    console.log(`✅ User ${userId} has ${profile.token_count} tokens available`);
+    return true;
+}
+
 export async function decrementToken(userId: string): Promise<boolean> {
     console.log(`🔍 Checking and decrementing tokens for user: ${userId}`);
     

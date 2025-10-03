@@ -172,6 +172,32 @@ async function getNpraStats() {
  * @param {string} userId - The unique user ID (UID from auth.users).
  * @returns {Promise<boolean>} True if the token was successfully decremented, False if user is out of tokens or failed.
  */
+async function checkTokenAvailability(userId) {
+    console.log(`🔍 Checking token availability for user: ${userId}`);
+    
+    const supabase = getSupabaseClient();
+    
+    // Check current tokens
+    const { data: profile, error: selectError } = await supabase
+        .from('profiles')
+        .select('token_count')
+        .eq('id', userId)
+        .single();
+
+    if (selectError) {
+        console.error('❌ Token check error:', selectError);
+        return false;
+    }
+
+    if (!profile || profile.token_count <= 0) {
+        console.log(`⚠️ User ${userId} has insufficient tokens (current: ${profile?.token_count || 0})`);
+        return false;
+    }
+
+    console.log(`✅ User ${userId} has ${profile.token_count} tokens available`);
+    return true;
+}
+
 async function decrementToken(userId) {
     console.log(`🔍 Checking and decrementing tokens for user: ${userId}`);
     
@@ -216,5 +242,6 @@ module.exports = {
   enhancedNpraLookup, 
   searchNpraMedicines, 
   getNpraStats,
+  checkTokenAvailability,
   decrementToken
 };

@@ -64,8 +64,12 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Pipeline completed successfully');
     
-    // Send the final structured JSON back to the client
-    return NextResponse.json(result.data);
+    // Send the full result with status
+    return NextResponse.json({
+      status: result.status,
+      data: result.data,
+      message: result.message
+    });
 
   } catch (error) {
     console.error("❌ API Route Error:", error);

@@ -11,7 +11,7 @@
 
 // Import required modules
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { npraProductLookup, decrementToken } = require('../utils/npraDatabase'); 
+const { npraProductLookup, checkTokenAvailability, decrementToken } = require('../utils/npraDatabase'); 
 
 // Initialize Gemini 1.5 Pro client
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY);
@@ -121,18 +121,18 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
     console.log(`🖼️ Image provided: ${base64Image ? 'Yes' : 'No'}`);
 
     try {
-        // 1. TOKEN DEDUCTION (Using the same utility as MedGemma)
+        // 1. TOKEN CHECK (NO DEDUCTION YET)
         if (!userId) {
             console.log(`❌ User ID missing for token check`);
             return { status: "ERROR", message: "User ID missing for token check." };
         }
         
-        console.log(`🔍 Checking and deducting token for user: ${userId}`);
-        if (!await decrementToken(userId)) { 
-            console.log(`❌ Token deduction failed for user: ${userId}`);
+        console.log(`🔍 Checking token availability for user: ${userId}`);
+        if (!await checkTokenAvailability(userId)) { 
+            console.log(`❌ Insufficient tokens for user: ${userId}`);
             return { status: "ERROR", message: "Out of tokens. Please renew your subscription or earn more tokens.", httpStatus: 402 }; 
         }
-        console.log(`✅ Token successfully deducted for user: ${userId}`);
+        console.log(`✅ Token check passed for user: ${userId}`);
 
         // 2. FIRST LLM CALL: IMAGE ANALYSIS & TOOL SIGNAL
         console.log(`🔍 Step 1: Gemini 1.5 Pro Image Analysis & Tool Signal`);
@@ -203,6 +203,8 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
         // Check if the LLM provided a direct, complete answer without a tool signal
         if (npraResult.status === "NO_SIGNAL") {
             console.log(`✅ Returning direct Gemini response`);
+            // Deduct token only after successful AI processing
+            await decrementToken(userId);
             return { status: "SUCCESS", data: { text: npraResult.raw_llm_text, note: npraResult.message } };
         }
 
@@ -239,6 +241,8 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
                 try {
                     const structuredResult = JSON.parse(finalJsonMatch[1]);
                     console.log(`✅ Structured JSON response parsed`);
+                    // Deduct token only after successful AI processing
+                    await decrementToken(userId);
                     return {
                         status: "SUCCESS",
                         data: {
@@ -249,6 +253,8 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
                     };
                 } catch (e) {
                     console.error("❌ Final JSON parse error, returning raw text.", e);
+                    // Deduct token only after successful AI processing
+                    await decrementToken(userId);
                     return { 
                         status: "SUCCESS", 
                         data: { 
@@ -262,6 +268,8 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
             
             // If final JSON structure is not detected
             console.log(`⚠️ No structured JSON detected in final response`);
+            // Deduct token only after successful AI processing
+            await decrementToken(userId);
             return { 
                 status: "SUCCESS", 
                 data: { 
