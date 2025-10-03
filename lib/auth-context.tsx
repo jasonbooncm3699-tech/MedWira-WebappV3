@@ -49,35 +49,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
 
-      // Get tokens and referral data from profiles table
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('token_count, referral_code, referred_by')
-        .eq('id', userId)
-        .single();
-
-      if (profileError) {
-        console.warn('⚠️ Profile data not found, using defaults:', profileError);
-      }
-
-      // Extract Google data from auth user metadata
-      const googleData = authUser.user.user_metadata || {};
-      const displayName = googleData.full_name || googleData.name || '';
-      const avatarUrl = googleData.avatar_url || googleData.picture || '';
+      // Get profile data via API endpoint (bypasses RLS issues)
+      let userData: User;
       
-      // Create user data combining both sources
-      const userData: User = {
-        id: userId,
-        email: userEmail || authUser.user.email || '',
-        name: displayName ? displayName.split(' ')[0] : '', // Just first name (e.g., "Jason")
-        tokens: profileData?.token_count || 30,
-        subscription_tier: 'free',
-        referral_code: profileData?.referral_code || '',
-        referral_count: 0, // Default value
-        referred_by: profileData?.referred_by || null,
-        display_name: displayName, // Full name (e.g., "Jason Boon")
-        avatar_url: avatarUrl // Google profile picture
-      };
+      try {
+        const profileResponse = await fetch(`/api/user-profile?user_id=${userId}`);
+        
+        if (profileResponse.ok) {
+          const profileApiData = await profileResponse.json();
+          console.log('✅ Profile data retrieved via API:', profileApiData);
+          userData = profileApiData;
+        } else {
+          console.warn('⚠️ Profile API failed, using auth data only:', profileResponse.status);
+          // Fallback to auth data only
+          const googleData = authUser.user.user_metadata || {};
+          const displayName = googleData.full_name || googleData.name || '';
+          const avatarUrl = googleData.avatar_url || googleData.picture || '';
+          
+          userData = {
+            id: userId,
+            email: userEmail || authUser.user.email || '',
+            name: displayName ? displayName.split(' ')[0] : '',
+            tokens: 30, // Default fallback
+            subscription_tier: 'free',
+            referral_code: '',
+            referral_count: 0,
+            referred_by: null,
+            display_name: displayName,
+            avatar_url: avatarUrl
+          };
+        }
+      } catch (apiError) {
+        console.error('❌ Profile API error, using fallback:', apiError);
+        // Fallback to auth data only
+        const googleData = authUser.user.user_metadata || {};
+        const displayName = googleData.full_name || googleData.name || '';
+        const avatarUrl = googleData.avatar_url || googleData.picture || '';
+        
+        userData = {
+          id: userId,
+          email: userEmail || authUser.user.email || '',
+          name: displayName ? displayName.split(' ')[0] : '',
+          tokens: 30, // Default fallback
+          subscription_tier: 'free',
+          referral_code: '',
+          referral_count: 0,
+          referred_by: null,
+          display_name: displayName,
+          avatar_url: avatarUrl
+        };
+      }
       
       console.log('✅ User data loaded directly from auth.users + profiles:', {
         tokens: userData.tokens,
