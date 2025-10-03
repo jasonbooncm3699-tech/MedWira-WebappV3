@@ -92,28 +92,28 @@ Perfect for healthcare professionals, students, and anyone who needs quick medic
         }
 
         .referral-code-btn {
-          background: linear-gradient(135deg, #00d4ff, #0099cc);
-          color: white;
-          border: none;
+          background: rgba(0, 0, 0, 0.3);
+          color: #00d4ff;
+          border: 1px solid #00d4ff;
           padding: 12px 20px;
           border-radius: 8px;
           font-size: 14px;
-          font-weight: 600;
+          font-weight: 500;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.2s ease;
           width: 100%;
-          box-shadow: 0 2px 8px rgba(0, 212, 255, 0.3);
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 8px;
           position: relative;
+          font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+          letter-spacing: 1px;
         }
 
         .referral-code-btn:hover {
-          background: linear-gradient(135deg, #0099cc, #0077aa);
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
+          background: rgba(0, 212, 255, 0.1);
+          border-color: rgba(0, 212, 255, 0.8);
         }
 
         .referral-code-text {
@@ -122,15 +122,14 @@ Perfect for healthcare professionals, students, and anyone who needs quick medic
           white-space: nowrap;
           text-overflow: ellipsis;
           text-align: left;
-          font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-          letter-spacing: 1px;
+          color: #00d4ff;
           max-width: calc(100% - 30px); /* Leave space for share icon */
         }
 
         .share-icon-btn {
           background: none;
           border: none;
-          color: white;
+          color: #00d4ff;
           cursor: pointer;
           padding: 4px;
           border-radius: 4px;
@@ -144,7 +143,7 @@ Perfect for healthcare professionals, students, and anyone who needs quick medic
         }
 
         .share-icon-btn:hover {
-          background: rgba(255, 255, 255, 0.2);
+          background: rgba(0, 212, 255, 0.2);
           transform: scale(1.1);
         }
 
@@ -154,12 +153,18 @@ Perfect for healthcare professionals, students, and anyone who needs quick medic
 
         /* Copy feedback */
         .referral-code-btn.copied {
-          background: linear-gradient(135deg, #22c55e, #16a34a);
+          background: rgba(34, 197, 94, 0.2);
+          border-color: #22c55e;
+          color: #22c55e;
         }
 
         .referral-code-btn.copied .referral-code-text::after {
           content: ' ✓';
-          color: #ffffff;
+          color: #22c55e;
+        }
+
+        .referral-code-btn.copied .share-icon-btn {
+          color: #22c55e;
         }
 
         /* Mobile responsiveness */
