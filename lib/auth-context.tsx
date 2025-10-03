@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           tokens: user.token_count || 0,
           subscription_tier: 'free',
           referral_code: user.referral_code,
-          referral_count: user.referral_count || 0,
+          referral_count: 0, // Default value since column doesn't exist
           referred_by: user.referred_by,
           display_name: user.display_name || user.user_name || '',
           avatar_url: user.profile_picture_url || user.avatar_url

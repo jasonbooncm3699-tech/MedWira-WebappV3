@@ -12,7 +12,7 @@ SELECT
     COALESCE(au.raw_user_meta_data->>'full_name', au.raw_user_meta_data->>'name', au.email) as user_name,
     COALESCE(p.token_count, 30) as token_count,
     p.referral_code,
-    p.referral_count,
+    0 as referral_count, -- Default value since column doesn't exist
     p.referred_by,
     au.created_at,
     au.updated_at

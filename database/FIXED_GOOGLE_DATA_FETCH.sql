@@ -1,5 +1,5 @@
--- Function to get complete user profile with Google data from auth.users
--- This function combines Google OAuth metadata with token/referral data
+-- FIXED: Create function to get user data with Google OAuth metadata
+-- This fixes the referral_count column error
 
 CREATE OR REPLACE FUNCTION public.get_user_complete_profile(user_id UUID)
 RETURNS TABLE (
@@ -11,7 +11,6 @@ RETURNS TABLE (
     user_name TEXT,
     token_count INTEGER,
     referral_code TEXT,
-    referral_count INTEGER,
     referred_by TEXT,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ
@@ -30,7 +29,6 @@ BEGIN
         COALESCE(au.raw_user_meta_data->>'full_name', au.raw_user_meta_data->>'name', au.email) as user_name,
         COALESCE(p.token_count, 30) as token_count,
         p.referral_code,
-        0 as referral_count, -- Default value since column doesn't exist in profiles table
         p.referred_by,
         au.created_at,
         au.updated_at
@@ -43,5 +41,5 @@ $$;
 -- Grant execute permission to authenticated users
 GRANT EXECUTE ON FUNCTION public.get_user_complete_profile(UUID) TO authenticated;
 
--- Test the function
+-- Test the function with your user ID
 SELECT * FROM public.get_user_complete_profile('88ff0bde-fa90-4aa7-991e-654eec08951c'::UUID);
