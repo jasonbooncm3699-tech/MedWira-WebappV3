@@ -36,10 +36,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // CRITICAL: Create Supabase client instance for cookie-based authentication
   const supabase = createClient();
 
-  // Fetch user data from Supabase profiles table
+  // Fetch user data from Supabase with Google OAuth metadata
   const fetchUserData = useCallback(async (userId: string, userEmail?: string): Promise<User | null> => {
     try {
-      console.log('📡 Fetching user data from profiles table...');
+      console.log('📡 Fetching user data with Google OAuth metadata...');
+      
+      // Try the new function first (combines auth.users + profiles)
+      const { data: completeData, error: completeError } = await supabase
+        .rpc('get_user_complete_profile', { user_id: userId });
+
+      if (!completeError && completeData && completeData.length > 0) {
+        const user = completeData[0];
+        const userData: User = {
+          id: user.id,
+          email: user.email || userEmail || '',
+          name: user.user_name || user.display_name || '',
+          tokens: user.token_count || 0,
+          subscription_tier: 'free',
+          referral_code: user.referral_code,
+          referral_count: user.referral_count || 0,
+          referred_by: user.referred_by,
+          display_name: user.display_name || user.user_name || '',
+          avatar_url: user.profile_picture_url || user.avatar_url
+        };
+        
+        console.log('✅ User data loaded with Google metadata:', {
+          tokens: userData.tokens,
+          referral_code: userData.referral_code,
+          display_name: userData.display_name,
+          avatar_url: userData.avatar_url,
+          email: userData.email,
+          name: userData.name
+        });
+        
+        return userData;
+      }
+
+      // Fallback to old method if function doesn't exist yet
+      console.log('📡 Fallback: Fetching from profiles table only...');
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -52,13 +86,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data) {
-        // Map profiles data to User interface
         const userData: User = {
           id: data.id,
-          email: userEmail || '', // Use provided email or empty string
-          name: data.display_name || '', // Use display_name from profiles table
+          email: userEmail || '',
+          name: data.display_name || '',
           tokens: data.token_count || 0,
-          subscription_tier: 'free', // Default tier
+          subscription_tier: 'free',
           referral_code: data.referral_code,
           referral_count: data.referral_count || 0,
           referred_by: data.referred_by,
@@ -66,11 +99,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           avatar_url: data.avatar_url
         };
         
-        console.log('✅ User data loaded from profiles:', {
+        console.log('✅ User data loaded from profiles (fallback):', {
           tokens: userData.tokens,
           referral_code: userData.referral_code,
-          referral_count: userData.referral_count,
-          referred_by: userData.referred_by,
           display_name: userData.display_name,
           avatar_url: userData.avatar_url,
           email: userData.email,
