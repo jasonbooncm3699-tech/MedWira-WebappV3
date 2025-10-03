@@ -751,26 +751,23 @@ export default function Home() {
             </div>
             
             {/* Compact Referral Code Button */}
-            {user?.referral_code ? (
-              <CompactReferralButton 
-                referralCode={user.referral_code}
-                className="nav-referral-button"
-              />
-            ) : user ? (
-              <div className="referral-placeholder">
-                <p>Share to earn free tokens</p>
+            <div className="referral-section">
+              <p className="referral-header-text">Share to earn free tokens</p>
+              {user?.referral_code ? (
+                <CompactReferralButton 
+                  referralCode={user.referral_code}
+                  className="nav-referral-button"
+                />
+              ) : user ? (
                 <div className="referral-code-placeholder">
                   <span>Loading referral code...</span>
                 </div>
-              </div>
-            ) : (
-              <div className="referral-placeholder">
-                <p>Sign in to get your referral code</p>
+              ) : (
                 <div className="referral-code-placeholder">
                   <span>Sign In Required</span>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
             
             <button 
               className="nav-faq-btn"
