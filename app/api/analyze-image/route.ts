@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+// DEPRECATED: Gemini integration being replaced with MedGemma 4B
 import { geminiAnalyzer } from '@/lib/gemini-service';
 import { DatabaseService } from '@/lib/supabase';
 
