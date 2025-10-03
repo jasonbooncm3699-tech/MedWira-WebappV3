@@ -277,8 +277,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 sessionUser?.user_metadata?.name || 
                 userEmail?.split('@')[0] || 
                 'User',
-          tokens: 0,
-          subscription_tier: 'free'
+          tokens: 30, // Default tokens for new users
+          subscription_tier: 'free',
+          referral_code: '',
+          referral_count: 0,
+          referred_by: null,
+          display_name: sessionUser?.user_metadata?.full_name || sessionUser?.user_metadata?.name || '',
+          avatar_url: sessionUser?.user_metadata?.avatar_url || sessionUser?.user_metadata?.picture || ''
         };
         console.log('📝 Setting fallback user:', fallbackUser);
         setUser(fallbackUser);

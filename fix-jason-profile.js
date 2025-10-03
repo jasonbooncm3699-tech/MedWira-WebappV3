@@ -44,7 +44,7 @@ async function fixJasonProfile() {
         token_count: 30,
         referral_code: 'C275226B',
         referral_count: 0,
-        referred_by: undefined,
+        referred_by: null,
         display_name: 'Jason',
         avatar_url: null,
         created_at: new Date().toISOString(),
