@@ -56,12 +56,12 @@ export async function npraProductLookup(
   const supabase = getSupabaseClient();
   let query = supabase
     .from('medicines') // Targeting the specific table: public.medicines
-    .select('id, reg_no, npra_product, description, status, holder, text') // Select all relevant columns
-    .ilike('npra_product', `%${productName}%`); // Search the NPRA product name column
+    .select('id, reg_no, product, description, status, holder, active_ingredient, generic_name') // Select all relevant columns
+    .ilike('product', `%${productName}%`); // Search the product name column
 
   if (regNumber) {
     // If a registration number is provided, search both the product name and the registration number column
-    query = query.or(`reg_no.eq.${regNumber},npra_product.ilike.%${productName}%`);
+    query = query.or(`reg_no.eq.${regNumber},product.ilike.%${productName}%`);
   } else {
     // Apply a simple limit if searching by name only
     query = query.limit(1);
@@ -129,13 +129,13 @@ export async function enhancedNpraLookup(
       const { data: ingredientMatch, error } = await supabase
         .from('medicines')
         .select('*')
-        .ilike('npra_product', `%${productName}%`)
-        .ilike('text', `%${activeIngredient}%`)
+        .ilike('product', `%${productName}%`)
+        .ilike('active_ingredient', `%${activeIngredient}%`)
         .limit(1)
         .single();
       
       if (!error && ingredientMatch) {
-        console.log(`✅ NPRA Ingredient Match: ${ingredientMatch.npra_product}`);
+        console.log(`✅ NPRA Ingredient Match: ${ingredientMatch.product}`);
         return ingredientMatch as NPRAProduct;
       }
     } catch (error) {
@@ -163,8 +163,8 @@ export async function searchNpraMedicines(
     const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('medicines')
-      .select('id, reg_no, npra_product, status')
-      .ilike('npra_product', `%${partialName}%`)
+      .select('id, reg_no, product, status')
+      .ilike('product', `%${partialName}%`)
       .limit(limit);
     
     if (error) {

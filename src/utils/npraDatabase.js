@@ -35,12 +35,12 @@ async function npraProductLookup(productName, regNumber = null) {
   const supabase = getSupabaseClient();
   let query = supabase
     .from('medicines') // Targeting the specific table: public.medicines
-    .select('id, reg_no, npra_product, description, status, holder, text') // Select all relevant columns from your table
-    .ilike('npra_product', `%${productName}%`); // Search the NPRA product name column
+    .select('id, reg_no, product, description, status, holder, active_ingredient, generic_name') // Select all relevant columns from your table
+    .ilike('product', `%${productName}%`); // Search the product name column
 
   if (regNumber) {
     // If a registration number is provided, search both the product name and the registration number column
-    query = query.or(`reg_no.eq.${regNumber},npra_product.ilike.%${productName}%`);
+    query = query.or(`reg_no.eq.${regNumber},product.ilike.%${productName}%`);
   } else {
     // Apply a simple limit if searching by name only
     query = query.limit(1);
@@ -56,7 +56,7 @@ async function npraProductLookup(productName, regNumber = null) {
     
     if (data && data.length > 0) {
       console.log(`✅ NPRA Found: ${data.length} result(s) for "${productName}"`);
-      console.log(`📋 Product: ${data[0].npra_product} | Reg: ${data[0].reg_no} | Status: ${data[0].status}`);
+      console.log(`📋 Product: ${data[0].product} | Reg: ${data[0].reg_no} | Status: ${data[0].status}`);
       return data[0];
     } else {
       console.log(`⚠️ NPRA Not Found: No results for "${productName}"`);
@@ -88,7 +88,7 @@ async function enhancedNpraLookup(productName, regNumber = null, activeIngredien
       .single();
     
     if (!regMatch.error && regMatch.data) {
-      console.log(`✅ NPRA Exact Reg Match: ${regMatch.data.npra_product}`);
+      console.log(`✅ NPRA Exact Reg Match: ${regMatch.data.product}`);
       return regMatch.data;
     }
   }
@@ -98,13 +98,13 @@ async function enhancedNpraLookup(productName, regNumber = null, activeIngredien
     const ingredientMatch = await supabase
       .from('medicines')
       .select('*')
-      .ilike('npra_product', `%${productName}%`)
+        .ilike('product', `%${productName}%`)
       .ilike('text', `%${activeIngredient}%`)
       .limit(1)
       .single();
     
     if (!ingredientMatch.error && ingredientMatch.data) {
-      console.log(`✅ NPRA Ingredient Match: ${ingredientMatch.data.npra_product}`);
+      console.log(`✅ NPRA Ingredient Match: ${ingredientMatch.data.product}`);
       return ingredientMatch.data;
     }
   }
@@ -126,8 +126,8 @@ async function searchNpraMedicines(partialName, limit = 10) {
     const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('medicines')
-      .select('id, reg_no, npra_product, status')
-      .ilike('npra_product', `%${partialName}%`)
+      .select('id, reg_no, product, status')
+      .ilike('product', `%${partialName}%`)
       .limit(limit);
     
     if (error) {
