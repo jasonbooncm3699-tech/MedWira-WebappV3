@@ -13,6 +13,7 @@
     "lint": "eslint",
     "test:medgemma": "npx tsx src/services/test-medgemma.ts",
     "test:npra": "npx tsx -e \"import('./src/utils/npraDatabase.js').then(m => m.getNpraStats().then(console.log))\"",
+    "test:pipeline": "node src/scripts/test-medgemma-pipeline.js",
     "verify:medgemma": "node src/scripts/verify-medgemma-setup.js",
     "server": "node src/server.js",
     "server:dev": "nodemon src/server.js"
