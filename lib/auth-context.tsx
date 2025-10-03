@@ -439,57 +439,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         setUser(completeUserData);
       } else {
-        console.log('⚠️ No user data found during refresh - user may not be provisioned yet');
-        
-        // If no user data found, try to provision the user
-        try {
-          console.log('🔄 Attempting to provision user during refresh...');
-          const { data: provisionResult, error: provisionError } = await supabase
-            .rpc('provision_user_profile_manually', {
-              user_id: user.id,
-              user_email: user.email,
-              user_name: user.name,
-              referral_code_param: null
-            });
-          
-          if (provisionResult && provisionResult.success) {
-            console.log('✅ User provisioned during refresh:', provisionResult);
-            // Recursively call refreshUserData to fetch the newly created data
-            setTimeout(() => refreshUserData(), 500);
-          } else {
-            console.error('❌ Failed to provision user during refresh:', provisionError);
-            // Set safe fallback when provision fails
-            const safeFallbackUser: User = {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              tokens: 0, // NO TOKENS when provision fails
-              subscription_tier: 'free',
-              referral_code: '', // NO REFERRAL CODE when provision fails
-              referral_count: 0,
-              referred_by: null,
-              display_name: user.display_name || '',
-              avatar_url: user.avatar_url || ''
-            };
-            setUser(safeFallbackUser);
-          }
-        } catch (provisionError) {
-          console.error('❌ Error provisioning user during refresh:', provisionError);
-          // Set safe fallback when provision throws exception
-          const safeFallbackUser: User = {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            tokens: 0, // NO TOKENS when provision fails
-            subscription_tier: 'free',
-            referral_code: '', // NO REFERRAL CODE when provision fails
-            referral_count: 0,
-            referred_by: null,
-            display_name: user.display_name || '',
-            avatar_url: user.avatar_url || ''
-          };
-          setUser(safeFallbackUser);
-        }
+        // CRITICAL: fetchUserData returned null - set safe fallback to prevent stale data
+        console.warn('⚠️ fetchUserData returned null - setting safe fallback with zero tokens');
+        const safeFallbackUser: User = {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          tokens: 0, // NO TOKENS when fetchUserData returns null - prevents stale data
+          subscription_tier: 'free',
+          referral_code: '', // NO REFERRAL CODE when fetchUserData returns null
+          referral_count: 0,
+          referred_by: null,
+          display_name: user.display_name || '',
+          avatar_url: user.avatar_url || ''
+        };
+        console.log('🛡️ Setting safe fallback user due to null return:', safeFallbackUser);
+        setUser(safeFallbackUser);
       }
     } catch (error) {
       console.error('❌ CRITICAL: Unexpected error in refreshUserData:', error);

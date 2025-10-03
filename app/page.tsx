@@ -94,8 +94,8 @@ export default function Home() {
       return false;
     }
     
-    // Check if user has tokens available
-    if (user.tokens <= 0) {
+    // Check if user has tokens available (defensive check)
+    if (user && user.tokens <= 0) {
       const errorMessage = {
         id: Date.now().toString(),
         type: 'ai' as const,
@@ -582,8 +582,46 @@ export default function Home() {
     );
   }
 
-  // RENDER THE MAIN APPLICATION ONLY WHEN LOADING IS COMPLETE
-  // This prevents React error #418 (hydration mismatch) by ensuring consistent rendering
+  // CRITICAL GUARD: Prevent null pointer crashes when user is null
+  if (!user) {
+    // If loading is done but user is null, show safe logged-out view
+    return (
+      <div className="app">
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          background: '#0a0a0a',
+          color: '#ffffff',
+          padding: '20px'
+        }}>
+          <h1 style={{ fontSize: '24px', marginBottom: '20px' }}>MedWira AI</h1>
+          <p style={{ fontSize: '16px', marginBottom: '20px', textAlign: 'center' }}>
+            Please sign in to access the medicine identification service
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: '#00d4ff',
+              color: '#000',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              cursor: 'pointer'
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // RENDER THE MAIN APPLICATION ONLY WHEN LOADING IS COMPLETE AND USER IS VALID
+  // This prevents React error #418 (hydration mismatch) and null pointer crashes
   return (
       <div className="app">
       {/* Header */}
