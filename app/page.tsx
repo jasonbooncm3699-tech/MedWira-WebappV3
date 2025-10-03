@@ -406,16 +406,15 @@ export default function Home() {
       setAiStatus('Summarizing and Formatting Response...');
       await new Promise(resolve => setTimeout(resolve, 600));
 
-      const response = await fetch('/api/analyze-medicine-enhanced', {
+      const response = await fetch('/api/analyze-medicine-medgemma', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          imageBase64,
-          language,
-          allergy,
-          userId: user?.id
+          image_data: imageBase64,
+          text_query: "Please analyze this medicine image and provide detailed information.",
+          user_id: user?.id
         }),
       });
 
@@ -424,12 +423,12 @@ export default function Home() {
       // Reset AI status
       setAiStatus('idle');
       
-      if (response.status === 200 && result.success && result.status === 'SUCCESS') {
+      if (response.status === 200 && result.status === 'SUCCESS') {
         // Create structured AI response message with comprehensive data
         const structuredMessage = {
           id: (Date.now() + 1).toString(),
           type: 'structured' as const,
-          content: `**Medicine Analysis Complete**\n\n**Medicine:** ${result.data?.medicineName || 'N/A'}\n**Purpose:** ${result.data?.purpose || 'N/A'}`,
+          content: `**Medicine Analysis Complete**\n\n**Medicine:** ${result.data?.medicine_name || 'N/A'}\n**Purpose:** ${result.data?.purpose || 'N/A'}`,
           timestamp: new Date(),
           structuredData: result.data
         };
@@ -451,7 +450,7 @@ export default function Home() {
         const errorMessage = {
           id: (Date.now() + 1).toString(),
           type: 'ai' as const,
-          content: `**${response.status === 402 ? '⚠️ Insufficient Tokens' : 'Error'}**\n\n${result.message || result.error || 'Analysis failed. Please try again.'}\n\n${result.tokensRemaining !== undefined ? `**Tokens Remaining:** ${result.tokensRemaining}` : ''}`,
+          content: `**${response.status === 402 ? '⚠️ Insufficient Tokens' : 'Error'}**\n\n${result.message || result.error || 'Analysis failed. Please try again.'}`,
           timestamp: new Date()
         };
         
