@@ -6,6 +6,7 @@
 
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config({ path: '.env.local' });
 
 console.log('🔍 Gemini 1.5 Pro Setup Verification');
 console.log('=' .repeat(50));
@@ -53,7 +54,7 @@ async function verifyGeminiAuthentication() {
     
     // Initialize Gemini client
     const genAI = new GoogleGenerativeAI(API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     console.log('✅ Gemini client initialized successfully');
     
     // Test authentication by attempting a simple generation

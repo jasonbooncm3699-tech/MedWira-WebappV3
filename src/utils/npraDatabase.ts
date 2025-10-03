@@ -7,8 +7,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Environment variables for Supabase connection
-const SUPABASE_URL = process.env.SUPABASE_URL || '';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || '';
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 // Initialize the Supabase client
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);

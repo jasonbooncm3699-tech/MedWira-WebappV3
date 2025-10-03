@@ -15,7 +15,13 @@ const { npraProductLookup, decrementToken } = require('../utils/npraDatabase');
 
 // Initialize Gemini 1.5 Pro client
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+const model = genAI.getGenerativeModel({ 
+  model: "gemini-2.5-flash",
+  generationConfig: {
+    temperature: 0.1,
+    maxOutputTokens: 2048,
+  }
+});
 
 // Tool call schema for NPRA lookup (same as MedGemma for consistency)
 const TOOL_CALL_SCHEMA = {

@@ -1,9 +1,12 @@
 /**
- * Test file for MedGemma 4B Agent Controller
+ * Test file for Gemini 1.5 Pro Agent Controller
  * 
- * This file provides test functions to verify the NPRA lookup and MedGemma pipeline
+ * This file provides test functions to verify the NPRA lookup and Gemini pipeline
  * before full integration with the Next.js application.
  */
+
+// Load environment variables
+require('dotenv').config({ path: '.env.local' });
 
 import { runGeminiPipeline } from './geminiAgent';
 import { npraProductLookup, enhancedNpraLookup, getNpraStats, decrementToken } from '../utils/npraDatabase';
@@ -162,9 +165,4 @@ export async function runAllTests(): Promise<void> {
   }
 }
 
-// Export test functions for individual use
-export {
-  testNpraDatabase,
-  testTokenManagement,
-  testMedGemmaPipeline
-};
+// Test functions are already exported individually above
