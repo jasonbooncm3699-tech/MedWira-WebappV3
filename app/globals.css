@@ -1717,6 +1717,42 @@ p, h1, h2, h3, h4, h5, h6, span, div, a {
   font-size: 12px;
 }
 
+/* Referral Placeholder Styles */
+.referral-placeholder {
+  margin: 10px 0;
+  width: 100%;
+}
+
+.referral-placeholder p {
+  color: #888;
+  font-size: 12px;
+  margin: 0 0 8px 0;
+  text-align: center;
+}
+
+.referral-code-placeholder {
+  background: linear-gradient(135deg, #00d4ff, #0099cc);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(0, 212, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.referral-code-placeholder:hover {
+  background: linear-gradient(135deg, #0099cc, #0077aa);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
+}
+
 /* FAQ Styles */
 .nav-faq-btn {
   background: linear-gradient(135deg, #00d4ff, #0099cc);
