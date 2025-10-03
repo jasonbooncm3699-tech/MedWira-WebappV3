@@ -23,14 +23,16 @@ const model = genAI.getGenerativeModel({
   }
 });
 
-// Tool call schema for NPRA lookup (same as MedGemma for consistency)
+// Tool call schema for medicine database lookup
 const TOOL_CALL_SCHEMA = {
   "tool_call": {
-    "name": "npra_product_lookup",
+    "name": "medicine_database_lookup",
     "parameters": {
       "product_name": "string",
-      "registration_number": "string | null", // Keep this for OCR extraction
-      "active_ingredient": "string | null"
+      "registration_number": "string | null",
+      "active_ingredient": "string | null",
+      "manufacturer": "string | null",
+      "strength": "string | null"
     }
   }
 };
@@ -43,21 +45,22 @@ const TOOL_CALL_SCHEMA = {
  * @param {Object|null} toolSchema - The expected JSON schema for the tool call (only used in the first call).
  * @returns {string} The structured system prompt.
  */
-function buildGeminiSystemPrompt(isFirstCall, npraResult, toolSchema) {
-    // FINAL OUTPUT SCHEMA (same as MedGemma - 9 sections, excludes npra_registration_no)
+function buildGeminiSystemPrompt(isFirstCall, databaseResult, toolSchema) {
+    // FINAL OUTPUT SCHEMA - Based on the sample image format
     const finalOutputSchema = {
         "status": "SUCCESS",
         "data": {
-            "packaging_detected": "[String: Describe key text/features/dosage from the image and database data.]",
-            "medicine_name": "[String: Official Product Name (from DB) + Active Ingredients (Gemini knowledge)]",
-            "purpose": "[String: Uses/indications. Gemini knowledge augmented by product name.]",
-            "dosage_instructions": "[String: General adult/child dosage. Gemini knowledge.]",
-            "side_effects": "[String: Common and serious side effects. Gemini knowledge.]",
-            "allergy_warning": "[String: Key ingredient allergy warning. Gemini knowledge.]",
-            "drug_interactions": "[String: Major known interactions. Gemini knowledge.]",
-            "safety_notes": "[String: Warnings for pregnancy, driving, pre-existing conditions.]",
-            "storage": "[String: General storage conditions.]",
-            "disclaimer": "Disclaimer: This information is sourced from our internal medicine database and medical knowledge. It is for informational purposes only and is NOT medical advice. Consult a licensed doctor or pharmacist before use."
+            "packaging_detected": "[String: Describe the packaging type and visible information from the image]",
+            "medicine_name": "[String: Brand name and active ingredients with strengths]",
+            "purpose": "[String: What the medication treats and how it works]",
+            "dosage_instructions": "[String: Dosage for different age groups]",
+            "side_effects": "[String: Common, rare side effects and overdose risks]",
+            "allergy_warning": "[String: Contains ingredients and allergy information]",
+            "drug_interactions": "[String: Interactions with drugs, food, and alcohol]",
+            "safety_notes": "[String: Special warnings for kids, pregnant women, and other conditions]",
+            "cross_border_info": "[String: Similar products available in other countries]",
+            "storage": "[String: Storage instructions]",
+            "disclaimer": "Disclaimer: This information is sourced from our internal medicine database and reliable medical sources. It is for informational purposes only and is NOT medical advice. Consult a licensed doctor or pharmacist before use."
         }
     };
 
@@ -65,16 +68,24 @@ function buildGeminiSystemPrompt(isFirstCall, npraResult, toolSchema) {
 You are the **MedWira Product Specialist**, an expert in Malaysian medicine information powered by Gemini 1.5 Pro. Your primary directive is to provide comprehensive, accurate, and safety-focused details about medicines.
 
 **CORE DIRECTIVES - FOLLOW STRICTLY:**
-1. **Multimodality:** Analyze the provided image (if present) for visual text (OCR) like the product name and registration number.
-2. **Database Verification:** You MUST incorporate the data from the internal \`public.medicines\` database lookup call to verify the product's official name and status.
-3. **Augmentation:** You MUST combine the official database details with your internal, extensive medical knowledge to complete the structured report.
+1. **Packaging Analysis:** Extract ALL visible data from medicine packaging including product name, active ingredients, strengths, manufacturer, registration number, and any other text visible on the packaging.
+2. **Database Search:** You MUST search our internal \`public.medicines\` database (the most complete Malaysian medicine database) to find matching records.
+3. **Web Research:** If additional medical information is needed, use reliable medical sources (FDA, WHO, pharmaceutical databases, medical journals) to supplement database information.
+4. **Comprehensive Response:** Always start with "Packaging detected:" and provide detailed analysis in the exact format specified.
 `;
     
     if (isFirstCall) {
-        // --- FIRST CALL PROMPT (Analyze image and signal tool use) ---
+        // --- FIRST CALL PROMPT (Analyze packaging and signal tool use) ---
         return `${basePrompt}
-**CURRENT TASK: TOOL SIGNALING**
-Analyze the image and user query. Extract the exact **Product Name** and **Registration Number** (MAL/NOT) if visible. Your ENTIRE output must be a single JSON object wrapped in \`\`\`json tags, adhering strictly to the TOOL DEFINITION schema below. Do not include any other text, greetings, or reasoning.
+**CURRENT TASK: PACKAGING ANALYSIS & DATABASE SEARCH SIGNAL**
+Carefully analyze the medicine packaging image and extract ALL visible information. Look for:
+- Product/Brand name
+- Active ingredients and their strengths
+- Registration number (MAL/NOT)
+- Manufacturer name
+- Any other text visible on packaging
+
+Your ENTIRE output must be a single JSON object wrapped in \`\`\`json tags, adhering strictly to the TOOL DEFINITION schema below. Do not include any other text, greetings, or reasoning.
 
 **TOOL DEFINITION:**
 \`\`\`json
@@ -82,26 +93,34 @@ ${JSON.stringify(toolSchema, null, 2)}
 \`\`\`
 `;
     } else {
-        // --- SECOND CALL PROMPT (Augment with Database results and generate final report) ---
-        const dbStatus = npraResult && npraResult.id ? "PRODUCT FOUND & VERIFIED in internal database" : "PRODUCT NOT FOUND in internal database or failed lookup";
+        // --- SECOND CALL PROMPT (Generate comprehensive medical report) ---
+        const dbStatus = databaseResult && databaseResult.id ? "PRODUCT FOUND & VERIFIED in our medicine database" : "PRODUCT NOT FOUND in our database - will use web research";
         
         return `${basePrompt}
-**CURRENT TASK: FINAL REPORT GENERATION**
-The internal database lookup is complete.
+**CURRENT TASK: COMPREHENSIVE MEDICAL REPORT GENERATION**
+The medicine database lookup is complete.
 
 - **Database Status:** ${dbStatus}
 - **Database Data:** \`\`\`json
-${JSON.stringify(npraResult || {id: null, message: "No result or search failed. Rely on general knowledge and image." }, null, 2)}
+${JSON.stringify(databaseResult || {id: null, message: "No database match found. Will rely on packaging analysis and web research." }, null, 2)}
 \`\`\`
 
-You must now use this database data (if available) and your general medical knowledge to generate a comprehensive, structured report that adheres **exactly** to the FINAL OUTPUT FORMAT below.
+You must now generate a comprehensive medical report that follows the EXACT format from the sample. Always start with "Packaging detected:" and provide detailed information in the specified sections.
 
-**FINAL OUTPUT FORMAT:**
-Your ENTIRE response must be a single JSON object wrapped in \`\`\`json tags. Fill all nested fields.
+**REQUIRED FORMAT:**
+Your ENTIRE response must be a single JSON object wrapped in \`\`\`json tags. Fill all nested fields with detailed, accurate information.
 
 \`\`\`json
 ${JSON.stringify(finalOutputSchema, null, 2)}
 \`\`\`
+
+**IMPORTANT:** 
+- Start with "Packaging detected:" in the packaging_detected field
+- Use database information when available
+- Supplement with reliable web sources for missing information
+- Provide specific, actionable information in each section
+- Include proper dosage instructions for different age groups
+- List comprehensive side effects and safety warnings
 
 Start your response with the final \`\`\`json structure now.
 `;
@@ -166,10 +185,10 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
         }
 
         // 3. CHECK FOR TOOL SIGNAL & EXECUTE TOOL
-        console.log(`🔍 Step 2: Parsing Tool Signal & Executing NPRA Lookup`);
+        console.log(`🔍 Step 2: Parsing Tool Signal & Executing Medicine Database Lookup`);
         
         const jsonMatch = firstResponse.match(/```json\s*(\{[\s\S]*?\})\s*```/);
-        let npraResult = null;
+        let databaseResult = null;
         
         if (jsonMatch) {
             try {
@@ -177,14 +196,14 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
                 console.log(`🔧 Tool Signal Parsed:`, jsonSignal);
                 
                 if (jsonSignal.tool_call && jsonSignal.tool_call.parameters) {
-                    const { product_name, registration_number, active_ingredient } = jsonSignal.tool_call.parameters;
+                    const { product_name, registration_number, active_ingredient, manufacturer, strength } = jsonSignal.tool_call.parameters;
                     
-                    console.log(`🔍 Executing NPRA lookup for: ${product_name}`);
-                    // EXECUTE DATABASE LOOKUP (same as MedGemma)
-                    npraResult = await npraProductLookup(product_name, registration_number);
+                    console.log(`🔍 Executing medicine database lookup for: ${product_name}`);
+                    // EXECUTE DATABASE LOOKUP
+                    databaseResult = await npraProductLookup(product_name, registration_number);
                     
-                    if (npraResult) {
-                        console.log(`✅ NPRA Lookup successful: ${npraResult.product}`);
+                    if (databaseResult) {
+                        console.log(`✅ Medicine database lookup successful: ${databaseResult.product}`);
                     } else {
                         console.log(`⚠️ Product not found, searching by active ingredients...`);
                         // Try searching by individual active ingredients if product not found
@@ -196,7 +215,7 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
                                 const ingredientResult = await npraProductLookup(ingredient, null);
                                 if (ingredientResult) {
                                     console.log(`✅ Found equivalent product by ingredient: ${ingredientResult.product}`);
-                                    npraResult = {
+                                    databaseResult = {
                                         ...ingredientResult,
                                         search_method: 'active_ingredient',
                                         searched_ingredient: ingredient,
@@ -207,33 +226,33 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
                             }
                         }
                         
-                        if (!npraResult) {
-                            npraResult = { status: "NOT_FOUND", message: "No NPRA data found for the identified medicine or its active ingredients." };
+                        if (!databaseResult) {
+                            databaseResult = { status: "NOT_FOUND", message: "No medicine found in our database. Will use packaging analysis and web research." };
                         }
                     }
                 }
             } catch (e) {
                 console.error('❌ Tool Execution/Parsing Error:', e);
-                npraResult = { status: "TOOL_ERROR", message: "Error executing internal database lookup tool or parsing LLM signal." }; 
+                databaseResult = { status: "TOOL_ERROR", message: "Error executing internal database lookup tool or parsing LLM signal." }; 
             }
         } else {
             // Fallback: If no structured signal, treat the first response as general text
             console.log(`⚠️ No tool signal detected - Gemini provided direct answer`);
-            npraResult = { status: "NO_SIGNAL", message: "LLM provided a direct answer. Bypassing database lookup.", raw_llm_text: firstResponse };
+            databaseResult = { status: "NO_SIGNAL", message: "LLM provided a direct answer. Bypassing database lookup.", raw_llm_text: firstResponse };
         }
         
         // Check if the LLM provided a direct, complete answer without a tool signal
-        if (npraResult.status === "NO_SIGNAL") {
+        if (databaseResult.status === "NO_SIGNAL") {
             console.log(`✅ Returning direct Gemini response`);
             // Deduct token only after successful AI processing
             await decrementToken(userId);
-            return { status: "SUCCESS", data: { text: npraResult.raw_llm_text, note: npraResult.message } };
+            return { status: "SUCCESS", data: { text: databaseResult.raw_llm_text, note: databaseResult.message } };
         }
 
         // 4. SECOND LLM CALL: AUGMENTATION & FINAL OUTPUT
-        console.log(`🔍 Step 3: Final Gemini Augmentation with NPRA Data`);
+        console.log(`🔍 Step 3: Final Gemini Augmentation with Medicine Database Data`);
         
-        const finalPrompt = buildGeminiSystemPrompt(false, npraResult, null); 
+        const finalPrompt = buildGeminiSystemPrompt(false, databaseResult, null); 
         
         // Prepare content for final call
         let finalContent = finalPrompt;
@@ -260,32 +279,32 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
             const finalJsonMatch = finalText.match(/```json\s*(\{[\s\S]*?\})\s*```/);
             
             if (finalJsonMatch) {
-                try {
-                    const structuredResult = JSON.parse(finalJsonMatch[1]);
-                    console.log(`✅ Structured JSON response parsed`);
-                    // Deduct token only after successful AI processing
-                    await decrementToken(userId);
-                    return {
-                        status: "SUCCESS",
-                        data: {
-                            ...structuredResult,
-                            npra_result: npraResult,
-                            source: "gemini_structured"
-                        }
-                    };
-                } catch (e) {
-                    console.error("❌ Final JSON parse error, returning raw text.", e);
-                    // Deduct token only after successful AI processing
-                    await decrementToken(userId);
-                    return { 
-                        status: "SUCCESS", 
-                        data: { 
-                            text: finalText, 
-                            npra_result: npraResult, 
-                            note: "JSON parsing failed after second call, returning raw text." 
-                        } 
-                    };
-                }
+                       try {
+                           const structuredResult = JSON.parse(finalJsonMatch[1]);
+                           console.log(`✅ Structured JSON response parsed`);
+                           // Deduct token only after successful AI processing
+                           await decrementToken(userId);
+                           return {
+                               status: "SUCCESS",
+                               data: {
+                                   ...structuredResult,
+                                   database_result: databaseResult,
+                                   source: "gemini_structured"
+                               }
+                           };
+                       } catch (e) {
+                           console.error("❌ Final JSON parse error, returning raw text.", e);
+                           // Deduct token only after successful AI processing
+                           await decrementToken(userId);
+                           return { 
+                               status: "SUCCESS", 
+                               data: { 
+                                   text: finalText, 
+                                   database_result: databaseResult, 
+                                   note: "JSON parsing failed after second call, returning raw text." 
+                               } 
+                           };
+                       }
             } 
             
             // If final JSON structure is not detected
@@ -296,7 +315,7 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
                 status: "SUCCESS", 
                 data: { 
                     text: finalText, 
-                    npra_result: npraResult, 
+                    database_result: databaseResult, 
                     note: "LLM did not return structured JSON for final output." 
                 } 
             };
