@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useAuth } from '@/lib/auth-context';
 import { getInitials, generateAvatarColor } from '@/lib/avatar-utils';
 import ReferralCodeDisplay from './ReferralCodeDisplay';
+import CompactReferralButton from './CompactReferralButton';
 import { User, Coins, Crown, RefreshCw } from 'lucide-react';
 
 interface UserProfileProps {
@@ -108,12 +109,17 @@ export default function UserProfile({
       )}
 
       {showReferralCode && user.referral_code && (
-        <ReferralCodeDisplay
-          referralCode={user.referral_code}
-          referralCount={user.referral_count}
-          compact={compact}
-          showHeader={!compact}
-        />
+        compact ? (
+          <CompactReferralButton
+            referralCode={user.referral_code}
+          />
+        ) : (
+          <ReferralCodeDisplay
+            referralCode={user.referral_code}
+            referralCount={user.referral_count}
+            showHeader={true}
+          />
+        )
       )}
 
       <style jsx>{`

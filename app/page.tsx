@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth-context';
 import SocialAuthModal from '@/components/SocialAuthModal';
 import StructuredMedicineReply from '@/components/StructuredMedicineReply';
 import ReferralCodeDisplay from '@/components/ReferralCodeDisplay';
+import CompactReferralButton from '@/components/CompactReferralButton';
 import AIStatusDisplay from '@/components/AIStatusDisplay';
 import { getInitials, generateAvatarColor } from '@/lib/avatar-utils';
 import { MessageFormatter } from '@/lib/message-formatter';
@@ -749,15 +750,12 @@ export default function Home() {
               </div>
             </div>
             
-            {/* Referral Code Display */}
+            {/* Compact Referral Code Button */}
             {user?.referral_code && (
-              <div className="nav-referral-section">
-                <ReferralCodeDisplay 
-                  referralCode={user.referral_code}
-                  referralCount={user.referral_count || 0}
-                  className="nav-referral-display"
-                />
-              </div>
+              <CompactReferralButton 
+                referralCode={user.referral_code}
+                className="nav-referral-button"
+              />
             )}
             
             <button 
