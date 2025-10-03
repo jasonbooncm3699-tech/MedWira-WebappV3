@@ -10,6 +10,7 @@ import SocialAuthModal from '@/components/SocialAuthModal';
 import StructuredMedicineReply from '@/components/StructuredMedicineReply';
 import ReferralCodeDisplay from '@/components/ReferralCodeDisplay';
 import AIStatusDisplay from '@/components/AIStatusDisplay';
+import { getInitials, generateAvatarColor } from '@/lib/avatar-utils';
 import { MessageFormatter } from '@/lib/message-formatter';
 import { DatabaseService } from '@/lib/supabase';
 
@@ -718,7 +719,25 @@ export default function Home() {
                     height={32}
                   />
                 ) : (
-                  <User size={20} />
+                  <div 
+                    className="nav-avatar-initials"
+                    style={{ 
+                      backgroundColor: generateAvatarColor(user?.display_name || user?.name),
+                      color: '#ffffff',
+                      fontSize: '11px',
+                      fontWeight: '600',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '50%',
+                      width: '32px',
+                      height: '32px',
+                      minWidth: '32px',
+                      minHeight: '32px'
+                    }}
+                  >
+                    {getInitials(user?.display_name || user?.name)}
+                  </div>
                 )}
               </div>
               <div className="user-details">

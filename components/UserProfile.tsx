@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth-context';
+import { getInitials, generateAvatarColor } from '@/lib/avatar-utils';
 import ReferralCodeDisplay from './ReferralCodeDisplay';
 import { User, Coins, Crown, RefreshCw } from 'lucide-react';
 
@@ -56,7 +57,25 @@ export default function UserProfile({
               height={32}
             />
           ) : (
-            <User size={24} />
+            <div 
+              className="avatar-initials"
+              style={{ 
+                backgroundColor: generateAvatarColor(user.display_name || user.name),
+                color: '#ffffff',
+                fontSize: '12px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                minWidth: '32px',
+                minHeight: '32px'
+              }}
+            >
+              {getInitials(user.display_name || user.name)}
+            </div>
           )}
         </div>
         <div className="user-info">
