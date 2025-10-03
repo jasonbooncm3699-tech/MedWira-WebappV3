@@ -1,0 +1,53 @@
+# MedGemma 4B Environment Configuration Template
+# Copy these variables to your .env.local file and fill in your actual values
+
+# =============================================================================
+# GOOGLE CLOUD PLATFORM CONFIGURATION
+# =============================================================================
+
+# Your Google Cloud Project ID (required)
+GCP_PROJECT_ID=your-gcp-project-id-here
+
+# Google Cloud region (optional, defaults to us-central1)
+GCP_LOCATION=us-central1
+
+# Path to your service account key file (optional if using Application Default Credentials)
+# GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/service-account-key.json
+
+# =============================================================================
+# SUPABASE CONFIGURATION
+# =============================================================================
+
+# Your Supabase project URL (required)
+SUPABASE_URL=https://your-project-id.supabase.co
+
+# Your Supabase anon/public key (required)
+SUPABASE_KEY=your-supabase-anon-key-here
+
+# =============================================================================
+# OPTIONAL CONFIGURATION
+# =============================================================================
+
+# Custom MedGemma endpoint ID (optional, uses default if not set)
+# MEDGEMMA_ENDPOINT_ID=your-custom-endpoint-id
+
+# Debug mode (optional, set to true for verbose logging)
+# DEBUG=true
+
+# =============================================================================
+# SETUP INSTRUCTIONS
+# =============================================================================
+
+# 1. Copy this template to .env.local:
+#    cp MEDGEMMA_ENV_TEMPLATE.txt .env.local
+
+# 2. Edit .env.local and replace all placeholder values with your actual values
+
+# 3. Verify your setup:
+#    npm run verify:medgemma
+
+# 4. Test the integration:
+#    npm run test:medgemma
+
+# 5. Start the server:
+#    npm run server:dev
