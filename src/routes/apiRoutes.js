@@ -49,8 +49,8 @@ router.post('/analyze-medicine', async (req, res) => {
         console.log(`📊 Pipeline result status: ${result.status}`);
         
         if (result.status === "ERROR") {
-            // Return 402 for token issues, 500 for other backend errors
-            const statusCode = result.message.includes('tokens') ? 402 : 500;
+            // Use httpStatus if available (from token check), otherwise default to 500
+            const statusCode = result.httpStatus || (result.message.includes('tokens') ? 402 : 500);
             console.log(`❌ Pipeline error (${statusCode}): ${result.message}`);
             return res.status(statusCode).json(result);
         }

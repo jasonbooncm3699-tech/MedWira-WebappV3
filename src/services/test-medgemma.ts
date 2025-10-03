@@ -71,18 +71,10 @@ export async function testTokenManagement(): Promise<void> {
     const directResult = await decrementToken(testUserId);
     console.log('Direct token deduction result:', directResult);
     
-    // Test 2: Token check and deduction via agent
+    // Test 2: Token check and deduction via agent (Note: checkAndDeductToken is no longer exported)
     console.log('🔍 Testing token check and deduction via agent...');
-    const tokenResult = await checkAndDeductToken(testUserId);
-    
-    if (tokenResult.success) {
-      console.log('✅ Token management test successful:', {
-        success: tokenResult.success,
-        message: tokenResult.message
-      });
-    } else {
-      console.log('⚠️ Token management test failed:', tokenResult.message);
-    }
+    console.log('ℹ️ Note: checkAndDeductToken function is no longer exported from medgemmaAgent');
+    console.log('✅ Direct token deduction test completed');
     
     console.log('✅ Token Management tests completed');
     
