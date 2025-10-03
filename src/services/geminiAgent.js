@@ -177,17 +177,39 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
                 console.log(`🔧 Tool Signal Parsed:`, jsonSignal);
                 
                 if (jsonSignal.tool_call && jsonSignal.tool_call.parameters) {
-                    const { product_name, registration_number } = jsonSignal.tool_call.parameters;
+                    const { product_name, registration_number, active_ingredient } = jsonSignal.tool_call.parameters;
                     
-                    console.log(`🔍 Executing NPRA lookup...`);
+                    console.log(`🔍 Executing NPRA lookup for: ${product_name}`);
                     // EXECUTE DATABASE LOOKUP (same as MedGemma)
                     npraResult = await npraProductLookup(product_name, registration_number);
                     
                     if (npraResult) {
-                        console.log(`✅ NPRA Lookup successful: ${npraResult.npra_product}`);
+                        console.log(`✅ NPRA Lookup successful: ${npraResult.product}`);
                     } else {
-                        console.log(`⚠️ NPRA Lookup returned no results`);
-                        npraResult = { status: "NOT_FOUND", message: "No NPRA data found for the identified medicine." };
+                        console.log(`⚠️ Product not found, searching by active ingredients...`);
+                        // Try searching by individual active ingredients if product not found
+                        if (active_ingredient && active_ingredient.includes('and')) {
+                            const ingredients = active_ingredient.split('and').map(ing => ing.trim());
+                            console.log(`🔍 Searching for individual ingredients: ${ingredients.join(', ')}`);
+                            
+                            for (const ingredient of ingredients) {
+                                const ingredientResult = await npraProductLookup(ingredient, null);
+                                if (ingredientResult) {
+                                    console.log(`✅ Found equivalent product by ingredient: ${ingredientResult.product}`);
+                                    npraResult = {
+                                        ...ingredientResult,
+                                        search_method: 'active_ingredient',
+                                        searched_ingredient: ingredient,
+                                        original_product: product_name
+                                    };
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (!npraResult) {
+                            npraResult = { status: "NOT_FOUND", message: "No NPRA data found for the identified medicine or its active ingredients." };
+                        }
                     }
                 }
             } catch (e) {

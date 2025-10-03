@@ -59,16 +59,68 @@ export async function POST(request: NextRequest) {
       // Use httpStatus if available (from token check), otherwise default to 500
       const statusCode = result.httpStatus || (result.message?.includes('tokens') ? 402 : 500);
       console.log(`❌ Pipeline error (${statusCode}): ${result.message || 'Unknown error'}`);
-      return NextResponse.json(result, { status: statusCode });
+      
+      // For token errors, include current token count
+      let remainingTokens = null;
+      if (statusCode === 402 && user_id) {
+        try {
+          const { createClient } = await import('@supabase/supabase-js');
+          const supabase = createClient(
+            process.env.SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+          );
+          
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('token_count')
+            .eq('id', user_id)
+            .single();
+            
+          remainingTokens = profile?.token_count || 0;
+        } catch (tokenError) {
+          console.error('❌ Error fetching token count for error response:', tokenError);
+        }
+      }
+      
+      return NextResponse.json({
+        ...result,
+        tokensRemaining: remainingTokens
+      }, { status: statusCode });
     }
 
     console.log('✅ Pipeline completed successfully');
     
-    // Send the full result with status
+    // Get remaining tokens after successful processing
+    let remainingTokens = null;
+    if (result.status === "SUCCESS" && user_id) {
+      try {
+        const { checkTokenAvailability } = await import('@/src/utils/npraDatabase');
+        // We need to get the actual token count, not just check availability
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabase = createClient(
+          process.env.SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('token_count')
+          .eq('id', user_id)
+          .single();
+          
+        remainingTokens = profile?.token_count || 0;
+        console.log(`📊 Remaining tokens: ${remainingTokens}`);
+      } catch (tokenError) {
+        console.error('❌ Error fetching remaining tokens:', tokenError);
+      }
+    }
+    
+    // Send the full result with status and remaining tokens
     return NextResponse.json({
       status: result.status,
       data: result.data,
-      message: result.message
+      message: result.message,
+      tokensRemaining: remainingTokens
     });
 
   } catch (error) {
