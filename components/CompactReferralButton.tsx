@@ -88,7 +88,6 @@ Perfect for healthcare professionals, students, and anyone who needs quick medic
       <style jsx>{`
         .compact-referral-button {
           width: 100%;
-          margin: 10px 0;
         }
 
         .referral-code-btn {
@@ -98,9 +97,9 @@ Perfect for healthcare professionals, students, and anyone who needs quick medic
           padding: 12px 20px;
           border-radius: 8px;
           font-size: 14px;
-          font-weight: 500;
+          font-weight: 600;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.3s ease;
           width: 100%;
           display: flex;
           align-items: center;
@@ -109,6 +108,8 @@ Perfect for healthcare professionals, students, and anyone who needs quick medic
           position: relative;
           font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
           letter-spacing: 1px;
+          margin: 10px 0;
+          box-shadow: 0 2px 8px rgba(0, 212, 255, 0.1);
         }
 
         .referral-code-btn:hover {
