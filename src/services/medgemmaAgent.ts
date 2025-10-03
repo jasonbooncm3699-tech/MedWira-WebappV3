@@ -272,52 +272,78 @@ export async function checkAndDeductToken(userId: string): Promise<TokenCheckRes
 }
 
 /**
- * Helper function for system prompt creation
- * This will be fully implemented in Phase 3 with proper medical prompts
+ * Generates the specific system prompt required for MedGemma based on the pipeline step.
+ * Enforces structured JSON output for both tool signaling and the final medical report.
+ * @param isFirstCall - True for the initial image analysis/tool signal call.
+ * @param npraResult - The result object from the internal 'public.medicines' database lookup.
+ * @param toolSchema - The expected JSON schema for the tool call (only used in the first call).
+ * @returns The structured system prompt.
  */
 export function buildMedGemmaSystemPrompt(
   isFirstCall: boolean, 
-  toolResult: any, 
+  npraResult: any, 
   toolSchema: any
 ): string {
-  if (isFirstCall) {
-    return `You are MedGemma 4B, a specialized medical AI assistant for medicine identification and analysis.
+    // REFINED FINAL OUTPUT SCHEMA (Removed npra_registration_no)
+    const finalOutputSchema = {
+        "status": "SUCCESS",
+        "data": {
+            "packaging_detected": "[String: Describe key text/features/dosage from the image and database data.]",
+            "medicine_name": "[String: Official Product Name (from DB) + Active Ingredients (MedGemma knowledge)]",
+            "purpose": "[String: Uses/indications. MedGemma knowledge augmented by product name.]",
+            "dosage_instructions": "[String: General adult/child dosage. MedGemma knowledge.]",
+            "side_effects": "[String: Common and serious side effects. MedGemma knowledge.]",
+            "allergy_warning": "[String: Key ingredient allergy warning. MedGemma knowledge.]",
+            "drug_interactions": "[String: Major known interactions. MedGemma knowledge.]",
+            "safety_notes": "[String: Warnings for pregnancy, driving, pre-existing conditions (e.g., high blood pressure). MedGemma knowledge.]",
+            "storage": "[String: General storage conditions (room temp, direct sunlight). MedGemma knowledge.]",
+            "disclaimer": "Disclaimer: This information is sourced from our internal medicine database and medical knowledge. It is for informational purposes only and is NOT medical advice. Consult a licensed doctor or pharmacist before use."
+        }
+    };
 
-**TASK**: Analyze the provided medicine image and user query to extract key information.
+    const basePrompt = `
+You are the **MedWira Product Specialist**, an expert in Malaysian medicine information powered by MedGemma 4B Monolith. Your primary directive is to provide comprehensive, accurate, and safety-focused details about medicines.
 
-**INSTRUCTIONS**:
-1. Examine the medicine image carefully
-2. Extract: medicine name, registration number, active ingredients, manufacturer
-3. If you need official NPRA (Malaysia) data, respond with this JSON format:
+**CORE DIRECTIVES - FOLLOW STRICTLY:**
+1. **Multimodality:** Analyze the provided image (if present) for visual text (OCR) like the product name, dosage, or registration number.
+2. **Database Verification:** You MUST incorporate the data from the internal \`public.medicines\` database lookup call to verify the product's official name and status.
+3. **Augmentation:** You MUST combine the official database details with your internal, extensive medical knowledge to complete the structured report (Purpose, Dosage, Side Effects, etc.).
+`;
+    
+    if (isFirstCall) {
+        // --- FIRST CALL PROMPT (Analyze image and signal tool use) ---
+        return `${basePrompt}
+**CURRENT TASK: TOOL SIGNALING**
+Analyze the image and user query. Extract the exact **Product Name** and **Registration Number** (MAL/NOT) if visible. Your ENTIRE output must be a single JSON object wrapped in \`\`\`json tags, adhering strictly to the TOOL DEFINITION schema below. Do not include any other text, greetings, or reasoning.
 
+**TOOL DEFINITION:**
+\`\`\`json
 ${JSON.stringify(toolSchema, null, 2)}
+\`\`\`
+`;
+    } else {
+        // --- SECOND CALL PROMPT (Augment with Database results and generate final report) ---
+        const dbStatus = npraResult && npraResult.id ? "PRODUCT FOUND & VERIFIED in internal database" : "PRODUCT NOT FOUND in internal database or failed lookup";
+        
+        return `${basePrompt}
+**CURRENT TASK: FINAL REPORT GENERATION**
+The internal database lookup is complete.
 
-**IMPORTANT**: Only use the tool call if you need official NPRA verification. If you can provide a complete analysis from the image alone, do so directly.
+- **Database Status:** ${dbStatus}
+- **Database Data:** \`\`\`json
+${JSON.stringify(npraResult || {id: null, message: "No result or search failed. Rely on general knowledge and image." }, null, 2)}
+\`\`\`
 
-**OUTPUT**: Provide detailed medicine information including purpose, dosage, side effects, and safety warnings.`;
-  } else {
-    return `You are MedGemma 4B, now with access to official NPRA database information.
+You must now use this database data (if available) and your general medical knowledge to generate a comprehensive, structured report that adheres **exactly** to the FINAL OUTPUT FORMAT below.
 
-**TASK**: Synthesize the image analysis with official NPRA data to provide comprehensive medicine information.
+**FINAL OUTPUT FORMAT:**
+Your ENTIRE response must be a single JSON object wrapped in \`\`\`json tags. Fill all nested fields accurately. If specific data is missing, fill the field with the most accurate information based on the visual input and your knowledge.
 
-**NPRA DATA PROVIDED**:
-${JSON.stringify(toolResult, null, 2)}
+\`\`\`json
+${JSON.stringify(finalOutputSchema, null, 2)}
+\`\`\`
 
-**INSTRUCTIONS**:
-1. Combine image analysis with official NPRA data
-2. Provide comprehensive medicine information
-3. Include safety warnings and contraindications
-4. Format response clearly with sections for different information types
-
-**OUTPUT FORMAT**: Provide detailed analysis including:
-- Medicine identification (brand + generic names)
-- Purpose and indications
-- Dosage instructions
-- Side effects and warnings
-- Drug interactions
-- Storage instructions
-- Safety notes and contraindications
-
-**IMPORTANT**: Always include appropriate medical disclaimers.`;
-  }
+Start your response with the final \`\`\`json structure now.
+`;
+    }
 }
