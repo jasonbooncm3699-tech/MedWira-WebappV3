@@ -58,7 +58,6 @@ function buildGeminiSystemPrompt(isFirstCall, databaseResult, toolSchema) {
             "allergy_warning": "[String: Contains ingredients and allergy information]",
             "drug_interactions": "[String: Interactions with drugs, food, and alcohol]",
             "safety_notes": "[String: Special warnings for kids, pregnant women, and other conditions]",
-            "cross_border_info": "[String: Similar products available in other countries]",
             "storage": "[String: Storage instructions]",
             "disclaimer": "Disclaimer: This information is sourced from our internal medicine database and reliable medical sources. It is for informational purposes only and is NOT medical advice. Consult a licensed doctor or pharmacist before use."
         }
