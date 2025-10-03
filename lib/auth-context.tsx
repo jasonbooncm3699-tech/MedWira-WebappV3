@@ -49,19 +49,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
 
-      // Get profile data via API endpoint (bypasses RLS issues)
+      // Get profile data via API endpoint with enhanced error handling
       let userData: User;
       
       try {
-        const profileResponse = await fetch(`/api/user-profile?user_id=${userId}`);
+        const profileResponse = await fetch(`/api/user-profile?user_id=${userId}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          signal: AbortSignal.timeout(10000) // 10 second timeout
+        });
         
         if (profileResponse.ok) {
           const profileApiData = await profileResponse.json();
           console.log('✅ Profile data retrieved via API:', profileApiData);
           userData = profileApiData;
         } else {
-          console.warn('⚠️ Profile API failed, using auth data only:', profileResponse.status);
-          // Fallback to auth data only
+          const errorData = await profileResponse.json().catch(() => ({}));
+          console.warn('⚠️ Profile API failed:', {
+            status: profileResponse.status,
+            error: errorData.error,
+            apiStatus: errorData.status
+          });
+          
+          // Check error type and handle accordingly
+          if (profileResponse.status === 403 || profileResponse.status === 401) {
+            console.error('❌ Authentication/Authorization error - cannot access user data');
+            // Return null to indicate authentication failure
+            return null;
+          }
+          
+          if (profileResponse.status === 404) {
+            console.warn('⚠️ User profile not found - user may not be provisioned yet');
+            // Return null to indicate profile not found
+            return null;
+          }
+          
+          // For other errors (500, network issues), create fallback with zero tokens
+          console.error('❌ Server error or network issue - creating fallback with no tokens');
           const googleData = authUser.user.user_metadata || {};
           const displayName = googleData.full_name || googleData.name || '';
           const avatarUrl = googleData.avatar_url || googleData.picture || '';
@@ -70,9 +97,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             id: userId,
             email: userEmail || authUser.user.email || '',
             name: displayName ? displayName.split(' ')[0] : '',
-            tokens: 30, // Default fallback
+            tokens: 0, // NO TOKENS when API fails - prevents stale data
             subscription_tier: 'free',
-            referral_code: '',
+            referral_code: '', // NO REFERRAL CODE when API fails
             referral_count: 0,
             referred_by: null,
             display_name: displayName,
@@ -80,8 +107,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           };
         }
       } catch (apiError) {
-        console.error('❌ Profile API error, using fallback:', apiError);
-        // Fallback to auth data only
+        console.error('❌ Profile API network error:', apiError);
+        
+        // Network error - create fallback with zero tokens
         const googleData = authUser.user.user_metadata || {};
         const displayName = googleData.full_name || googleData.name || '';
         const avatarUrl = googleData.avatar_url || googleData.picture || '';
@@ -90,9 +118,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           id: userId,
           email: userEmail || authUser.user.email || '',
           name: displayName ? displayName.split(' ')[0] : '',
-          tokens: 30, // Default fallback
+          tokens: 0, // NO TOKENS when API fails - prevents stale data
           subscription_tier: 'free',
-          referral_code: '',
+          referral_code: '', // NO REFERRAL CODE when API fails
           referral_count: 0,
           referred_by: null,
           display_name: displayName,
@@ -268,8 +296,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         setUser(userData);
       } else {
-        console.log('⚠️ No user data in database, creating fallback user');
+        console.log('⚠️ No user data in database, creating fallback user with zero tokens');
         // DEFENSIVE: Safe property access for fallback user creation
+        // CRITICAL: Set tokens to 0 to prevent stale data issues
         const fallbackUser = {
           id: userId,
           email: userEmail,
@@ -277,15 +306,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 sessionUser?.user_metadata?.name || 
                 userEmail?.split('@')[0] || 
                 'User',
-          tokens: 30, // Default tokens for new users
+          tokens: 0, // NO TOKENS when API fails - prevents stale data
           subscription_tier: 'free',
-          referral_code: '',
+          referral_code: '', // NO REFERRAL CODE when API fails
           referral_count: 0,
           referred_by: null,
           display_name: sessionUser?.user_metadata?.full_name || sessionUser?.user_metadata?.name || '',
           avatar_url: sessionUser?.user_metadata?.avatar_url || sessionUser?.user_metadata?.picture || ''
         };
-        console.log('📝 Setting fallback user:', fallbackUser);
+        console.log('📝 Setting fallback user with zero tokens:', fallbackUser);
         setUser(fallbackUser);
       }
     } catch (error) {

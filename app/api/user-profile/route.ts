@@ -15,8 +15,25 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get('user_id');
     
     if (!userId) {
+      console.log('❌ Missing user ID in request');
       return NextResponse.json(
-        { error: 'User ID is required' },
+        { 
+          error: 'User ID is required',
+          status: 'MISSING_USER_ID'
+        },
+        { status: 400 }
+      );
+    }
+    
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      console.log('❌ Invalid user ID format:', userId);
+      return NextResponse.json(
+        { 
+          error: 'Invalid user ID format',
+          status: 'INVALID_USER_ID'
+        },
         { status: 400 }
       );
     }
@@ -27,18 +44,45 @@ export async function GET(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
     
-    // Get profile data
-    const { data: profile, error } = await supabase
+    // Get profile data with better error handling
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('token_count, referral_code, referred_by, display_name, avatar_url')
       .eq('id', userId)
       .single();
       
-    if (error) {
-      console.error('❌ Error fetching profile:', error);
+    if (profileError) {
+      console.error('❌ Profile fetch error:', profileError);
+      
+      // Check if it's an RLS policy error
+      if (profileError.message?.includes('permission') || profileError.message?.includes('RLS')) {
+        return NextResponse.json(
+          { 
+            error: 'Access denied - RLS policy issue',
+            status: 'RLS_ACCESS_DENIED'
+          },
+          { status: 403 }
+        );
+      }
+      
+      // Check if profile doesn't exist
+      if (profileError.code === 'PGRST116' || profileError.message?.includes('No rows')) {
+        return NextResponse.json(
+          { 
+            error: 'User profile not found',
+            status: 'PROFILE_NOT_FOUND'
+          },
+          { status: 404 }
+        );
+      }
+      
+      // Other database errors
       return NextResponse.json(
-        { error: 'Profile not found' },
-        { status: 404 }
+        { 
+          error: 'Database error: ' + profileError.message,
+          status: 'DATABASE_ERROR'
+        },
+        { status: 500 }
       );
     }
     
@@ -48,7 +92,10 @@ export async function GET(request: NextRequest) {
     let displayName = '';
     let avatarUrl = '';
     
-    if (!authError && authUser.user) {
+    if (authError) {
+      console.warn('⚠️ Auth user fetch failed:', authError.message);
+      // Continue with profile data only
+    } else if (authUser?.user) {
       const googleData = authUser.user.user_metadata || {};
       displayName = googleData.full_name || googleData.name || '';
       avatarUrl = googleData.avatar_url || googleData.picture || '';
@@ -67,17 +114,34 @@ export async function GET(request: NextRequest) {
       subscription_tier: 'free'
     };
     
-    console.log('✅ User profile data retrieved:', {
+    console.log('✅ User profile data retrieved successfully:', {
       tokens: userProfile.tokens,
-      referral_code: userProfile.referral_code
+      referral_code: userProfile.referral_code,
+      hasDisplayName: !!userProfile.display_name,
+      hasAvatarUrl: !!userProfile.avatar_url
     });
     
     return NextResponse.json(userProfile);
     
   } catch (error) {
-    console.error('❌ User Profile API Error:', error);
+    console.error('❌ User Profile API Unexpected Error:', error);
+    
+    // Return appropriate error based on error type
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      return NextResponse.json(
+        { 
+          error: 'Network error - unable to connect to database',
+          status: 'NETWORK_ERROR'
+        },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error: ' + (error instanceof Error ? error.message : 'Unknown error'),
+        status: 'INTERNAL_ERROR'
+      },
       { status: 500 }
     );
   }
