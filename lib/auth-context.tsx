@@ -72,7 +72,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           referral_count: userData.referral_count,
           referred_by: userData.referred_by,
           display_name: userData.display_name,
-          avatar_url: userData.avatar_url
+          avatar_url: userData.avatar_url,
+          email: userData.email,
+          name: userData.name
         });
         
         return userData;

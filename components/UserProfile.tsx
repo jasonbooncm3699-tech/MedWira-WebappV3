@@ -79,7 +79,7 @@ export default function UserProfile({
           )}
         </div>
         <div className="user-info">
-          <h3 className="user-name">{user.display_name || user.name}</h3>
+          <h3 className="user-name">{user.display_name || user.name || 'User'}</h3>
           <p className="user-email">{user.email}</p>
         </div>
         <button 
