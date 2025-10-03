@@ -49,113 +49,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
 
-      // Get profile data via API endpoint with enhanced error handling
+      // Get profile data directly from Supabase (bypassing problematic API route)
       let userData: User | null = null;
       
       try {
-        const profileResponse = await fetch(`/api/user-profile?user_id=${userId}`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          signal: AbortSignal.timeout(10000) // 10 second timeout
-        });
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('token_count, referral_code, referred_by, display_name, avatar_url')
+          .eq('id', userId)
+          .single();
         
-        if (profileResponse.ok) {
-          // CRITICAL: Safe JSON parsing with error handling
-          let profileApiData;
-          try {
-            profileApiData = await profileResponse.json();
-            console.log('✅ Profile data retrieved via API:', profileApiData);
-          } catch (jsonError) {
-            console.error('❌ CRITICAL: Failed to parse API response JSON:', jsonError);
-            // Create safe fallback when JSON parsing fails
-            const googleData = authUser.user.user_metadata || {};
-            const displayName = googleData.full_name || googleData.name || '';
-            const avatarUrl = googleData.avatar_url || googleData.picture || '';
-            
-            userData = {
-              id: userId,
-              email: userEmail || authUser.user.email || '',
-              name: displayName ? displayName.split(' ')[0] : '',
-              tokens: 0, // NO TOKENS when JSON parsing fails
-              subscription_tier: 'free',
-              referral_code: '', // NO REFERRAL CODE when JSON parsing fails
-              referral_count: 0,
-              referred_by: null,
-              display_name: displayName,
-              avatar_url: avatarUrl
-            };
-          }
-          
-          // CRITICAL: Validate that the API response has required fields
-          if (profileApiData && typeof profileApiData === 'object' && 
-              typeof profileApiData.tokens === 'number' && 
-              typeof profileApiData.id === 'string') {
-            userData = profileApiData;
-          } else if (profileApiData) {
-            console.error('❌ CRITICAL: Invalid API response format:', profileApiData);
-            // Create safe fallback when API returns invalid data
-            const googleData = authUser.user.user_metadata || {};
-            const displayName = googleData.full_name || googleData.name || '';
-            const avatarUrl = googleData.avatar_url || googleData.picture || '';
-            
-            userData = {
-              id: userId,
-              email: userEmail || authUser.user.email || '',
-              name: displayName ? displayName.split(' ')[0] : '',
-              tokens: 0, // NO TOKENS when API returns invalid data
-              subscription_tier: 'free',
-              referral_code: '', // NO REFERRAL CODE when API returns invalid data
-              referral_count: 0,
-              referred_by: null,
-              display_name: displayName,
-              avatar_url: avatarUrl
-            };
-          }
-        } else {
-          const errorData = await profileResponse.json().catch(() => ({}));
-          console.warn('⚠️ Profile API failed:', {
-            status: profileResponse.status,
-            error: errorData.error,
-            apiStatus: errorData.status
-          });
-          
-          // Check error type and handle accordingly
-          if (profileResponse.status === 403 || profileResponse.status === 401) {
-            console.error('❌ Authentication/Authorization error - cannot access user data');
-            // Return null to indicate authentication failure
-            return null;
-          }
-          
-          if (profileResponse.status === 404) {
-            console.warn('⚠️ User profile not found - user may not be provisioned yet');
-            // Return null to indicate profile not found
-            return null;
-          }
-          
-          // For other errors (500, network issues), create fallback with zero tokens
-          console.error('❌ Server error or network issue - creating fallback with no tokens');
-          const googleData = authUser.user.user_metadata || {};
-          const displayName = googleData.full_name || googleData.name || '';
-          const avatarUrl = googleData.avatar_url || googleData.picture || '';
-          
+        if (profileData && !profileError) {
+          // Use profile data directly from Supabase
+          const displayName = profileData.display_name || '';
+          const avatarUrl = profileData.avatar_url || '';
           userData = {
             id: userId,
             email: userEmail || authUser.user.email || '',
             name: displayName ? displayName.split(' ')[0] : '',
-            tokens: 0, // NO TOKENS when API fails - prevents stale data
+            tokens: profileData.token_count || 0,
             subscription_tier: 'free',
-            referral_code: '', // NO REFERRAL CODE when API fails
+            referral_code: profileData.referral_code || '',
             referral_count: 0,
-            referred_by: null,
+            referred_by: profileData.referred_by,
             display_name: displayName,
             avatar_url: avatarUrl
           };
+          console.log('✅ Profile data retrieved directly from Supabase:', { tokens: userData.tokens, referral_code: userData.referral_code });
+        } else {
+          console.warn('⚠️ Profile fetch error:', profileError);
+          // Create fallback with Google data only
+          const googleData = authUser.user.user_metadata || {};
+          const displayName = googleData.full_name || googleData.name || '';
+          const avatarUrl = googleData.avatar_url || googleData.picture || '';
+          userData = { 
+            id: userId, 
+            email: userEmail || authUser.user.email || '', 
+            name: displayName ? displayName.split(' ')[0] : '', 
+            tokens: 0, 
+            subscription_tier: 'free', 
+            referral_code: '', 
+            referral_count: 0, 
+            referred_by: null, 
+            display_name: displayName, 
+            avatar_url: avatarUrl 
+          };
         }
-      } catch (apiError) {
-        console.error('❌ Profile API network error:', apiError);
+      } catch (directError) {
+        console.error('❌ Direct Supabase fetch error:', directError);
         
         // Network error - create fallback with zero tokens
         const googleData = authUser.user.user_metadata || {};

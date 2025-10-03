@@ -38,14 +38,14 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // CRITICAL: Validate environment variables before creating Supabase client
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    // Use client-side environment variables (available in Vercel)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     
-    if (!supabaseUrl || !supabaseServiceKey) {
+    if (!supabaseUrl || !supabaseAnonKey) {
       console.error('❌ CRITICAL: Missing Supabase environment variables:', {
         hasUrl: !!supabaseUrl,
-        hasServiceKey: !!supabaseServiceKey
+        hasAnonKey: !!supabaseAnonKey
       });
       return NextResponse.json(
         { 
@@ -56,10 +56,11 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Use service key to bypass RLS
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // Use anon key (client-side access)
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
     // Get profile data with better error handling
+    // Note: This will only work if RLS policies allow anon access or if user is authenticated
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('token_count, referral_code, referred_by, display_name, avatar_url')
@@ -114,25 +115,19 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Get auth user data for Google metadata
-    const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId);
+    // For now, skip auth user data fetch since we don't have admin access
+    // The profile data already contains display_name and avatar_url if available
+    let authUser = null;
+    let authError = null;
     
-    let displayName = '';
-    let avatarUrl = '';
-    
-    if (authError) {
-      console.warn('⚠️ Auth user fetch failed:', authError.message);
-      // Continue with profile data only
-    } else if (authUser?.user) {
-      const googleData = authUser.user.user_metadata || {};
-      displayName = googleData.full_name || googleData.name || '';
-      avatarUrl = googleData.avatar_url || googleData.picture || '';
-    }
+    // Use display_name and avatar_url from profile data
+    const displayName = profile.display_name || '';
+    const avatarUrl = profile.avatar_url || '';
     
     // Return combined data
     const userProfile = {
       id: userId,
-      email: authUser?.user?.email || '',
+      email: '', // Email not available without admin access
       name: displayName ? displayName.split(' ')[0] : '',
       tokens: profile.token_count,
       referral_code: profile.referral_code,
