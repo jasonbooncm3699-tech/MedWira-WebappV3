@@ -101,13 +101,14 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // CRITICAL FIX: If no database error, but profile is STILL null (e.g., user not found)
+    // CRITICAL FIX: Check if the profile was not found (data is null from Supabase .single())
+    // This handles the case where Supabase returns { data: null, error: null } for non-existent users
     if (!profile) {
-      console.error('❌ CRITICAL: Profile is null after successful query - user not found');
+      console.warn(`⚠️ Profile not found for userId: ${userId}`);
       return NextResponse.json(
         { 
-          error: 'Profile data missing after query - user not found',
-          status: 'PROFILE_NULL_AFTER_QUERY'
+          error: 'Profile not found',
+          status: 'PROFILE_NOT_FOUND'
         },
         { status: 404 }
       );
