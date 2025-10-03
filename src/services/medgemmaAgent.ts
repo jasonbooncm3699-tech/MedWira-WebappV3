@@ -78,13 +78,20 @@ export async function runMedGemmaPipeline(
   console.log(`🖼️ Image provided: ${base64Image ? 'Yes' : 'No'}`);
 
   try {
-    // 1. TOKEN DEDUCTION
-    const tokenCheck = await checkAndDeductToken(userId);
-    if (!tokenCheck.success) {
-      console.log(`❌ Token check failed: ${tokenCheck.message}`);
-      return { status: "ERROR", message: tokenCheck.message };
+    // 1. TOKEN DEDUCTION (NOW IMPLEMENTED)
+    if (!userId) {
+      // Should not happen if authenticated, but a safety check
+      console.log(`❌ User ID missing for token check`);
+      return { status: "ERROR", message: "User ID missing for token check." };
     }
-    console.log(`✅ Token deducted. Remaining: ${tokenCheck.remainingTokens}`);
+    
+    // Implement the token check before any costly LLM calls
+    console.log(`🔍 Checking and deducting token for user: ${userId}`);
+    if (!await decrementToken(userId)) { 
+      console.log(`❌ Token deduction failed for user: ${userId}`);
+      return { status: "ERROR", message: "Out of tokens. Please renew your subscription or earn more tokens." }; 
+    }
+    console.log(`✅ Token successfully deducted for user: ${userId}`);
 
     // 2. FIRST LLM CALL: IMAGE ANALYSIS & TOOL SIGNAL
     console.log(`🔍 Step 1: MedGemma Image Analysis & Tool Signal`);
