@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { runMedGemmaPipeline } from '@/src/services/medgemmaAgent';
+import { runGeminiPipeline } from '@/src/services/geminiAgent';
 
 export async function POST(request: NextRequest) {
   console.log('🔍 MedGemma Medicine Analysis API Request received');
@@ -40,10 +40,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`🚀 Starting MedGemma pipeline for user: ${user_id}`);
+    console.log(`🚀 Starting Gemini 1.5 Pro pipeline for user: ${user_id}`);
     
-    // Call the final, cost-optimized pipeline
-    const result = await runMedGemmaPipeline(image_data, text_query, user_id);
+    // Call the Gemini 1.5 Pro pipeline
+    const result = await runGeminiPipeline(image_data, text_query, user_id);
     
     console.log(`📊 Pipeline result status: ${result.status}`);
     

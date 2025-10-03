@@ -11,15 +11,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:medgemma": "npx tsx src/services/test-medgemma.ts",
+    "test:gemini": "npx tsx src/services/test-medgemma.ts",
     "test:npra": "npx tsx -e \"import('./src/utils/npraDatabase.js').then(m => m.getNpraStats().then(console.log))\"",
     "test:pipeline": "node src/scripts/test-medgemma-pipeline.js",
-    "verify:medgemma": "node src/scripts/verify-medgemma-setup.js",
+    "verify:gemini": "node src/scripts/verify-medgemma-setup.js",
     "server": "node src/server.js",
     "server:dev": "nodemon src/server.js"
   },
   "dependencies": {
-    "@google-cloud/vertexai": "^1.10.0",
+    "@google/generative-ai": "^0.21.0",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.45.4",

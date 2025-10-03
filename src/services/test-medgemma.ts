@@ -5,7 +5,7 @@
  * before full integration with the Next.js application.
  */
 
-import { runMedGemmaPipeline, checkAndDeductToken } from './medgemmaAgent';
+import { runGeminiPipeline } from './geminiAgent';
 import { npraProductLookup, enhancedNpraLookup, getNpraStats, decrementToken } from '../utils/npraDatabase';
 
 /**
@@ -100,14 +100,14 @@ export async function testMedGemmaPipeline(): Promise<void> {
     // Mock base64 image (small test image)
     const mockImageBase64 = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=';
     
-    console.log('🚀 Running MedGemma pipeline test...');
+    console.log('🚀 Running Gemini 1.5 Pro pipeline test...');
     console.log(`📝 Query: "${testQuery}"`);
     console.log(`👤 User ID: ${testUserId}`);
     
     // Run the pipeline
-    const result = await runMedGemmaPipeline(mockImageBase64, testQuery, testUserId);
+    const result = await runGeminiPipeline(mockImageBase64, testQuery, testUserId);
     
-    console.log('📊 MedGemma Pipeline Result:', {
+    console.log('📊 Gemini Pipeline Result:', {
       status: result.status,
       hasData: !!result.data,
       dataKeys: result.data ? Object.keys(result.data) : [],
