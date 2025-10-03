@@ -5,12 +5,22 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
-// Environment variables for Supabase connection
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_KEY;
+// Lazy initialization of Supabase client to avoid build-time errors
+let supabaseClient = null;
 
-// Initialize the Supabase client
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+function getSupabaseClient() {
+  if (!supabaseClient) {
+    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+      throw new Error('Supabase environment variables are not configured');
+    }
+    
+    supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+  return supabaseClient;
+}
 
 /**
  * Searches the Supabase 'public.medicines' table for official product information.
@@ -22,7 +32,8 @@ const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 async function npraProductLookup(productName, regNumber = null) {
   console.log(`🔍 NPRA Lookup: Searching for "${productName}"${regNumber ? ` with reg_no: ${regNumber}` : ''}`);
   
-  let query = supabaseClient
+  const supabase = getSupabaseClient();
+  let query = supabase
     .from('medicines') // Targeting the specific table: public.medicines
     .select('id, reg_no, npra_product, description, status, holder, text') // Select all relevant columns from your table
     .ilike('npra_product', `%${productName}%`); // Search the NPRA product name column
@@ -69,7 +80,8 @@ async function enhancedNpraLookup(productName, regNumber = null, activeIngredien
   
   // Strategy 1: Exact registration number match (highest priority)
   if (regNumber) {
-    const regMatch = await supabaseClient
+    const supabase = getSupabaseClient();
+    const regMatch = await supabase
       .from('medicines')
       .select('*')
       .eq('reg_no', regNumber)
@@ -83,7 +95,7 @@ async function enhancedNpraLookup(productName, regNumber = null, activeIngredien
   
   // Strategy 2: Product name match with active ingredient
   if (activeIngredient) {
-    const ingredientMatch = await supabaseClient
+    const ingredientMatch = await supabase
       .from('medicines')
       .select('*')
       .ilike('npra_product', `%${productName}%`)
@@ -111,7 +123,8 @@ async function searchNpraMedicines(partialName, limit = 10) {
   console.log(`🔍 NPRA Search Suggestions: "${partialName}" (limit: ${limit})`);
   
   try {
-    const { data, error } = await supabaseClient
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
       .from('medicines')
       .select('id, reg_no, npra_product, status')
       .ilike('npra_product', `%${partialName}%`)
@@ -136,7 +149,8 @@ async function searchNpraMedicines(partialName, limit = 10) {
  */
 async function getNpraStats() {
   try {
-    const { count, error } = await supabaseClient
+    const supabase = getSupabaseClient();
+    const { count, error } = await supabase
       .from('medicines')
       .select('*', { count: 'exact', head: true });
     
@@ -161,7 +175,8 @@ async function decrementToken(userId) {
     console.log(`🔍 Checking and decrementing tokens for user: ${userId}`);
     
     // 1. Check current tokens
-    const { data: profile, error: selectError } = await supabaseClient
+    const supabase = getSupabaseClient();
+    const { data: profile, error: selectError } = await supabase
         .from('profiles')
         .select('token_count')
         .eq('id', userId)
@@ -181,7 +196,7 @@ async function decrementToken(userId) {
     // 2. Decrement tokens
     const newCount = profile.token_count - 1;
 
-    const { error: updateError } = await supabaseClient
+    const { error: updateError } = await supabase
         .from('profiles')
         .update({ token_count: newCount, updated_at: new Date().toISOString() })
         .eq('id', userId);

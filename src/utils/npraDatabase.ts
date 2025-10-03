@@ -6,12 +6,22 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Environment variables for Supabase connection
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Lazy initialization of Supabase client to avoid build-time errors
+let supabaseClient: any = null;
 
-// Initialize the Supabase client
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+function getSupabaseClient() {
+  if (!supabaseClient) {
+    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+      throw new Error('Supabase environment variables are not configured');
+    }
+    
+    supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+  return supabaseClient;
+}
 
 // Type definitions
 export interface NPRAProduct {
@@ -43,7 +53,8 @@ export async function npraProductLookup(
 ): Promise<NPRAProduct | null> {
   console.log(`🔍 NPRA Lookup: Searching for "${productName}"${regNumber ? ` with reg_no: ${regNumber}` : ''}`);
   
-  let query = supabaseClient
+  const supabase = getSupabaseClient();
+  let query = supabase
     .from('medicines') // Targeting the specific table: public.medicines
     .select('id, reg_no, npra_product, description, status, holder, text') // Select all relevant columns
     .ilike('npra_product', `%${productName}%`); // Search the NPRA product name column
@@ -95,7 +106,8 @@ export async function enhancedNpraLookup(
   // Strategy 1: Exact registration number match (highest priority)
   if (regNumber) {
     try {
-      const { data: regMatch, error } = await supabaseClient
+      const supabase = getSupabaseClient();
+      const { data: regMatch, error } = await supabase
         .from('medicines')
         .select('*')
         .eq('reg_no', regNumber)
@@ -113,7 +125,8 @@ export async function enhancedNpraLookup(
   // Strategy 2: Product name match with active ingredient
   if (activeIngredient) {
     try {
-      const { data: ingredientMatch, error } = await supabaseClient
+      const supabase = getSupabaseClient();
+      const { data: ingredientMatch, error } = await supabase
         .from('medicines')
         .select('*')
         .ilike('npra_product', `%${productName}%`)
@@ -147,7 +160,8 @@ export async function searchNpraMedicines(
   console.log(`🔍 NPRA Search Suggestions: "${partialName}" (limit: ${limit})`);
   
   try {
-    const { data, error } = await supabaseClient
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
       .from('medicines')
       .select('id, reg_no, npra_product, status')
       .ilike('npra_product', `%${partialName}%`)
@@ -172,7 +186,8 @@ export async function searchNpraMedicines(
  */
 export async function getNpraStats(): Promise<NPRAStats> {
   try {
-    const { count, error } = await supabaseClient
+    const supabase = getSupabaseClient();
+    const { count, error } = await supabase
       .from('medicines')
       .select('*', { count: 'exact', head: true });
     
@@ -237,7 +252,8 @@ export async function decrementToken(userId: string): Promise<boolean> {
     console.log(`🔍 Checking and decrementing tokens for user: ${userId}`);
     
     // 1. Check current tokens
-    const { data: profile, error: selectError } = await supabaseClient
+    const supabase = getSupabaseClient();
+    const { data: profile, error: selectError } = await supabase
         .from('profiles')
         .select('token_count')
         .eq('id', userId)
@@ -257,7 +273,7 @@ export async function decrementToken(userId: string): Promise<boolean> {
     // 2. Decrement tokens
     const newCount = profile.token_count - 1;
 
-    const { error: updateError } = await supabaseClient
+    const { error: updateError } = await supabase
         .from('profiles')
         .update({ token_count: newCount, updated_at: new Date().toISOString() })
         .eq('id', userId);

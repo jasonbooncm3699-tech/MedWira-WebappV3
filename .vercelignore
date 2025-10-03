@@ -1,7 +1,8 @@
-# Supabase Edge Functions - handled separately
+# Supabase Edge Functions - deployed separately via Supabase CLI
 supabase/
 supabase/**
-**/supabase/**
+supabase_edge_functions/
+supabase_edge_functions/**
 
 # Database files
 database/
@@ -30,3 +31,6 @@ src/services/test-*.js
 # Test files
 **/*.test.*
 **/*.spec.*
+
+# Node modules (should be installed by Vercel)
+node_modules/
