@@ -11,7 +11,7 @@ interface User {
   subscription_tier: string;
   referral_code?: string;
   referral_count?: number;
-  referred_by?: string;
+  referred_by?: string | null;
   display_name?: string;
   avatar_url?: string;
 }
@@ -192,7 +192,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             subscription_tier: 'free', // Default subscription tier
             referral_code: undefined, // Will be fetched from database
             referral_count: 0,
-            referred_by: undefined
+            referred_by: null
           };
           
           setUser(cookieUser);
