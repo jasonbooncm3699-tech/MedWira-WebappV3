@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
 
   // Fetch user data from Supabase profiles table
-  const fetchUserData = useCallback(async (userId: string): Promise<User | null> => {
+  const fetchUserData = useCallback(async (userId: string, userEmail?: string): Promise<User | null> => {
     try {
       console.log('📡 Fetching user data from profiles table...');
       const { data, error } = await supabase
@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Map profiles data to User interface
         const userData: User = {
           id: data.id,
-          email: '', // Will be fetched from auth.users if needed
+          email: userEmail || '', // Use provided email or empty string
           name: data.display_name || '', // Use display_name from profiles table
           tokens: data.token_count || 0,
           subscription_tier: 'free', // Default tier
@@ -228,7 +228,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('✅ Valid session found for:', userEmail);
       
       // Fetch user data from users table
-      const userData = await fetchUserData(userId);
+      const userData = await fetchUserData(userId, userEmail);
       if (userData) {
         console.log('✅ User data loaded from database:', {
           name: userData.name,
@@ -279,7 +279,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       console.log('🔄 Refreshing user data...');
-      const userData = await fetchUserData(user.id);
+      const userData = await fetchUserData(user.id, user.email);
       if (userData) {
         // Combine with existing user data to preserve email and name
         const completeUserData: User = {
@@ -344,7 +344,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       // Fetch user data from user_profiles table
-      userData = await fetchUserData(userId);
+      userData = await fetchUserData(userId, userEmail);
       
       if (!userData) {
         retryCount++;
@@ -393,7 +393,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           // Try to fetch the newly created data
           await new Promise(resolve => setTimeout(resolve, 1000));
-          const newUserData = await fetchUserData(userId);
+          const newUserData = await fetchUserData(userId, userEmail);
           
           if (newUserData) {
             const completeUserData: User = {
@@ -573,7 +573,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (userId && typeof userId === 'string' && 
               userEmail && typeof userEmail === 'string' && 
               userEmail.includes('@')) {
-            const userData = await fetchUserData(userId);
+            const userData = await fetchUserData(userId, userEmail);
             if (userData) {
               setUser(userData);
             }
@@ -604,7 +604,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (userId && typeof userId === 'string' && 
                 userEmail && typeof userEmail === 'string' && 
                 userEmail.includes('@')) {
-              const userData = await fetchUserData(userId);
+              const userData = await fetchUserData(userId, userEmail);
               if (userData) {
                 setUser(userData);
                 console.log('✅ User data loaded from INITIAL_SESSION');

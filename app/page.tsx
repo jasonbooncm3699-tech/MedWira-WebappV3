@@ -710,10 +710,10 @@ export default function Home() {
           <div className="nav-footer">
             <div className="user-info">
               <div className="user-avatar">
-                {user?.avatar_url ? (
+                {user?.avatar_url && user.avatar_url.trim() !== '' ? (
                   <Image 
                     src={user.avatar_url} 
-                    alt={user.display_name || user.name} 
+                    alt={user.display_name || user.name || user.email} 
                     className="nav-avatar-image"
                     width={32}
                     height={32}
@@ -722,7 +722,7 @@ export default function Home() {
                   <div 
                     className="nav-avatar-initials"
                     style={{ 
-                      backgroundColor: generateAvatarColor(user?.display_name || user?.name),
+                      backgroundColor: generateAvatarColor(user?.display_name || user?.name || user?.email),
                       color: '#ffffff',
                       fontSize: '11px',
                       fontWeight: '600',
@@ -736,7 +736,7 @@ export default function Home() {
                       minHeight: '32px'
                     }}
                   >
-                    {getInitials(user?.display_name || user?.name)}
+                    {getInitials(user?.display_name || user?.name || user?.email)}
                   </div>
                 )}
               </div>
