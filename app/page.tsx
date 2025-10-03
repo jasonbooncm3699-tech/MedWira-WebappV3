@@ -87,12 +87,25 @@ export default function Home() {
     }
   ]);
 
-  // Function to check authentication before allowing actions
+  // Function to check authentication and tokens before allowing actions
   const checkAuthentication = (): boolean => {
     if (!user) {
       setShowRegistrationModal(true);
       return false;
     }
+    
+    // Check if user has tokens available
+    if (user.tokens <= 0) {
+      const errorMessage = {
+        id: Date.now().toString(),
+        type: 'ai' as const,
+        content: '⚠️ **Insufficient Tokens**\n\nYou have no tokens remaining. Please earn more tokens through referrals or contact support.',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      return false;
+    }
+    
     return true;
   };
 
@@ -100,7 +113,10 @@ export default function Home() {
   const handleTextSubmit = async () => {
     if (!inputText.trim()) return;
     
-    // Check authentication before proceeding
+    // Refresh user data to get latest token count before proceeding
+    await refreshUserData();
+    
+    // Check authentication and tokens before proceeding
     if (!checkAuthentication()) {
       return;
     }
@@ -130,13 +146,9 @@ export default function Home() {
         })
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to analyze medicine');
-      }
-      
       const result = await response.json();
       
-      if (result.status === 'SUCCESS' || result.data) {
+      if (response.status === 200 && result.status === 'SUCCESS') {
         // Add AI response
         const aiMessage = {
           id: (Date.now() + 1).toString(),
@@ -165,8 +177,30 @@ export default function Home() {
           // Also refresh user data to get latest tokens and referral info
           await refreshUserData();
         }
+      } else if (response.status === 402) {
+        // Handle insufficient tokens error
+        const errorMessage = {
+          id: (Date.now() + 1).toString(),
+          type: 'ai' as const,
+          content: `⚠️ **Insufficient Tokens**\n\n${result.message || 'You have no tokens remaining. Please earn more tokens through referrals or contact support.'}`,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+        
+        // Update tokens if provided
+        if (result.tokensRemaining !== undefined) {
+          setUserTokens(result.tokensRemaining);
+          await refreshUserData();
+        }
       } else {
-        throw new Error(result.error || 'Analysis failed');
+        // Handle other errors
+        const errorMessage = {
+          id: (Date.now() + 1).toString(),
+          type: 'ai' as const,
+          content: `**Error**\n\n${result.message || result.error || 'Analysis failed. Please try again.'}`,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, errorMessage]);
       }
     } catch (error) {
       console.error('Error analyzing medicine:', error);
@@ -373,6 +407,9 @@ export default function Home() {
 
   // Enhanced AI Image Analysis with Real-Time Status Display
   const analyzeMedicineImage = async (imageBase64: string) => {
+    // Refresh user data to get latest token count before proceeding
+    await refreshUserData();
+    
     if (!checkAuthentication()) return;
 
     setIsAnalyzing(true);
