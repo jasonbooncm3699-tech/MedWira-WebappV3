@@ -11,7 +11,8 @@ let supabaseClient = null;
 function getSupabaseClient() {
   if (!supabaseClient) {
     const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    // Use service role key for server-side operations to bypass RLS policies
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
     
     if (!SUPABASE_URL || !SUPABASE_KEY) {
       throw new Error('Supabase environment variables are not configured');
@@ -198,7 +199,7 @@ async function decrementToken(userId) {
 
     const { error: updateError } = await supabase
         .from('profiles')
-        .update({ token_count: newCount, updated_at: new Date().toISOString() })
+        .update({ token_count: newCount })
         .eq('id', userId);
 
     if (updateError) {
