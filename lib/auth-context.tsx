@@ -344,7 +344,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       console.log('🔄 Refreshing user data...');
-      const userData = await fetchUserData(user.id, user.email);
+      
+      // CRITICAL: Wrap fetchUserData in try-catch to prevent app crashes
+      let userData = null;
+      try {
+        userData = await fetchUserData(user.id, user.email);
+      } catch (fetchError) {
+        console.error('❌ CRITICAL: fetchUserData threw unhandled exception:', fetchError);
+        // Set safe fallback user state to prevent app crash
+        const safeFallbackUser: User = {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          tokens: 0, // NO TOKENS when fetch fails - prevents stale data
+          subscription_tier: 'free',
+          referral_code: '', // NO REFERRAL CODE when fetch fails
+          referral_count: 0,
+          referred_by: null,
+          display_name: user.display_name || '',
+          avatar_url: user.avatar_url || ''
+        };
+        console.log('🛡️ Setting safe fallback user to prevent app crash:', safeFallbackUser);
+        setUser(safeFallbackUser);
+        return; // Exit early to prevent further processing
+      }
+
       if (userData) {
         // Combine with existing user data to preserve email and name
         const completeUserData: User = {
@@ -353,7 +377,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name: user.name    // Preserve existing name
         };
         
-        console.log('✅ User data refreshed:', {
+        console.log('✅ User data refreshed successfully:', {
           name: completeUserData.name,
           tokens: completeUserData.tokens,
           referral_code: completeUserData.referral_code,
@@ -380,15 +404,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setTimeout(() => refreshUserData(), 500);
           } else {
             console.error('❌ Failed to provision user during refresh:', provisionError);
+            // Set safe fallback when provision fails
+            const safeFallbackUser: User = {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              tokens: 0, // NO TOKENS when provision fails
+              subscription_tier: 'free',
+              referral_code: '', // NO REFERRAL CODE when provision fails
+              referral_count: 0,
+              referred_by: null,
+              display_name: user.display_name || '',
+              avatar_url: user.avatar_url || ''
+            };
+            setUser(safeFallbackUser);
           }
         } catch (provisionError) {
           console.error('❌ Error provisioning user during refresh:', provisionError);
+          // Set safe fallback when provision throws exception
+          const safeFallbackUser: User = {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            tokens: 0, // NO TOKENS when provision fails
+            subscription_tier: 'free',
+            referral_code: '', // NO REFERRAL CODE when provision fails
+            referral_count: 0,
+            referred_by: null,
+            display_name: user.display_name || '',
+            avatar_url: user.avatar_url || ''
+          };
+          setUser(safeFallbackUser);
         }
       }
     } catch (error) {
-      console.error('❌ Error refreshing user data:', error);
+      console.error('❌ CRITICAL: Unexpected error in refreshUserData:', error);
+      // CRITICAL: Set safe fallback to prevent app crash
+      if (user?.id) {
+        const safeFallbackUser: User = {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          tokens: 0, // NO TOKENS when unexpected error occurs
+          subscription_tier: 'free',
+          referral_code: '', // NO REFERRAL CODE when unexpected error occurs
+          referral_count: 0,
+          referred_by: null,
+          display_name: user.display_name || '',
+          avatar_url: user.avatar_url || ''
+        };
+        console.log('🛡️ Setting safe fallback user due to unexpected error:', safeFallbackUser);
+        setUser(safeFallbackUser);
+      }
     }
-  }, [user?.id, user?.email, user?.name, fetchUserData, supabase]);
+  }, [user?.id, user?.email, user?.name, user?.display_name, user?.avatar_url, fetchUserData, supabase]);
 
   // CRITICAL: Force fetch user profile data from user_profiles table
   const forceFetchUserProfile = useCallback(async (userId: string, userEmail: string, userName: string) => {
@@ -398,99 +467,129 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let retryCount = 0;
     const maxRetries = 10; // Increased retries for critical data fetch
     
-    while (!userData && retryCount < maxRetries) {
-      // Start with immediate fetch, then wait progressively longer
-      if (retryCount > 0) {
-        const waitTime = 300 + (retryCount * 200); // 0.3s, 0.5s, 0.7s, 0.9s, etc.
-        console.log(`⏳ Force fetching user profile (attempt ${retryCount + 1}/${maxRetries}) - waiting ${waitTime}ms...`);
-        await new Promise(resolve => setTimeout(resolve, waitTime));
-      } else {
-        console.log(`⏳ Force fetching user profile (attempt ${retryCount + 1}/${maxRetries}) - immediate fetch...`);
-      }
-      
-      // Fetch user data from user_profiles table
-      userData = await fetchUserData(userId, userEmail);
-      
-      if (!userData) {
-        retryCount++;
-        console.log(`⚠️ User profile not found, retrying... (${retryCount}/${maxRetries})`);
-      } else {
-        console.log('✅ User profile found after force fetch:', {
-          tokens: userData.tokens,
-          referral_code: userData.referral_code,
-          referral_count: userData.referral_count
-        });
-      }
-    }
-    
-    if (userData) {
-      // Combine user_profiles data with auth user data
-      const completeUserData: User = {
-        ...userData,
-        email: userEmail,
-        name: userName
-      };
-      
-      console.log('🎉 Force fetch successful - setting user data:', {
-        name: completeUserData.name,
-        email: completeUserData.email,
-        tokens: completeUserData.tokens,
-        referral_code: completeUserData.referral_code
-      });
-      
-      setUser(completeUserData);
-      return completeUserData;
-    } else {
-      console.error('❌ Force fetch failed after all retries - attempting manual provisioning...');
-      
-      // Last resort: try manual provisioning
-      try {
-        const { data: provisionResult, error: provisionError } = await supabase
-          .rpc('provision_user_profile_manually', {
-            user_id: userId,
-            user_email: userEmail,
-            user_name: userName,
-            referral_code_param: null
-          });
-        
-        if (provisionResult && provisionResult.success) {
-          console.log('✅ Manual provisioning successful during force fetch:', provisionResult);
-          
-          // Try to fetch the newly created data
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          const newUserData = await fetchUserData(userId, userEmail);
-          
-          if (newUserData) {
-            const completeUserData: User = {
-              ...newUserData,
-              email: userEmail,
-              name: userName
-            };
-            setUser(completeUserData);
-            return completeUserData;
-          }
+    try {
+      while (!userData && retryCount < maxRetries) {
+        // Start with immediate fetch, then wait progressively longer
+        if (retryCount > 0) {
+          const waitTime = 300 + (retryCount * 200); // 0.3s, 0.5s, 0.7s, 0.9s, etc.
+          console.log(`⏳ Force fetching user profile (attempt ${retryCount + 1}/${maxRetries}) - waiting ${waitTime}ms...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
         } else {
-          console.error('❌ Manual provisioning failed during force fetch:', provisionError);
+          console.log(`⏳ Force fetching user profile (attempt ${retryCount + 1}/${maxRetries}) - immediate fetch...`);
         }
-      } catch (provisionError) {
-        console.error('❌ Error during manual provisioning:', provisionError);
+        
+        // CRITICAL: Wrap fetchUserData in try-catch to prevent crashes
+        try {
+          userData = await fetchUserData(userId, userEmail);
+        } catch (fetchError) {
+          console.error(`❌ CRITICAL: fetchUserData threw exception on attempt ${retryCount + 1}:`, fetchError);
+          retryCount++;
+          continue; // Continue to next retry attempt
+        }
+        
+        if (!userData) {
+          retryCount++;
+          console.log(`⚠️ User profile not found, retrying... (${retryCount}/${maxRetries})`);
+        } else {
+          console.log('✅ User profile found after force fetch:', {
+            tokens: userData.tokens,
+            referral_code: userData.referral_code,
+            referral_count: userData.referral_count
+          });
+        }
       }
       
-      // Ultimate fallback
-      const fallbackUser: User = {
+      if (userData) {
+        // Combine user_profiles data with auth user data
+        const completeUserData: User = {
+          ...userData,
+          email: userEmail,
+          name: userName
+        };
+        
+        console.log('🎉 Force fetch successful - setting user data:', {
+          name: completeUserData.name,
+          email: completeUserData.email,
+          tokens: completeUserData.tokens,
+          referral_code: completeUserData.referral_code
+        });
+        
+        setUser(completeUserData);
+        return completeUserData;
+      } else {
+        console.error('❌ Force fetch failed after all retries - attempting manual provisioning...');
+        
+        // Last resort: try manual provisioning
+        try {
+          const { data: provisionResult, error: provisionError } = await supabase
+            .rpc('provision_user_profile_manually', {
+              user_id: userId,
+              user_email: userEmail,
+              user_name: userName,
+              referral_code_param: null
+            });
+          
+          if (provisionResult && provisionResult.success) {
+            console.log('✅ Manual provisioning successful during force fetch:', provisionResult);
+            
+            // Try to fetch the newly created data
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            const newUserData = await fetchUserData(userId, userEmail);
+            
+            if (newUserData) {
+              const completeUserData: User = {
+                ...newUserData,
+                email: userEmail,
+                name: userName
+              };
+              setUser(completeUserData);
+              return completeUserData;
+            }
+          } else {
+            console.error('❌ Manual provisioning failed during force fetch:', provisionError);
+          }
+        } catch (provisionError) {
+          console.error('❌ Error during manual provisioning:', provisionError);
+        }
+        
+        // CRITICAL: Ultimate fallback with ZERO tokens to prevent stale data
+        const fallbackUser: User = {
+          id: userId,
+          email: userEmail,
+          name: userName,
+          tokens: 0, // NO TOKENS when all attempts fail - prevents stale data
+          subscription_tier: 'free',
+          referral_code: '', // NO REFERRAL CODE when all attempts fail
+          referral_count: 0,
+          referred_by: null,
+          display_name: userName,
+          avatar_url: ''
+        };
+        
+        console.log('🆘 Using safe fallback user data with zero tokens:', fallbackUser);
+        setUser(fallbackUser);
+        return fallbackUser;
+      }
+    } catch (error) {
+      console.error('❌ CRITICAL: Unexpected error in forceFetchUserProfile:', error);
+      
+      // CRITICAL: Emergency fallback to prevent app crash
+      const emergencyFallbackUser: User = {
         id: userId,
         email: userEmail,
         name: userName,
-        tokens: 30, // Default to 30 tokens
+        tokens: 0, // NO TOKENS when unexpected error occurs
         subscription_tier: 'free',
-        referral_code: undefined,
+        referral_code: '', // NO REFERRAL CODE when unexpected error occurs
         referral_count: 0,
-        referred_by: undefined
+        referred_by: null,
+        display_name: userName,
+        avatar_url: ''
       };
       
-      console.log('🆘 Using fallback user data:', fallbackUser);
-      setUser(fallbackUser);
-      return fallbackUser;
+      console.log('🛡️ Setting emergency fallback user to prevent app crash:', emergencyFallbackUser);
+      setUser(emergencyFallbackUser);
+      return emergencyFallbackUser;
     }
   }, [fetchUserData, supabase]);
 
