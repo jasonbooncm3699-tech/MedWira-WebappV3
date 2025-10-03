@@ -36,82 +36,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // CRITICAL: Create Supabase client instance for cookie-based authentication
   const supabase = createClient();
 
-  // Fetch user data from Supabase with Google OAuth metadata
+  // Fetch user data directly from auth.users (Google data) + profiles (tokens/referrals)
   const fetchUserData = useCallback(async (userId: string, userEmail?: string): Promise<User | null> => {
     try {
-      console.log('📡 Fetching user data with Google OAuth metadata...');
+      console.log('📡 Fetching user data directly from auth.users + profiles...');
       
-      // Try the new function first (combines auth.users + profiles)
-      const { data: completeData, error: completeError } = await supabase
-        .rpc('get_user_complete_profile', { user_id: userId });
-
-      if (!completeError && completeData && completeData.length > 0) {
-        const user = completeData[0];
-        const userData: User = {
-          id: user.id,
-          email: user.email || userEmail || '',
-          name: user.user_name || user.display_name || '',
-          tokens: user.token_count || 0,
-          subscription_tier: 'free',
-          referral_code: user.referral_code,
-          referral_count: 0, // Default value since column doesn't exist
-          referred_by: user.referred_by,
-          display_name: user.display_name || user.user_name || '',
-          avatar_url: user.profile_picture_url || user.avatar_url
-        };
-        
-        console.log('✅ User data loaded with Google metadata:', {
-          tokens: userData.tokens,
-          referral_code: userData.referral_code,
-          display_name: userData.display_name,
-          avatar_url: userData.avatar_url,
-          email: userData.email,
-          name: userData.name
-        });
-        
-        return userData;
-      }
-
-      // Fallback to old method if function doesn't exist yet
-      console.log('📡 Fallback: Fetching from profiles table only...');
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('❌ Error fetching user data:', error);
+      // Get Google OAuth data from auth.users
+      const { data: authUser, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !authUser.user) {
+        console.error('❌ Error fetching auth user:', authError);
         return null;
       }
 
-      if (data) {
-        const userData: User = {
-          id: data.id,
-          email: userEmail || '',
-          name: data.display_name || '',
-          tokens: data.token_count || 0,
-          subscription_tier: 'free',
-          referral_code: data.referral_code,
-          referral_count: data.referral_count || 0,
-          referred_by: data.referred_by,
-          display_name: data.display_name,
-          avatar_url: data.avatar_url
-        };
-        
-        console.log('✅ User data loaded from profiles (fallback):', {
-          tokens: userData.tokens,
-          referral_code: userData.referral_code,
-          display_name: userData.display_name,
-          avatar_url: userData.avatar_url,
-          email: userData.email,
-          name: userData.name
-        });
-        
-        return userData;
+      // Get tokens and referral data from profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('token_count, referral_code, referred_by')
+        .eq('id', userId)
+        .single();
+
+      if (profileError) {
+        console.warn('⚠️ Profile data not found, using defaults:', profileError);
       }
 
-      return null;
+      // Extract Google data from auth user metadata
+      const googleData = authUser.user.user_metadata || {};
+      const displayName = googleData.full_name || googleData.name || '';
+      const avatarUrl = googleData.avatar_url || googleData.picture || '';
+      
+      // Create user data combining both sources
+      const userData: User = {
+        id: userId,
+        email: userEmail || authUser.user.email || '',
+        name: displayName ? displayName.split(' ')[0] : '', // Just first name (e.g., "Jason")
+        tokens: profileData?.token_count || 30,
+        subscription_tier: 'free',
+        referral_code: profileData?.referral_code || '',
+        referral_count: 0, // Default value
+        referred_by: profileData?.referred_by || null,
+        display_name: displayName, // Full name (e.g., "Jason Boon")
+        avatar_url: avatarUrl // Google profile picture
+      };
+      
+      console.log('✅ User data loaded directly from auth.users + profiles:', {
+        tokens: userData.tokens,
+        referral_code: userData.referral_code,
+        display_name: userData.display_name,
+        name: userData.name,
+        avatar_url: userData.avatar_url,
+        email: userData.email
+      });
+      
+      return userData;
     } catch (error) {
       console.error('❌ Exception fetching user data:', error);
       return null;

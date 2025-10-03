@@ -736,12 +736,12 @@ export default function Home() {
                       minHeight: '32px'
                     }}
                   >
-                    {getInitials(user?.display_name || user?.name || user?.email)}
+                    {getInitials(user?.name || user?.display_name || user?.email)}
                   </div>
                 )}
               </div>
               <div className="user-details">
-                <span className="username">{user ? (user?.display_name || user?.name || 'User') : 'Guest'}</span>
+                <span className="username">{user ? (user?.name || user?.display_name || 'User') : 'Guest'}</span>
                 <span className="tokens">{user ? `${user?.tokens || 0} tokens` : '0 tokens'}</span>
                 {user && (
                   <span className="tier">{user?.subscription_tier || 'free'}</span>

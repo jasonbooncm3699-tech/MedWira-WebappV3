@@ -74,12 +74,12 @@ export default function UserProfile({
                 minHeight: '32px'
               }}
             >
-              {getInitials(user.display_name || user.name || user.email)}
+              {getInitials(user.name || user.display_name || user.email)}
             </div>
           )}
         </div>
         <div className="user-info">
-          <h3 className="user-name">{user.display_name || user.name || 'User'}</h3>
+          <h3 className="user-name">{user.name || user.display_name || 'User'}</h3>
           <p className="user-email">{user.email}</p>
         </div>
         <button 
