@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
-// DEPRECATED: Gemini integration being replaced with MedGemma 4B
+// UPDATED: Using Gemini 1.5 Pro for medicine analysis
 import { geminiAnalyzer } from '@/lib/gemini-service';
 import { DatabaseService } from '@/lib/supabase';
 

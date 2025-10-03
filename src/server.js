@@ -1,7 +1,7 @@
 /**
- * Express Server for MedGemma 4B API
+ * Express Server for Gemini 1.5 Pro API
  * 
- * This is a standalone Express server that can be used to run the MedGemma API
+ * This is a standalone Express server that can be used to run the Gemini API
  * independently of the Next.js application.
  */
 
@@ -66,7 +66,7 @@ app.use((req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 MedGemma 4B API Server running on port ${PORT}`);
+  console.log(`🚀 Gemini 1.5 Pro API Server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
   console.log(`🔍 Medicine analysis: POST http://localhost:${PORT}/api/analyze-medicine`);
   console.log(`💰 Token status: GET http://localhost:${PORT}/api/token-status/:userId`);

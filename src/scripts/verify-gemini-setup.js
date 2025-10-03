@@ -1,19 +1,19 @@
 /**
- * MedGemma 4B Setup Verification Script
+ * Gemini 1.5 Pro Setup Verification Script
  * 
- * This script verifies that all prerequisites are met for MedGemma 4B integration.
+ * This script verifies that all prerequisites are met for Gemini 1.5 Pro integration.
  */
 
-const { VertexAI } = require('@google-cloud/vertexai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { createClient } = require('@supabase/supabase-js');
 
-console.log('🔍 MedGemma 4B Setup Verification');
+console.log('🔍 Gemini 1.5 Pro Setup Verification');
 console.log('=' .repeat(50));
 
 async function verifyEnvironmentVariables() {
   console.log('\n📋 Checking Environment Variables...');
   
-  const requiredVars = ['GCP_PROJECT_ID', 'SUPABASE_URL', 'SUPABASE_KEY'];
+  const requiredVars = ['GOOGLE_GENERATIVE_AI_API_KEY', 'SUPABASE_URL', 'SUPABASE_KEY'];
   const missingVars = [];
   
   requiredVars.forEach(varName => {
@@ -25,12 +25,12 @@ async function verifyEnvironmentVariables() {
     }
   });
   
-  const optionalVars = ['GCP_LOCATION', 'GOOGLE_APPLICATION_CREDENTIALS'];
+  const optionalVars = ['DEBUG'];
   optionalVars.forEach(varName => {
     if (process.env[varName]) {
       console.log(`✅ Found: ${varName} = ${process.env[varName]}`);
     } else {
-      console.log(`⚠️  Optional: ${varName} (using default)`);
+      console.log(`⚠️  Optional: ${varName} (not set)`);
     }
   });
   
@@ -43,33 +43,47 @@ async function verifyEnvironmentVariables() {
   return true;
 }
 
-async function verifyGoogleCloudAuthentication() {
-  console.log('\n🔐 Testing Google Cloud Authentication...');
+async function verifyGeminiAuthentication() {
+  console.log('\n🔐 Testing Gemini 1.5 Pro Authentication...');
   
   try {
-    const PROJECT_ID = process.env.GCP_PROJECT_ID;
-    const LOCATION = process.env.GCP_LOCATION || 'us-central1';
+    const API_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
     
-    console.log(`📍 Project ID: ${PROJECT_ID}`);
-    console.log(`📍 Location: ${LOCATION}`);
+    console.log(`📍 API Key: ${API_KEY ? 'Set' : 'Not Set'}`);
     
-    // Initialize Vertex AI client
-    const vertexAI = new VertexAI({ project: PROJECT_ID, location: LOCATION });
-    console.log('✅ Vertex AI client initialized successfully');
+    // Initialize Gemini client
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    console.log('✅ Gemini client initialized successfully');
     
-    // Test authentication by attempting to list models (this will fail if not authenticated)
+    // Test authentication by attempting a simple generation
     console.log('🔍 Testing authentication...');
     
-    // Note: We don't actually call the API here to avoid costs, just verify client setup
-    console.log('✅ Authentication appears to be configured correctly');
+    try {
+      const result = await model.generateContent("Hello, this is a test message.");
+      const response = await result.response;
+      console.log('✅ Gemini authentication successful');
+      console.log(`📝 Test response: ${response.text().substring(0, 50)}...`);
+      return true;
+    } catch (error) {
+      if (error.message.includes('API_KEY_INVALID')) {
+        console.log('❌ Invalid API key');
+        return false;
+      } else if (error.message.includes('QUOTA_EXCEEDED')) {
+        console.log('❌ API quota exceeded');
+        return false;
+      } else {
+        console.log(`❌ Gemini authentication failed: ${error.message}`);
+        return false;
+      }
+    }
     
-    return true;
   } catch (error) {
-    console.log(`❌ Google Cloud authentication failed: ${error.message}`);
+    console.log(`❌ Gemini authentication failed: ${error.message}`);
     console.log('\n💡 Troubleshooting tips:');
-    console.log('1. Ensure GOOGLE_APPLICATION_CREDENTIALS is set to your service account key');
-    console.log('2. Verify your service account has roles/aiplatform.user permission');
-    console.log('3. Check that GCP_PROJECT_ID matches your actual project ID');
+    console.log('1. Ensure GOOGLE_GENERATIVE_AI_API_KEY is set correctly');
+    console.log('2. Verify your API key is valid and active');
+    console.log('3. Check your quota in Google AI Studio');
     return false;
   }
 }
@@ -112,23 +126,6 @@ async function verifySupabaseConnection() {
   }
 }
 
-async function verifyMedGemmaModelPath() {
-  console.log('\n🤖 Verifying MedGemma Model Configuration...');
-  
-  const PROJECT_ID = process.env.GCP_PROJECT_ID;
-  const LOCATION = process.env.GCP_LOCATION || 'us-central1';
-  
-  const MEDGEMMA_MODEL_NAME = `projects/google/locations/${LOCATION}/publishers/google/models/medgemma-4b-it@001`;
-  
-  console.log(`📍 Model Path: ${MEDGEMMA_MODEL_NAME}`);
-  console.log('✅ MedGemma model path configured correctly');
-  
-  // Note: We don't actually test the model call here to avoid costs
-  console.log('ℹ️  Model availability will be tested during first API call');
-  
-  return true;
-}
-
 async function verifyNPRAFunctions() {
   console.log('\n🔧 Testing NPRA Database Functions...');
   
@@ -156,13 +153,12 @@ async function verifyNPRAFunctions() {
 }
 
 async function runVerification() {
-  console.log('🚀 Starting MedGemma 4B Setup Verification...\n');
+  console.log('🚀 Starting Gemini 1.5 Pro Setup Verification...\n');
   
   const checks = [
     { name: 'Environment Variables', fn: verifyEnvironmentVariables },
-    { name: 'Google Cloud Authentication', fn: verifyGoogleCloudAuthentication },
+    { name: 'Gemini Authentication', fn: verifyGeminiAuthentication },
     { name: 'Supabase Connection', fn: verifySupabaseConnection },
-    { name: 'MedGemma Model Path', fn: verifyMedGemmaModelPath },
     { name: 'NPRA Functions', fn: verifyNPRAFunctions }
   ];
   
@@ -194,14 +190,14 @@ async function runVerification() {
   console.log(`\n📈 Overall: ${successful}/${total} checks passed`);
   
   if (successful === total) {
-    console.log('\n🎉 All checks passed! MedGemma 4B integration is ready.');
+    console.log('\n🎉 All checks passed! Gemini 1.5 Pro integration is ready.');
     console.log('\n🚀 Next steps:');
-    console.log('1. Test the API: npm run test:medgemma');
+    console.log('1. Test the API: npm run test:gemini');
     console.log('2. Start the server: npm run server:dev');
     console.log('3. Deploy to production when ready');
   } else {
     console.log('\n⚠️  Some checks failed. Please review the errors above and fix them before proceeding.');
-    console.log('\n📚 For detailed setup instructions, see: MEDGEMMA_SETUP_GUIDE.md');
+    console.log('\n📚 For detailed setup instructions, see: GEMINI_SETUP_GUIDE.md');
   }
   
   return successful === total;

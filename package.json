@@ -11,10 +11,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:gemini": "npx tsx src/services/test-medgemma.ts",
+    "test:gemini": "npx tsx src/services/test-gemini.ts",
     "test:npra": "npx tsx -e \"import('./src/utils/npraDatabase.js').then(m => m.getNpraStats().then(console.log))\"",
-    "test:pipeline": "node src/scripts/test-medgemma-pipeline.js",
-    "verify:gemini": "node src/scripts/verify-medgemma-setup.js",
+    "test:pipeline": "node src/scripts/test-gemini-pipeline.js",
+    "verify:gemini": "node src/scripts/verify-gemini-setup.js",
     "server": "node src/server.js",
     "server:dev": "nodemon src/server.js"
   },

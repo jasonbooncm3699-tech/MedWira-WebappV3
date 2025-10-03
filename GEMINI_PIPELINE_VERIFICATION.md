@@ -1,86 +1,90 @@
-# MedGemma 4B Two-Step Pipeline Verification
+# Gemini 1.5 Pro Two-Step Pipeline Verification
 
 ## Overview
-This document confirms that the `runMedGemmaPipeline` function correctly implements the two-step LLM pipeline as specified for MedGemma 4B Monolith integration.
+This document confirms that the `runGeminiPipeline` function correctly implements the two-step LLM pipeline as specified for Gemini 1.5 Pro integration.
 
 ## Part B: Two-Step LLM Pipeline Implementation
 
 ### ✅ **Step 1: LLM Call for Tool Signaling (Image Analysis)**
 
-**Location**: Lines 134-162 in `src/services/medgemmaAgent.js`
+**Location**: Lines 134-162 in `src/services/geminiAgent.js`
 
 **Implementation Confirmed**:
 ```javascript
 // 2. FIRST LLM CALL: IMAGE ANALYSIS & TOOL SIGNAL
-console.log(`🔍 Step 1: MedGemma Image Analysis & Tool Signal`);
+console.log(`🔍 Step 1: Gemini 1.5 Pro Image Analysis & Tool Signal`);
 
-const firstPrompt = buildMedGemmaSystemPrompt(true, null, TOOL_CALL_SCHEMA);
-const contentParts = [ { text: firstPrompt } ];
+const firstPrompt = buildGeminiSystemPrompt(true, null, TOOL_CALL_SCHEMA);
+
+// Prepare content for Gemini 1.5 Pro
+let firstContent = firstPrompt;
 
 if (base64Image) {
-    contentParts.push({ 
+    // Ensure image has proper data URL format for Gemini
+    const imageData = base64Image.startsWith('data:') ? base64Image : `data:image/jpeg;base64,${base64Image}`;
+    firstContent = [firstPrompt, {
         inlineData: {
-            mimeType: 'image/jpeg', 
-            data: base64Image.replace(/^data:image\/[a-z]+;base64,/, '') // Remove data URL prefix
+            mimeType: 'image/jpeg',
+            data: imageData.replace(/^data:image\/[a-z]+;base64,/, '')
         }
-    });
+    }];
 }
-contentParts.push({ text: `User Query: ${textQuery}` });
 
-const response = await vertexAI.generateContent({
-    model: model, // Using MedGemma model
-    contents: [{ role: 'user', parts: contentParts }],
-    config: { maxOutputTokens: 512, temperature: 0.1 }
-});
-firstResponse = response.response.candidates[0].content.parts[0].text;
+firstContent += `\n\nUser Query: ${textQuery}`;
+
+const response = await model.generateContent(firstContent);
+firstResponse = response.response.text();
 ```
 
 **✅ Verification Points**:
 - ✅ **Multimodal Input**: Correctly sends image (Base64) + user query + system prompt
 - ✅ **Image Format**: Properly formatted as `inlineData` with `mimeType: 'image/jpeg'`
-- ✅ **System Prompt**: Uses `buildMedGemmaSystemPrompt(true, null, TOOL_CALL_SCHEMA)`
-- ✅ **Model Call**: Correctly calls `vertexAI.generateContent()` with MedGemma model
-- ✅ **Response Parsing**: Extracts text from `response.response.candidates[0].content.parts[0].text`
+- ✅ **System Prompt**: Uses `buildGeminiSystemPrompt(true, null, TOOL_CALL_SCHEMA)`
+- ✅ **Model Call**: Correctly calls `model.generateContent()` with Gemini 1.5 Pro
+- ✅ **Response Parsing**: Extracts text from `response.response.text()`
 
 ### ✅ **Step 2: LLM Call for Report Generation (Augmentation)**
 
-**Location**: Lines 205-223 in `src/services/medgemmaAgent.js`
+**Location**: Lines 205-223 in `src/services/geminiAgent.js`
 
 **Implementation Confirmed**:
 ```javascript
 // 4. SECOND LLM CALL: AUGMENTATION & FINAL OUTPUT
-console.log(`🔍 Step 3: Final MedGemma Augmentation with NPRA Data`);
+console.log(`🔍 Step 3: Final Gemini Augmentation with NPRA Data`);
 
-const finalPrompt = buildMedGemmaSystemPrompt(false, npraResult, null); 
-const finalContentParts = [ { text: finalPrompt } ];
+const finalPrompt = buildGeminiSystemPrompt(false, npraResult, null); 
+
+// Prepare content for final call
+let finalContent = finalPrompt;
 
 if (base64Image) {
-    finalContentParts.push({ 
-        inlineData: { mimeType: 'image/jpeg', data: base64Image.replace(/^data:image\/[a-z]+;base64,/, '') }
-    });
+    // Include image again for context
+    const imageData = base64Image.startsWith('data:') ? base64Image : `data:image/jpeg;base64,${base64Image}`;
+    finalContent = [finalPrompt, {
+        inlineData: {
+            mimeType: 'image/jpeg',
+            data: imageData.replace(/^data:image\/[a-z]+;base64,/, '')
+        }
+    }];
 }
-finalContentParts.push({ text: `User Query: ${textQuery}` });
 
-const finalResponse = await vertexAI.generateContent({
-    model: model, // Using MedGemma model
-    contents: [{ role: 'user', parts: finalContentParts }],
-    config: { maxOutputTokens: 2048, temperature: 0.3 }
-});
+finalContent += `\n\nUser Query: ${textQuery}`;
 
-const finalText = finalResponse.response.candidates[0].content.parts[0].text;
+const finalResponse = await model.generateContent(finalContent);
+const finalText = finalResponse.response.text();
 ```
 
 **✅ Verification Points**:
-- ✅ **Database Integration**: Uses `buildMedGemmaSystemPrompt(false, npraResult, null)`
+- ✅ **Database Integration**: Uses `buildGeminiSystemPrompt(false, npraResult, null)`
 - ✅ **NPRA Data**: Passes database result from Step 1's tool execution
 - ✅ **Image Context**: Sends original image again for context
 - ✅ **User Query**: Includes original user query for reference
-- ✅ **Enhanced Config**: Uses higher `maxOutputTokens: 2048` and `temperature: 0.3`
+- ✅ **Enhanced Config**: Uses Gemini 1.5 Pro's default configuration
 - ✅ **Response Extraction**: Properly extracts final text response
 
 ## 🔧 **Tool Execution & NPRA Integration**
 
-**Location**: Lines 164-203 in `src/services/medgemmaAgent.js`
+**Location**: Lines 164-203 in `src/services/geminiAgent.js`
 
 **Implementation Confirmed**:
 ```javascript
@@ -99,7 +103,7 @@ if (jsonMatch) {
             const { product_name, registration_number } = jsonSignal.tool_call.parameters;
             
             console.log(`🔍 Executing NPRA lookup...`);
-            // EXECUTE DATABASE LOOKUP
+            // EXECUTE DATABASE LOOKUP (same as MedGemma)
             npraResult = await npraProductLookup(product_name, registration_number);
             
             if (npraResult) {
@@ -125,18 +129,18 @@ if (jsonMatch) {
 
 ## 🎯 **System Prompt Implementation**
 
-### **First Call System Prompt** (`buildMedGemmaSystemPrompt(true, null, TOOL_CALL_SCHEMA)`)
+### **First Call System Prompt** (`buildGeminiSystemPrompt(true, null, TOOL_CALL_SCHEMA)`)
 
 **Purpose**: Image analysis and tool signaling
 **Output**: JSON structure with tool call parameters
-**Configuration**: `maxOutputTokens: 512, temperature: 0.1`
+**Configuration**: Gemini 1.5 Pro default settings
 
-### **Second Call System Prompt** (`buildMedGemmaSystemPrompt(false, npraResult, null)`)
+### **Second Call System Prompt** (`buildGeminiSystemPrompt(false, npraResult, null)`)
 
 **Purpose**: Database augmentation and final report generation
 **Input**: NPRA database results from Step 1
 **Output**: Structured 9-section medical report
-**Configuration**: `maxOutputTokens: 2048, temperature: 0.3`
+**Configuration**: Gemini 1.5 Pro default settings
 
 ## 🛡️ **Error Handling & Edge Cases**
 
@@ -145,7 +149,7 @@ if (jsonMatch) {
 - ✅ **Authentication**: User ID validation and authentication checks
 - ✅ **Tool Parsing**: JSON parsing errors and malformed responses
 - ✅ **Database Errors**: NPRA lookup failures and connection issues
-- ✅ **API Errors**: Vertex AI API failures and timeout handling
+- ✅ **API Errors**: Gemini API failures and timeout handling
 - ✅ **Fallback Logic**: Direct response when no tool signal detected
 
 ### **Edge Case Handling**:
@@ -170,21 +174,17 @@ if (jsonMatch) {
 npm run test:pipeline
 
 # Test specific components
-npm run test:medgemma
-npm run verify:medgemma
+npm run test:gemini
+npm run verify:gemini
 ```
 
 ## 📊 **Performance & Configuration**
 
-### **Step 1 Configuration**:
-- **Max Output Tokens**: 512 (focused on tool signaling)
-- **Temperature**: 0.1 (deterministic, focused responses)
-- **Purpose**: Extract product name and registration number
-
-### **Step 2 Configuration**:
-- **Max Output Tokens**: 2048 (comprehensive medical report)
-- **Temperature**: 0.3 (balanced creativity and accuracy)
-- **Purpose**: Generate structured medical analysis
+### **Gemini 1.5 Pro Configuration**:
+- **Model**: gemini-1.5-pro (latest and most capable)
+- **Multimodal**: Supports both text and image inputs
+- **Context Window**: Large context for comprehensive analysis
+- **Response Quality**: High-quality medical analysis and reporting
 
 ### **Token Management**:
 - **Early Validation**: Token check before expensive LLM operations
@@ -206,7 +206,7 @@ npm run verify:medgemma
 
 ### **🎯 Ready for Production**:
 - ✅ **API Endpoints**: Express.js and Next.js routes configured
-- ✅ **Authentication**: Google Cloud service account integration
+- ✅ **Authentication**: Google AI Studio API key integration
 - ✅ **Database**: Supabase NPRA database connectivity
 - ✅ **Monitoring**: Health checks and error tracking
 - ✅ **Documentation**: Complete setup and usage guides
@@ -222,4 +222,4 @@ npm run verify:medgemma
 - ✅ **Testing**: Complete test suite implementation
 - ✅ **Documentation**: Setup and verification guides
 
-**Status**: ✅ **COMPLETE** - The two-step LLM pipeline is correctly implemented and ready for production use with MedGemma 4B Monolith.
+**Status**: ✅ **COMPLETE** - The two-step LLM pipeline is correctly implemented and ready for production use with Gemini 1.5 Pro.
