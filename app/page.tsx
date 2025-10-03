@@ -120,13 +120,13 @@ export default function Home() {
     setIsAnalyzing(true);
     
     try {
-      const response = await fetch('/api/scan-medicine', {
+      const response = await fetch('/api/analyze-medicine-medgemma', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          text: userMessage,
-          language,
-          allergy: allergy.trim() || undefined
+          image_data: null, // Text-only query
+          text_query: userMessage,
+          user_id: user?.id
         })
       });
       
@@ -136,25 +136,25 @@ export default function Home() {
       
       const result = await response.json();
       
-      if (result.success) {
+      if (result.status === 'SUCCESS' || result.data) {
         // Add AI response
         const aiMessage = {
           id: (Date.now() + 1).toString(),
           type: 'ai' as const,
-          content: result.message || 'Analysis complete',
+          content: result.data?.text || result.message || 'Analysis complete',
           timestamp: new Date()
         };
         
         setMessages(prev => [...prev, aiMessage]);
         
-        // Add structured data if available
-        if (result.structuredData) {
+        // Add structured data if available (new Gemini format)
+        if (result.data && (result.data.medicine_name || result.data.purpose)) {
           const structuredMessage = {
             id: (Date.now() + 2).toString(),
             type: 'structured' as const,
             content: '',
             timestamp: new Date(),
-            structuredData: result.structuredData
+            structuredData: result.data // New Gemini format
           };
           setMessages(prev => [...prev, structuredMessage]);
         }
