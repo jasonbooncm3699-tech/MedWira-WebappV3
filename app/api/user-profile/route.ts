@@ -38,11 +38,26 @@ export async function GET(request: NextRequest) {
       );
     }
     
+    // CRITICAL: Validate environment variables before creating Supabase client
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('❌ CRITICAL: Missing Supabase environment variables:', {
+        hasUrl: !!supabaseUrl,
+        hasServiceKey: !!supabaseServiceKey
+      });
+      return NextResponse.json(
+        { 
+          error: 'Server configuration error - missing Supabase credentials',
+          status: 'CONFIGURATION_ERROR'
+        },
+        { status: 500 }
+      );
+    }
+    
     // Use service key to bypass RLS
-    const supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
     // Get profile data with better error handling
     const { data: profile, error: profileError } = await supabase
@@ -83,6 +98,18 @@ export async function GET(request: NextRequest) {
           status: 'DATABASE_ERROR'
         },
         { status: 500 }
+      );
+    }
+    
+    // CRITICAL FIX: If no database error, but profile is STILL null (e.g., user not found)
+    if (!profile) {
+      console.error('❌ CRITICAL: Profile is null after successful query - user not found');
+      return NextResponse.json(
+        { 
+          error: 'Profile data missing after query - user not found',
+          status: 'PROFILE_NULL_AFTER_QUERY'
+        },
+        { status: 404 }
       );
     }
     
