@@ -6,7 +6,7 @@
  */
 
 import { VertexAI } from '@google-cloud/vertexai';
-import { npraProductLookup, enhancedNpraLookup } from '../utils/npraDatabase';
+import { npraProductLookup, enhancedNpraLookup, decrementToken } from '../utils/npraDatabase';
 
 // Environment variables for Google Cloud and MedGemma
 const PROJECT_ID = process.env.GCP_PROJECT_ID;
@@ -254,14 +254,20 @@ export async function checkAndDeductToken(userId: string): Promise<TokenCheckRes
   try {
     console.log(`🔍 Checking tokens for user: ${userId}`);
     
-    // TODO: Implement actual Supabase token management
-    // This is a placeholder implementation
+    // Use the real token management function
+    const tokenDeducted = await decrementToken(userId);
     
-    return {
-      success: true,
-      remainingTokens: 29,
-      message: "Token deducted successfully"
-    };
+    if (tokenDeducted) {
+      return {
+        success: true,
+        message: "Token deducted successfully"
+      };
+    } else {
+      return {
+        success: false,
+        message: "No tokens remaining or token deduction failed"
+      };
+    }
   } catch (error) {
     console.error('❌ Token management error:', error);
     return {
