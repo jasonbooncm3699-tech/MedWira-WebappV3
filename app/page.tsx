@@ -590,7 +590,7 @@ export default function Home() {
   }
 
   // CRITICAL GUARD: Prevent null pointer crashes when user is null
-  if (!user) {
+  if (!user && !isLoading) {
     // If loading is done but user is null, show safe logged-out view
     return (
       <div className="app">
