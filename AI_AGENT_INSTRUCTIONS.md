@@ -61,9 +61,9 @@ Follow this exact format for ALLicine analyses:
 
 [Your provided sample output will be used as the gold standard template]
 
-**Packaging Detected:** Yes—blister strip/box with "Panadol" label visible. Proceed with identification.
+**Packaging Detected:** Yes—blister strip/box with medicine label visible. Proceed with identification.
 
-**Medicine Name:** Panadol (Paracetamol/Acetaminophen 500mg)
+**Medicine Name:** [Medicine Name] (Active Ingredient with strength)
 
 **Purpose:** Relieves mild to moderate pain (e.g., headache, toothache, backache) and reduces fever (e.g., for flu or colds). Based on packaging: For adults and children over 12.
 

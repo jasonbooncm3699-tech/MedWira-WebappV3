@@ -46,7 +46,7 @@ Prepare MedWira AI for live deployment and user testing with complete MVP featur
 - [ ] Update Gemini prompts to use 11-section Malaysian format
 - [ ] Integrate NPRA database data into AI responses
 - [ ] Implement web research instructions for comprehensive medical information
-- [ ] Test with Malaysian medicines (Panadol, Uphadol, etc.)
+- [ ] Test with Malaysian medicines (various brands)
 
 **4. Fix Authentication Issues**
 - [ ] Test email/password registration and login
@@ -131,7 +131,7 @@ Prepare MedWira AI for live deployment and user testing with complete MVP featur
 **Files to Update:**
 - `lib/gemini-service.ts`: Add NPRA integration and web research prompts
 - `lib/message-formatter.ts`: Format 11-section Malaysian output
-- Test: Upload Panadol image, verify comprehensive medical analysis
+- Test: Upload medicine image, verify comprehensive medical analysis
 
 ### Step 4: Production Deployment (1 hour)
 **Deployment Actions:**
@@ -159,7 +159,7 @@ Prepare MedWira AI for live deployment and user testing with complete MVP featur
 
 ### Medicine Analysis Testing
 **Scenario 3: Camera Capture**
-1. Mobile device: Take photo of Panadol packaging
+1. Mobile device: Take photo of medicine packaging
 2. Verify: AI analysis follows 11-section format
 3. Verify: NPRA database information integrated
 4. Verify: Comprehensive medical information provided
