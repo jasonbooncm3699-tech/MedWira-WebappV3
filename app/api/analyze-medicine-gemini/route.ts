@@ -10,7 +10,7 @@ import { runGeminiPipeline } from '@/src/services/geminiAgent';
 
 // Type definitions for the Gemini pipeline response
 interface GeminiPipelineResponse {
-  status: "SUCCESS" | "ERROR";
+  status: "SUCCESS" | "ERROR" | "INSUFFICIENT_TOKENS";
   message?: string;
   data?: any;
   httpStatus?: number;
