@@ -206,17 +206,19 @@ async function checkTokenAvailability(userId, requiredCost = 1) {
             .eq('id', userId)
             .single();
 
-    console.log(`🔍 Token check query result:`, { profile, selectError });
+        console.log(`🔍 Token check query result:`, { profile, selectError });
 
-    if (selectError) {
-        console.error('❌ Token check database error:', selectError);
-        return { isAvailable: false, reason: "DATABASE_ERROR" };
-    }
+        if (selectError) {
+            // CRITICAL FIX: Log the actual Supabase error object
+            console.error('❌ Token check DB Error (Supabase):', selectError);
+            return { isAvailable: false, reason: "DATABASE_ERROR" };
+        }
 
-    if (!profile) {
-        console.error(`❌ User ${userId} profile not found in database`);
-        return { isAvailable: false, reason: "DATABASE_ERROR" };
-    }
+        if (!profile) {
+            // Case for a valid user ID but no profile row found (RLS or missing profile)
+            console.error(`❌ Token check: Profile not found for userId: ${userId}`);
+            return { isAvailable: false, reason: "DATABASE_ERROR" };
+        }
 
     console.log(`🔍 User ${userId} profile found:`, {
         id: profile.id,
