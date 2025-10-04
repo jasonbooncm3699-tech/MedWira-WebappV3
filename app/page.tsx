@@ -493,17 +493,18 @@ export default function Home() {
 
     // Construct the GUARANTEED valid JSON payload
     const payload = {
-      image_data: imageBase64Data,
-      user_id: userId,
-      text_query: textQuery,
+      imageBase64: imageBase64Data,
+      userId: userId,
+      language: 'English',
+      textQuery: textQuery,
     };
 
     // DEBUG: Log the payload to ensure it's valid
     console.log('🔍 Sending payload:', {
-      hasImageData: !!payload.image_data,
-      imageDataLength: payload.image_data?.length || 0,
-      userId: payload.user_id,
-      textQuery: payload.text_query,
+      hasImageData: !!payload.imageBase64,
+      imageDataLength: payload.imageBase64?.length || 0,
+      userId: payload.userId,
+      textQuery: payload.textQuery,
       payloadType: typeof payload
     });
 
