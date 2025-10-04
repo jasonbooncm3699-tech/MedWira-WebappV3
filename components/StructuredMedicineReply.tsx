@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Pill, AlertTriangle, Shield, AlertCircle } from 'lucide-react';
+import React from 'react';
+import { Pill, AlertTriangle, Shield, AlertCircle } from 'lucide-react';
 
 interface StructuredMedicineData {
   // Gemini output format
@@ -45,62 +45,10 @@ interface StructuredMedicineReplyProps {
 }
 
 const StructuredMedicineReply: React.FC<StructuredMedicineReplyProps> = ({ response }) => {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['dosage']));
-
-  const toggleSection = (sectionId: string) => {
-    const newExpanded = new Set(expandedSections);
-    if (newExpanded.has(sectionId)) {
-      newExpanded.delete(sectionId);
-    } else {
-      newExpanded.add(sectionId);
-    }
-    setExpandedSections(newExpanded);
-  };
 
   // Check if this is Gemini format (new) or legacy format
   const isGeminiFormat = !!(response.medicine_name || response.purpose || response.dosage_instructions);
 
-  const SectionHeader: React.FC<{
-    sectionId: string;
-    title: string;
-    icon: React.ReactNode;
-    isExpanded: boolean;
-    textColor?: string;
-  }> = ({ sectionId, title, icon, isExpanded, textColor = 'text-blue-400' }) => (
-    <button
-      onClick={() => toggleSection(sectionId)}
-      className={`w-full flex items-center justify-between p-4 rounded-lg transition-all duration-200 hover:bg-gray-800/50 ${textColor}`}
-    >
-      <div className="flex items-center gap-3">
-        {icon}
-        <h3 className="font-semibold text-lg">{title}</h3>
-      </div>
-      {isExpanded ? (
-        <ChevronDown className="w-5 h-5" />
-      ) : (
-        <ChevronRight className="w-5 h-5" />
-      )}
-    </button>
-  );
-
-  const SectionContent: React.FC<{
-    content: string;
-    details?: string[];
-  }> = ({ content, details }) => (
-    <div className="px-4 pb-4">
-      <p className="text-gray-300 leading-relaxed mb-3">{content}</p>
-      {details && details.length > 0 && (
-        <ul className="space-y-2">
-          {details.map((detail, index) => (
-            <li key={index} className="flex items-start gap-2 text-sm text-gray-400">
-              <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-2 flex-shrink-0"></span>
-              <span>{detail}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
 
   // Create sections based on format
   const sections = isGeminiFormat ? [
@@ -180,10 +128,10 @@ const StructuredMedicineReply: React.FC<StructuredMedicineReplyProps> = ({ respo
   ];
 
   return (
-    <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden shadow-2xl">
+    <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden shadow-2xl p-4">
       {/* Medicine Header - Show for Gemini format */}
       {isGeminiFormat && (response.medicine_name || response.purpose) && (
-        <div className="p-4 border-b border-gray-700/30">
+        <div className="mb-4">
           {response.medicine_name && (
             <div className="mb-3">
               <h2 className="text-lg font-semibold text-white mb-1">Medicine</h2>
@@ -191,7 +139,7 @@ const StructuredMedicineReply: React.FC<StructuredMedicineReplyProps> = ({ respo
             </div>
           )}
           {response.purpose && (
-            <div>
+            <div className="mb-4">
               <h2 className="text-lg font-semibold text-white mb-1">Purpose</h2>
               <p className="text-gray-300 leading-relaxed">{response.purpose}</p>
             </div>
@@ -199,26 +147,30 @@ const StructuredMedicineReply: React.FC<StructuredMedicineReplyProps> = ({ respo
         </div>
       )}
       
-      {/* Expandable Sections */}
+      {/* All Information Displayed as Text - No Expandable Sections */}
       {sections.map((section) => {
-        const isExpanded = expandedSections.has(section.id);
+        if (!section.data) return null;
+        
         return (
-          <div key={section.id} className="border-b border-gray-700/30 last:border-b-0">
-            <SectionHeader
-              sectionId={section.id}
-              title={section.title}
-              icon={section.icon}
-              isExpanded={isExpanded}
-              textColor={section.textColor}
-            />
-            {isExpanded && section.data && (
-              <div className="border-t border-gray-700/30 bg-gray-800/30">
-                <SectionContent
-                  content={section.data.content}
-                  details={section.data.details}
-                />
-              </div>
-            )}
+          <div key={section.id} className="mb-4 last:mb-0">
+            <div className="flex items-center gap-2 mb-2">
+              {section.icon}
+              <h3 className={`font-semibold text-lg ${section.textColor || 'text-white'}`}>
+                {section.title}
+              </h3>
+            </div>
+            <div className="ml-7">
+              <p className="text-gray-300 leading-relaxed mb-2">{section.data.content}</p>
+              {section.data.details && section.data.details.length > 0 && (
+                <div className="space-y-1">
+                  {section.data.details.map((detail, index) => (
+                    <p key={index} className="text-sm text-gray-400 ml-4">
+                      • {detail}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         );
       })}
