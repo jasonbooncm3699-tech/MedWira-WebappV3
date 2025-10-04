@@ -18,6 +18,13 @@ import { DatabaseService } from '@/lib/supabase';
 export default function Home() {
   const { user, logout, isLoading, refreshUser, refreshUserData } = useAuth();
   
+  // Helper function to extract first name from display_name
+  const getFirstName = (displayName?: string): string => {
+    if (!displayName) return 'User';
+    const firstWord = displayName.trim().split(' ')[0];
+    return firstWord || 'User';
+  };
+  
   // Get welcome message in user's language
   const getWelcomeMessage = (lang: string): string => {
     const messages: { [key: string]: string } = {
@@ -681,7 +688,7 @@ export default function Home() {
             <div className="user-dropdown">
               <button className="auth-btn user-profile-btn">
                 <User size={16} />
-{user?.name || 'User'}
+{getFirstName(user?.display_name)}
               </button>
               <div className="dropdown-menu">
                 <div className="dropdown-item">
@@ -775,7 +782,7 @@ export default function Home() {
                 {user?.avatar_url && user.avatar_url.trim() !== '' ? (
                   <Image 
                     src={user.avatar_url} 
-                    alt={user.name || user.display_name || user.email} 
+                    alt={getFirstName(user?.display_name) || user?.email} 
                     className="nav-avatar-image"
                     width={32}
                     height={32}
@@ -803,7 +810,7 @@ export default function Home() {
                 )}
               </div>
               <div className="user-details">
-                <span className="username">{user ? (user?.name || 'User') : 'Guest'}</span>
+                <span className="username">{user ? getFirstName(user?.display_name) : 'Guest'}</span>
                 <span className="tokens">{user ? `${user?.tokens || 0} tokens` : '0 tokens'}</span>
                 {user && (
                   <span className="tier">{user?.subscription_tier || 'free'}</span>
