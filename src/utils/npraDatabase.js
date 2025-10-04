@@ -186,14 +186,9 @@ async function checkTokenAvailability(userId, requiredCost = 1) {
 
     console.log(`🔍 Token check query result:`, { profile, selectError });
 
-    if (selectError) {
-        console.error('❌ Token check error:', selectError);
-        return false;
-    }
-
-    if (!profile) {
-        console.log(`⚠️ User ${userId} profile not found in database`);
-        return false;
+    if (selectError || !profile) {
+        console.error('❌ Token check DB Error:', selectError || 'Profile not found');
+        return { isAvailable: false, reason: "DATABASE_ERROR" };
     }
 
     console.log(`🔍 User ${userId} profile found:`, {
@@ -204,11 +199,11 @@ async function checkTokenAvailability(userId, requiredCost = 1) {
 
     if (profile.token_count < requiredCost) {
         console.log(`⚠️ User ${userId} has insufficient tokens (current: ${profile.token_count}, required: ${requiredCost})`);
-        return false;
+        return { isAvailable: false, reason: "INSUFFICIENT_TOKENS" };
     }
 
-    console.log(`✅ User ${userId} has ${profile.token_count} tokens available (required: ${requiredCost})`);
-    return true;
+    console.log(`✅ User ${userId} has sufficient tokens.`);
+    return { isAvailable: true, reason: "SUFFICIENT" };
 }
 
 async function decrementToken(userId) {

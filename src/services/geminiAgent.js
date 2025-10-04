@@ -150,15 +150,23 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
         
         console.log(`🔍 GeminiAgent: Starting token check for user: ${userId} (required: ${REQUIRED_COST} tokens)`);
         
-        const isTokenAvailable = await checkTokenAvailability(userId, REQUIRED_COST);
-        console.log(`🔍 GeminiAgent: Token check result: ${isTokenAvailable}`);
+        const tokenCheckResult = await checkTokenAvailability(userId, REQUIRED_COST);
+        console.log(`🔍 GeminiAgent: Token check result:`, tokenCheckResult);
         
-        if (!isTokenAvailable) {
-            console.log(`❌ User ${userId} blocked due to insufficient tokens (Required: ${REQUIRED_COST})`);
-            return { 
-                status: "INSUFFICIENT_TOKENS", 
-                message: "Insufficient token. Please subscribe or redeem a referral code." 
-            };
+        if (!tokenCheckResult.isAvailable) {
+            if (tokenCheckResult.reason === "INSUFFICIENT_TOKENS") {
+                console.log(`❌ User ${userId} blocked due to insufficient tokens (Required: ${REQUIRED_COST})`);
+                return { 
+                    status: "INSUFFICIENT_TOKENS", 
+                    message: "Insufficient token. Please subscribe or redeem a referral code." 
+                };
+            } else if (tokenCheckResult.reason === "DATABASE_ERROR") {
+                console.log(`❌ User ${userId} blocked due to database error during token check`);
+                return { 
+                    status: "SERVICE_ERROR", 
+                    message: "Service temporarily unavailable. Please try again later." 
+                };
+            }
         }
         
         console.log(`✅ GeminiAgent: Token check PASSED for user: ${userId}`);
