@@ -681,7 +681,7 @@ export default function Home() {
             <div className="user-dropdown">
               <button className="auth-btn user-profile-btn">
                 <User size={16} />
-{user?.name || user?.email || 'User'}
+{user?.name || 'User'}
               </button>
               <div className="dropdown-menu">
                 <div className="dropdown-item">
@@ -775,7 +775,7 @@ export default function Home() {
                 {user?.avatar_url && user.avatar_url.trim() !== '' ? (
                   <Image 
                     src={user.avatar_url} 
-                    alt={user.display_name || user.name || user.email} 
+                    alt={user.name || user.display_name || user.email} 
                     className="nav-avatar-image"
                     width={32}
                     height={32}
@@ -803,7 +803,7 @@ export default function Home() {
                 )}
               </div>
               <div className="user-details">
-                <span className="username">{user ? (user?.name || user?.display_name || 'User') : 'Guest'}</span>
+                <span className="username">{user ? (user?.name || 'User') : 'Guest'}</span>
                 <span className="tokens">{user ? `${user?.tokens || 0} tokens` : '0 tokens'}</span>
                 {user && (
                   <span className="tier">{user?.subscription_tier || 'free'}</span>
