@@ -65,71 +65,59 @@ function buildGeminiSystemPrompt(isFirstCall, databaseResult, toolSchema) {
     };
 
     const basePrompt = `
-You are the **MedWira Product Specialist**, an expert in Malaysian medicine information powered by Gemini 1.5 Pro. Your primary directive is to provide comprehensive, accurate, and safety-focused details about medicines.
+You are a medicine packaging analysis specialist. Your ONLY job is to accurately read and extract information from medicine packaging images.
 
-**CORE DIRECTIVES - FOLLOW STRICTLY:**
-1. **Packaging Analysis:** Extract ALL visible data from medicine packaging including product name, active ingredients, strengths, manufacturer, registration number, and any other text visible on the packaging.
-2. **Database Search:** You MUST search our internal \`public.medicines\` database (the most complete Malaysian medicine database) to find matching records.
-3. **Web Research:** If additional medical information is needed, use reliable medical sources (FDA, WHO, pharmaceutical databases, medical journals) to supplement database information.
-4. **Comprehensive Response:** Always start with "Packaging detected:" and provide detailed analysis in the exact format specified.
+**CRITICAL INSTRUCTIONS:**
+1. **READ ONLY WHAT YOU SEE:** Extract ONLY the text and information that is clearly visible in the image
+2. **DO NOT GUESS:** If you cannot clearly see text, do not make assumptions
+3. **BE PRECISE:** Copy exact text from packaging, do not interpret or translate
+4. **FOCUS ON ACCURACY:** It's better to miss information than to provide incorrect information
 `;
     
     if (isFirstCall) {
         // --- FIRST CALL PROMPT (Analyze packaging and signal tool use) ---
         return `${basePrompt}
-**CURRENT TASK: PACKAGING ANALYSIS & DATABASE SEARCH SIGNAL**
-Carefully analyze the medicine packaging image and extract ALL visible information. Look for:
-- Product/Brand name
-- Active ingredients and their strengths
-- Registration number (MAL/NOT)
-- Manufacturer name
-- Any other text visible on packaging
+**CURRENT TASK: EXTRACT VISIBLE TEXT FROM PACKAGING**
 
-Your ENTIRE output must be a single JSON object wrapped in \`\`\`json tags, adhering strictly to the TOOL DEFINITION schema below. Do not include any other text, greetings, or reasoning.
+Look at the medicine packaging image and extract ONLY the text that is clearly visible. Do not guess or interpret.
 
-**TOOL DEFINITION:**
+Extract these specific pieces of information if clearly visible:
+- Product name (exact text)
+- Registration number (exact text) 
+- Active ingredient (exact text)
+- Manufacturer (exact text)
+- Strength/dosage (exact text)
+
+Your output must be a JSON object in this exact format:
+
 \`\`\`json
 ${JSON.stringify(toolSchema, null, 2)}
 \`\`\`
+
+IMPORTANT: Only include information you can clearly see in the image. Use null for fields you cannot clearly read.
 `;
     } else {
         // --- SECOND CALL PROMPT (Generate comprehensive medical report) ---
         const dbStatus = databaseResult && databaseResult.id ? "PRODUCT FOUND & VERIFIED in our medicine database" : "PRODUCT NOT FOUND in our database - will use web research";
         
         return `${basePrompt}
-**CURRENT TASK: COMPREHENSIVE MEDICAL REPORT GENERATION**
-The medicine database lookup is complete.
+**CURRENT TASK: GENERATE MEDICINE REPORT**
 
-- **Database Status:** ${dbStatus}
-- **Database Data:** \`\`\`json
-${JSON.stringify(databaseResult || {id: null, message: "No database match found. Will rely on packaging analysis and web research." }, null, 2)}
-\`\`\`
+Database lookup result: ${dbStatus}
 
-You must now generate a comprehensive medical report that follows the EXACT format from the sample. Always start with "Packaging detected:" and provide detailed information in the specified sections.
-
-**CRITICAL REQUIREMENTS:**
-1. **Medicine Name Extraction:** You MUST extract the actual medicine name from the image. Look for brand names, product names, or active ingredients clearly visible on the packaging.
-2. **Generic Name:** If you can identify the generic name or active ingredients, include them.
-3. **Never return "N/A" or "Unknown"** - always provide specific information based on what you can see in the image.
-4. **If you cannot identify the medicine clearly, describe what you can see on the packaging and provide general information about similar medicines.**
-
-**REQUIRED FORMAT:**
-Your ENTIRE response must be a single JSON object wrapped in \`\`\`json tags. Fill all nested fields with detailed, accurate information.
+Based on the packaging information extracted, generate a medical report in this format:
 
 \`\`\`json
 ${JSON.stringify(finalOutputSchema, null, 2)}
 \`\`\`
 
-**IMPORTANT:** 
-- Start with "Packaging detected:" in the packaging_detected field
-- Extract the actual medicine name from the image - DO NOT use "N/A" or "Unknown"
-- Use database information when available
-- Supplement with reliable web sources for missing information
-- Provide specific, actionable information in each section
-- Include proper dosage instructions for different age groups
-- List comprehensive side effects and safety warnings
+**REQUIREMENTS:**
+- Use the exact medicine name from the packaging
+- Provide accurate medical information
+- Keep responses concise but informative
+- Use your knowledge of common medicines
 
-Start your response with the final \`\`\`json structure now.
+**IMPORTANT:** Respond quickly and efficiently. Focus on accuracy over complexity.
 `;
     }
 }
@@ -311,21 +299,8 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
         const finalPrompt = buildGeminiSystemPrompt(false, databaseResult, null); 
         console.log(`📝 Final Prompt:`, finalPrompt);
         
-        // Prepare content for final call
-        let finalContent = finalPrompt;
-        
-        if (base64Image) {
-            // Include image again for context
-            const imageData = base64Image.startsWith('data:') ? base64Image : `data:image/jpeg;base64,${base64Image}`;
-            finalContent = [finalPrompt, {
-                inlineData: {
-                    mimeType: 'image/jpeg',
-                    data: imageData.replace(/^data:image\/[a-z]+;base64,/, '')
-                }
-            }];
-        }
-        
-        finalContent += `\n\nUser Query: ${textQuery}`;
+        // Prepare content for final call - no image needed for second call
+        let finalContent = finalPrompt + `\n\nUser Query: ${textQuery}`;
         console.log(`📤 Sending final request to Gemini with database data`);
 
         try {
