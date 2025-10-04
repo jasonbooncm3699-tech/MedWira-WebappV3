@@ -589,43 +589,8 @@ export default function Home() {
     );
   }
 
-  // CRITICAL GUARD: Prevent null pointer crashes when user is null
-  if (!user && !isLoading) {
-    // If loading is done but user is null, show safe logged-out view
-    return (
-      <div className="app">
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          background: '#0a0a0a',
-          color: '#ffffff',
-          padding: '20px'
-        }}>
-          <h1 style={{ fontSize: '24px', marginBottom: '20px' }}>MedWira AI</h1>
-          <p style={{ fontSize: '16px', marginBottom: '20px', textAlign: 'center' }}>
-            Please sign in to access the medicine identification service
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              padding: '12px 24px',
-              backgroundColor: '#00d4ff',
-              color: '#000',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              cursor: 'pointer'
-            }}
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // TEMPORARY: Allow normal interface to show sign-in button
+  // The normal interface will handle the unauthenticated state properly
 
   // RENDER THE MAIN APPLICATION ONLY WHEN LOADING IS COMPLETE AND USER IS VALID
   // This prevents React error #418 (hydration mismatch) and null pointer crashes
