@@ -52,6 +52,7 @@ function buildGeminiSystemPrompt(isFirstCall, databaseResult, toolSchema) {
         "data": {
             "packaging_detected": "[String: Describe the packaging type and visible information from the image]",
             "medicine_name": "[String: Brand name and active ingredients with strengths]",
+            "generic_name": "[String: Generic name of the medicine]",
             "purpose": "[String: What the medication treats and how it works]",
             "dosage_instructions": "[String: Dosage for different age groups]",
             "side_effects": "[String: Common, rare side effects and overdose risks]",
@@ -106,6 +107,12 @@ ${JSON.stringify(databaseResult || {id: null, message: "No database match found.
 
 You must now generate a comprehensive medical report that follows the EXACT format from the sample. Always start with "Packaging detected:" and provide detailed information in the specified sections.
 
+**CRITICAL REQUIREMENTS:**
+1. **Medicine Name Extraction:** You MUST extract the actual medicine name from the image. Look for brand names, product names, or active ingredients clearly visible on the packaging.
+2. **Generic Name:** If you can identify the generic name or active ingredients, include them.
+3. **Never return "N/A" or "Unknown"** - always provide specific information based on what you can see in the image.
+4. **If you cannot identify the medicine clearly, describe what you can see on the packaging and provide general information about similar medicines.**
+
 **REQUIRED FORMAT:**
 Your ENTIRE response must be a single JSON object wrapped in \`\`\`json tags. Fill all nested fields with detailed, accurate information.
 
@@ -115,6 +122,7 @@ ${JSON.stringify(finalOutputSchema, null, 2)}
 
 **IMPORTANT:** 
 - Start with "Packaging detected:" in the packaging_detected field
+- Extract the actual medicine name from the image - DO NOT use "N/A" or "Unknown"
 - Use database information when available
 - Supplement with reliable web sources for missing information
 - Provide specific, actionable information in each section

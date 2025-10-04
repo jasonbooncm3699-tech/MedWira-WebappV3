@@ -790,7 +790,57 @@ export default function Home() {
               <div className="chat-list">
                 {scanHistory.length > 0 ? (
                   scanHistory.slice(0, 5).map((scan, index) => (
-                    <div key={scan.id} className="chat-item">
+                    <div 
+                      key={scan.id} 
+                      className="chat-item"
+                      onClick={() => {
+                        // Load previous conversation
+                        const previousMessage = {
+                          id: `history-${scan.id}`,
+                          type: 'user' as const,
+                          content: 'Previous medicine analysis',
+                          image: scan.image_url,
+                          timestamp: new Date(scan.created_at).toLocaleTimeString()
+                        };
+                        
+                        const aiResponse = {
+                          id: `ai-history-${scan.id}`,
+                          type: 'ai' as const,
+                          content: 'Medicine Analysis Complete',
+                          structuredData: {
+                            medicine: scan.medicine_name || 'Unknown Medicine',
+                            genericName: scan.generic_name || '',
+                            purpose: 'Previous analysis result',
+                            packagingDetected: 'Previously analyzed medicine',
+                            confidence: scan.confidence || 0.85,
+                            disclaimer: 'This information is for educational purposes only. Consult a healthcare professional before use.'
+                          },
+                          dosage: scan.dosage ? {
+                            title: 'Dosage & Administration',
+                            content: scan.dosage,
+                            details: [scan.dosage]
+                          } : undefined,
+                          sideEffects: scan.side_effects && scan.side_effects.length > 0 ? {
+                            title: 'Potential Side Effects',
+                            content: Array.isArray(scan.side_effects) ? scan.side_effects.join('. ') : scan.side_effects,
+                            details: Array.isArray(scan.side_effects) ? scan.side_effects : [scan.side_effects]
+                          } : undefined,
+                          interactions: scan.interactions && scan.interactions.length > 0 ? {
+                            title: 'Key Drug Interactions',
+                            content: Array.isArray(scan.interactions) ? scan.interactions.join('. ') : scan.interactions,
+                            details: Array.isArray(scan.interactions) ? scan.interactions : [scan.interactions]
+                          } : undefined,
+                          warnings: scan.warnings && scan.warnings.length > 0 ? {
+                            title: 'Warnings & Contraindications',
+                            content: Array.isArray(scan.warnings) ? scan.warnings.join('. ') : scan.warnings,
+                            details: Array.isArray(scan.warnings) ? scan.warnings : [scan.warnings]
+                          } : undefined,
+                          timestamp: new Date(scan.created_at).toLocaleTimeString()
+                        };
+                        
+                        setMessages([previousMessage, aiResponse]);
+                      }}
+                    >
                     <MessageSquare size={16} />
                     <div className="chat-info">
                         <span className="chat-title">
@@ -804,7 +854,7 @@ export default function Home() {
                   ))
                 ) : (
                   <div className="no-scans">
-                    <p>No scans yet</p>
+                    <p>No chat yet</p>
                     <p className="scan-hint">Upload a medicine image to get started</p>
                   </div>
                 )}

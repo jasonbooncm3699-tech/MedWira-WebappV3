@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
         try {
           const { createClient } = await import('@supabase/supabase-js');
           const supabase = createClient(
-            process.env.SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!
           );
           
@@ -227,7 +227,7 @@ export async function POST(request: NextRequest) {
         // We need to get the actual token count, not just check availability
         const { createClient } = await import('@supabase/supabase-js');
         const supabase = createClient(
-          process.env.SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.SUPABASE_SERVICE_ROLE_KEY!
         );
         
