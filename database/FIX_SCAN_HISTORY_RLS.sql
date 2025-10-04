@@ -1,9 +1,11 @@
 -- Fix scan_history RLS policies for service role access
 -- This allows service role to insert scan history records
 
--- Drop existing policies
+-- Drop ALL existing policies first
 DROP POLICY IF EXISTS "Users can view own scan history" ON scan_history;
 DROP POLICY IF EXISTS "Users can insert own scan history" ON scan_history;
+DROP POLICY IF EXISTS "Users can update own scan history" ON scan_history;
+DROP POLICY IF EXISTS "Users can delete own scan history" ON scan_history;
 
 -- Create new policies that allow service role access
 CREATE POLICY "Users can view own scan history" ON scan_history
@@ -18,7 +20,6 @@ CREATE POLICY "Users can insert own scan history" ON scan_history
     auth.role() = 'service_role'
   );
 
--- Also add update and delete policies for completeness
 CREATE POLICY "Users can update own scan history" ON scan_history
   FOR UPDATE USING (
     auth.uid() = user_id OR 
