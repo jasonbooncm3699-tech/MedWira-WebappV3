@@ -8,7 +8,7 @@
  * - Gemini 1.5 Pro SDK integrated and working
  * - Medicine analysis functionality enabled
  * - NPRA database lookup supported
- * - Used by analyze-image and scan-medicine API routes
+ * - Used by analyze-image API route
  */
 
 import { DatabaseService } from './supabase';

@@ -102,7 +102,7 @@ async function fixJasonProfile() {
       
       // Test token deduction
       console.log('\\n🧪 Testing token deduction...');
-      const { decrementToken } = require('./src/utils/npraDatabase.js');
+      const { decrementToken } = require('./lib/npraDatabase.js');
       const success = await decrementToken(jasonUserId);
       
       if (success) {

@@ -175,7 +175,7 @@ export default function Home() {
     };
 
     try {
-      const response = await fetch('/api/analyze-medicine-gemini', {
+      const response = await fetch('/api/analyze-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // The body is now guaranteed to be valid JSON.
