@@ -10,7 +10,7 @@ import { runGeminiPipeline } from '@/src/services/geminiAgent';
 
 // Type definitions for the Gemini pipeline response
 interface GeminiPipelineResponse {
-  status: "SUCCESS" | "ERROR" | "INSUFFICIENT_TOKENS";
+  status: "SUCCESS" | "ERROR" | "INSUFFICIENT_TOKENS" | "SERVICE_ERROR";
   message?: string;
   data?: any;
   httpStatus?: number;
@@ -62,9 +62,19 @@ export async function POST(request: NextRequest) {
     
     console.log(`📊 Pipeline result status: ${result.status}`);
     
-    if (result.status === "ERROR" || result.status === "INSUFFICIENT_TOKENS") {
-      // Use httpStatus if available (from token check), otherwise default to 500
-      const statusCode = result.httpStatus || (result.status === "INSUFFICIENT_TOKENS" || result.message?.includes('tokens') ? 402 : 500);
+    if (result.status === "ERROR" || result.status === "INSUFFICIENT_TOKENS" || result.status === "SERVICE_ERROR") {
+      // Use httpStatus if available (from token check), otherwise determine by status
+      let statusCode = result.httpStatus;
+      if (!statusCode) {
+        if (result.status === "INSUFFICIENT_TOKENS") {
+          statusCode = 402; // Payment Required
+        } else if (result.status === "SERVICE_ERROR") {
+          statusCode = 503; // Service Unavailable
+        } else {
+          statusCode = 500; // Internal Server Error
+        }
+      }
+      
       console.log(`❌ Pipeline error (${statusCode}): ${result.message || 'Unknown error'}`);
       
       // For token errors, include current token count
@@ -147,10 +157,44 @@ export async function POST(request: NextRequest) {
  * GET /api/analyze-medicine-gemini
  */
 export async function GET() {
-  return NextResponse.json({ 
-    status: "OK", 
-    message: "Gemini 1.5 Pro API is running",
-    endpoint: "/api/analyze-medicine-gemini",
-    timestamp: new Date().toISOString()
-  });
+  try {
+    console.log('🔍 Testing Gemini 1.5 Pro API connection...');
+    
+    // Test Gemini API connection without using tokens
+    const { GoogleGenerativeAI } = await import('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY!);
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.5-flash",
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 100,
+      }
+    });
+
+    // Simple test prompt
+    const testPrompt = "Say 'API is working' if you can read this.";
+    const response = await model.generateContent(testPrompt);
+    const testResult = response.response.text();
+    
+    console.log('✅ Gemini 1.5 Pro API test successful:', testResult);
+    
+    return NextResponse.json({ 
+      status: "HEALTHY", 
+      message: "Gemini 1.5 Pro API is running and responding",
+      endpoint: "/api/analyze-medicine-gemini",
+      apiTest: testResult,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('❌ Gemini 1.5 Pro API test failed:', error);
+    
+    return NextResponse.json({ 
+      status: "UNHEALTHY", 
+      message: "Gemini 1.5 Pro API connection failed",
+      endpoint: "/api/analyze-medicine-gemini",
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    }, { status: 503 });
+  }
 }

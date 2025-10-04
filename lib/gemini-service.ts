@@ -136,10 +136,10 @@ export class GeminiMedicineAnalyzer {
     userAllergies: string = ''
   ): Promise<MedicineAnalysisResult> {
     if (!this.model) {
-      console.log('⚠️ Gemini model not initialized - returning error');
+      console.log('⚠️ Gemini model not initialized - SERVICE_DISABLED');
       return {
         success: false,
-        error: 'Gemini 1.5 Pro service not available. Please try again later.',
+        error: 'SERVICE_DISABLED: Gemini 1.5 Pro service not available. Please try again later.',
         language
       };
     }

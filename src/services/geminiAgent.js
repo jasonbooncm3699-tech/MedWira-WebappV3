@@ -338,8 +338,8 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
     } catch (error) {
         console.error('❌ Gemini Pipeline Error:', error);
         return { 
-            status: "ERROR", 
-            message: "Unexpected error in Gemini pipeline execution." 
+            status: "SERVICE_ERROR", 
+            message: "Gemini AI service failed. Please try again." 
         };
     }
 }
