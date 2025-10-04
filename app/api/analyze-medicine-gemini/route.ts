@@ -17,16 +17,18 @@ interface GeminiPipelineResponse {
 }
 
 export async function POST(request: NextRequest) {
-  console.log('🔍 Gemini 1.5 Pro Medicine Analysis API Request received');
+  console.log('🔍 [API] Gemini 1.5 Pro Medicine Analysis API Request received');
   
   try {
     // Parse request body
+    console.log('🔍 [API] Parsing request body...');
     const body = await request.json();
     const { image_data, user_id, text_query } = body;
+    console.log('🔍 [API] Request body parsed successfully');
     
     // Validate required parameters
     if (!image_data && !text_query) {
-      console.log('❌ Missing required parameters: image_data or text_query');
+      console.log('❌ [API] Missing required parameters: image_data or text_query');
       return NextResponse.json(
         { 
           status: "ERROR", 
@@ -38,7 +40,7 @@ export async function POST(request: NextRequest) {
     
     // CRITICAL FIX: Add explicit check for user_id validity
     if (!user_id || typeof user_id !== 'string' || user_id.length < 5) {
-      console.error('❌ CRITICAL: Invalid or missing user_id in request body:', user_id);
+      console.error('❌ [API] CRITICAL: Invalid or missing user_id in request body:', user_id);
       return NextResponse.json(
         { 
           status: "ERROR", 
@@ -48,23 +50,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`🔍 API Request details:`, {
+    console.log(`🔍 [API] Request validation passed. Details:`, {
       user_id: user_id,
       user_id_type: typeof user_id,
+      user_id_length: user_id.length,
       has_image_data: !!image_data,
-      has_text_query: !!text_query
+      image_data_length: image_data?.length || 0,
+      has_text_query: !!text_query,
+      text_query_length: text_query?.length || 0
     });
 
-    console.log(`🚀 Starting Gemini 1.5 Pro pipeline for user: ${user_id}`);
+    console.log(`🚀 [API] Starting Gemini 1.5 Pro pipeline for user: ${user_id}`);
     
     // Call the Gemini 1.5 Pro pipeline
-    const result = await runGeminiPipeline(image_data, text_query, user_id) as GeminiPipelineResponse;
+    console.log(`🔍 [API] About to call runGeminiPipeline with user: ${user_id}`);
+    let result: GeminiPipelineResponse;
+    try {
+      result = await runGeminiPipeline(image_data, text_query, user_id) as GeminiPipelineResponse;
+      console.log(`✅ [API] runGeminiPipeline completed successfully`);
+    } catch (pipelineError) {
+      console.error(`❌ [API] runGeminiPipeline failed with error:`, pipelineError);
+      return NextResponse.json(
+        { 
+          status: "SERVICE_ERROR", 
+          message: "Gemini pipeline execution failed." 
+        },
+        { status: 503 }
+      );
+    }
     
-    console.log(`📊 Pipeline result status: ${result.status}`);
+    console.log(`📊 [API] Pipeline result status: ${result.status}`, {
+      hasMessage: !!result.message,
+      hasData: !!result.data,
+      httpStatus: result.httpStatus
+    });
     
     // 1. CRITICAL: Handle Insufficient Tokens (Payment Required)
     if (result.status === "INSUFFICIENT_TOKENS") {
-      console.log(`❌ Token failure for user ${user_id}. Returning 402.`);
+      console.log(`❌ [API] Token failure for user ${user_id}. Returning 402.`);
       
       // Get current token count for the error response
       let remainingTokens = null;
@@ -100,7 +123,7 @@ export async function POST(request: NextRequest) {
 
     // 2. Handle service unavailable errors
     if (result.status === "SERVICE_UNAVAILABLE") {
-      console.error(`❌ Service unavailable for user ${user_id}: ${result.message}`);
+      console.error(`❌ [API] Service unavailable for user ${user_id}: ${result.message}`);
       return NextResponse.json(
         { status: result.status, message: result.message },
         { status: 503 } // Service Unavailable
@@ -109,7 +132,7 @@ export async function POST(request: NextRequest) {
 
     // 3. Handle all other pipeline errors
     if (result.status === "ERROR" || result.status === "SERVICE_ERROR") {
-      console.error(`❌ Pipeline returned general error for user ${user_id}: ${result.message}`);
+      console.error(`❌ [API] Pipeline returned general error for user ${user_id}: ${result.message}`);
       // Use the httpStatus provided by the pipeline, or default to appropriate status
       let httpStatus = result.httpStatus;
       if (!httpStatus) {
@@ -126,7 +149,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('✅ Pipeline completed successfully');
+    console.log('✅ [API] Pipeline completed successfully');
     
     // Get remaining tokens after successful processing
     let remainingTokens = null;
@@ -162,7 +185,8 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("❌ API Route Error:", error);
+    console.error("❌ [API] API Route Error:", error);
+    console.error("❌ [API] Error stack:", error instanceof Error ? error.stack : 'No stack trace');
     return NextResponse.json(
       { 
         status: "ERROR", 

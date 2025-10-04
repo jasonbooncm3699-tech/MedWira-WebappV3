@@ -194,23 +194,26 @@ async function getNpraStats() {
  * @returns {Promise<boolean>} True if the token was successfully decremented, False if user is out of tokens or failed.
  */
 async function checkTokenAvailability(userId, requiredCost = 1) {
-    console.log(`🔍 Checking token availability for user: ${userId} (required: ${requiredCost})`);
+    console.log(`🔍 [DB] Checking token availability for user: ${userId} (required: ${requiredCost})`);
     
     try {
+        console.log(`🔍 [DB] Getting Supabase client...`);
         const supabase = getSupabaseClient();
+        console.log(`✅ [DB] Supabase client obtained successfully`);
         
         // Check current tokens with more detailed logging
+        console.log(`🔍 [DB] Executing profile query for userId: ${userId}`);
         const { data: profile, error: selectError } = await supabase
             .from('profiles')
             .select('token_count, id, email')
             .eq('id', userId)
             .single();
 
-        console.log(`🔍 Token check query result:`, { profile, selectError });
+        console.log(`🔍 [DB] Token check query result:`, { profile, selectError });
 
         if (selectError) {
             // CRITICAL FIX: Log the actual Supabase error object
-            console.error('❌ Token check DB Error (Supabase):', selectError);
+            console.error('❌ [DB] Token check DB Error (Supabase):', selectError);
             return { isAvailable: false, reason: "DATABASE_ERROR" };
         }
 

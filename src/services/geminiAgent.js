@@ -134,9 +134,9 @@ Start your response with the final \`\`\`json structure now.
  * @returns {Promise<Object>} Analysis result with status and data
  */
 async function runGeminiPipeline(base64Image, textQuery, userId) {
-    console.log(`🚀 Starting Gemini 1.5 Pro Pipeline for user: ${userId}`);
-    console.log(`📝 Query: "${textQuery}"`);
-    console.log(`🖼️ Image provided: ${base64Image ? 'Yes' : 'No'}`);
+    console.log(`🚀 [GEMINI] Starting Gemini 1.5 Pro Pipeline for user: ${userId}`);
+    console.log(`📝 [GEMINI] Query: "${textQuery}"`);
+    console.log(`🖼️ [GEMINI] Image provided: ${base64Image ? 'Yes' : 'No'}`);
 
     try {
         // Define the cost of one analysis
@@ -144,19 +144,19 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
         
         // 1. CRITICAL: Check token availability
         if (!userId || typeof userId !== 'string' || userId.length < 5) {
-            console.error(`❌ CRITICAL: Invalid user ID in pipeline:`, { userId, type: typeof userId, length: userId?.length });
+            console.error(`❌ [GEMINI] CRITICAL: Invalid user ID in pipeline:`, { userId, type: typeof userId, length: userId?.length });
             return { status: "ERROR", message: "Invalid user ID provided to pipeline." };
         }
         
-        console.log(`🔍 GeminiAgent: Starting token check for user: ${userId} (required: ${REQUIRED_COST} tokens)`);
+        console.log(`🔍 [GEMINI] Starting token check for user: ${userId} (required: ${REQUIRED_COST} tokens)`);
         
         const tokenCheckResult = await checkTokenAvailability(userId, REQUIRED_COST);
-        console.log(`🔍 GeminiAgent: Token check result:`, tokenCheckResult);
+        console.log(`🔍 [GEMINI] Token check result:`, tokenCheckResult);
         
         if (!tokenCheckResult.isAvailable) {
             // Separate the two failure reasons
             if (tokenCheckResult.reason === "INSUFFICIENT_TOKENS") {
-                console.log(`❌ User ${userId} blocked due to insufficient tokens (Required: ${REQUIRED_COST})`);
+                console.log(`❌ [GEMINI] User ${userId} blocked due to insufficient tokens (Required: ${REQUIRED_COST})`);
                 return { 
                     status: "INSUFFICIENT_TOKENS", 
                     message: "Insufficient token. Please subscribe or redeem a referral code." 
@@ -164,14 +164,14 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
             }
             
             // Handle all other failure reasons (e.g., DATABASE_ERROR)
-            console.log(`❌ User ${userId} blocked due to service error: ${tokenCheckResult.reason}`);
+            console.log(`❌ [GEMINI] User ${userId} blocked due to service error: ${tokenCheckResult.reason}`);
             return { 
                 status: "SERVICE_UNAVAILABLE", 
                 message: "Authentication service is temporarily unavailable." 
             };
         }
         
-        console.log(`✅ GeminiAgent: Token check PASSED for user: ${userId}`);
+        console.log(`✅ [GEMINI] Token check PASSED for user: ${userId}`);
 
         // 2. FIRST LLM CALL: IMAGE ANALYSIS & TOOL SIGNAL
         console.log(`🔍 Step 1: Gemini 1.5 Pro Image Analysis & Tool Signal`);
