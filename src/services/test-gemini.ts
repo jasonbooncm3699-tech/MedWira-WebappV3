@@ -40,7 +40,7 @@ export async function testNpraDatabase(): Promise<void> {
     
     // Test 3: Enhanced lookup
     console.log('🔍 Testing enhanced lookup...');
-    const enhancedResult = await enhancedNpraLookup(testProduct, null, 'acetaminophen');
+    const enhancedResult = await enhancedNpraLookup(testProduct, null, 'sample-ingredient');
     
     if (enhancedResult) {
       console.log('✅ Enhanced lookup successful:', {

@@ -254,8 +254,8 @@ export const sampleMedicineData: StructuredMedicineData = {
     title: 'Key Drug Interactions',
     content: 'This medication may interact with blood thinners, diabetes medications, and certain antibiotics.',
     details: [
-      'Warfarin: May increase bleeding risk',
-      'Metformin: May affect blood sugar levels',
+      'Blood thinners: May increase bleeding risk',
+      'Diabetes medications: May affect blood sugar levels',
       'Certain antibiotics: May reduce effectiveness',
       'Always inform your doctor of all medications you take'
     ]
