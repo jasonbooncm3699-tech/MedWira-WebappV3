@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { geminiAnalyzer } from '@/lib/gemini-service';
 import { DatabaseService } from '@/lib/supabase';
 
+// Increase Vercel timeout to 120 seconds for comprehensive analysis
+export const maxDuration = 120;
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

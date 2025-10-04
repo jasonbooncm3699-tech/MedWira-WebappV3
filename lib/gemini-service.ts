@@ -302,73 +302,71 @@ Do not provide any other information. Only return the above format.`;
         
         console.log(`🧪 [${analysisId}] Active ingredient analysis:`, activeIngredientAnalysis);
         
-        const comprehensivePrompt = `You are a specialized medicine analysis AI. Provide comprehensive medical information in the EXACT 11-section format below.
+        const comprehensivePrompt = `Analyze this medicine and provide information in this format:
 
-**DATABASE VERIFIED INFORMATION:**
-- Product Name: ${(dbResult as any).product}
-- Active Ingredients: ${(dbResult as any).active_ingredient}
-- Generic Name: ${(dbResult as any).generic_name}
-- Registration Number: ${(dbResult as any).reg_no}
-- Status: ${(dbResult as any).status}
-- Manufacturer: ${(dbResult as any).holder}
+Packaging: ${packagingType}
+Medicine: ${(dbResult as any).product} (${(dbResult as any).active_ingredient})
+Purpose: [What it treats]
 
-**TASK: COMPREHENSIVE MEDICAL ANALYSIS**
-Analyze the active ingredients and provide detailed medical information in this EXACT format with bullet points:
-
-Packaging Detected: ${packagingType}
-Medicine Name: ${(dbResult as any).product} (${(dbResult as any).active_ingredient})
-Purpose: [What this medicine treats based on active ingredients]
-
-Dosage Instructions:
-• Adults: [Dosage for adults]
-• Children: [Dosage for children if applicable]
-• Elderly: [Special considerations for elderly]
-• General: [General dosage instructions]
+Dosage:
+• Adults: [Dosage]
+• Children: [If applicable]
+• General: [Instructions]
 
 Side Effects:
-• Common: [Most common side effects]
-• Moderate: [Moderate side effects]
-• Rare: [Rare but serious side effects]
-• Overdose: [Overdose symptoms and treatment]
+• Common: [Most common]
+• Serious: [Rare/serious]
+• Overdose: [Symptoms]
 
 Allergy Warning:
-• Contains: ${(dbResult as any).active_ingredient} and excipients
-• Allergic reactions: [Types of allergic reactions possible]
-• Cross-reactivity: [Cross-reactivity with other substances]
-• Emergency: [What to do if allergic reaction occurs]
+• Contains: ${(dbResult as any).active_ingredient}
+• Reactions: [Possible reactions]
+• Emergency: [What to do]
 
-Drug Interactions:
-• With medications: [Drug-drug interactions]
-• With food: [Food interactions]
-• With alcohol: [Alcohol interactions]
-• With supplements: [Supplement interactions]
+Interactions:
+• Medications: [Drug interactions]
+• Food/Alcohol: [Interactions]
 
-Safety Notes:
-• Children: [Safety for children]
-• Pregnancy: [Pregnancy safety]
-• Breastfeeding: [Breastfeeding safety]
-• Elderly: [Elderly considerations]
-• Driving: [Impact on driving/operating machinery]
+Safety:
+• Children/Pregnancy: [Safety info]
+• Elderly/Driving: [Considerations]
 
-Storage Instructions:
-• Temperature: [Storage temperature requirements]
-• Light: [Light exposure requirements]
-• Moisture: [Moisture protection requirements]
-• Container: [Container requirements]
-• Expiry: [Expiry date handling]
+Storage: [Temperature, light, moisture requirements]
 
-${userAllergies ? `**USER ALLERGY ALERT:** User has known allergies: ${userAllergies}. Pay special attention to allergy warnings and cross-reactivity.` : ''}
+${userAllergies ? `User allergies: ${userAllergies}` : ''}
 
-Disclaimer: This information is sourced from medical databases and packaging details. For informational purposes only. Not medical advice. Consult a doctor or pharmacist before use.`;
+Disclaimer: For informational purposes only. Consult healthcare professional.`;
 
         try {
-          const comprehensiveResponse = await this.model.generateContent(comprehensivePrompt);
+          // Add timeout handling for comprehensive analysis
+          const timeoutPromise = (promise: Promise<any>, timeoutMs: number) => {
+            return Promise.race([
+              promise,
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Analysis timeout')), timeoutMs)
+              )
+            ]);
+          };
+
+          const comprehensiveResponse = await timeoutPromise(
+            this.model.generateContent(comprehensivePrompt),
+            25000 // 25 second timeout (5 seconds before Vercel timeout)
+          );
           comprehensiveAnalysis = comprehensiveResponse.response.text();
           console.log(`✅ [${analysisId}] STEP 4: Bullet formatting applied successfully`);
           console.log(`✅ [${analysisId}] STEP 5: Active ingredient analysis enhanced successfully`);
         } catch (error) {
           console.error(`❌ [${analysisId}] Comprehensive analysis error:`, error);
-          comprehensiveAnalysis = `Analysis completed but detailed formatting failed. Basic information available.`;
+          if (error instanceof Error && error.message === 'Analysis timeout') {
+            console.warn(`⚠️ [${analysisId}] Analysis timed out, providing fallback analysis`);
+            comprehensiveAnalysis = `Packaging: ${packagingType}
+Medicine: ${(dbResult as any).product} (${(dbResult as any).active_ingredient})
+Purpose: Analysis timed out - basic information available
+Note: Comprehensive analysis could not be completed due to timeout. Please try again with a clearer image.
+Disclaimer: For informational purposes only. Consult healthcare professional.`;
+          } else {
+            comprehensiveAnalysis = `Analysis completed but detailed formatting failed. Basic information available.`;
+          }
         }
       } else {
         // Fallback analysis without database data
