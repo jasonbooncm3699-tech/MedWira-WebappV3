@@ -146,7 +146,13 @@ export default function Home() {
     if (!user || !user.id) {
       // CRITICAL: Prevent API call if authentication is missing
       console.error("❌ Cannot send request: User not authenticated.");
-      setErrorMessage("Please log in to use the medicine analysis feature.");
+      const errorMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai' as const,
+        content: "⚠️ **Authentication Required**\n\nPlease log in to use the medicine analysis feature.",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
       setIsAnalyzing(false);
       return; // EARLY EXIT to prevent bad request
     }
@@ -450,7 +456,13 @@ export default function Home() {
     if (!user || !user.id) {
       // CRITICAL: Prevent API call if authentication is missing
       console.error("❌ Cannot send request: User not authenticated.");
-      setErrorMessage("Please log in to use the medicine analysis feature.");
+      const errorMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai' as const,
+        content: "⚠️ **Authentication Required**\n\nPlease log in to use the medicine analysis feature.",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
       setIsAnalyzing(false);
       setAiStatus('idle');
       return; // EARLY EXIT to prevent bad request
