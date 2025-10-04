@@ -105,41 +105,48 @@ Before returning the JSON, verify:
     if (isFirstCall) {
         // --- FIRST CALL PROMPT (Systematic text extraction with validation) ---
         return `${basePrompt}
-**TASK: SYSTEMATIC TEXT EXTRACTION WITH VALIDATION**
+**TASK: MANDATORY STEP-BY-STEP TEXT EXTRACTION**
 
-Follow this EXACT step-by-step process:
+You MUST follow this EXACT process and show your work:
 
 **STEP 1: DESCRIBE WHAT YOU SEE**
-- Describe the packaging type (blister pack, bottle, box, etc.)
-- Note the overall layout and text arrangement
-- Identify the most prominent visual elements
+First, describe exactly what you see in the image:
+- Packaging type (blister pack, bottle, box, etc.)
+- Overall layout and text arrangement
+- Most prominent visual elements
 
 **STEP 2: LIST ALL VISIBLE TEXT**
-- Scan the image systematically from top to bottom, left to right
-- List EVERY piece of text you can see, in order of prominence
+Scan the image systematically and list EVERY piece of text you can see:
+- Start from top-left, go left to right, then down
+- List text in order of size/prominence
 - Include even small text that might be relevant
 
 **STEP 3: IDENTIFY THE MAIN PRODUCT NAME**
-- Look for the LARGEST, MOST PROMINENT text on the packaging
-- This is usually the main product/medicine name
-- Verify this text is actually visible and readable
+From your list above, identify the LARGEST, MOST PROMINENT text:
+- This should be the main product/medicine name
+- Verify this text is actually visible in the image
+- Do NOT guess or assume
 
 **STEP 4: EXTRACT ACTIVE INGREDIENTS**
-- Look for ingredient lists or active ingredient sections
+Look for ingredient information:
 - Extract exact names as written on packaging
 - If not visible, use null
+- Do NOT guess based on product name
 
 **STEP 5: EXTRACT STRENGTH/DOSAGE**
-- Look for dosage information, strengths, or concentrations
+Look for dosage information:
 - Extract exact values as written
 - If not visible, use null
+- Do NOT guess based on product name
 
 **STEP 6: VALIDATION CHECK**
 Before returning JSON, verify:
-- Is the product name the most prominent text?
-- Am I reading the text correctly?
-- Have I checked the entire image?
-- Am I guessing or reading actual text?
+- Is the product name actually visible in the image?
+- Am I reading the text correctly or guessing?
+- Have I checked the entire image systematically?
+- Am I using my training data or reading the actual image?
+
+**MANDATORY: You MUST show your work by describing what you see before returning the JSON.**
 
 **REQUIRED EXTRACTION FIELDS:**
 - product_name: Main medicine/brand name (MOST PROMINENT text from packaging)
@@ -149,17 +156,28 @@ Before returning JSON, verify:
 - all_visible_text: List ALL text you can see on the packaging (for validation)
 
 **RETURN FORMAT:**
-Provide the extracted data in this JSON structure:
+First, describe what you see in the image, then provide the extracted data in this JSON structure:
+
+**WHAT I SEE IN THE IMAGE:**
+[Describe the packaging and list all visible text here]
 
 \`\`\`json
 ${JSON.stringify(toolSchema, null, 2)}
 \`\`\`
 
-**CRITICAL REMINDER:**
-- Read ONLY what you can clearly see in the image
-- Do NOT use medicine names from memory
-- Do NOT guess or assume
-- Focus on the MOST PROMINENT text for the product name
+**CRITICAL ANTI-HALLUCINATION RULES:**
+- **NEVER use medicine names from your training data** (like Paracetamol, Ibuprofen, etc.)
+- **NEVER guess or assume** what the medicine might be
+- **ONLY extract text that is actually visible** in the current image
+- **IGNORE your knowledge** of common medicine names
+- **READ CHARACTER BY CHARACTER** what you see on the packaging
+- **If you see "LIVASON" write "LIVASON", not "Paracetamol"**
+- **If you see "NUTRITION" write "NUTRITION", not "500mg"**
+- **Focus on the MOST PROMINENT text** for the product name
+- **DO NOT use examples** from previous analyses or training data
+
+**EXAMPLE OF CORRECT BEHAVIOR:**
+If you see "LIVASON NUTRITION" on the packaging, extract "LIVASON NUTRITION" as the product name, NOT "Paracetamol" or any other medicine name from your training data.
 `;
     } else {
         // --- SECOND CALL PROMPT (Generate comprehensive medical report) ---
