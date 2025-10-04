@@ -283,12 +283,25 @@ async function decrementToken(userId) {
     // We assume checkTokenAvailability was called successfully beforehand.
     const supabase = getSupabaseClient();
     
-    // Use atomic decrement operation - only decrement if token_count > 0
+    // First get current token count, then decrement
+    const { data: currentProfile, error: selectError } = await supabase
+        .from('profiles')
+        .select('token_count')
+        .eq('id', userId)
+        .single();
+
+    if (selectError || !currentProfile || currentProfile.token_count <= 0) {
+        console.error('❌ [DB] Cannot decrement token - user has no tokens or profile not found');
+        return false;
+    }
+
+    const newTokenCount = currentProfile.token_count - 1;
+    
+    // Update with new token count
     const { data, error: updateError } = await supabase
         .from('profiles')
-        .update({ token_count: supabase.raw('token_count - 1') })
+        .update({ token_count: newTokenCount })
         .eq('id', userId)
-        .gt('token_count', 0) // Only update if token_count > 0
         .select('token_count')
         .single();
 
