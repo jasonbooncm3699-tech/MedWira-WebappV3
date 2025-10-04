@@ -1,12 +1,12 @@
 /**
- * DEPRECATED: Gemini Service - Being replaced with MedGemma 4B
+ * DEPRECATED: Gemini Service - Being replaced with Gemini 1.5 Pro
  * 
  * This file contains the legacy Gemini integration code.
- * All functionality has been disabled for Phase 1 of the MedGemma 4B migration.
+ * All functionality has been disabled for Phase 1 of the Gemini 1.5 Pro migration.
  * 
  * Phase 1 Status: ✅ COMPLETE
- * - Gemini SDK removed
- * - All Gemini code commented out
+ * - Legacy Gemini SDK removed
+ * - All legacy Gemini code commented out
  * - Placeholder service created for backward compatibility
  */
 
@@ -49,14 +49,14 @@ export interface NPRAMedicineData {
 /**
  * DEPRECATED: GeminiMedicineAnalyzer class
  * 
- * This class has been disabled and will be replaced with MedGemma 4B service.
+ * This class has been disabled and will be replaced with Gemini 1.5 Pro service.
  * All methods return placeholder responses.
  */
 export class GeminiMedicineAnalyzer {
   private model: any;
 
   constructor() {
-    console.log('⚠️ GeminiMedicineAnalyzer: DEPRECATED - MedGemma 4B integration in progress');
+    console.log('⚠️ GeminiMedicineAnalyzer: DEPRECATED - Gemini 1.5 Pro integration in progress');
     this.model = null;
   }
 
@@ -82,12 +82,12 @@ export class GeminiMedicineAnalyzer {
     
     return {
       success: false,
-      error: 'Gemini integration temporarily disabled. MedGemma 4B integration in progress.',
+      error: 'AI Analysis Service temporarily undergoing maintenance. Please try again soon.',
       language
     };
   }
 }
 
 // DEPRECATED: Legacy singleton export
-// Will be replaced with MedGemma 4B service singleton
+// Will be replaced with Gemini 1.5 Pro service singleton
 export const geminiAnalyzer = new GeminiMedicineAnalyzer();
