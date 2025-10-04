@@ -159,9 +159,12 @@ export default function Home() {
 
     // 1. Defensively retrieve values from state/context
     // Use ?? (Nullish Coalescing) to force non-undefined, valid JSON types.
+    console.log('🔍 Debug - User object (text):', { user, userId: user?.id, userType: typeof user });
     const userId = user?.id ?? ''; // If user is null, userId is '' (empty string)
     const imageBase64 = null; // Text-only query, so always null
     const textQuery = userMessage ?? ''; // If no text, textQuery is '' (empty string)
+    
+    console.log('🔍 Debug - Extracted values (text):', { userId, imageBase64, textQuery });
 
     // 2. CRITICAL VALIDATION: Abort if user is missing (prevents unauthenticated token check)
     if (!userId) {
@@ -490,9 +493,12 @@ export default function Home() {
 
     // 1. Defensively retrieve values from state/context
     // Use ?? (Nullish Coalescing) to force non-undefined, valid JSON types.
+    console.log('🔍 Debug - User object:', { user, userId: user?.id, userType: typeof user });
     const userId = user?.id ?? ''; // If user is null, userId is '' (empty string)
     const imageBase64Data = imageBase64 ?? null; // If no image, imageBase64 is null (valid JSON)
     const textQuery = "Please analyze this medicine image and provide detailed information."; // The user's text message
+    
+    console.log('🔍 Debug - Extracted values:', { userId, imageBase64Data: !!imageBase64Data, textQuery });
 
     // 2. CRITICAL VALIDATION: Abort if user is missing (prevents unauthenticated token check)
     if (!userId) {
