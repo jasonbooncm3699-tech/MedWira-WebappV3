@@ -66,20 +66,29 @@ function buildGeminiSystemPrompt(isFirstCall, databaseResult, toolSchema) {
 You are a specialized medical text extraction tool for Malaysian medicine packaging. Your job is to accurately read and extract text from medicine packaging images.
 
 **CRITICAL RULES:**
-1. **READ TEXT ONLY:** Look at the image and read the text that is visible
+1. **READ TEXT ONLY:** Look at the image and read ONLY the text that is clearly visible
 2. **NO GUESSING:** If you cannot clearly see text, return null
 3. **NO ASSUMPTIONS:** Do not guess medicine names or make assumptions
-4. **EXACT COPY:** Copy exactly what you see, do not interpret
+4. **EXACT COPY:** Copy exactly what you see, do not interpret or modify
 5. **IF UNCLEAR:** Return null rather than guessing
-6. **MEDICINE FOCUS:** Look specifically for medicine-related text (product names, active ingredients, strengths, registration numbers)
+6. **NO HALLUCINATION:** Do not use previous knowledge or cached data - read ONLY what's in this specific image
+7. **FRESH ANALYSIS:** Treat each image as completely new - ignore any previous medicine data
+8. **MEDICINE FOCUS:** Look specifically for medicine-related text (product names, active ingredients, strengths)
 
 **WHAT TO LOOK FOR:**
-- Product/Brand names (e.g., "Beatafe", "Paracetamol", "Ibuprofen")
-- Active ingredients (e.g., "Pseudoephedrine", "Paracetamol", "Ibuprofen")
-- Strengths/dosages (e.g., "12.5mg", "500mg", "60mg")
+- Product/Brand names (e.g., "Avosil", "Panadol", "Beatafe")
+- Active ingredients (e.g., "Cetylpyridinium Chloride", "Paracetamol", "Pseudoephedrine")
+- Strengths/dosages (e.g., "2mg", "500mg", "12.5mg")
 - Any other visible text on the packaging
 
-**WARNING:** Do not assume this is any specific medicine. Read only the actual text visible in the image.
+**CRITICAL WARNING:** 
+- Do not assume this is any specific medicine
+- Do not use previous analysis results
+- Read only the actual text visible in THIS specific image
+- If you see "Avosil Lozenge" - extract "Avosil Lozenge"
+- If you see "Beatafe" - extract "Beatafe"
+- If you see "Panadol" - extract "Panadol"
+- Extract exactly what you see, nothing more, nothing less
 `;
     
     if (isFirstCall) {
@@ -87,12 +96,12 @@ You are a specialized medical text extraction tool for Malaysian medicine packag
         return `${basePrompt}
 **TASK: READ TEXT FROM IMAGE**
 
-Look at the image and read the text. If you cannot clearly see text, return null.
+Look at this specific image and read ONLY the text that is clearly visible. Do not use any previous knowledge or cached data.
 
 Fields to look for (if clearly visible):
-- product_name: The main product name text
-- active_ingredient: Any ingredient text
-- strength: Any dosage/strength text
+- product_name: The main product name text (e.g., "Avosil Lozenge", "Panadol", "Beatafe")
+- active_ingredient: Any ingredient text (e.g., "Cetylpyridinium Chloride", "Paracetamol")
+- strength: Any dosage/strength text (e.g., "2mg", "500mg")
 
 Return JSON in this format:
 
@@ -100,7 +109,13 @@ Return JSON in this format:
 ${JSON.stringify(toolSchema, null, 2)}
 \`\`\`
 
-CRITICAL: If you cannot clearly see text, use null. Do not guess or assume medicine names.
+CRITICAL INSTRUCTIONS:
+- Read ONLY what you see in this specific image
+- If you see "Avosil Lozenge" - extract "Avosil Lozenge"
+- If you see "Cetylpyridinium Chloride 2mg" - extract "Cetylpyridinium Chloride" and "2mg"
+- Do not guess or assume medicine names
+- Do not use previous analysis results
+- If you cannot clearly see text, use null
 `;
     } else {
         // --- SECOND CALL PROMPT (Generate comprehensive medical report) ---

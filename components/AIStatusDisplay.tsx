@@ -33,8 +33,8 @@ export default function AIStatusDisplay({ status, className = '' }: AIStatusDisp
           display: flex;
           align-items: center;
           padding: 12px 16px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 12px;
           margin: 8px 0;
           animation: slideInUp 0.3s ease-out;
@@ -60,10 +60,11 @@ export default function AIStatusDisplay({ status, className = '' }: AIStatusDisp
         }
 
         .dot {
-          width: 6px;
-          height: 6px;
+          width: 4px;
+          height: 4px;
           border-radius: 50%;
           background: #ffffff;
+          opacity: 0.7;
           animation: typingAnimation 1.4s infinite ease-in-out;
         }
 
@@ -87,17 +88,19 @@ export default function AIStatusDisplay({ status, className = '' }: AIStatusDisp
         }
 
         .status-label {
-          font-size: 12px;
+          font-size: 11px;
           color: #ffffff;
-          font-weight: 500;
+          font-weight: 400;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
+          letter-spacing: 0.3px;
+          opacity: 0.8;
         }
 
         .status-message {
-          font-size: 14px;
+          font-size: 13px;
           color: #ffffff;
-          font-weight: 500;
+          font-weight: 400;
+          line-height: 1.3;
         }
 
         @keyframes typingAnimation {
@@ -134,16 +137,16 @@ export default function AIStatusDisplay({ status, className = '' }: AIStatusDisp
           }
 
           .dot {
-            width: 6px;
-            height: 6px;
+            width: 4px;
+            height: 4px;
           }
 
           .status-label {
-            font-size: 11px;
+            font-size: 10px;
           }
 
           .status-message {
-            font-size: 13px;
+            font-size: 12px;
           }
         }
 

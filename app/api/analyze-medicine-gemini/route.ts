@@ -331,6 +331,13 @@ export async function POST(request: NextRequest) {
     
     // Flatten the data structure for UI compatibility
     let flattenedData = result.data;
+    console.log(`🔧 [API] Original data structure:`, {
+      hasData: !!result.data,
+      dataKeys: result.data ? Object.keys(result.data) : [],
+      hasNestedData: !!(result.data && result.data.data),
+      nestedDataKeys: (result.data && result.data.data) ? Object.keys(result.data.data) : []
+    });
+    
     if (result.data && result.data.data) {
       // If data is nested (result.data.data), flatten it
       flattenedData = {
@@ -340,6 +347,13 @@ export async function POST(request: NextRequest) {
       };
       console.log(`🔧 [API] Flattened data structure for UI compatibility`);
       console.log(`📊 [API] Flattened data keys:`, Object.keys(flattenedData));
+      console.log(`📊 [API] Flattened data sample:`, {
+        medicine_name: flattenedData.medicine_name,
+        generic_name: flattenedData.generic_name,
+        purpose: flattenedData.purpose ? flattenedData.purpose.substring(0, 100) + '...' : 'N/A'
+      });
+    } else {
+      console.log(`🔧 [API] Data structure is already flat, no flattening needed`);
     }
 
     // Send the full result with status and remaining tokens
