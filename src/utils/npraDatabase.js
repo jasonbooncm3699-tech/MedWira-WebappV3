@@ -177,20 +177,33 @@ async function checkTokenAvailability(userId) {
     
     const supabase = getSupabaseClient();
     
-    // Check current tokens
+    // Check current tokens with more detailed logging
     const { data: profile, error: selectError } = await supabase
         .from('profiles')
-        .select('token_count')
+        .select('token_count, id, email')
         .eq('id', userId)
         .single();
+
+    console.log(`🔍 Token check query result:`, { profile, selectError });
 
     if (selectError) {
         console.error('❌ Token check error:', selectError);
         return false;
     }
 
-    if (!profile || profile.token_count <= 0) {
-        console.log(`⚠️ User ${userId} has insufficient tokens (current: ${profile?.token_count || 0})`);
+    if (!profile) {
+        console.log(`⚠️ User ${userId} profile not found in database`);
+        return false;
+    }
+
+    console.log(`🔍 User ${userId} profile found:`, {
+        id: profile.id,
+        token_count: profile.token_count,
+        email: profile.email
+    });
+
+    if (profile.token_count <= 0) {
+        console.log(`⚠️ User ${userId} has insufficient tokens (current: ${profile.token_count})`);
         return false;
     }
 
