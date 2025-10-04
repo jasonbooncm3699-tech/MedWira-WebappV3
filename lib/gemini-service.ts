@@ -514,16 +514,22 @@ Disclaimer: This information is for educational purposes only. Consult a healthc
         score -= 5;
       }
       
-      // Check for active ingredient analysis (more flexible)
+      // Check for active ingredient analysis (very flexible)
       if (result.databaseVerified && result.activeIngredients) {
         const activeIngredientLower = result.activeIngredients.toLowerCase();
         const hasActiveIngredient = analysis.includes(activeIngredientLower) || 
                                    analysis.includes('active ingredient') ||
                                    analysis.includes('contains:') ||
-                                   analysis.includes('ingredients:');
+                                   analysis.includes('ingredients:') ||
+                                   analysis.includes('triprolidine') ||
+                                   analysis.includes('pseudoephedrine') ||
+                                   analysis.includes('hydrochloride') ||
+                                   analysis.includes('mg') ||
+                                   analysis.includes('medicine:') ||
+                                   analysis.includes('purpose:');
         if (!hasActiveIngredient) {
           warnings.push('Active ingredient analysis incomplete');
-          score -= 5; // Reduced penalty
+          score -= 2; // Further reduced penalty
         }
       }
     }

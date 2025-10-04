@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
 
     // Only deduct token and save history if analysis was successful
     if (userId && result.success) {
+      // Save scan history (separate from token deduction)
       try {
         await DatabaseService.saveScanHistory({
           user_id: userId,
@@ -94,27 +95,26 @@ export async function POST(request: NextRequest) {
           language,
           allergies: allergy || null,
         });
-
-        // Deduct token if user is logged in
-        if (userId) {
-          try {
-            const user = await DatabaseService.getUser(userId);
-            if (user && user.tokens > 0) {
-              await DatabaseService.updateUser(userId, {
-                tokens: Math.max(0, user.tokens - 1)
-              });
-              console.log(`✅ Token deducted for user ${userId}. Remaining: ${user.tokens - 1}`);
-            } else {
-              console.log(`⚠️ User ${userId} not found or has no tokens - skipping token deduction`);
-            }
-          } catch (error) {
-            console.error('Error deducting token:', error);
-            // Don't fail the request if token deduction fails
-          }
-        }
+        console.log(`✅ Scan history saved for user ${userId}`);
       } catch (error) {
         console.error('Error saving scan history:', error);
         // Don't fail the request if saving history fails
+      }
+
+      // Deduct token (separate from scan history)
+      try {
+        const user = await DatabaseService.getUser(userId);
+        if (user && user.tokens > 0) {
+          await DatabaseService.updateUser(userId, {
+            tokens: Math.max(0, user.tokens - 1)
+          });
+          console.log(`✅ Token deducted for user ${userId}. Remaining: ${user.tokens - 1}`);
+        } else {
+          console.log(`⚠️ User ${userId} not found or has no tokens - skipping token deduction`);
+        }
+      } catch (error) {
+        console.error('Error deducting token:', error);
+        // Don't fail the request if token deduction fails
       }
     }
 
