@@ -11,7 +11,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:npra": "npx tsx -e \"import('./src/utils/npraDatabase.js').then(m => m.getNpraStats().then(console.log))\""
+    "test:npra": "npx tsx -e \"import('./lib/npraDatabase.js').then(m => m.getNpraStats().then(console.log))\""
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
