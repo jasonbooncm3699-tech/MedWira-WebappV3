@@ -14,7 +14,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { npraProductLookup, checkTokenAvailability, decrementToken } = require('../utils/npraDatabase'); 
 
 // Initialize Gemini 1.5 Pro client
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ 
   model: "gemini-2.5-flash",
   generationConfig: {
