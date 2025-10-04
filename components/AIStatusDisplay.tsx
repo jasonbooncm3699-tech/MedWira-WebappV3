@@ -3,7 +3,7 @@
 import React from 'react';
 
 interface AIStatusDisplayProps {
-  status: 'idle' | 'Analyzing Image...' | 'Checking Medicine Database...' | 'Augmenting Data via Web Search...' | 'Summarizing and Formatting Response...';
+  status: 'idle' | 'Analyzing Image...' | 'Extracting Text...' | 'Matching Database...' | 'Checking Information...' | 'Summarizing Output...';
   className?: string;
 }
 
@@ -60,8 +60,8 @@ export default function AIStatusDisplay({ status, className = '' }: AIStatusDisp
         }
 
         .dot {
-          width: 8px;
-          height: 8px;
+          width: 6px;
+          height: 6px;
           border-radius: 50%;
           background: #00d4ff;
           animation: typingAnimation 1.4s infinite ease-in-out;

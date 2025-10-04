@@ -77,7 +77,7 @@ export default function Home() {
   const [scanHistory, setScanHistory] = useState<any[]>([]);
   const [userTokens, setUserTokens] = useState<number>(user?.tokens || 0);
   const [inputText, setInputText] = useState('');
-  const [aiStatus, setAiStatus] = useState<'idle' | 'Analyzing Image...' | 'Checking Medicine Database...' | 'Augmenting Data via Web Search...' | 'Summarizing and Formatting Response...'>('idle');
+  const [aiStatus, setAiStatus] = useState<'idle' | 'Analyzing Image...' | 'Extracting Text...' | 'Matching Database...' | 'Checking Information...' | 'Summarizing Output...'>('idle');
   const [messages, setMessages] = useState<Array<{
     id: string;
     type: 'user' | 'ai' | 'structured';
@@ -508,8 +508,14 @@ export default function Home() {
     });
 
     try {
-      // Real AI processing - no fake delays
+      // Real AI processing with detailed status updates
       setAiStatus('Analyzing Image...');
+      
+      // Simulate status progression for better UX
+      setTimeout(() => setAiStatus('Extracting Text...'), 1000);
+      setTimeout(() => setAiStatus('Matching Database...'), 3000);
+      setTimeout(() => setAiStatus('Checking Information...'), 6000);
+      setTimeout(() => setAiStatus('Summarizing Output...'), 9000);
 
       const response = await fetch('/api/analyze-medicine-gemini', {
         method: 'POST',

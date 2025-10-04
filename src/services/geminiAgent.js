@@ -65,59 +65,57 @@ function buildGeminiSystemPrompt(isFirstCall, databaseResult, toolSchema) {
     };
 
     const basePrompt = `
-You are a medicine packaging analysis specialist. Your ONLY job is to accurately read and extract information from medicine packaging images.
+You are a text extraction tool. Your ONLY job is to read text from images.
 
-**CRITICAL INSTRUCTIONS:**
-1. **READ ONLY WHAT YOU SEE:** Extract ONLY the text and information that is clearly visible in the image
-2. **DO NOT GUESS:** If you cannot clearly see text, do not make assumptions
-3. **BE PRECISE:** Copy exact text from packaging, do not interpret or translate
-4. **FOCUS ON ACCURACY:** It's better to miss information than to provide incorrect information
+**CRITICAL RULES:**
+1. **READ TEXT ONLY:** Look at the image and read the text that is visible
+2. **NO GUESSING:** If you cannot clearly see text, return null
+3. **NO ASSUMPTIONS:** Do not guess medicine names or make assumptions
+4. **EXACT COPY:** Copy exactly what you see, do not interpret
+5. **IF UNCLEAR:** Return null rather than guessing
+
+**WARNING:** Do not assume this is any specific medicine. Read only the actual text visible in the image.
 `;
     
     if (isFirstCall) {
         // --- FIRST CALL PROMPT (Analyze packaging and signal tool use) ---
         return `${basePrompt}
-**CURRENT TASK: EXTRACT VISIBLE TEXT FROM PACKAGING**
+**TASK: READ TEXT FROM IMAGE**
 
-Look at the medicine packaging image and extract ONLY the text that is clearly visible. Do not guess or interpret.
+Look at the image and read the text. If you cannot clearly see text, return null.
 
-Extract these specific pieces of information if clearly visible:
-- Product name (exact text)
-- Registration number (exact text) 
-- Active ingredient (exact text)
-- Manufacturer (exact text)
-- Strength/dosage (exact text)
+Fields to look for (if clearly visible):
+- product_name: The main product name text
+- registration_number: Any registration/MAL number
+- active_ingredient: Any ingredient text
+- manufacturer: Any manufacturer text
+- strength: Any dosage/strength text
 
-Your output must be a JSON object in this exact format:
+Return JSON in this format:
 
 \`\`\`json
 ${JSON.stringify(toolSchema, null, 2)}
 \`\`\`
 
-IMPORTANT: Only include information you can clearly see in the image. Use null for fields you cannot clearly read.
+CRITICAL: If you cannot clearly see text, use null. Do not guess or assume medicine names.
 `;
     } else {
         // --- SECOND CALL PROMPT (Generate comprehensive medical report) ---
         const dbStatus = databaseResult && databaseResult.id ? "PRODUCT FOUND & VERIFIED in our medicine database" : "PRODUCT NOT FOUND in our database - will use web research";
         
-        return `${basePrompt}
-**CURRENT TASK: GENERATE MEDICINE REPORT**
+        return `Generate a medical report for the medicine identified.
 
-Database lookup result: ${dbStatus}
+Database result: ${dbStatus}
 
-Based on the packaging information extracted, generate a medical report in this format:
+Create a JSON response with this structure:
 
 \`\`\`json
 ${JSON.stringify(finalOutputSchema, null, 2)}
 \`\`\`
 
-**REQUIREMENTS:**
-- Use the exact medicine name from the packaging
-- Provide accurate medical information
-- Keep responses concise but informative
-- Use your knowledge of common medicines
+Fill in the fields with information about the medicine. Use the database data when available.
 
-**IMPORTANT:** Respond quickly and efficiently. Focus on accuracy over complexity.
+IMPORTANT: You must respond with the JSON structure above. Do not provide any other text.
 `;
     }
 }
