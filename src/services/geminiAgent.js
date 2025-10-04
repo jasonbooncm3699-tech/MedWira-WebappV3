@@ -140,7 +140,7 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
 
     try {
         // Define the cost of one analysis
-        const REQUIRED_COST = 10;
+        const REQUIRED_COST = 1;
         
         // 1. CRITICAL: Check token availability
         if (!userId) {
