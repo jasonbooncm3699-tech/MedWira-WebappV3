@@ -468,12 +468,56 @@ export default function Home() {
       return; // EARLY EXIT to prevent bad request
     }
 
-    // Prepare the payload object
+    // 1. Get current data from state (user should be from useAuth())
+    const userId = user.id; 
+    const imageBase64Data = imageBase64; // Use the actual state variable name
+    const inputMessage = "Please analyze this medicine image and provide detailed information."; // The user's text message
+
+    // 2. CRITICAL VALIDATION: Fail early if required data is missing
+    if (!userId) {
+      console.error("❌ Cannot send request: User ID missing");
+      const errorMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai' as const,
+        content: "⚠️ **Authentication Error**\n\nUser ID is missing. Please log in again.",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      setIsAnalyzing(false);
+      setAiStatus('idle');
+      return;
+    }
+    
+    if (!imageBase64Data) {
+      console.error("❌ Cannot send request: Image data missing");
+      const errorMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai' as const,
+        content: "⚠️ **Image Error**\n\nImage data is missing. Please try uploading the image again.",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      setIsAnalyzing(false);
+      setAiStatus('idle');
+      return;
+    }
+
+    // 3. CRITICAL FIX: Construct the payload with fallbacks to prevent 'undefined'
     const payload = {
-      image_data: imageBase64, // Ensure this is a non-null base64 string
-      user_id: user.id, // The validated user ID
-      text_query: "Please analyze this medicine image and provide detailed information." // The user's text message
+      // Ensure both are explicitly set, even if one is null/empty string
+      image_data: imageBase64Data || null, 
+      user_id: userId,
+      text_query: inputMessage || '', 
     };
+
+    // 4. DEBUG: Log the payload to ensure it's valid
+    console.log('🔍 Sending payload:', {
+      hasImageData: !!payload.image_data,
+      imageDataLength: payload.image_data?.length || 0,
+      userId: payload.user_id,
+      textQuery: payload.text_query,
+      payloadType: typeof payload
+    });
 
     try {
       // Real AI processing - no fake delays
