@@ -206,43 +206,36 @@ Generate the medical report in this EXACT JSON structure:
 ${JSON.stringify(finalOutputSchema, null, 2)}
 \`\`\`
 
-**ANALYSIS REQUIREMENTS FOR EACH FIELD:**
+**CONCISE ANALYSIS REQUIREMENTS:**
 
-**packaging_detected:** Describe the packaging type, visible brand name, active ingredients, and strengths. Note any special packaging features or usage indicators.
+**packaging_detected:** Brief description of packaging type and visible text.
 
-**medicine_name:** Format as "BrandName (ActiveIngredient1 strength / ActiveIngredient2 strength)" using the exact database information when available.
+**medicine_name:** Format as "BrandName (ActiveIngredient strength)" using database information.
 
-**generic_name:** Use the official generic name from the database or standard pharmaceutical nomenclature.
+**generic_name:** Use official generic name from database.
 
-**purpose:** Analyze each active ingredient's pharmacological action and therapeutic indication. Explain how the combination works synergistically if multiple ingredients.
+**purpose:** Concise therapeutic indication and mechanism of action.
 
-**dosage_instructions:** Provide evidence-based dosage recommendations for different age groups, considering the active ingredients' pharmacokinetics and safety profiles.
+**dosage_instructions:** Standard dosage for adults and children (if applicable).
 
-**side_effects:** Analyze side effects based on each active ingredient's known adverse effects, including common, rare, and serious reactions.
+**side_effects:** Common and serious side effects in brief format.
 
-**allergy_warning:** List all active ingredients and potential allergens, including cross-reactivity warnings and hypersensitivity reactions.
+**allergy_warning:** Key allergy information and contraindications.
 
-**drug_interactions:** Analyze potential interactions based on each active ingredient's metabolic pathways, receptor binding, and known drug interactions.
+**drug_interactions:** Major drug interactions and warnings.
 
-**safety_notes:** Provide comprehensive safety information considering each active ingredient's contraindications, special populations, and clinical considerations.
+**safety_notes:** Important safety considerations for special populations.
 
-**storage:** Provide appropriate storage conditions based on the active ingredients' stability requirements and formulation characteristics.
-
-**MEDICINE SPECIALIST ANALYSIS APPROACH:**
-1. **Ingredient-by-Ingredient Analysis:** Analyze each active ingredient individually
-2. **Combination Effects:** Consider synergistic or antagonistic effects of multiple ingredients
-3. **Evidence-Based Information:** Use established pharmacological and clinical data
-4. **Safety-First Approach:** Prioritize patient safety in all recommendations
-5. **Comprehensive Coverage:** Address all aspects of safe and effective medication use
+**storage:** Basic storage requirements.
 
 **CRITICAL INSTRUCTIONS:**
-1. Base analysis on verified database information when available
-2. Use established medical and pharmacological knowledge
-3. Provide comprehensive, accurate, and clinically relevant information
-4. Focus on patient safety and proper medication use
-5. Return ONLY the JSON structure with complete analysis
+1. Keep responses concise and focused
+2. Use database information when available
+3. Provide essential medical information only
+4. Return ONLY the JSON structure
+5. Maximum 2-3 sentences per field
 
-IMPORTANT: Return ONLY the JSON structure. Do not provide any additional text or explanations.
+IMPORTANT: Return ONLY the JSON structure. Keep responses brief and to the point.
 `;
     }
 }
