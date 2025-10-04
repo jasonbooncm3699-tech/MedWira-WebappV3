@@ -44,7 +44,7 @@ const TOOL_CALL_SCHEMA = {
  * @returns {string} The structured system prompt.
  */
 function buildGeminiSystemPrompt(isFirstCall, databaseResult, toolSchema) {
-    // COMPREHENSIVE OUTPUT SCHEMA - Based on the Beatafe sample format
+    // COMPREHENSIVE OUTPUT SCHEMA - Standard medicine analysis format
     const finalOutputSchema = {
         "status": "SUCCESS",
         "data": {

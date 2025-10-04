@@ -77,7 +77,7 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
   //   "tool_call": {
   //     "name": "npra_product_lookup",
   //     "parameters": {
-  //       "product_name": "Paracetamol 500mg",
+  //       "product_name": "Sample Medicine 500mg",
   //       "registration_number": "MAL12345678"
   //     }
   //   }
@@ -120,7 +120,7 @@ export async function npraProductLookup(productName: string, regNumber?: string)
   // {
   //   "id": "123",
   //   "reg_no": "MAL12345678",
-  //   "npra_product": "Paracetamol 500mg Tablets",
+  //   "npra_product": "Sample Medicine 500mg Tablets",
   //   "status": "Active",
   //   "holder": "Pharma Company Sdn Bhd"
   // }
@@ -146,11 +146,11 @@ const finalText = result.response.text();
 //   "status": "SUCCESS",
 //   "data": {
 //     "packaging_detected": "White tablets in blister pack with '500mg' printed",
-//     "medicine_name": "Paracetamol 500mg Tablets - Active ingredient: Paracetamol",
+//     "medicine_name": "Sample Medicine 500mg Tablets - Active ingredient: Sample Ingredient",
 //     "purpose": "Pain relief and fever reduction",
 //     "dosage_instructions": "Adults: 1-2 tablets every 4-6 hours, max 8 tablets/day",
 //     "side_effects": "Rare: skin rash, liver damage with overdose",
-//     "allergy_warning": "Do not use if allergic to paracetamol",
+//     "allergy_warning": "Do not use if allergic to active ingredients",
 //     "drug_interactions": "May interact with warfarin, alcohol",
 //     "safety_notes": "Do not exceed recommended dose, avoid with alcohol",
 //     "storage": "Store at room temperature, protect from moisture"

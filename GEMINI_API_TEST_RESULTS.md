@@ -42,7 +42,7 @@
 ```bash
 🧪 Testing Gemini 1.5 Pro Direct API...
 ✅ Gemini Direct API Test Success!
-Response: "Paracetamol, also known as acetaminophen in some countries..."
+Response: "Sample medicine, also known by its generic name in some countries..."
 ```
 
 ### **5. API Route Integration ✅**
@@ -80,7 +80,7 @@ Response: {"status":"ERROR","message":"Out of tokens. Please renew your subscrip
 ## 🎯 **Live Testing Ready**
 
 ### **What Works:**
-1. **Text Queries**: "What is paracetamol used for?" → Detailed medical response
+1. **Text Queries**: "What is this medicine used for?" → Detailed medical response
 2. **Image Analysis**: Ready for medicine image uploads
 3. **Token Management**: Proper cost control and user limits
 4. **Database Lookup**: NPRA medicine database integration

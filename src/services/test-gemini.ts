@@ -25,7 +25,7 @@ export async function testNpraDatabase(): Promise<void> {
     
     // Test 2: Basic product lookup
     console.log('🔍 Testing basic product lookup...');
-    const testProduct = 'Paracetamol'; // Common medicine name
+    const testProduct = 'Generic Medicine'; // Generic test medicine name
     const result = await npraProductLookup(testProduct);
     
     if (result) {

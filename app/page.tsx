@@ -1127,7 +1127,7 @@ export default function Home() {
             <div className="allergy-input-wrapper">
               <input
                 type="text"
-              placeholder="Enter allergies (e.g., penicillin, paracetamol)"
+              placeholder="Enter allergies (e.g., penicillin, sulfa drugs)"
               className="allergy-input"
                 value={allergy}
                 onChange={(e) => setAllergy(e.target.value)}

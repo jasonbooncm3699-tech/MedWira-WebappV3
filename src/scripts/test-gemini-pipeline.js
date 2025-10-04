@@ -170,7 +170,7 @@ async function testErrorHandling() {
     {
       name: 'No Image, Text Only',
       base64Image: null,
-      textQuery: 'What are the side effects of paracetamol?',
+      textQuery: 'What are the side effects of this medicine?',
       userId: 'test-user-no-image'
     },
     {

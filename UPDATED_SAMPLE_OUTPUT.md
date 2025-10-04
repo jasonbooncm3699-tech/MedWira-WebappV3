@@ -15,12 +15,12 @@
 
 **Side Effects:** Common: None frequent. Rare: Skin rash, allergic reactions, or stomach upset. Overdose risk: Liver damage—seek immediate help if exceeded.
 
-**Allergy Warning:** Contains paracetamol and excipients (e.g., starch, magnesium stearate). May cause reactions if allergic. If you entered allergies (e.g., paracetamol), warning: Potential trigger—consult a doctor.
+**Allergy Warning:** Contains active ingredients and excipients (e.g., starch, magnesium stearate). May cause reactions if allergic. If you entered allergies, warning: Potential trigger—consult a doctor.
 
 **Drug Interactions:**
-- With other drugs: Do not combine with other paracetamol products (e.g., cold meds) to avoid overdose. May enhance effects of blood thinners (e.g., warfarin) or interact with seizure meds (e.g., phenytoin).
+- With other drugs: Do not combine with other products containing the same active ingredients to avoid overdose. May enhance effects of blood thinners (e.g., warfarin) or interact with seizure meds (e.g., phenytoin).
 - With food: Can be taken with or without food; no major interactions.
-- With alcohol: Avoid—alcohol increases liver toxicity risk when taken with paracetamol.
+- With alcohol: Avoid—alcohol increases liver toxicity risk when taken with this medication.
 
 **Safety Notes:**
 - For kids: Suitable for children over 7 per packaging, but consult pediatrician for younger ages or if under 12.

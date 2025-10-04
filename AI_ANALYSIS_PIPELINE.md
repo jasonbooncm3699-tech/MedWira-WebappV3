@@ -156,11 +156,11 @@ const analyzeMedicineImage = async (imageBase64: string) => {
   "status": "SUCCESS",
   "data": {
     "packagingDetected": "Blister pack with markings...",
-    "medicineName": "BEATAFE (Pseudoephedrine 60mg, Triprolidine HCI 2.5mg)",
+    "medicineName": "SAMPLE_MEDICINE (ActiveIngredient1 60mg, ActiveIngredient2 2.5mg)",
     "purpose": "Treatment of common cold and allergies...",
     "dosageInstructions": "Adults: one tablet every 4-6 hours...",
     "sideEffects": "Common: dry mouth, dizziness...",
-    "allergyWarning": "Contains pseudoephedrine and triprolidine...",
+    "allergyWarning": "Contains active ingredients and excipients...",
     "drugInteractions": "May interact with MAOIs...",
     "safetyNotes": "Use with caution in children...",
     "crossBorderInfo": "Availability in other countries...",
