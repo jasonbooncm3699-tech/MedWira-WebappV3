@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     if (userId) {
       try {
         const user = await DatabaseService.getUser(userId);
-        if (user.tokens <= 0) {
+        if (user && user.tokens <= 0) {
           return NextResponse.json(
             { 
               status: 'ERROR',
@@ -63,7 +63,8 @@ export async function POST(request: NextRequest) {
         }
       } catch (error) {
         console.error('Error checking user tokens:', error);
-        // Continue without token check if user lookup fails
+        // Continue without token check if user lookup fails - user might not exist yet
+        console.log('Continuing analysis without token check - user profile may not exist');
       }
     }
 
@@ -96,10 +97,20 @@ export async function POST(request: NextRequest) {
 
         // Deduct token if user is logged in
         if (userId) {
-          const user = await DatabaseService.getUser(userId);
-          await DatabaseService.updateUser(userId, {
-            tokens: Math.max(0, user.tokens - 1)
-          });
+          try {
+            const user = await DatabaseService.getUser(userId);
+            if (user && user.tokens > 0) {
+              await DatabaseService.updateUser(userId, {
+                tokens: Math.max(0, user.tokens - 1)
+              });
+              console.log(`✅ Token deducted for user ${userId}. Remaining: ${user.tokens - 1}`);
+            } else {
+              console.log(`⚠️ User ${userId} not found or has no tokens - skipping token deduction`);
+            }
+          } catch (error) {
+            console.error('Error deducting token:', error);
+            // Don't fail the request if token deduction fails
+          }
         }
       } catch (error) {
         console.error('Error saving scan history:', error);
@@ -134,7 +145,7 @@ export async function POST(request: NextRequest) {
           safety_notes: result.safetyNotes,
           disclaimer: result.disclaimer
         },
-        tokensRemaining: userId ? (await DatabaseService.getUser(userId))?.tokens : undefined
+        tokensRemaining: undefined // Will be set by frontend if needed
       });
     } else {
       return NextResponse.json({

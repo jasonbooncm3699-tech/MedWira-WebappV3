@@ -514,11 +514,16 @@ Disclaimer: This information is for educational purposes only. Consult a healthc
         score -= 5;
       }
       
-      // Check for active ingredient analysis
+      // Check for active ingredient analysis (more flexible)
       if (result.databaseVerified && result.activeIngredients) {
-        if (!analysis.includes(result.activeIngredients.toLowerCase())) {
+        const activeIngredientLower = result.activeIngredients.toLowerCase();
+        const hasActiveIngredient = analysis.includes(activeIngredientLower) || 
+                                   analysis.includes('active ingredient') ||
+                                   analysis.includes('contains:') ||
+                                   analysis.includes('ingredients:');
+        if (!hasActiveIngredient) {
           warnings.push('Active ingredient analysis incomplete');
-          score -= 10;
+          score -= 5; // Reduced penalty
         }
       }
     }
