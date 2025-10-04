@@ -800,7 +800,7 @@ export default function Home() {
                           type: 'user' as const,
                           content: 'Previous medicine analysis',
                           image: scan.image_url,
-                          timestamp: new Date(scan.created_at).toLocaleTimeString()
+                          timestamp: new Date(scan.created_at)
                         };
                         
                         const aiResponse = {
@@ -835,7 +835,7 @@ export default function Home() {
                             content: Array.isArray(scan.warnings) ? scan.warnings.join('. ') : scan.warnings,
                             details: Array.isArray(scan.warnings) ? scan.warnings : [scan.warnings]
                           } : undefined,
-                          timestamp: new Date(scan.created_at).toLocaleTimeString()
+                          timestamp: new Date(scan.created_at)
                         };
                         
                         setMessages([previousMessage, aiResponse]);
