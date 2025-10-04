@@ -72,7 +72,7 @@ export class GeminiMedicineAnalyzer {
         model: "gemini-2.5-flash",
         generationConfig: {
           temperature: 0.1,
-          maxOutputTokens: 2048,
+          maxOutputTokens: 4096,
         }
       });
       console.log('✅ Gemini 1.5 Pro model initialized successfully');

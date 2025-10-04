@@ -230,10 +230,15 @@ export async function POST(request: NextRequest) {
         const medicineName = medicineData.medicine_name || 'Unknown Medicine';
         const genericName = medicineData.generic_name || '';
         const dosage = medicineData.dosage_instructions || medicineData.dosage || '';
-        const sideEffects = medicineData.side_effects || [];
-        const interactions = medicineData.drug_interactions || [];
-        const warnings = medicineData.safety_notes || [];
+        const sideEffects = medicineData.side_effects || '';
+        const interactions = medicineData.drug_interactions || '';
+        const warnings = medicineData.safety_notes || '';
         const storage = medicineData.storage || '';
+        
+        // Convert string fields to arrays for database storage
+        const sideEffectsArray = typeof sideEffects === 'string' ? [sideEffects] : (Array.isArray(sideEffects) ? sideEffects : []);
+        const interactionsArray = typeof interactions === 'string' ? [interactions] : (Array.isArray(interactions) ? interactions : []);
+        const warningsArray = typeof warnings === 'string' ? [warnings] : (Array.isArray(warnings) ? warnings : []);
         
         await DatabaseService.saveScanHistory({
           user_id: user_id,
@@ -241,9 +246,9 @@ export async function POST(request: NextRequest) {
           medicine_name: medicineName,
           generic_name: genericName,
           dosage: dosage,
-          side_effects: Array.isArray(sideEffects) ? sideEffects : [sideEffects],
-          interactions: Array.isArray(interactions) ? interactions : [interactions],
-          warnings: Array.isArray(warnings) ? warnings : [warnings],
+          side_effects: sideEffectsArray,
+          interactions: interactionsArray,
+          warnings: warningsArray,
           storage: storage,
           category: 'Medicine',
           confidence: 0.85,

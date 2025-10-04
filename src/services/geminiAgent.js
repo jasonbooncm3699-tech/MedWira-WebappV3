@@ -19,7 +19,7 @@ const model = genAI.getGenerativeModel({
   model: "gemini-2.5-flash",
   generationConfig: {
     temperature: 0.1,
-    maxOutputTokens: 2048,
+    maxOutputTokens: 4096,
   }
 });
 
@@ -29,9 +29,7 @@ const TOOL_CALL_SCHEMA = {
     "name": "medicine_database_lookup",
     "parameters": {
       "product_name": "string",
-      "registration_number": "string | null",
       "active_ingredient": "string | null",
-      "manufacturer": "string | null",
       "strength": "string | null"
     }
   }
@@ -79,8 +77,6 @@ You are a specialized medical text extraction tool for Malaysian medicine packag
 - Product/Brand names (e.g., "Beatafe", "Paracetamol", "Ibuprofen")
 - Active ingredients (e.g., "Pseudoephedrine", "Paracetamol", "Ibuprofen")
 - Strengths/dosages (e.g., "12.5mg", "500mg", "60mg")
-- Registration numbers (e.g., "MAL19990007T", "NOT123456")
-- Manufacturer names
 - Any other visible text on the packaging
 
 **WARNING:** Do not assume this is any specific medicine. Read only the actual text visible in the image.
@@ -95,9 +91,7 @@ Look at the image and read the text. If you cannot clearly see text, return null
 
 Fields to look for (if clearly visible):
 - product_name: The main product name text
-- registration_number: Any registration/MAL number
 - active_ingredient: Any ingredient text
-- manufacturer: Any manufacturer text
 - strength: Any dosage/strength text
 
 Return JSON in this format:
@@ -280,19 +274,17 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
                 console.log(`🔧 Tool Signal Parsed Successfully:`, JSON.stringify(jsonSignal, null, 2));
                 
                 if (jsonSignal.tool_call && jsonSignal.tool_call.parameters) {
-                    const { product_name, registration_number, active_ingredient, manufacturer, strength } = jsonSignal.tool_call.parameters;
+                    const { product_name, active_ingredient, strength } = jsonSignal.tool_call.parameters;
                     
                     console.log(`🔍 Extracted Parameters:`, {
                         product_name,
-                        registration_number,
                         active_ingredient,
-                        manufacturer,
                         strength
                     });
                     
                     console.log(`🔍 Executing medicine database lookup for: "${product_name}"`);
                     // EXECUTE DATABASE LOOKUP
-                    databaseResult = await npraProductLookup(product_name, registration_number);
+                    databaseResult = await npraProductLookup(product_name, null);
                     console.log(`📊 Database lookup result:`, databaseResult);
                     
                     if (databaseResult && databaseResult.product) {
@@ -367,13 +359,20 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
             console.log(`✅ Final Gemini call successful`);
             console.log(`📥 Raw Final Response:`, finalText);
             
-            // Attempt to extract the final structured JSON output
-            const finalJsonMatch = finalText.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+            // Attempt to extract the final structured JSON output - handle both wrapped and unwrapped JSON
+            let finalJsonMatch = finalText.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+            
+            // If no wrapped JSON found, try to find JSON directly
+            if (!finalJsonMatch) {
+                finalJsonMatch = finalText.match(/(\{[\s\S]*\})/);
+            }
             
             if (finalJsonMatch) {
                 console.log(`✅ JSON pattern found in final response`);
                 try {
-                    const structuredResult = JSON.parse(finalJsonMatch[1]);
+                    const jsonString = finalJsonMatch[1];
+                    console.log(`🔍 Extracted JSON string:`, jsonString.substring(0, 200) + '...');
+                    const structuredResult = JSON.parse(jsonString);
                     console.log(`✅ Structured JSON response parsed successfully:`, JSON.stringify(structuredResult, null, 2));
                     
                     // Check if medicine name was extracted properly
