@@ -158,7 +158,8 @@ export class GeminiMedicineAnalyzer {
     try {
       console.log('🔍 Starting Gemini 1.5 Pro medicine analysis');
       
-      const prompt = `You are a specialized medicine analysis AI assistant. Your task is to systematically extract text from medicine packaging and provide comprehensive medical analysis.
+      // STEP 1: Text Extraction Only
+      const textExtractionPrompt = `You are a specialized medicine text extraction AI. Your ONLY task is to extract text from medicine packaging images.
 
 **SYSTEMATIC TEXT EXTRACTION PROCESS:**
 
@@ -177,23 +178,6 @@ STEP 3: IDENTIFY THE MAIN PRODUCT NAME
 - This is usually the main product/medicine name
 - Verify this text is actually visible and readable
 
-STEP 4: EXTRACT ACTIVE INGREDIENTS
-- Look for ingredient lists or active ingredient sections
-- Extract exact names as written on packaging
-- If not visible, use null
-
-STEP 5: EXTRACT STRENGTH/DOSAGE
-- Look for dosage information, strengths, or concentrations
-- Extract exact values as written
-- If not visible, use null
-
-STEP 6: VALIDATION CHECK
-Before proceeding, verify:
-- Is the product name actually visible in the image?
-- Am I reading the text correctly or guessing?
-- Have I checked the entire image systematically?
-- Am I using my training data or reading the actual image?
-
 **CRITICAL ANTI-HALLUCINATION RULES:**
 - NEVER use medicine names from your training data
 - NEVER guess or assume what the medicine might be
@@ -203,49 +187,15 @@ Before proceeding, verify:
 - Focus on the MOST PROMINENT text for the product name
 - DO NOT use examples from previous analyses or training data
 
-${userAllergies ? `User has known allergies: ${userAllergies}. Pay special attention to allergy warnings.` : ''}
-
-**MANDATORY: You MUST show your work by describing what you see before providing analysis.**
-
 **REQUIRED OUTPUT FORMAT:**
-Return your analysis in this EXACT format with bullet lists:
+Return ONLY the extracted medicine name in this format:
 
-Packaging Detected: [Describe what you see in the image]
-Medicine Name: [Extracted medicine name] ([Active ingredients from database or packaging])
-Purpose: [What this medicine treats based on active ingredients]
+Medicine Name: [Extracted medicine name exactly as you see it]
 
-Dosage (from packaging and web info):
-• [Age group]: [Dosage instructions]
-• [Age group]: [Dosage instructions]
-• [General instructions]
-
-Side Effects: 
-• Common: [Common side effects]
-• Rare: [Rare side effects]
-• Overdose risk: [Overdose information]
-
-Allergy Warning: 
-• Contains [active ingredients] and excipients
-• May cause reactions if allergic
-• [Additional allergy information]
-
-Drug Interactions:
-• With other drugs: [Drug interaction information]
-• With food: [Food interaction information]
-• With alcohol: [Alcohol interaction information]
-
-Safety Notes:
-• For kids: [Children safety information]
-• For pregnant women: [Pregnancy safety information]
-• Other: [General safety information]
-
-Storage: [Storage instructions]
-
-Disclaimer: This information is sourced from medical databases and packaging details. For informational purposes only. Not medical advice. Consult a doctor or pharmacist before use.
-`;
+Do not provide any other information. Only return the medicine name.`;
 
       const imageData = imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`;
-      const content = [prompt, {
+      const content = [textExtractionPrompt, {
         inlineData: {
           mimeType: 'image/jpeg',
           data: imageData.replace(/^data:image\/[a-z]+;base64,/, '')
@@ -278,6 +228,63 @@ Disclaimer: This information is sourced from medical databases and packaging det
       
       console.log('✅ Gemini 1.5 Pro analysis completed successfully');
       
+      // STEP 2: Generate comprehensive analysis with database data
+      let finalAnalysis = analysisText;
+      if (dbResult) {
+        const comprehensivePrompt = `You are a specialized medicine analysis AI. Analyze the active ingredients and provide comprehensive medical information.
+
+**DATABASE VERIFIED INFORMATION:**
+- Product Name: ${(dbResult as any).product}
+- Active Ingredients: ${(dbResult as any).active_ingredient}
+- Generic Name: ${(dbResult as any).generic_name}
+
+**TASK: COMPREHENSIVE MEDICAL ANALYSIS**
+Analyze the active ingredients and provide detailed medical information in this EXACT format:
+
+Packaging Detected: [Describe what you see in the image]
+Medicine Name: ${(dbResult as any).product} (${(dbResult as any).active_ingredient})
+Purpose: [What this medicine treats based on active ingredients]
+
+Dosage (from packaging and web info):
+• [Age group]: [Dosage instructions]
+• [Age group]: [Dosage instructions]
+• [General instructions]
+
+Side Effects: 
+• Common: [Common side effects]
+• Rare: [Rare side effects]
+• Overdose risk: [Overdose information]
+
+Allergy Warning: 
+• Contains ${(dbResult as any).active_ingredient} and excipients
+• May cause reactions if allergic
+• [Additional allergy information]
+
+Drug Interactions:
+• With other drugs: [Drug interaction information]
+• With food: [Food interaction information]
+• With alcohol: [Alcohol interaction information]
+
+Safety Notes:
+• For kids: [Children safety information]
+• For pregnant women: [Pregnancy safety information]
+• Other: [General safety information]
+
+Storage: [Storage instructions]
+
+Disclaimer: This information is sourced from medical databases and packaging details. For informational purposes only. Not medical advice. Consult a doctor or pharmacist before use.
+
+${userAllergies ? `User has known allergies: ${userAllergies}. Pay special attention to allergy warnings.` : ''}`;
+
+        try {
+          const comprehensiveResponse = await this.model.generateContent(comprehensivePrompt);
+          finalAnalysis = comprehensiveResponse.response.text();
+          console.log('✅ Comprehensive analysis with database data completed');
+        } catch (error) {
+          console.error('❌ Comprehensive analysis error:', error);
+        }
+      }
+      
       return {
         success: true,
         medicineName: dbResult ? (dbResult as any).product : 'Medicine identified via Gemini 1.5 Pro',
@@ -297,7 +304,7 @@ Disclaimer: This information is sourced from medical databases and packaging det
         databaseVerified: !!dbResult,
         activeIngredients: dbResult ? (dbResult as any).active_ingredient : null,
         // Raw analysis text for UI display
-        rawAnalysis: analysisText,
+        rawAnalysis: finalAnalysis,
         dosageInstructions: 'See detailed analysis below',
         allergyWarning: userAllergies ? `Contains ingredients. User allergies: ${userAllergies}` : 'See detailed analysis',
         drugInteractions: 'See detailed analysis',
