@@ -123,8 +123,9 @@ export default function Home() {
     // Refresh user data to get latest token count before proceeding
     await refreshUserData();
     
-    // Check authentication and tokens before proceeding
-    if (!checkAuthentication()) {
+    // Check basic authentication (user exists) but NOT tokens yet
+    if (!user) {
+      setShowRegistrationModal(true);
       return;
     }
 
@@ -445,7 +446,11 @@ export default function Home() {
     // Refresh user data to get latest token count before proceeding
     await refreshUserData();
     
-    if (!checkAuthentication()) return;
+    // Check basic authentication (user exists) but NOT tokens yet
+    if (!user) {
+      setShowRegistrationModal(true);
+      return;
+    }
 
     setIsAnalyzing(true);
     setAiStatus('Analyzing Image...');
