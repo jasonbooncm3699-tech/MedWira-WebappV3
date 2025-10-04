@@ -36,6 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // CRITICAL: Create Supabase client instance for cookie-based authentication
   const supabase = createClient();
 
+
   // Fetch user data directly from auth.users (Google data) + profiles (tokens/referrals)
   const fetchUserData = useCallback(async (userId: string, userEmail?: string): Promise<User | null> => {
     try {
@@ -49,6 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
 
+
       // Get profile data directly from Supabase (bypassing problematic API route)
       let userData: User | null = null;
       
@@ -60,7 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single();
         
         if (profileData && !profileError) {
-          // Use profile data directly from Supabase
+          // Use profile data directly from Supabase (now includes display_name from auth.users)
           const displayName = profileData.display_name || '';
           const avatarUrl = profileData.avatar_url || '';
           userData = {
@@ -75,45 +77,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             display_name: displayName,
             avatar_url: avatarUrl
           };
-          console.log('✅ Profile data retrieved directly from Supabase:', { tokens: userData.tokens, referral_code: userData.referral_code });
+          console.log('✅ Profile data retrieved from public.profiles:', { 
+            tokens: userData.tokens, 
+            referral_code: userData.referral_code,
+            display_name: userData.display_name,
+            name: userData.name
+          });
         } else {
           console.warn('⚠️ Profile fetch error:', profileError);
-          // Create fallback with Google data only
-          const googleData = authUser.user.user_metadata || {};
-          const displayName = googleData.full_name || googleData.name || '';
-          const avatarUrl = googleData.avatar_url || googleData.picture || '';
+          // Create fallback user with basic data
           userData = { 
             id: userId, 
             email: userEmail || authUser.user.email || '', 
-            name: displayName ? displayName.split(' ')[0] : '', 
+            name: 'User', 
             tokens: 0, 
             subscription_tier: 'free', 
             referral_code: '', 
             referral_count: 0, 
             referred_by: null, 
-            display_name: displayName, 
-            avatar_url: avatarUrl 
+            display_name: '', 
+            avatar_url: '' 
           };
         }
       } catch (directError) {
         console.error('❌ Direct Supabase fetch error:', directError);
         
         // Network error - create fallback with zero tokens
-        const googleData = authUser.user.user_metadata || {};
-        const displayName = googleData.full_name || googleData.name || '';
-        const avatarUrl = googleData.avatar_url || googleData.picture || '';
-        
         userData = {
           id: userId,
           email: userEmail || authUser.user.email || '',
-          name: displayName ? displayName.split(' ')[0] : '',
+          name: 'User',
           tokens: 0, // NO TOKENS when API fails - prevents stale data
           subscription_tier: 'free',
           referral_code: '', // NO REFERRAL CODE when API fails
           referral_count: 0,
           referred_by: null,
-          display_name: displayName,
-          avatar_url: avatarUrl
+          display_name: '',
+          avatar_url: ''
         };
       }
       
@@ -297,17 +297,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const fallbackUser = {
           id: userId,
           email: userEmail,
-          name: sessionUser?.user_metadata?.full_name || 
-                sessionUser?.user_metadata?.name || 
-                userEmail?.split('@')[0] || 
-                'User',
+          name: 'User',
           tokens: 0, // NO TOKENS when API fails - prevents stale data
           subscription_tier: 'free',
           referral_code: '', // NO REFERRAL CODE when API fails
           referral_count: 0,
           referred_by: null,
-          display_name: sessionUser?.user_metadata?.full_name || sessionUser?.user_metadata?.name || '',
-          avatar_url: sessionUser?.user_metadata?.avatar_url || sessionUser?.user_metadata?.picture || ''
+          display_name: '',
+          avatar_url: ''
         };
         console.log('📝 Setting fallback user with zero tokens:', fallbackUser);
         setUser(fallbackUser);
@@ -657,10 +654,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('✅ Valid SIGNED_IN session for:', userEmail);
           
           // CRITICAL: Use force fetch to ensure we get user profile data with tokens and referral code
-          const userName = sessionUser?.user_metadata?.full_name || 
-                          sessionUser?.user_metadata?.name || 
-                          userEmail?.split('@')[0] || 
-                          'User';
+          const userName = 'User';
           
           console.log('🚀 Force fetching user profile data after sign-in...');
           const userProfileData = await forceFetchUserProfile(userId, userEmail, userName);
@@ -737,12 +731,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const fallbackUser = {
                   id: userId,
                   email: userEmail,
-                  name: sessionUser?.user_metadata?.full_name || 
-                        sessionUser?.user_metadata?.name || 
-                        userEmail?.split('@')[0] || 
-                        'User',
+                  name: 'User',
                   tokens: 0,
-                  subscription_tier: 'free'
+                  subscription_tier: 'free',
+                  referral_code: '',
+                  referral_count: 0,
+                  referred_by: null,
+                  display_name: '',
+                  avatar_url: ''
                 };
                 setUser(fallbackUser);
               }
