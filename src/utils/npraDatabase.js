@@ -186,8 +186,13 @@ async function checkTokenAvailability(userId, requiredCost = 1) {
 
     console.log(`🔍 Token check query result:`, { profile, selectError });
 
-    if (selectError || !profile) {
-        console.error('❌ Token check DB Error:', selectError || 'Profile not found');
+    if (selectError) {
+        console.error('❌ Token check database error:', selectError);
+        return { isAvailable: false, reason: "DATABASE_ERROR" };
+    }
+
+    if (!profile) {
+        console.error(`❌ User ${userId} profile not found in database`);
         return { isAvailable: false, reason: "DATABASE_ERROR" };
     }
 

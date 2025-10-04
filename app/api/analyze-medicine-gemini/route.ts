@@ -10,7 +10,7 @@ import { runGeminiPipeline } from '@/src/services/geminiAgent';
 
 // Type definitions for the Gemini pipeline response
 interface GeminiPipelineResponse {
-  status: "SUCCESS" | "ERROR" | "INSUFFICIENT_TOKENS" | "SERVICE_ERROR";
+  status: "SUCCESS" | "ERROR" | "INSUFFICIENT_TOKENS" | "SERVICE_ERROR" | "SERVICE_UNAVAILABLE";
   message?: string;
   data?: any;
   httpStatus?: number;
@@ -98,7 +98,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Handle all other pipeline errors
+    // 2. Handle service unavailable errors
+    if (result.status === "SERVICE_UNAVAILABLE") {
+      console.error(`❌ Service unavailable for user ${user_id}: ${result.message}`);
+      return NextResponse.json(
+        { status: result.status, message: result.message },
+        { status: 503 } // Service Unavailable
+      );
+    }
+
+    // 3. Handle all other pipeline errors
     if (result.status === "ERROR" || result.status === "SERVICE_ERROR") {
       console.error(`❌ Pipeline returned general error for user ${user_id}: ${result.message}`);
       // Use the httpStatus provided by the pipeline, or default to appropriate status
