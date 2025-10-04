@@ -19,14 +19,24 @@ interface GeminiPipelineResponse {
 }
 
 export async function POST(request: NextRequest) {
-  console.log('🔍 [API] Gemini 1.5 Pro Medicine Analysis API Request received');
-  
-  try {
-    // Parse request body
-    console.log('🔍 [API] Parsing request body...');
-    const body = await request.json();
-    const { image_data, user_id, text_query } = body;
-    console.log('🔍 [API] Request body parsed successfully');
+    console.log('🔍 [API] ========== GEMINI MEDICINE ANALYSIS API REQUEST ==========');
+    console.log('⏰ [API] Request received at:', new Date().toISOString());
+    
+    try {
+        // Parse request body
+        console.log('🔍 [API] Parsing request body...');
+        const body = await request.json();
+        const { image_data, user_id, text_query } = body;
+        console.log('🔍 [API] Request body parsed successfully');
+        console.log('📋 [API] Request details:', {
+            hasImageData: !!image_data,
+            imageDataLength: image_data?.length || 0,
+            hasUserId: !!user_id,
+            userIdLength: user_id?.length || 0,
+            hasTextQuery: !!text_query,
+            textQueryLength: text_query?.length || 0,
+            textQuery: text_query
+        });
     
     // Validate required parameters
     if (!image_data && !text_query) {
@@ -91,15 +101,24 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`🚀 [API] Starting Gemini 1.5 Pro pipeline for user: ${user_id}`);
+    const pipelineStartTime = Date.now();
     
     // Call the Gemini 1.5 Pro pipeline
     console.log(`🔍 [API] About to call runGeminiPipeline with user: ${user_id}`);
     let result: GeminiPipelineResponse;
     try {
       result = await runGeminiPipeline(image_data, text_query, user_id) as GeminiPipelineResponse;
+      const pipelineDuration = Date.now() - pipelineStartTime;
       console.log(`✅ [API] runGeminiPipeline completed successfully`);
+      console.log(`⏱️ [API] Total pipeline duration: ${pipelineDuration}ms`);
     } catch (pipelineError) {
-      console.error(`❌ [API] runGeminiPipeline failed with error:`, pipelineError);
+      const pipelineDuration = Date.now() - pipelineStartTime;
+      console.error(`❌ [API] runGeminiPipeline failed after ${pipelineDuration}ms:`, pipelineError);
+      console.error(`❌ [API] Pipeline error details:`, {
+        message: pipelineError instanceof Error ? pipelineError.message : 'Unknown error',
+        stack: pipelineError instanceof Error ? pipelineError.stack : 'No stack trace',
+        name: pipelineError instanceof Error ? pipelineError.name : 'Unknown'
+      });
       return NextResponse.json(
         { 
           status: "SERVICE_ERROR", 
@@ -220,6 +239,20 @@ export async function POST(request: NextRequest) {
       isSuccessful: isAnalysisSuccessful
     });
     
+    console.log(`📊 [API] Result data structure:`, {
+      hasData: !!result.data,
+      dataType: typeof result.data,
+      dataKeys: result.data ? Object.keys(result.data) : [],
+      hasMedicineName: !!(result.data?.medicine_name),
+      hasGenericName: !!(result.data?.generic_name),
+      hasPurpose: !!(result.data?.purpose),
+      hasDosage: !!(result.data?.dosage_instructions),
+      hasSideEffects: !!(result.data?.side_effects),
+      hasInteractions: !!(result.data?.drug_interactions),
+      hasSafetyNotes: !!(result.data?.safety_notes),
+      hasStorage: !!(result.data?.storage)
+    });
+    
     // NEW: Save scan history to database if processing was successful AND medicine was identified
     if (isAnalysisSuccessful && user_id && result.data) {
       try {
@@ -259,6 +292,14 @@ export async function POST(request: NextRequest) {
         console.log(`✅ [API] Scan history saved successfully for medicine: ${medicineName}`);
       } catch (historyError) {
         console.error('❌ [API] Error saving scan history:', historyError);
+        console.error('❌ [API] Scan history error details:', {
+          message: historyError instanceof Error ? historyError.message : 'Unknown error',
+          stack: historyError instanceof Error ? historyError.stack : 'No stack trace',
+          name: historyError instanceof Error ? historyError.name : 'Unknown',
+          code: (historyError as any)?.code || 'Unknown',
+          details: (historyError as any)?.details || null,
+          hint: (historyError as any)?.hint || null
+        });
         // Don't fail the request if saving history fails
       }
     }
@@ -289,6 +330,15 @@ export async function POST(request: NextRequest) {
     }
     
     // Send the full result with status and remaining tokens
+    console.log(`✅ [API] ========== API REQUEST COMPLETED SUCCESSFULLY ==========`);
+    console.log(`⏰ [API] Request completed at: ${new Date().toISOString()}`);
+    console.log(`📊 [API] Final response:`, {
+      status: result.status,
+      hasData: !!result.data,
+      hasMessage: !!result.message,
+      tokensRemaining: remainingTokens
+    });
+    
     return NextResponse.json({
       status: result.status,
       data: result.data,
@@ -297,8 +347,15 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
+    console.error("❌ [API] ========== API ROUTE ERROR ==========");
     console.error("❌ [API] API Route Error:", error);
     console.error("❌ [API] Error stack:", error instanceof Error ? error.stack : 'No stack trace');
+    console.error("❌ [API] Error details:", {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace',
+      name: error instanceof Error ? error.name : 'Unknown'
+    });
+    console.error(`⏰ [API] Error occurred at: ${new Date().toISOString()}`);
     return NextResponse.json(
       { 
         status: "ERROR", 
