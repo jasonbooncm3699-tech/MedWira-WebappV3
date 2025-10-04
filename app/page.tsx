@@ -528,6 +528,16 @@ export default function Home() {
 
       const result = await response.json();
       
+      // Debug: Log the actual result structure
+      console.log('🔍 [UI] API Response received:', {
+        status: result.status,
+        hasData: !!result.data,
+        dataKeys: result.data ? Object.keys(result.data) : [],
+        medicineName: result.data?.medicine_name,
+        purpose: result.data?.purpose,
+        fullData: result.data
+      });
+      
       // Reset AI status
       setAiStatus('idle');
       
