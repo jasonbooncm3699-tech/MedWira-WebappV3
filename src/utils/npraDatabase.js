@@ -11,29 +11,31 @@ let supabaseClient = null;
 function getSupabaseClient() {
   if (!supabaseClient) {
     const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    // Use service role key for server-side operations to bypass RLS policies
-    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    // CRITICAL FIX: Explicitly prefer the server-side service key
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
     console.log('🔍 Supabase environment check:', {
       hasUrl: !!SUPABASE_URL,
-      hasKey: !!SUPABASE_KEY,
+      hasServiceKey: !!SUPABASE_KEY,
       urlLength: SUPABASE_URL.length,
-      keyLength: SUPABASE_KEY.length
+      keyLength: SUPABASE_KEY?.length || 0
     });
     
-    if (!SUPABASE_URL || !SUPABASE_KEY) {
-      console.error('❌ CRITICAL: Supabase environment variables missing:', {
-        SUPABASE_URL: !!SUPABASE_URL,
-        SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-        SUPABASE_KEY: !!process.env.SUPABASE_KEY,
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      });
-      throw new Error('Supabase environment variables are not configured');
+    if (!SUPABASE_URL) {
+      // Throw error if URL is missing
+      console.error('❌ CRITICAL: Supabase URL missing');
+      throw new Error('Supabase URL environment variable (SUPABASE_URL) is not configured.');
+    }
+    
+    if (!SUPABASE_KEY) {
+      // Throw error if SERVICE_ROLE_KEY is missing (required for server-side token management)
+      console.error('❌ CRITICAL: Supabase Service Role Key missing');
+      throw new Error('Supabase Service Role Key (SUPABASE_SERVICE_ROLE_KEY) is not configured.');
     }
     
     try {
       supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
-      console.log('✅ Supabase client initialized successfully');
+      console.log('✅ Supabase client initialized successfully with service role key');
     } catch (error) {
       console.error('❌ CRITICAL: Failed to initialize Supabase client:', error);
       throw new Error('Failed to initialize Supabase client');
