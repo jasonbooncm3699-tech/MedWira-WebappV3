@@ -4,7 +4,7 @@ import React from 'react';
 import { Pill, AlertTriangle, Shield, AlertCircle } from 'lucide-react';
 
 interface StructuredMedicineData {
-  // Gemini output format
+  // Gemini output format (API response format)
   medicine_name?: string;
   generic_name?: string;
   purpose?: string;
@@ -16,6 +16,10 @@ interface StructuredMedicineData {
   allergy_warning?: string;
   packaging_detected?: string;
   disclaimer?: string;
+  active_ingredients?: string;
+  database_verified?: boolean;
+  confidence?: number;
+  language?: string;
   
   // Legacy format (for backward compatibility)
   dosage?: {

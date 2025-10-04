@@ -545,8 +545,17 @@ export default function Home() {
         dataKeys: result.data ? Object.keys(result.data) : [],
         medicineName: result.data?.medicine_name,
         purpose: result.data?.purpose,
+        rawAnalysis: result.data?.raw_analysis,
         fullData: result.data
       });
+      
+      // Additional validation
+      if (!result.status) {
+        console.error('❌ [UI] Missing status in API response:', result);
+      }
+      if (result.status === 'SUCCESS' && !result.data) {
+        console.error('❌ [UI] SUCCESS status but no data:', result);
+      }
       
       // Reset AI status
       setAiStatus('idle');
@@ -559,7 +568,7 @@ export default function Home() {
           content: `**Medicine Analysis Complete**\n\n**Medicine:** ${result.data?.medicine_name || 'N/A'}\n**Purpose:** ${result.data?.purpose || 'N/A'}`,
           timestamp: new Date(),
           structuredData: result.data,
-          rawAnalysis: result.data?.rawAnalysis || result.data?.text || 'Analysis completed'
+          rawAnalysis: result.data?.raw_analysis || result.data?.rawAnalysis || result.data?.text || 'Analysis completed'
         };
 
         // Update user tokens
@@ -579,7 +588,7 @@ export default function Home() {
         const errorMessage = {
           id: (Date.now() + 1).toString(),
           type: 'ai' as const,
-          content: `**${response.status === 402 ? '⚠️ Insufficient Tokens' : 'Error'}**\n\n${result.message || result.error || 'Analysis failed. Please try again.'}`,
+          content: `**${response.status === 402 ? '⚠️ Insufficient Tokens' : 'Error'}**\n\n${result.error || result.message || 'Analysis failed. Please try again.'}`,
           timestamp: new Date()
         };
         
@@ -587,15 +596,25 @@ export default function Home() {
       }
 
     } catch (error) {
-      console.error('Analysis error:', error);
-      const errorMessage = {
+      console.error('❌ [UI] Analysis error:', error);
+      
+      // Determine error type and provide specific message
+      let errorMessage = '**Error:** Analysis failed. Please try again with a clearer image.';
+      
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        errorMessage = '**Network Error:** Unable to connect to the server. Please check your internet connection and try again.';
+      } else if (error instanceof Error) {
+        errorMessage = `**Error:** ${error.message}`;
+      }
+      
+      const errorMsg = {
         id: (Date.now() + 1).toString(),
         type: 'ai' as const,
-        content: '**Error:** Analysis failed. Please try again with a clearer image.',
+        content: errorMessage,
         timestamp: new Date()
       };
       
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => [...prev, errorMsg]);
     } finally {
       setIsAnalyzing(false);
       setAiStatus('idle');
