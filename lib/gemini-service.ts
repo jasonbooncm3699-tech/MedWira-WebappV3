@@ -12,6 +12,7 @@
  */
 
 import { DatabaseService } from './supabase';
+import { npraProductLookup } from './npraDatabase';
 
 export interface MedicineAnalysisResult {
   success: boolean;
@@ -28,12 +29,16 @@ export interface MedicineAnalysisResult {
   language?: string;
   // Enhanced fields for 11-section format
   packagingDetected?: string;
-  purpose?: string;
+  // Database integration fields
+  databaseVerified?: boolean;
+  activeIngredients?: string;
+  rawAnalysis?: string;
   dosageInstructions?: string;
   allergyWarning?: string;
   drugInteractions?: string;
   safetyNotes?: string;
   disclaimer?: string;
+  purpose?: string;
 }
 
 export interface NPRAMedicineData {
@@ -153,21 +158,91 @@ export class GeminiMedicineAnalyzer {
     try {
       console.log('🔍 Starting Gemini 1.5 Pro medicine analysis');
       
-      const prompt = `You are a medical AI assistant specializing in Malaysian medicine identification. Analyze this medicine packaging image and provide comprehensive information.
+      const prompt = `You are a specialized medicine analysis AI assistant. Your task is to systematically extract text from medicine packaging and provide comprehensive medical analysis.
 
-      Extract and analyze:
-      1. Product name and brand
-      2. Active ingredients and strengths
-      3. Registration number (MAL/NOT format)
-      4. Manufacturer information
-      5. Dosage instructions
-      6. Side effects and warnings
-      7. Drug interactions
-      8. Storage instructions
-      
-      ${userAllergies ? `User has known allergies: ${userAllergies}. Pay special attention to allergy warnings.` : ''}
-      
-      Respond in ${language} with detailed, accurate medical information.`;
+**SYSTEMATIC TEXT EXTRACTION PROCESS:**
+
+STEP 1: DESCRIBE WHAT YOU SEE
+- Describe the packaging type (blister pack, bottle, box, etc.)
+- Note the overall layout and text arrangement
+- Identify the most prominent visual elements
+
+STEP 2: LIST ALL VISIBLE TEXT
+- Scan the image systematically from top-left to bottom-right, left to right
+- List EVERY piece of text you can see, in order of prominence
+- Include even small text that might be relevant
+
+STEP 3: IDENTIFY THE MAIN PRODUCT NAME
+- Look for the LARGEST, MOST PROMINENT text on the packaging
+- This is usually the main product/medicine name
+- Verify this text is actually visible and readable
+
+STEP 4: EXTRACT ACTIVE INGREDIENTS
+- Look for ingredient lists or active ingredient sections
+- Extract exact names as written on packaging
+- If not visible, use null
+
+STEP 5: EXTRACT STRENGTH/DOSAGE
+- Look for dosage information, strengths, or concentrations
+- Extract exact values as written
+- If not visible, use null
+
+STEP 6: VALIDATION CHECK
+Before proceeding, verify:
+- Is the product name actually visible in the image?
+- Am I reading the text correctly or guessing?
+- Have I checked the entire image systematically?
+- Am I using my training data or reading the actual image?
+
+**CRITICAL ANTI-HALLUCINATION RULES:**
+- NEVER use medicine names from your training data
+- NEVER guess or assume what the medicine might be
+- ONLY extract text that is actually visible in the current image
+- IGNORE your knowledge of common medicine names
+- READ CHARACTER BY CHARACTER what you see on the packaging
+- Focus on the MOST PROMINENT text for the product name
+- DO NOT use examples from previous analyses or training data
+
+${userAllergies ? `User has known allergies: ${userAllergies}. Pay special attention to allergy warnings.` : ''}
+
+**MANDATORY: You MUST show your work by describing what you see before providing analysis.**
+
+**REQUIRED OUTPUT FORMAT:**
+Return your analysis in this EXACT format with bullet lists:
+
+Packaging Detected: [Describe what you see in the image]
+Medicine Name: [Extracted medicine name] ([Active ingredients from database or packaging])
+Purpose: [What this medicine treats based on active ingredients]
+
+Dosage (from packaging and web info):
+• [Age group]: [Dosage instructions]
+• [Age group]: [Dosage instructions]
+• [General instructions]
+
+Side Effects: 
+• Common: [Common side effects]
+• Rare: [Rare side effects]
+• Overdose risk: [Overdose information]
+
+Allergy Warning: 
+• Contains [active ingredients] and excipients
+• May cause reactions if allergic
+• [Additional allergy information]
+
+Drug Interactions:
+• With other drugs: [Drug interaction information]
+• With food: [Food interaction information]
+• With alcohol: [Alcohol interaction information]
+
+Safety Notes:
+• For kids: [Children safety information]
+• For pregnant women: [Pregnancy safety information]
+• Other: [General safety information]
+
+Storage: [Storage instructions]
+
+Disclaimer: This information is sourced from medical databases and packaging details. For informational purposes only. Not medical advice. Consult a doctor or pharmacist before use.
+`;
 
       const imageData = imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`;
       const content = [prompt, {
@@ -180,12 +255,33 @@ export class GeminiMedicineAnalyzer {
       const response = await this.model.generateContent(content);
       const analysisText = response.response.text();
       
+      console.log('✅ Gemini 1.5 Pro text extraction completed successfully');
+      console.log('📝 Raw analysis text:', analysisText);
+      
+      // Extract medicine name from analysis for database lookup
+      const medicineNameMatch = analysisText.match(/Medicine Name:\s*([^\n]+)/i) || 
+                               analysisText.match(/Product Name:\s*([^\n]+)/i) ||
+                               analysisText.match(/Brand Name:\s*([^\n]+)/i);
+      
+      let dbResult = null;
+      if (medicineNameMatch) {
+        const extractedMedicineName = medicineNameMatch[1].trim();
+        console.log('🔍 Extracted medicine name for database lookup:', extractedMedicineName);
+        
+        try {
+          dbResult = await npraProductLookup(extractedMedicineName, null);
+          console.log('📊 Database lookup result:', dbResult);
+        } catch (error) {
+          console.error('❌ Database lookup error:', error);
+        }
+      }
+      
       console.log('✅ Gemini 1.5 Pro analysis completed successfully');
       
       return {
         success: true,
-        medicineName: 'Medicine identified via Gemini 1.5 Pro',
-        genericName: 'Analysis completed',
+        medicineName: dbResult ? (dbResult as any).product : 'Medicine identified via Gemini 1.5 Pro',
+        genericName: dbResult ? (dbResult as any).generic_name : 'Analysis completed',
         dosage: 'See detailed analysis below',
         sideEffects: ['See detailed analysis'],
         interactions: ['See detailed analysis'],
@@ -197,6 +293,11 @@ export class GeminiMedicineAnalyzer {
         // Enhanced fields
         packagingDetected: 'Medicine packaging analyzed',
         purpose: 'See detailed analysis below',
+        // Database integration
+        databaseVerified: !!dbResult,
+        activeIngredients: dbResult ? (dbResult as any).active_ingredient : null,
+        // Raw analysis text for UI display
+        rawAnalysis: analysisText,
         dosageInstructions: 'See detailed analysis below',
         allergyWarning: userAllergies ? `Contains ingredients. User allergies: ${userAllergies}` : 'See detailed analysis',
         drugInteractions: 'See detailed analysis',

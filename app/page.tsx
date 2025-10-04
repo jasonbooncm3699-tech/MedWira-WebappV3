@@ -14,6 +14,7 @@ import AIStatusDisplay from '@/components/AIStatusDisplay';
 import { getInitials, generateAvatarColor } from '@/lib/avatar-utils';
 import { MessageFormatter } from '@/lib/message-formatter';
 import { DatabaseService } from '@/lib/supabase';
+import { Share2 } from 'lucide-react';
 
 export default function Home() {
   const { user, logout, isLoading, refreshUser, refreshUserData } = useAuth();
@@ -23,6 +24,13 @@ export default function Home() {
     if (!displayName) return 'User';
     const firstWord = displayName.trim().split(' ')[0];
     return firstWord || 'User';
+  };
+
+  // WhatsApp sharing function
+  const shareToWhatsApp = (analysisText: string) => {
+    const message = `💊 Medicine Analysis from MedWira AI:\n\n${analysisText}\n\n🔗 Shared from MedWira AI - Your Medicine Assistant`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
   };
   
   // Get welcome message in user's language
@@ -85,6 +93,7 @@ export default function Home() {
     timestamp: Date;
     image?: string;
     structuredData?: any;
+    rawAnalysis?: string;
   }>>([
     {
       id: '1',
@@ -546,10 +555,11 @@ export default function Home() {
         // Create structured AI response message with comprehensive data
         const structuredMessage = {
           id: (Date.now() + 1).toString(),
-          type: 'structured' as const,
+          type: 'ai' as const,
           content: `**Medicine Analysis Complete**\n\n**Medicine:** ${result.data?.medicine_name || 'N/A'}\n**Purpose:** ${result.data?.purpose || 'N/A'}`,
           timestamp: new Date(),
-          structuredData: result.data
+          structuredData: result.data,
+          rawAnalysis: result.data?.rawAnalysis || result.data?.text || 'Analysis completed'
         };
 
         // Update user tokens
@@ -1101,6 +1111,56 @@ export default function Home() {
                         }} />
                       ) : (
                         <span>{message.content || ''}</span>
+                      )}
+                      {/* Display raw analysis text for AI messages */}
+                      {message.type === 'ai' && message.rawAnalysis && (
+                        <div className="raw-analysis-text" style={{ 
+                          marginTop: '10px', 
+                          padding: '10px', 
+                          backgroundColor: 'rgba(255, 255, 255, 0.05)', 
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          lineHeight: '1.6',
+                          whiteSpace: 'pre-wrap'
+                        }}>
+                          {message.rawAnalysis}
+                        </div>
+                      )}
+                      {/* Share icon for AI messages (excluding greeting) */}
+                      {message.type === 'ai' && message.id !== '1' && (
+                        <div className="share-icon-container" style={{
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                          marginTop: '8px'
+                        }}>
+                          <button
+                            onClick={() => shareToWhatsApp(message.rawAnalysis || message.content)}
+                            className="share-button"
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#ffffff',
+                              cursor: 'pointer',
+                              padding: '4px',
+                              borderRadius: '4px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontSize: '12px',
+                              opacity: 0.7,
+                              transition: 'opacity 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.opacity = '1';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.opacity = '0.7';
+                            }}
+                          >
+                            <Share2 size={14} />
+                            <span>Share</span>
+                          </button>
+                        </div>
                       )}
                     </div>
                   )}
