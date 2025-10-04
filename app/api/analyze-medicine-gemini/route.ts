@@ -7,6 +7,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { runGeminiPipeline } from '@/src/services/geminiAgent';
+import { geminiAnalyzer } from '@/lib/gemini-service';
+import { DatabaseService } from '@/lib/supabase';
 
 // Type definitions for the Gemini pipeline response
 interface GeminiPipelineResponse {
@@ -59,6 +61,34 @@ export async function POST(request: NextRequest) {
       has_text_query: !!text_query,
       text_query_length: text_query?.length || 0
     });
+
+    // NEW: Image validation to detect medicine packaging before processing
+    if (image_data) {
+      console.log(`🔍 [API] Validating image for medicine packaging...`);
+      try {
+        const validationResult = await geminiAnalyzer.validateMedicineImage(image_data);
+        console.log(`🔍 [API] Image validation result:`, validationResult);
+        
+        if (!validationResult.isValid || validationResult.confidence < 0.3) {
+          console.log(`❌ [API] Image validation failed - not medicine packaging`);
+          return NextResponse.json(
+            { 
+              status: "ERROR", 
+              message: "The image uploaded isn't medicine related. Please reupload a new medicine image for analysis.",
+              validation_failed: true,
+              confidence: validationResult.confidence
+            },
+            { status: 400 }
+          );
+        }
+        
+        console.log(`✅ [API] Image validation passed - medicine packaging detected`);
+      } catch (validationError) {
+        console.error(`❌ [API] Image validation error:`, validationError);
+        // Continue with processing if validation fails (fallback behavior)
+        console.log(`⚠️ [API] Continuing with processing despite validation error`);
+      }
+    }
 
     console.log(`🚀 [API] Starting Gemini 1.5 Pro pipeline for user: ${user_id}`);
     
@@ -150,6 +180,44 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('✅ [API] Pipeline completed successfully');
+    
+    // NEW: Save scan history to database if processing was successful
+    if (result.status === "SUCCESS" && user_id && result.data) {
+      try {
+        console.log(`🔍 [API] Saving scan history for user: ${user_id}`);
+        
+        // Extract medicine information from the result
+        const medicineData = result.data.data || result.data;
+        const medicineName = medicineData.medicine_name || 'Unknown Medicine';
+        const genericName = medicineData.generic_name || '';
+        const dosage = medicineData.dosage_instructions || medicineData.dosage || '';
+        const sideEffects = medicineData.side_effects || [];
+        const interactions = medicineData.drug_interactions || [];
+        const warnings = medicineData.safety_notes || [];
+        const storage = medicineData.storage || '';
+        
+        await DatabaseService.saveScanHistory({
+          user_id: user_id,
+          image_url: image_data || '',
+          medicine_name: medicineName,
+          generic_name: genericName,
+          dosage: dosage,
+          side_effects: Array.isArray(sideEffects) ? sideEffects : [sideEffects],
+          interactions: Array.isArray(interactions) ? interactions : [interactions],
+          warnings: Array.isArray(warnings) ? warnings : [warnings],
+          storage: storage,
+          category: 'Medicine',
+          confidence: 0.85,
+          language: 'English',
+          allergies: ''
+        });
+        
+        console.log(`✅ [API] Scan history saved successfully for medicine: ${medicineName}`);
+      } catch (historyError) {
+        console.error('❌ [API] Error saving scan history:', historyError);
+        // Don't fail the request if saving history fails
+      }
+    }
     
     // Get remaining tokens after successful processing
     let remainingTokens = null;
