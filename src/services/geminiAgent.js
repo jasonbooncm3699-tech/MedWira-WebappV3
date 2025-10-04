@@ -46,26 +46,26 @@ const TOOL_CALL_SCHEMA = {
  * @returns {string} The structured system prompt.
  */
 function buildGeminiSystemPrompt(isFirstCall, databaseResult, toolSchema) {
-    // FINAL OUTPUT SCHEMA - Based on the sample image format
+    // COMPREHENSIVE OUTPUT SCHEMA - Based on the Beatafe sample format
     const finalOutputSchema = {
         "status": "SUCCESS",
         "data": {
-            "packaging_detected": "[String: Describe the packaging type and visible information from the image]",
-            "medicine_name": "[String: Brand name and active ingredients with strengths]",
+            "packaging_detected": "[String: Describe the packaging type, brand visibility, and active ingredients visible on packaging]",
+            "medicine_name": "[String: Brand name with active ingredients and strengths in format: 'BrandName (ActiveIngredient1 strength / ActiveIngredient2 strength)']",
             "generic_name": "[String: Generic name of the medicine]",
-            "purpose": "[String: What the medication treats and how it works]",
-            "dosage_instructions": "[String: Dosage for different age groups]",
-            "side_effects": "[String: Common, rare side effects and overdose risks]",
-            "allergy_warning": "[String: Contains ingredients and allergy information]",
-            "drug_interactions": "[String: Interactions with drugs, food, and alcohol]",
-            "safety_notes": "[String: Special warnings for kids, pregnant women, and other conditions]",
-            "storage": "[String: Storage instructions]",
-            "disclaimer": "Disclaimer: This information is sourced from our internal medicine database and reliable medical sources. It is for informational purposes only and is NOT medical advice. Consult a licensed doctor or pharmacist before use."
+            "purpose": "[String: What the medication treats, how it works, and medical indication]",
+            "dosage_instructions": "[String: Detailed dosage for adults/children over 12, children 7-12 years, and general advice]",
+            "side_effects": "[String: Common side effects, rare side effects, and overdose risks with specific symptoms]",
+            "allergy_warning": "[String: Contains ingredients and excipients, allergy information]",
+            "drug_interactions": "[String: Interactions with other drugs, food, and alcohol with specific warnings]",
+            "safety_notes": "[String: Special warnings for children, pregnant women, and other medical conditions]",
+            "storage": "[String: Storage instructions and safety precautions]",
+            "disclaimer": "This information is sourced from medical databases and packaging details. For informational purposes only. Not medical advice. Consult a doctor or pharmacist before use."
         }
     };
 
     const basePrompt = `
-You are a text extraction tool. Your ONLY job is to read text from images.
+You are a specialized medical text extraction tool for Malaysian medicine packaging. Your job is to accurately read and extract text from medicine packaging images.
 
 **CRITICAL RULES:**
 1. **READ TEXT ONLY:** Look at the image and read the text that is visible
@@ -73,6 +73,15 @@ You are a text extraction tool. Your ONLY job is to read text from images.
 3. **NO ASSUMPTIONS:** Do not guess medicine names or make assumptions
 4. **EXACT COPY:** Copy exactly what you see, do not interpret
 5. **IF UNCLEAR:** Return null rather than guessing
+6. **MEDICINE FOCUS:** Look specifically for medicine-related text (product names, active ingredients, strengths, registration numbers)
+
+**WHAT TO LOOK FOR:**
+- Product/Brand names (e.g., "Beatafe", "Paracetamol", "Ibuprofen")
+- Active ingredients (e.g., "Pseudoephedrine", "Paracetamol", "Ibuprofen")
+- Strengths/dosages (e.g., "12.5mg", "500mg", "60mg")
+- Registration numbers (e.g., "MAL19990007T", "NOT123456")
+- Manufacturer names
+- Any other visible text on the packaging
 
 **WARNING:** Do not assume this is any specific medicine. Read only the actual text visible in the image.
 `;
@@ -101,21 +110,72 @@ CRITICAL: If you cannot clearly see text, use null. Do not guess or assume medic
 `;
     } else {
         // --- SECOND CALL PROMPT (Generate comprehensive medical report) ---
-        const dbStatus = databaseResult && databaseResult.id ? "PRODUCT FOUND & VERIFIED in our medicine database" : "PRODUCT NOT FOUND in our database - will use web research";
+        const dbStatus = databaseResult && databaseResult.id ? "PRODUCT FOUND & VERIFIED in our medicine database" : "PRODUCT NOT FOUND in our database - will use packaging analysis and medical knowledge";
         
-        return `Generate a medical report for the medicine identified.
+        // Extract database information for enhancement
+        const dbInfo = databaseResult && databaseResult.id ? {
+            productName: databaseResult.product || databaseResult.npra_product || 'N/A',
+            regNumber: databaseResult.reg_no || 'N/A',
+            activeIngredients: databaseResult.active_ingredient || 'N/A',
+            genericName: databaseResult.generic_name || 'N/A',
+            manufacturer: databaseResult.manufacturer || 'N/A',
+            holder: databaseResult.holder || 'N/A',
+            status: databaseResult.status || 'N/A'
+        } : null;
+        
+        return `You are a specialized medical AI assistant for Malaysian medicine identification and analysis. Generate a comprehensive medical report for the identified medicine.
 
-Database result: ${dbStatus}
+**DATABASE STATUS:** ${dbStatus}
 
-Create a JSON response with this structure:
+${dbInfo ? `
+**DATABASE INFORMATION:**
+- Product Name: ${dbInfo.productName}
+- Registration Number: ${dbInfo.regNumber}
+- Active Ingredients: ${dbInfo.activeIngredients}
+- Generic Name: ${dbInfo.genericName}
+- Manufacturer: ${dbInfo.manufacturer}
+- Holder: ${dbInfo.holder}
+- Status: ${dbInfo.status}
+` : ''}
+
+**REQUIRED OUTPUT FORMAT:**
+Generate the medical report in this EXACT JSON structure:
 
 \`\`\`json
 ${JSON.stringify(finalOutputSchema, null, 2)}
 \`\`\`
 
-Fill in the fields with information about the medicine. Use the database data when available.
+**DETAILED FIELD REQUIREMENTS:**
 
-IMPORTANT: You must respond with the JSON structure above. Do not provide any other text.
+**packaging_detected:** Describe packaging type (blister strip, bottle, box, etc.), note if partially used, mention visible brand name and active ingredients, include strengths if visible.
+
+**medicine_name:** Format as "BrandName (ActiveIngredient1 strength / ActiveIngredient2 strength)" - Example: "Beatafe (Pseudoephedrine 12.5mg / Triprolidine HCl 2.5mg)"
+
+**purpose:** Medical indication (what it treats), how the medication works, mechanism of action for each active ingredient.
+
+**dosage_instructions:** Adults/Children over 12: specific dosage and frequency. Children 7-12 years: note that dosage should be determined by doctor. General advice about not exceeding recommended dose.
+
+**side_effects:** **Common:** List typical side effects. **Rare:** List serious but uncommon side effects. **Overdose risk:** Specific symptoms and emergency actions.
+
+**allergy_warning:** List all active ingredients and common excipients, note potential for allergic reactions, include symptoms to watch for.
+
+**drug_interactions:** **With other drugs:** Specific drug classes to avoid (MAO inhibitors, sedatives, etc.). **With food:** Any known food interactions. **With alcohol:** Specific warnings about alcohol consumption.
+
+**safety_notes:** **For kids:** Age restrictions and precautions. **For pregnant women:** Pregnancy and breastfeeding warnings. **Other:** Driving, machinery, medical conditions to avoid.
+
+**storage:** Temperature requirements, moisture and light protection, child safety warnings.
+
+**CRITICAL INSTRUCTIONS:**
+1. ALWAYS return the exact JSON structure above
+2. Fill ALL fields with relevant information
+3. Use database information when available to enhance accuracy
+4. Provide comprehensive safety information
+5. Include specific dosages and frequencies
+6. Mention age-specific considerations
+7. Use medically accurate terminology
+9. Include specific contraindications and warnings
+
+IMPORTANT: Return ONLY the JSON structure. Do not provide any additional text or explanations.
 `;
     }
 }
