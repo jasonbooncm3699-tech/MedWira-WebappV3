@@ -48,6 +48,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log(`🔍 API Request details:`, {
+      user_id: user_id,
+      user_id_type: typeof user_id,
+      has_image_data: !!image_data,
+      has_text_query: !!text_query
+    });
+
     console.log(`🚀 Starting Gemini 1.5 Pro pipeline for user: ${user_id}`);
     
     // Call the Gemini 1.5 Pro pipeline

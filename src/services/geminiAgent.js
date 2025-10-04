@@ -145,12 +145,17 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
             return { status: "ERROR", message: "User ID missing for token check." };
         }
         
-        console.log(`🔍 Checking token availability for user: ${userId}`);
-        if (!await checkTokenAvailability(userId)) { 
-            console.log(`❌ Insufficient tokens for user: ${userId}`);
+        console.log(`🔍 GeminiAgent: Starting token check for user: ${userId} (type: ${typeof userId})`);
+        console.log(`🔍 GeminiAgent: User ID length: ${userId ? userId.length : 'null'}`);
+        
+        const tokenCheckResult = await checkTokenAvailability(userId);
+        console.log(`🔍 GeminiAgent: Token check result: ${tokenCheckResult}`);
+        
+        if (!tokenCheckResult) { 
+            console.log(`❌ GeminiAgent: Token check FAILED for user: ${userId}`);
             return { status: "ERROR", message: "Out of tokens. Please renew your subscription or earn more tokens.", httpStatus: 402 }; 
         }
-        console.log(`✅ Token check passed for user: ${userId}`);
+        console.log(`✅ GeminiAgent: Token check PASSED for user: ${userId}`);
 
         // 2. FIRST LLM CALL: IMAGE ANALYSIS & TOOL SIGNAL
         console.log(`🔍 Step 1: Gemini 1.5 Pro Image Analysis & Tool Signal`);
