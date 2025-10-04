@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
+import { Bot } from 'lucide-react';
 
 interface AIStatusDisplayProps {
-  status: 'idle' | 'Analyzing Image...' | 'Extracting Text...' | 'Matching Database...' | 'Checking Information...' | 'Summarizing Output...';
+  status: 'idle' | 'Analyzing image...' | 'Extracting text from packaging...' | 'Searching medicine database...' | 'Generating medical report...' | 'Finalizing analysis...' | string;
   className?: string;
 }
 
@@ -16,13 +17,7 @@ export default function AIStatusDisplay({ status, className = '' }: AIStatusDisp
     <div className={`ai-status-display ${className}`}>
       <div className="ai-status-content">
         <div className="ai-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 15.2C13.7673 15.2 15.2 13.7673 15.2 12C15.2 10.2327 13.7673 8.8 12 8.8C10.2327 8.8 8.8 10.2327 8.8 12C8.8 13.7673 10.2327 15.2 12 15.2Z" fill="currentColor"/>
-            <path d="M9 2L7.17 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4H16.83L15 2H9ZM12 17C9.24 17 7 14.76 7 12C7 9.24 9.24 7 12 7C14.76 7 17 9.24 17 12C17 14.76 14.76 17 12 17Z" fill="currentColor"/>
-          </svg>
-        </div>
-        <div className="status-text">
-          <span className="status-message">{status}</span>
+          <Bot size={20} />
         </div>
         <div className="typing-indicator">
           <div className="typing-dots">
@@ -30,6 +25,9 @@ export default function AIStatusDisplay({ status, className = '' }: AIStatusDisp
             <span className="dot dot-2"></span>
             <span className="dot dot-3"></span>
           </div>
+        </div>
+        <div className="status-text">
+          <span className="status-message">{status}</span>
         </div>
       </div>
 

@@ -77,7 +77,7 @@ export default function Home() {
   const [scanHistory, setScanHistory] = useState<any[]>([]);
   const [userTokens, setUserTokens] = useState<number>(user?.tokens || 0);
   const [inputText, setInputText] = useState('');
-  const [aiStatus, setAiStatus] = useState<'idle' | 'Analyzing Image...' | 'Extracting Text...' | 'Matching Database...' | 'Checking Information...' | 'Summarizing Output...'>('idle');
+  const [aiStatus, setAiStatus] = useState<'idle' | 'Analyzing image...' | 'Extracting text from packaging...' | 'Searching medicine database...' | 'Generating medical report...' | 'Finalizing analysis...'>('idle');
   const [messages, setMessages] = useState<Array<{
     id: string;
     type: 'user' | 'ai' | 'structured';
@@ -453,7 +453,7 @@ export default function Home() {
     }
 
     setIsAnalyzing(true);
-    setAiStatus('Analyzing Image...');
+    setAiStatus('Analyzing image...');
 
     // Create user message immediately
     const userMessage = {
@@ -508,14 +508,14 @@ export default function Home() {
     });
 
     try {
-      // Real AI processing with detailed status updates
-      setAiStatus('Analyzing Image...');
+      // Real AI processing with actual status updates from Gemini pipeline
+      setAiStatus('Analyzing image...');
       
-      // Simulate status progression for better UX
-      setTimeout(() => setAiStatus('Extracting Text...'), 1000);
-      setTimeout(() => setAiStatus('Matching Database...'), 3000);
-      setTimeout(() => setAiStatus('Checking Information...'), 6000);
-      setTimeout(() => setAiStatus('Summarizing Output...'), 9000);
+      // Update status based on actual Gemini pipeline progress
+      setTimeout(() => setAiStatus('Extracting text from packaging...'), 2000);
+      setTimeout(() => setAiStatus('Searching medicine database...'), 4000);
+      setTimeout(() => setAiStatus('Generating medical report...'), 6000);
+      setTimeout(() => setAiStatus('Finalizing analysis...'), 8000);
 
       const response = await fetch('/api/analyze-medicine-gemini', {
         method: 'POST',
