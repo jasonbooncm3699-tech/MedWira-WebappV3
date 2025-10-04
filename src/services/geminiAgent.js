@@ -143,9 +143,9 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
         const REQUIRED_COST = 1;
         
         // 1. CRITICAL: Check token availability
-        if (!userId) {
-            console.log(`❌ User ID missing for token check`);
-            return { status: "ERROR", message: "User ID missing for token check." };
+        if (!userId || typeof userId !== 'string' || userId.length < 5) {
+            console.error(`❌ CRITICAL: Invalid user ID in pipeline:`, { userId, type: typeof userId, length: userId?.length });
+            return { status: "ERROR", message: "Invalid user ID provided to pipeline." };
         }
         
         console.log(`🔍 GeminiAgent: Starting token check for user: ${userId} (required: ${REQUIRED_COST} tokens)`);

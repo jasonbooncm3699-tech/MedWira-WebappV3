@@ -14,11 +14,30 @@ function getSupabaseClient() {
     // Use service role key for server-side operations to bypass RLS policies
     const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
     
+    console.log('🔍 Supabase environment check:', {
+      hasUrl: !!SUPABASE_URL,
+      hasKey: !!SUPABASE_KEY,
+      urlLength: SUPABASE_URL.length,
+      keyLength: SUPABASE_KEY.length
+    });
+    
     if (!SUPABASE_URL || !SUPABASE_KEY) {
+      console.error('❌ CRITICAL: Supabase environment variables missing:', {
+        SUPABASE_URL: !!SUPABASE_URL,
+        SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+        SUPABASE_KEY: !!process.env.SUPABASE_KEY,
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      });
       throw new Error('Supabase environment variables are not configured');
     }
     
-    supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+    try {
+      supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+      console.log('✅ Supabase client initialized successfully');
+    } catch (error) {
+      console.error('❌ CRITICAL: Failed to initialize Supabase client:', error);
+      throw new Error('Failed to initialize Supabase client');
+    }
   }
   return supabaseClient;
 }
@@ -175,14 +194,15 @@ async function getNpraStats() {
 async function checkTokenAvailability(userId, requiredCost = 1) {
     console.log(`🔍 Checking token availability for user: ${userId} (required: ${requiredCost})`);
     
-    const supabase = getSupabaseClient();
-    
-    // Check current tokens with more detailed logging
-    const { data: profile, error: selectError } = await supabase
-        .from('profiles')
-        .select('token_count, id, email')
-        .eq('id', userId)
-        .single();
+    try {
+        const supabase = getSupabaseClient();
+        
+        // Check current tokens with more detailed logging
+        const { data: profile, error: selectError } = await supabase
+            .from('profiles')
+            .select('token_count, id, email')
+            .eq('id', userId)
+            .single();
 
     console.log(`🔍 Token check query result:`, { profile, selectError });
 
@@ -209,6 +229,11 @@ async function checkTokenAvailability(userId, requiredCost = 1) {
 
     console.log(`✅ User ${userId} has sufficient tokens.`);
     return { isAvailable: true, reason: "SUFFICIENT" };
+    
+    } catch (error) {
+        console.error('❌ CRITICAL: Supabase client initialization or query failed:', error);
+        return { isAvailable: false, reason: "DATABASE_ERROR" };
+    }
 }
 
 async function decrementToken(userId) {

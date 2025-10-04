@@ -36,15 +36,15 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // CRITICAL: Ensure user_id is passed for the token check
-    if (!user_id) {
-      console.log('❌ Missing user_id for authentication');
+    // CRITICAL FIX: Add explicit check for user_id validity
+    if (!user_id || typeof user_id !== 'string' || user_id.length < 5) {
+      console.error('❌ CRITICAL: Invalid or missing user_id in request body:', user_id);
       return NextResponse.json(
         { 
           status: "ERROR", 
-          message: "Authentication required (user_id missing)." 
+          message: "Authentication failure: Invalid user ID provided. Please log in again." 
         },
-        { status: 401 }
+        { status: 401 } // Use 401 Unauthorized for authentication issues
       );
     }
 
