@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     if (!imageBase64) {
       return NextResponse.json(
         { 
-          success: false, 
+          status: 'ERROR',
           error: 'No image provided. Please upload a medicine image.',
           language 
         },
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     if (!process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
       return NextResponse.json(
         { 
-          success: false, 
+          status: 'ERROR',
           error: 'API key not configured. Please contact support.',
           language 
         },
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     if (!imageBase64.startsWith('data:image/')) {
       return NextResponse.json(
         { 
-          success: false, 
+          status: 'ERROR',
           error: 'Invalid image format. Please upload a JPEG or PNG image.',
           language 
         },
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         if (user.tokens <= 0) {
           return NextResponse.json(
             { 
-              success: false, 
+              status: 'ERROR',
               error: 'No tokens remaining. Please upgrade your plan or wait for daily reset.',
               language 
             },
@@ -107,15 +107,49 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Return the result
-    return NextResponse.json(result);
+    // Return the result in the format expected by the frontend
+    if (result.success) {
+      return NextResponse.json({
+        status: 'SUCCESS',
+        data: {
+          medicine_name: result.medicineName,
+          generic_name: result.genericName,
+          dosage: result.dosage,
+          side_effects: result.sideEffects,
+          interactions: result.interactions,
+          warnings: result.warnings,
+          storage: result.storage,
+          category: result.category,
+          confidence: result.confidence,
+          language: result.language,
+          // Enhanced fields
+          packaging_detected: result.packagingDetected,
+          purpose: result.purpose,
+          database_verified: result.databaseVerified,
+          active_ingredients: result.activeIngredients,
+          raw_analysis: result.rawAnalysis,
+          dosage_instructions: result.dosageInstructions,
+          allergy_warning: result.allergyWarning,
+          drug_interactions: result.drugInteractions,
+          safety_notes: result.safetyNotes,
+          disclaimer: result.disclaimer
+        },
+        tokensRemaining: userId ? (await DatabaseService.getUser(userId))?.tokens : undefined
+      });
+    } else {
+      return NextResponse.json({
+        status: 'ERROR',
+        error: result.error || 'Analysis failed',
+        language: result.language
+      });
+    }
 
   } catch (error) {
     console.error('API Error:', error);
     
     return NextResponse.json(
       { 
-        success: false, 
+        status: 'ERROR',
         error: 'Internal server error. Please try again.',
         language: 'English' 
       },
