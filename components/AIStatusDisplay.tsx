@@ -33,8 +33,8 @@ export default function AIStatusDisplay({ status, className = '' }: AIStatusDisp
           display: flex;
           align-items: center;
           padding: 12px 16px;
-          background: rgba(0, 212, 255, 0.1);
-          border: 1px solid rgba(0, 212, 255, 0.3);
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
           border-radius: 12px;
           margin: 8px 0;
           animation: slideInUp 0.3s ease-out;
@@ -63,7 +63,7 @@ export default function AIStatusDisplay({ status, className = '' }: AIStatusDisp
           width: 6px;
           height: 6px;
           border-radius: 50%;
-          background: #00d4ff;
+          background: #ffffff;
           animation: typingAnimation 1.4s infinite ease-in-out;
         }
 
@@ -88,7 +88,7 @@ export default function AIStatusDisplay({ status, className = '' }: AIStatusDisp
 
         .status-label {
           font-size: 12px;
-          color: #00d4ff;
+          color: #ffffff;
           font-weight: 500;
           text-transform: uppercase;
           letter-spacing: 0.5px;

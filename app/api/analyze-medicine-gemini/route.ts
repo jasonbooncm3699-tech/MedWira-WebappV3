@@ -258,7 +258,7 @@ export async function POST(request: NextRequest) {
       try {
         console.log(`🔍 [API] Saving scan history for user: ${user_id}`);
         
-        // Extract medicine information from the result
+        // Extract medicine information from the result (handle nested structure)
         const medicineData = result.data.data || result.data;
         const medicineName = medicineData.medicine_name || 'Unknown Medicine';
         const genericName = medicineData.generic_name || '';
@@ -329,19 +329,33 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    // Flatten the data structure for UI compatibility
+    let flattenedData = result.data;
+    if (result.data && result.data.data) {
+      // If data is nested (result.data.data), flatten it
+      flattenedData = {
+        ...result.data.data,
+        database_result: result.data.database_result,
+        source: result.data.source
+      };
+      console.log(`🔧 [API] Flattened data structure for UI compatibility`);
+      console.log(`📊 [API] Flattened data keys:`, Object.keys(flattenedData));
+    }
+
     // Send the full result with status and remaining tokens
     console.log(`✅ [API] ========== API REQUEST COMPLETED SUCCESSFULLY ==========`);
     console.log(`⏰ [API] Request completed at: ${new Date().toISOString()}`);
     console.log(`📊 [API] Final response:`, {
       status: result.status,
-      hasData: !!result.data,
+      hasData: !!flattenedData,
       hasMessage: !!result.message,
-      tokensRemaining: remainingTokens
+      tokensRemaining: remainingTokens,
+      dataKeys: flattenedData ? Object.keys(flattenedData) : []
     });
     
     return NextResponse.json({
       status: result.status,
-      data: result.data,
+      data: flattenedData,
       message: result.message,
       tokensRemaining: remainingTokens
     });
