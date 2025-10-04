@@ -157,18 +157,38 @@ export default function Home() {
       return; // EARLY EXIT to prevent bad request
     }
 
-    // Prepare the payload object
+    // 1. Defensively retrieve values from state/context
+    // Use ?? (Nullish Coalescing) to force non-undefined, valid JSON types.
+    const userId = user?.id ?? ''; // If user is null, userId is '' (empty string)
+    const imageBase64 = null; // Text-only query, so always null
+    const textQuery = userMessage ?? ''; // If no text, textQuery is '' (empty string)
+
+    // 2. CRITICAL VALIDATION: Abort if user is missing (prevents unauthenticated token check)
+    if (!userId) {
+      // Abort logic: stop loading, show error message
+      setIsAnalyzing(false);
+      const errorMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai' as const,
+        content: "⚠️ **Authentication Required**\n\nAuthentication required to use AI features.",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      return; // STOP EXECUTION
+    }
+
+    // 3. Construct the GUARANTEED valid JSON payload
     const payload = {
-      image_data: null, // Text-only query
-      user_id: user.id, // The validated user ID
-      text_query: userMessage // The user's text message
+      image_data: imageBase64, // Will be null (valid JSON)
+      user_id: userId, // Will be a string
+      text_query: textQuery, // Will be a string
     };
 
     try {
       const response = await fetch('/api/analyze-medicine-gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // CRITICAL FIX: Ensure the body is correctly structured and JSON stringified
+        // The body is now guaranteed to be valid JSON.
         body: JSON.stringify(payload)
       });
       
@@ -468,46 +488,32 @@ export default function Home() {
       return; // EARLY EXIT to prevent bad request
     }
 
-    // 1. Get current data from state (user should be from useAuth())
-    const userId = user.id; 
-    const imageBase64Data = imageBase64; // Use the actual state variable name
-    const inputMessage = "Please analyze this medicine image and provide detailed information."; // The user's text message
+    // 1. Defensively retrieve values from state/context
+    // Use ?? (Nullish Coalescing) to force non-undefined, valid JSON types.
+    const userId = user?.id ?? ''; // If user is null, userId is '' (empty string)
+    const imageBase64Data = imageBase64 ?? null; // If no image, imageBase64 is null (valid JSON)
+    const textQuery = "Please analyze this medicine image and provide detailed information."; // The user's text message
 
-    // 2. CRITICAL VALIDATION: Fail early if required data is missing
+    // 2. CRITICAL VALIDATION: Abort if user is missing (prevents unauthenticated token check)
     if (!userId) {
-      console.error("❌ Cannot send request: User ID missing");
+      // Abort logic: stop loading, show error message
+      setIsAnalyzing(false);
+      setAiStatus('idle');
       const errorMessage = {
         id: (Date.now() + 1).toString(),
         type: 'ai' as const,
-        content: "⚠️ **Authentication Error**\n\nUser ID is missing. Please log in again.",
+        content: "⚠️ **Authentication Required**\n\nAuthentication required to use AI features.",
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
-      setIsAnalyzing(false);
-      setAiStatus('idle');
-      return;
-    }
-    
-    if (!imageBase64Data) {
-      console.error("❌ Cannot send request: Image data missing");
-      const errorMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai' as const,
-        content: "⚠️ **Image Error**\n\nImage data is missing. Please try uploading the image again.",
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-      setIsAnalyzing(false);
-      setAiStatus('idle');
-      return;
+      return; // STOP EXECUTION
     }
 
-    // 3. CRITICAL FIX: Construct the payload with fallbacks to prevent 'undefined'
+    // 3. Construct the GUARANTEED valid JSON payload
     const payload = {
-      // Ensure both are explicitly set, even if one is null/empty string
-      image_data: imageBase64Data || null, 
-      user_id: userId,
-      text_query: inputMessage || '', 
+      image_data: imageBase64Data, // Will be string or null
+      user_id: userId, // Will be a string
+      text_query: textQuery, // Will be a string
     };
 
     // 4. DEBUG: Log the payload to ensure it's valid
@@ -528,7 +534,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        // CRITICAL FIX: Ensure the body is correctly structured and JSON stringified
+        // The body is now guaranteed to be valid JSON.
         body: JSON.stringify(payload)
       });
 
