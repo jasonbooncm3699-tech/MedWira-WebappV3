@@ -15,16 +15,21 @@ export default function AIStatusDisplay({ status, className = '' }: AIStatusDisp
   return (
     <div className={`ai-status-display ${className}`}>
       <div className="ai-status-content">
+        <div className="ai-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 15.2C13.7673 15.2 15.2 13.7673 15.2 12C15.2 10.2327 13.7673 8.8 12 8.8C10.2327 8.8 8.8 10.2327 8.8 12C8.8 13.7673 10.2327 15.2 12 15.2Z" fill="currentColor"/>
+            <path d="M9 2L7.17 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4H16.83L15 2H9ZM12 17C9.24 17 7 14.76 7 12C7 9.24 9.24 7 12 7C14.76 7 17 9.24 17 12C17 14.76 14.76 17 12 17Z" fill="currentColor"/>
+          </svg>
+        </div>
+        <div className="status-text">
+          <span className="status-message">{status}</span>
+        </div>
         <div className="typing-indicator">
           <div className="typing-dots">
             <span className="dot dot-1"></span>
             <span className="dot dot-2"></span>
             <span className="dot dot-3"></span>
           </div>
-        </div>
-        <div className="status-text">
-          <span className="status-label">AI is</span>
-          <span className="status-message">{status}</span>
         </div>
       </div>
 
@@ -43,8 +48,16 @@ export default function AIStatusDisplay({ status, className = '' }: AIStatusDisp
         .ai-status-content {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 8px;
           width: 100%;
+        }
+
+        .ai-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #ffffff;
+          opacity: 0.8;
         }
 
         .typing-indicator {
@@ -82,18 +95,8 @@ export default function AIStatusDisplay({ status, className = '' }: AIStatusDisp
 
         .status-text {
           display: flex;
-          flex-direction: column;
-          gap: 2px;
+          align-items: center;
           flex: 1;
-        }
-
-        .status-label {
-          font-size: 11px;
-          color: #ffffff;
-          font-weight: 400;
-          text-transform: uppercase;
-          letter-spacing: 0.3px;
-          opacity: 0.8;
         }
 
         .status-message {
@@ -139,10 +142,6 @@ export default function AIStatusDisplay({ status, className = '' }: AIStatusDisp
           .dot {
             width: 4px;
             height: 4px;
-          }
-
-          .status-label {
-            font-size: 10px;
           }
 
           .status-message {
