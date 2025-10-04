@@ -517,7 +517,7 @@ export default function Home() {
       setTimeout(() => setAiStatus('Generating medical report...'), 6000);
       setTimeout(() => setAiStatus('Finalizing analysis...'), 8000);
 
-      const response = await fetch('/api/analyze-medicine-gemini', {
+      const response = await fetch('/api/analyze-image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
