@@ -36,6 +36,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // CRITICAL: Create Supabase client instance for cookie-based authentication
   const supabase = createClient();
 
+  // SAFETY: Add timeout to prevent infinite loading
+  useEffect(() => {
+    const loadingTimeout = setTimeout(() => {
+      if (isLoading) {
+        console.warn('⚠️ Loading timeout reached, forcing loading to false');
+        setIsLoading(false);
+        setIsInitialized(true);
+      }
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(loadingTimeout);
+  }, [isLoading]);
+
 
   // Fetch user data directly from auth.users (Google data) + profiles (tokens/referrals)
   const fetchUserData = useCallback(async (userId: string, userEmail?: string): Promise<User | null> => {
@@ -591,6 +604,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('❌ Error during auth initialization:', error);
         setIsLoading(false);
         setIsInitialized(true);
+        // Ensure user is set to null on error to prevent stuck state
+        setUser(null);
       }
     };
     

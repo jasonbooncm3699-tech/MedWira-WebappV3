@@ -707,6 +707,21 @@ export default function Home() {
           }}>
             Setting up your medicine assistant
           </p>
+          <button 
+            onClick={() => window.location.reload()} 
+            style={{
+              marginTop: '20px',
+              padding: '8px 16px',
+              background: 'rgba(255, 255, 255, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '6px',
+              color: '#ffffff',
+              cursor: 'pointer',
+              fontSize: '12px'
+            }}
+          >
+            Still loading? Click to refresh
+          </button>
         </div>
       </div>
     );
