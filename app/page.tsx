@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Bot, User, Send, Upload, Camera, Menu, X, Plus, MessageSquare, Settings, LogOut, LogIn, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
@@ -347,7 +347,7 @@ export default function Home() {
 
 
   // Function to fetch user chat history
-  const fetchUserChatHistory = async () => {
+  const fetchUserChatHistory = useCallback(async () => {
     if (user?.id) {
       try {
         const history = await DatabaseService.getUserScanHistory(user.id);
@@ -360,12 +360,12 @@ export default function Home() {
     } else {
       setScanHistory([]);
     }
-  };
+  }, [user?.id]);
 
   // Fetch user chat history when user logs in
   useEffect(() => {
     fetchUserChatHistory();
-  }, [user]);
+  }, [fetchUserChatHistory]);
 
   const handleCameraCapture = async () => {
     try {

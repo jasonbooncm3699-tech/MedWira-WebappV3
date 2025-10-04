@@ -20,6 +20,7 @@ interface StructuredMedicineData {
   database_verified?: boolean;
   confidence?: number;
   language?: string;
+  raw_analysis?: string;
   
   // Legacy format (for backward compatibility)
   dosage?: {
