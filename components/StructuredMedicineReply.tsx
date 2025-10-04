@@ -133,8 +133,16 @@ const StructuredMedicineReply: React.FC<StructuredMedicineReplyProps> = ({ respo
   ];
 
   return (
-    <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden shadow-2xl p-4">
-      {/* Display raw analysis text directly with proper formatting */}
+    <div className="message-bubble" style={{
+      background: 'rgba(255, 255, 255, 0.1)',
+      border: '1px solid rgba(255, 255, 255, 0.2)',
+      borderRadius: '18px',
+      padding: '16px',
+      margin: '8px 0',
+      maxWidth: '100%',
+      wordWrap: 'break-word'
+    }}>
+      {/* Display raw analysis text with clean formatting */}
       {response.raw_analysis && (
         <div className="raw-analysis-content" style={{
           fontSize: '14px',
@@ -144,9 +152,10 @@ const StructuredMedicineReply: React.FC<StructuredMedicineReplyProps> = ({ respo
         }}>
           <div dangerouslySetInnerHTML={{
             __html: response.raw_analysis
-              .replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: bold; color: #ffffff;">$1</strong>')
+              .replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: bold; color: #ffffff; display: block; margin: 12px 0 6px 0; font-size: 15px;">$1</strong>')
               .replace(/\n/g, '<br>')
               .replace(/Packaging:/g, '<strong style="font-weight: bold; color: #ffffff;">Packaging Detected:</strong>')
+              .replace(/(Adults:|Children:|General:|Common:|Serious:|Overdose:|Contains:|Reactions:|Emergency:|Medications:|Food\/Alcohol:|Children\/Pregnancy:|Elderly\/Driving:|Pre-existing Conditions:)/g, '<strong style="font-weight: bold; color: #ffffff; display: block; margin: 8px 0 4px 0;">$1</strong>')
           }} />
         </div>
       )}

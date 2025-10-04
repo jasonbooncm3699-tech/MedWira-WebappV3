@@ -1257,36 +1257,38 @@ export default function Home() {
                   )}
                 </div>
                 
-                {/* Share button positioned outside the message bubble */}
+                {/* Share button positioned at bottom-right of chat bubble */}
                 {(message.type === 'ai' || message.type === 'structured') && message.id !== '1' && (
                   <div className="share-icon-container" style={{
                     display: 'flex',
                     justifyContent: 'flex-end',
-                    marginTop: '8px',
+                    marginTop: '4px',
                     marginLeft: '50px' // Align with message content
                   }}>
                     <button
                       onClick={() => shareToWhatsApp(message.rawAnalysis || message.content)}
                       className="share-button"
                       style={{
-                        background: 'none',
-                        border: 'none',
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
                         color: '#ffffff',
                         cursor: 'pointer',
-                        padding: '4px',
-                        borderRadius: '4px',
+                        padding: '6px 12px',
+                        borderRadius: '12px',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '4px',
+                        gap: '6px',
                         fontSize: '12px',
-                        opacity: 0.7,
-                        transition: 'opacity 0.2s ease'
+                        opacity: 0.8,
+                        transition: 'all 0.2s ease'
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.opacity = '1';
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.opacity = '0.7';
+                        e.currentTarget.style.opacity = '0.8';
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
                       }}
                     >
                       <Share2 size={14} />

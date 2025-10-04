@@ -302,36 +302,45 @@ Do not provide any other information. Only return the above format.`;
         
         console.log(`🧪 [${analysisId}] Active ingredient analysis:`, activeIngredientAnalysis);
         
-        const comprehensivePrompt = `Analyze this medicine and provide information in this format:
+        const comprehensivePrompt = `Analyze this medicine and provide comprehensive medical information in this EXACT clean format:
 
-Packaging: ${packagingType}
+Packaging Detected: ${packagingType}
 Medicine: ${(dbResult as any).product} (${(dbResult as any).active_ingredient})
-Purpose: [What it treats]
+
+Purpose: [Detailed purpose and function of the medicine]
 
 Dosage:
-• Adults: [Dosage]
-• Children: [If applicable]
-• General: [Instructions]
+Adults: [Detailed adult dosage instructions]
+• [Specific ingredient 1]: [Dosage details]
+• [Specific ingredient 2]: [Dosage details]
+Children: [Children dosage information]
+General: [General administration instructions]
 
 Side Effects:
-• Common: [Most common]
-• Serious: [Rare/serious]
-• Overdose: [Symptoms]
+Common: [Common side effects description]
+• [Ingredient 1]: [Specific side effects]
+• [Ingredient 2]: [Specific side effects]
+Serious: [Serious side effects description]
+• [Ingredient 1]: [Serious effects]
+• [Ingredient 2]: [Serious effects]
+Overdose: [Overdose symptoms and treatment]
 
 Allergy Warning:
-• Contains: ${(dbResult as any).active_ingredient}
-• Reactions: [Possible reactions]
-• Emergency: [What to do]
+Contains: ${(dbResult as any).active_ingredient}
+Reactions: [Possible allergic reactions]
+Emergency: [Emergency procedures]
 
 Interactions:
-• Medications: [Drug interactions]
-• Food/Alcohol: [Interactions]
+Medications: [Drug interaction information]
+• [Specific drug types]: [Interaction details]
+Food/Alcohol: [Food and alcohol interactions]
 
 Safety:
-• Children/Pregnancy: [Safety info]
-• Elderly/Driving: [Considerations]
+Children/Pregnancy: [Safety for children and pregnancy]
+Elderly/Driving: [Elderly and driving considerations]
+Pre-existing Conditions: [Conditions to consider]
 
-Storage: [Temperature, light, moisture requirements]
+Storage: [Storage instructions]
 
 ${userAllergies ? `User allergies: ${userAllergies}` : ''}
 
