@@ -142,49 +142,35 @@ export default function Home() {
     setMessages(prev => [...prev, newUserMessage]);
     setIsAnalyzing(true);
     
-    // Ensure user is authenticated and the ID is present
-    if (!user || !user.id) {
-      // CRITICAL: Prevent API call if authentication is missing
-      console.error("❌ Cannot send request: User not authenticated.");
-      const errorMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai' as const,
-        content: "⚠️ **Authentication Required**\n\nPlease log in to use the medicine analysis feature.",
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-      setIsAnalyzing(false);
-      return; // EARLY EXIT to prevent bad request
-    }
+    // FORCE DEFENSIVE PAYLOAD CREATION - Use ?? to force non-undefined, valid JSON types
+    const userId = user?.id ?? ''; 
+    const imageBase64 = null; // Text-only query, always null
+    const textQuery = userMessage ?? ''; 
 
-    // 1. Defensively retrieve values from state/context
-    // Use ?? (Nullish Coalescing) to force non-undefined, valid JSON types.
-    console.log('🔍 Debug - User object (text):', { user, userId: user?.id, userType: typeof user });
-    const userId = user?.id ?? ''; // If user is null, userId is '' (empty string)
-    const imageBase64 = null; // Text-only query, so always null
-    const textQuery = userMessage ?? ''; // If no text, textQuery is '' (empty string)
-    
-    console.log('🔍 Debug - Extracted values (text):', { userId, imageBase64, textQuery });
-
-    // 2. CRITICAL VALIDATION: Abort if user is missing (prevents unauthenticated token check)
+    // CRITICAL VALIDATION: Keep this check and add a user-facing error message
     if (!userId) {
-      // Abort logic: stop loading, show error message
-      setIsAnalyzing(false);
+      setIsAnalyzing(false); 
+      // Add a chat message here: "Authentication required. Please log in to use AI analysis."
       const errorMessage = {
         id: (Date.now() + 1).toString(),
         type: 'ai' as const,
-        content: "⚠️ **Authentication Required**\n\nAuthentication required to use AI features.",
+        content: "⚠️ **Authentication Required**\n\nAuthentication required. Please log in to use AI analysis.",
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
-      return; // STOP EXECUTION
+      return; // EXIT HERE ONLY IF UNAUTHENTICATED
     }
 
-    // 3. Construct the GUARANTEED valid JSON payload
+    // -------------------------------------------------------------
+    // DEBUGGING LOGS (Keep these to confirm execution)
+    console.log('🔍 Debug - Extracted values:', { userId, imageBase64: imageBase64 ? 'BASE64_EXISTS' : null, textQuery });
+    // -------------------------------------------------------------
+
+    // Construct the GUARANTEED valid JSON payload
     const payload = {
-      image_data: imageBase64, // Will be null (valid JSON)
-      user_id: userId, // Will be a string
-      text_query: textQuery, // Will be a string
+      image_data: imageBase64,
+      user_id: userId,
+      text_query: textQuery,
     };
 
     try {
@@ -475,54 +461,39 @@ export default function Home() {
 
     setMessages(prev => [...prev, userMessage]);
 
-    // Ensure user is authenticated and the ID is present
-    if (!user || !user.id) {
-      // CRITICAL: Prevent API call if authentication is missing
-      console.error("❌ Cannot send request: User not authenticated.");
-      const errorMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai' as const,
-        content: "⚠️ **Authentication Required**\n\nPlease log in to use the medicine analysis feature.",
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-      setIsAnalyzing(false);
-      setAiStatus('idle');
-      return; // EARLY EXIT to prevent bad request
-    }
+    // FORCE DEFENSIVE PAYLOAD CREATION - Use ?? to force non-undefined, valid JSON types
+    const userId = user?.id ?? ''; 
+    const imageBase64Data = imageBase64 ?? null;
+    const textQuery = "Please analyze this medicine image and provide detailed information.";
 
-    // 1. Defensively retrieve values from state/context
-    // Use ?? (Nullish Coalescing) to force non-undefined, valid JSON types.
-    console.log('🔍 Debug - User object:', { user, userId: user?.id, userType: typeof user });
-    const userId = user?.id ?? ''; // If user is null, userId is '' (empty string)
-    const imageBase64Data = imageBase64 ?? null; // If no image, imageBase64 is null (valid JSON)
-    const textQuery = "Please analyze this medicine image and provide detailed information."; // The user's text message
-    
-    console.log('🔍 Debug - Extracted values:', { userId, imageBase64Data: !!imageBase64Data, textQuery });
-
-    // 2. CRITICAL VALIDATION: Abort if user is missing (prevents unauthenticated token check)
+    // CRITICAL VALIDATION: Keep this check and add a user-facing error message
     if (!userId) {
-      // Abort logic: stop loading, show error message
-      setIsAnalyzing(false);
+      setIsAnalyzing(false); 
       setAiStatus('idle');
+      // Add a chat message here: "Authentication required. Please log in to use AI analysis."
       const errorMessage = {
         id: (Date.now() + 1).toString(),
         type: 'ai' as const,
-        content: "⚠️ **Authentication Required**\n\nAuthentication required to use AI features.",
+        content: "⚠️ **Authentication Required**\n\nAuthentication required. Please log in to use AI analysis.",
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
-      return; // STOP EXECUTION
+      return; // EXIT HERE ONLY IF UNAUTHENTICATED
     }
 
-    // 3. Construct the GUARANTEED valid JSON payload
+    // -------------------------------------------------------------
+    // DEBUGGING LOGS (Keep these to confirm execution)
+    console.log('🔍 Debug - Extracted values:', { userId, imageBase64: imageBase64Data ? 'BASE64_EXISTS' : null, textQuery });
+    // -------------------------------------------------------------
+
+    // Construct the GUARANTEED valid JSON payload
     const payload = {
-      image_data: imageBase64Data, // Will be string or null
-      user_id: userId, // Will be a string
-      text_query: textQuery, // Will be a string
+      image_data: imageBase64Data,
+      user_id: userId,
+      text_query: textQuery,
     };
 
-    // 4. DEBUG: Log the payload to ensure it's valid
+    // DEBUG: Log the payload to ensure it's valid
     console.log('🔍 Sending payload:', {
       hasImageData: !!payload.image_data,
       imageDataLength: payload.image_data?.length || 0,
