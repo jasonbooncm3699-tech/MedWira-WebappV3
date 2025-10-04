@@ -163,6 +163,33 @@ export async function POST(request: NextRequest) {
     // 3. Handle all other pipeline errors
     if (result.status === "ERROR" || result.status === "SERVICE_ERROR") {
       console.error(`❌ [API] Pipeline returned general error for user ${user_id}: ${result.message}`);
+      
+      // Refund token if analysis failed after token was deducted
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        );
+        
+        // Increment token back to user
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('token_count')
+          .eq('id', user_id)
+          .single();
+          
+        if (profile) {
+          await supabase
+            .from('profiles')
+            .update({ token_count: profile.token_count + 1 })
+            .eq('id', user_id);
+          console.log(`💰 [API] Token refunded to user ${user_id} due to analysis failure`);
+        }
+      } catch (refundError) {
+        console.error('❌ [API] Failed to refund token:', refundError);
+      }
+      
       // Use the httpStatus provided by the pipeline, or default to appropriate status
       let httpStatus = result.httpStatus;
       if (!httpStatus) {
@@ -181,8 +208,20 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ [API] Pipeline completed successfully');
     
-    // NEW: Save scan history to database if processing was successful
-    if (result.status === "SUCCESS" && user_id && result.data) {
+    // Check if analysis was actually successful (not just API success)
+    const isAnalysisSuccessful = result.status === "SUCCESS" && 
+                                result.data && 
+                                (result.data.medicine_name !== "N/A" && result.data.medicine_name !== "Unknown Medicine");
+    
+    console.log(`🔍 [API] Analysis success check:`, {
+      status: result.status,
+      hasData: !!result.data,
+      medicineName: result.data?.medicine_name,
+      isSuccessful: isAnalysisSuccessful
+    });
+    
+    // NEW: Save scan history to database if processing was successful AND medicine was identified
+    if (isAnalysisSuccessful && user_id && result.data) {
       try {
         console.log(`🔍 [API] Saving scan history for user: ${user_id}`);
         

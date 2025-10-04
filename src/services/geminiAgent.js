@@ -183,6 +183,7 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
 
         // 2. FIRST LLM CALL: IMAGE ANALYSIS & TOOL SIGNAL
         console.log(`🔍 Step 1: Gemini 1.5 Pro Image Analysis & Tool Signal`);
+        console.log(`📝 First Prompt:`, firstPrompt);
         
         const firstPrompt = buildGeminiSystemPrompt(true, null, TOOL_CALL_SCHEMA);
         
@@ -192,6 +193,7 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
         if (base64Image) {
             // Ensure image has proper data URL format for Gemini
             const imageData = base64Image.startsWith('data:') ? base64Image : `data:image/jpeg;base64,${base64Image}`;
+            console.log(`🖼️ Image data format:`, imageData.substring(0, 50) + '...');
             firstContent = [firstPrompt, {
                 inlineData: {
                     mimeType: 'image/jpeg',
@@ -201,12 +203,18 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
         }
         
         firstContent += `\n\nUser Query: ${textQuery}`;
+        console.log(`📤 Sending to Gemini:`, {
+            hasImage: !!base64Image,
+            textQuery: textQuery,
+            contentType: Array.isArray(firstContent) ? 'multimodal' : 'text'
+        });
 
         let firstResponse;
         try {
             const response = await model.generateContent(firstContent);
             firstResponse = response.response.text();
             console.log(`✅ First Gemini call successful`);
+            console.log(`📥 Raw First Response:`, firstResponse);
         } catch(e) {
             console.error('❌ Gemini First Call Error:', e);
             return { status: "ERROR", message: "Error during initial image analysis and tool signal." };
@@ -214,35 +222,47 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
 
         // 3. CHECK FOR TOOL SIGNAL & EXECUTE TOOL
         console.log(`🔍 Step 2: Parsing Tool Signal & Executing Medicine Database Lookup`);
+        console.log(`🔍 Searching for JSON in first response...`);
         
         const jsonMatch = firstResponse.match(/```json\s*(\{[\s\S]*?\})\s*```/);
         let databaseResult = null;
         
         if (jsonMatch) {
+            console.log(`✅ JSON pattern found in response`);
             try {
                 const jsonSignal = JSON.parse(jsonMatch[1]);
-                console.log(`🔧 Tool Signal Parsed:`, jsonSignal);
+                console.log(`🔧 Tool Signal Parsed Successfully:`, JSON.stringify(jsonSignal, null, 2));
                 
                 if (jsonSignal.tool_call && jsonSignal.tool_call.parameters) {
                     const { product_name, registration_number, active_ingredient, manufacturer, strength } = jsonSignal.tool_call.parameters;
                     
-                    console.log(`🔍 Executing medicine database lookup for: ${product_name}`);
+                    console.log(`🔍 Extracted Parameters:`, {
+                        product_name,
+                        registration_number,
+                        active_ingredient,
+                        manufacturer,
+                        strength
+                    });
+                    
+                    console.log(`🔍 Executing medicine database lookup for: "${product_name}"`);
                     // EXECUTE DATABASE LOOKUP
                     databaseResult = await npraProductLookup(product_name, registration_number);
+                    console.log(`📊 Database lookup result:`, databaseResult);
                     
-                    if (databaseResult) {
-                        console.log(`✅ Medicine database lookup successful: ${databaseResult.product}`);
+                    if (databaseResult && databaseResult.product) {
+                        console.log(`✅ Medicine database lookup successful: "${databaseResult.product}"`);
                     } else {
-                        console.log(`⚠️ Product not found, searching by active ingredients...`);
+                        console.log(`⚠️ Product "${product_name}" not found in database, searching by active ingredients...`);
                         // Try searching by individual active ingredients if product not found
                         if (active_ingredient && active_ingredient.includes('and')) {
                             const ingredients = active_ingredient.split('and').map(ing => ing.trim());
                             console.log(`🔍 Searching for individual ingredients: ${ingredients.join(', ')}`);
                             
                             for (const ingredient of ingredients) {
+                                console.log(`🔍 Searching for ingredient: "${ingredient}"`);
                                 const ingredientResult = await npraProductLookup(ingredient, null);
                                 if (ingredientResult) {
-                                    console.log(`✅ Found equivalent product by ingredient: ${ingredientResult.product}`);
+                                    console.log(`✅ Found equivalent product by ingredient: "${ingredientResult.product}"`);
                                     databaseResult = {
                                         ...ingredientResult,
                                         search_method: 'active_ingredient',
@@ -254,24 +274,31 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
                             }
                         }
                         
-                        if (!databaseResult) {
+                        if (!databaseResult || !databaseResult.product) {
+                            console.log(`❌ No medicine found in database for any search criteria`);
                             databaseResult = { status: "NOT_FOUND", message: "No medicine found in our database. Will use packaging analysis and web research." };
                         }
                     }
+                } else {
+                    console.log(`⚠️ Tool signal found but no valid parameters`);
+                    databaseResult = { status: "INVALID_SIGNAL", message: "Tool signal found but parameters are invalid." };
                 }
             } catch (e) {
                 console.error('❌ Tool Execution/Parsing Error:', e);
+                console.error('❌ Failed to parse JSON:', jsonMatch[1]);
                 databaseResult = { status: "TOOL_ERROR", message: "Error executing internal database lookup tool or parsing LLM signal." }; 
             }
         } else {
             // Fallback: If no structured signal, treat the first response as general text
             console.log(`⚠️ No tool signal detected - Gemini provided direct answer`);
+            console.log(`📝 First response (no JSON found):`, firstResponse);
             databaseResult = { status: "NO_SIGNAL", message: "LLM provided a direct answer. Bypassing database lookup.", raw_llm_text: firstResponse };
         }
         
         // Check if the LLM provided a direct, complete answer without a tool signal
         if (databaseResult.status === "NO_SIGNAL") {
             console.log(`✅ Returning direct Gemini response`);
+            console.log(`📝 Direct response content:`, databaseResult.raw_llm_text);
             // Deduct token only after successful AI processing
             await decrementToken(userId);
             return { status: "SUCCESS", data: { text: databaseResult.raw_llm_text, note: databaseResult.message } };
@@ -279,8 +306,10 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
 
         // 4. SECOND LLM CALL: AUGMENTATION & FINAL OUTPUT
         console.log(`🔍 Step 3: Final Gemini Augmentation with Medicine Database Data`);
+        console.log(`📊 Database result for final prompt:`, JSON.stringify(databaseResult, null, 2));
         
         const finalPrompt = buildGeminiSystemPrompt(false, databaseResult, null); 
+        console.log(`📝 Final Prompt:`, finalPrompt);
         
         // Prepare content for final call
         let finalContent = finalPrompt;
@@ -297,46 +326,59 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
         }
         
         finalContent += `\n\nUser Query: ${textQuery}`;
+        console.log(`📤 Sending final request to Gemini with database data`);
 
         try {
             const finalResponse = await model.generateContent(finalContent);
             const finalText = finalResponse.response.text();
             console.log(`✅ Final Gemini call successful`);
+            console.log(`📥 Raw Final Response:`, finalText);
             
             // Attempt to extract the final structured JSON output
             const finalJsonMatch = finalText.match(/```json\s*(\{[\s\S]*?\})\s*```/);
             
             if (finalJsonMatch) {
-                       try {
-                           const structuredResult = JSON.parse(finalJsonMatch[1]);
-                           console.log(`✅ Structured JSON response parsed`);
-                           // Deduct token only after successful AI processing
-                           await decrementToken(userId);
-                           return {
-                               status: "SUCCESS",
-                               data: {
-                                   ...structuredResult,
-                                   database_result: databaseResult,
-                                   source: "gemini_structured"
-                               }
-                           };
-                       } catch (e) {
-                           console.error("❌ Final JSON parse error, returning raw text.", e);
-                           // Deduct token only after successful AI processing
-                           await decrementToken(userId);
-                           return { 
-                               status: "SUCCESS", 
-                               data: { 
-                                   text: finalText, 
-                                   database_result: databaseResult, 
-                                   note: "JSON parsing failed after second call, returning raw text." 
-                               } 
-                           };
-                       }
+                console.log(`✅ JSON pattern found in final response`);
+                try {
+                    const structuredResult = JSON.parse(finalJsonMatch[1]);
+                    console.log(`✅ Structured JSON response parsed successfully:`, JSON.stringify(structuredResult, null, 2));
+                    
+                    // Check if medicine name was extracted properly
+                    if (structuredResult.data && structuredResult.data.medicine_name) {
+                        console.log(`✅ Medicine name extracted: "${structuredResult.data.medicine_name}"`);
+                    } else {
+                        console.log(`❌ No medicine name found in structured result`);
+                    }
+                    
+                    // Deduct token only after successful AI processing
+                    await decrementToken(userId);
+                    return {
+                        status: "SUCCESS",
+                        data: {
+                            ...structuredResult,
+                            database_result: databaseResult,
+                            source: "gemini_structured"
+                        }
+                    };
+                } catch (e) {
+                    console.error("❌ Final JSON parse error, returning raw text.", e);
+                    console.error("❌ Failed to parse JSON:", finalJsonMatch[1]);
+                    // Deduct token only after successful AI processing
+                    await decrementToken(userId);
+                    return { 
+                        status: "SUCCESS", 
+                        data: { 
+                            text: finalText, 
+                            database_result: databaseResult, 
+                            note: "JSON parsing failed after second call, returning raw text." 
+                        } 
+                    };
+                }
             } 
             
             // If final JSON structure is not detected
             console.log(`⚠️ No structured JSON detected in final response`);
+            console.log(`📝 Final response (no JSON found):`, finalText);
             // Deduct token only after successful AI processing
             await decrementToken(userId);
             return { 
