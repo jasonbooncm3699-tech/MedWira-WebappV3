@@ -183,9 +183,9 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
 
         // 2. FIRST LLM CALL: IMAGE ANALYSIS & TOOL SIGNAL
         console.log(`🔍 Step 1: Gemini 1.5 Pro Image Analysis & Tool Signal`);
-        console.log(`📝 First Prompt:`, firstPrompt);
         
         const firstPrompt = buildGeminiSystemPrompt(true, null, TOOL_CALL_SCHEMA);
+        console.log(`📝 First Prompt:`, firstPrompt);
         
         // Prepare content for Gemini 1.5 Pro
         let firstContent = firstPrompt;
