@@ -62,24 +62,13 @@ export async function POST(request: NextRequest) {
     
     console.log(`📊 Pipeline result status: ${result.status}`);
     
-    if (result.status === "ERROR" || result.status === "INSUFFICIENT_TOKENS" || result.status === "SERVICE_ERROR") {
-      // Use httpStatus if available (from token check), otherwise determine by status
-      let statusCode = result.httpStatus;
-      if (!statusCode) {
-        if (result.status === "INSUFFICIENT_TOKENS") {
-          statusCode = 402; // Payment Required
-        } else if (result.status === "SERVICE_ERROR") {
-          statusCode = 503; // Service Unavailable
-        } else {
-          statusCode = 500; // Internal Server Error
-        }
-      }
+    // 1. CRITICAL: Handle Insufficient Tokens (Payment Required)
+    if (result.status === "INSUFFICIENT_TOKENS") {
+      console.log(`❌ Token failure for user ${user_id}. Returning 402.`);
       
-      console.log(`❌ Pipeline error (${statusCode}): ${result.message || 'Unknown error'}`);
-      
-      // For token errors, include current token count
+      // Get current token count for the error response
       let remainingTokens = null;
-      if (statusCode === 402 && user_id) {
+      if (user_id) {
         try {
           const { createClient } = await import('@supabase/supabase-js');
           const supabase = createClient(
@@ -99,10 +88,33 @@ export async function POST(request: NextRequest) {
         }
       }
       
-      return NextResponse.json({
-        ...result,
-        tokensRemaining: remainingTokens
-      }, { status: statusCode });
+      return NextResponse.json(
+        { 
+          status: result.status, 
+          message: result.message,
+          tokensRemaining: remainingTokens
+        },
+        { status: 402 } 
+      );
+    }
+
+    // 2. Handle all other pipeline errors
+    if (result.status === "ERROR" || result.status === "SERVICE_ERROR") {
+      console.error(`❌ Pipeline returned general error for user ${user_id}: ${result.message}`);
+      // Use the httpStatus provided by the pipeline, or default to appropriate status
+      let httpStatus = result.httpStatus;
+      if (!httpStatus) {
+        if (result.status === "SERVICE_ERROR") {
+          httpStatus = 503; // Service Unavailable
+        } else {
+          httpStatus = 500; // Internal Server Error
+        }
+      }
+      
+      return NextResponse.json(
+        { status: result.status, message: result.message },
+        { status: httpStatus } 
+      );
     }
 
     console.log('✅ Pipeline completed successfully');
