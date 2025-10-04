@@ -205,7 +205,7 @@ async function checkTokenAvailability(userId, requiredCost = 1) {
         console.log(`🔍 [DB] Executing profile query for userId: ${userId}`);
         const { data: profile, error: selectError } = await supabase
             .from('profiles')
-            .select('token_count, id, email')
+            .select('token_count, id')
             .eq('id', userId)
             .single();
 
@@ -258,10 +258,9 @@ async function checkTokenAvailability(userId, requiredCost = 1) {
             }
         }
 
-    console.log(`🔍 User ${userId} profile found:`, {
+    console.log(`🔍 [DB] User ${userId} profile found:`, {
         id: profile.id,
-        token_count: profile.token_count,
-        email: profile.email
+        token_count: profile.token_count
     });
 
     if (profile.token_count < requiredCost) {
