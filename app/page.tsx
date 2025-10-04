@@ -142,15 +142,28 @@ export default function Home() {
     setMessages(prev => [...prev, newUserMessage]);
     setIsAnalyzing(true);
     
+    // Ensure user is authenticated and the ID is present
+    if (!user || !user.id) {
+      // CRITICAL: Prevent API call if authentication is missing
+      console.error("❌ Cannot send request: User not authenticated.");
+      setErrorMessage("Please log in to use the medicine analysis feature.");
+      setIsAnalyzing(false);
+      return; // EARLY EXIT to prevent bad request
+    }
+
+    // Prepare the payload object
+    const payload = {
+      image_data: null, // Text-only query
+      user_id: user.id, // The validated user ID
+      text_query: userMessage // The user's text message
+    };
+
     try {
       const response = await fetch('/api/analyze-medicine-gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          image_data: null, // Text-only query
-          text_query: userMessage,
-          user_id: user?.id
-        })
+        // CRITICAL FIX: Ensure the body is correctly structured and JSON stringified
+        body: JSON.stringify(payload)
       });
       
       const result = await response.json();
@@ -433,6 +446,23 @@ export default function Home() {
 
     setMessages(prev => [...prev, userMessage]);
 
+    // Ensure user is authenticated and the ID is present
+    if (!user || !user.id) {
+      // CRITICAL: Prevent API call if authentication is missing
+      console.error("❌ Cannot send request: User not authenticated.");
+      setErrorMessage("Please log in to use the medicine analysis feature.");
+      setIsAnalyzing(false);
+      setAiStatus('idle');
+      return; // EARLY EXIT to prevent bad request
+    }
+
+    // Prepare the payload object
+    const payload = {
+      image_data: imageBase64, // Ensure this is a non-null base64 string
+      user_id: user.id, // The validated user ID
+      text_query: "Please analyze this medicine image and provide detailed information." // The user's text message
+    };
+
     try {
       // Real AI processing - no fake delays
       setAiStatus('Analyzing Image...');
@@ -442,11 +472,8 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          image_data: imageBase64,
-          text_query: "Please analyze this medicine image and provide detailed information.",
-          user_id: user?.id
-        }),
+        // CRITICAL FIX: Ensure the body is correctly structured and JSON stringified
+        body: JSON.stringify(payload)
       });
 
       const result = await response.json();
