@@ -53,7 +53,7 @@ export interface NPRAMedicineData {
  * This class provides Gemini 1.5 Pro powered medicine analysis.
  * Integrates with NPRA database for comprehensive medicine information.
  * 
- * ✅ ACTIVE SERVICE - No longer deprecated
+ * ✅ ACTIVE SERVICE - Fully functional Gemini 1.5 Pro implementation
  */
 export class GeminiMedicineAnalyzer {
   private model: any;
@@ -136,12 +136,18 @@ export class GeminiMedicineAnalyzer {
     userAllergies: string = ''
   ): Promise<MedicineAnalysisResult> {
     if (!this.model) {
-      console.log('⚠️ Gemini model not initialized - SERVICE_DISABLED');
-      return {
-        success: false,
-        error: 'SERVICE_DISABLED: Gemini 1.5 Pro service not available. Please try again later.',
-        language
-      };
+      console.log('⚠️ Gemini model not initialized - retrying initialization');
+      // Retry initialization
+      await this.initializeModel();
+      
+      if (!this.model) {
+        console.error('❌ Gemini model initialization failed after retry');
+        return {
+          success: false,
+          error: 'Gemini 1.5 Pro service temporarily unavailable. Please try again later.',
+          language
+        };
+      }
     }
 
     try {
