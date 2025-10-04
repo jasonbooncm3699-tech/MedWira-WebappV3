@@ -215,9 +215,44 @@ async function checkTokenAvailability(userId, requiredCost = 1) {
         }
 
         if (!profile) {
-            // Case for a valid user ID but no profile row found (RLS or missing profile)
-            console.error(`❌ Token check: Profile not found for userId: ${userId}`);
-            return { isAvailable: false, reason: "DATABASE_ERROR" };
+            // Case for a valid user ID but no profile row found - create profile with welcome tokens
+            console.log(`⚠️ Profile not found for userId: ${userId}, attempting to create profile with welcome tokens`);
+            
+            try {
+                // Create profile with 30 welcome tokens
+                const { data: newProfile, error: insertError } = await supabase
+                    .from('profiles')
+                    .insert({
+                        id: userId,
+                        token_count: 30,
+                        referral_code: `REF${userId.substring(0, 6).toUpperCase()}`,
+                        referral_count: 0,
+                        display_name: null,
+                        avatar_url: null,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    })
+                    .select('token_count, id')
+                    .single();
+
+                if (insertError) {
+                    console.error('❌ Failed to create profile:', insertError);
+                    return { isAvailable: false, reason: "DATABASE_ERROR" };
+                }
+
+                console.log(`✅ Created new profile for user ${userId} with 30 welcome tokens`);
+                
+                // Check if the new profile has sufficient tokens
+                if (newProfile.token_count < requiredCost) {
+                    return { isAvailable: false, reason: "INSUFFICIENT_TOKENS" };
+                }
+                
+                return { isAvailable: true, reason: "SUFFICIENT" };
+                
+            } catch (createError) {
+                console.error('❌ Error creating profile:', createError);
+                return { isAvailable: false, reason: "DATABASE_ERROR" };
+            }
         }
 
     console.log(`🔍 User ${userId} profile found:`, {
