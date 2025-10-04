@@ -23,14 +23,16 @@ const model = genAI.getGenerativeModel({
   }
 });
 
-// Tool call schema for medicine database lookup
+// Tool call schema for medicine database lookup with confidence scoring
 const TOOL_CALL_SCHEMA = {
   "tool_call": {
     "name": "medicine_database_lookup",
     "parameters": {
       "product_name": "string",
       "active_ingredient": "string | null",
-      "strength": "string | null"
+      "strength": "string | null",
+      "confidence": "number (0-1, where 1 = completely confident in text reading)",
+      "all_visible_text": "string (list all text you can see on the packaging)"
     }
   }
 };
@@ -67,15 +69,22 @@ You are a specialized medicine specialist AI assistant. Your primary task is to 
 
 **YOUR ROLE:** Medicine Specialist with expertise in pharmaceutical identification and analysis.
 
-**CRITICAL EXTRACTION RULES:**
-1. **COMPREHENSIVE EXTRACTION:** Extract ALL visible text and information from the medicine packaging
-2. **ACCURATE READING:** Read exactly what is written, do not interpret or modify text
-3. **COMPLETE DATA:** Look for product names, active ingredients, strengths, manufacturer, registration numbers, dosage forms, etc.
-4. **NO HALLUCINATION:** Only extract what you can clearly see in the image
-5. **DETAILED ANALYSIS:** Provide thorough information for accurate database matching
+**SYSTEMATIC TEXT EXTRACTION PROCESS:**
+1. **SCAN SYSTEMATICALLY:** Read the entire image from top-left to bottom-right, left to right
+2. **IDENTIFY ALL TEXT REGIONS:** Locate every area containing text on the packaging
+3. **READ IN ORDER OF PROMINENCE:** Start with the largest, most prominent text first
+4. **EXTRACT EXACTLY:** Copy text character-by-character as it appears
+5. **VALIDATE ACCURACY:** Double-check your reading before proceeding
+
+**CRITICAL ANTI-HALLUCINATION RULES:**
+1. **READ ONLY WHAT YOU SEE:** Never use medicine names from memory or previous knowledge
+2. **NO GUESSING:** If text is unclear or partially visible, describe what you see rather than guessing
+3. **NO ASSUMPTIONS:** Do not assume this is any specific medicine you know
+4. **FRESH ANALYSIS:** Treat each image as completely new - ignore any previous analyses
+5. **VERIFY BEFORE EXTRACTING:** Ask yourself "Is this text actually visible in the image?"
 
 **WHAT TO EXTRACT FROM THE IMAGE:**
-- **Product/Brand Name:** Main medicine name as written on packaging
+- **Product/Brand Name:** The MOST PROMINENT text on the packaging (usually the largest)
 - **Active Ingredients:** All active ingredients listed with their exact names
 - **Strengths/Dosages:** All dosage strengths and concentrations
 - **Manufacturer:** Company name if visible
@@ -84,30 +93,60 @@ You are a specialized medicine specialist AI assistant. Your primary task is to 
 - **Packaging Details:** Blister pack, bottle, box, etc.
 - **Any Other Text:** Additional information visible on packaging
 
-**EXTRACTION APPROACH:**
-- Read the image systematically from top to bottom, left to right
-- Extract every piece of text that could be relevant for medicine identification
-- Be thorough and comprehensive in your data extraction
-- Focus on accuracy and completeness
+**VALIDATION CHECKLIST:**
+Before returning the JSON, verify:
+- Is this text actually visible in the image?
+- Is this the most prominent text on the packaging?
+- Does this look like a medicine/product name?
+- Am I reading this correctly or guessing?
+- Have I checked the entire image systematically?
 `;
     
     if (isFirstCall) {
-        // --- FIRST CALL PROMPT (Comprehensive data extraction for database matching) ---
+        // --- FIRST CALL PROMPT (Systematic text extraction with validation) ---
         return `${basePrompt}
-**TASK: COMPREHENSIVE MEDICINE DATA EXTRACTION**
+**TASK: SYSTEMATIC TEXT EXTRACTION WITH VALIDATION**
 
-As a medicine specialist, analyze this medicine packaging image and extract ALL possible data for accurate database matching.
+Follow this EXACT step-by-step process:
 
-**EXTRACTION PROCESS:**
-1. **Systematic Analysis:** Read the entire packaging systematically
-2. **Complete Data Collection:** Extract every relevant piece of information
-3. **Accurate Transcription:** Copy text exactly as written, no interpretation
-4. **Database Preparation:** Prepare data for precise database matching
+**STEP 1: DESCRIBE WHAT YOU SEE**
+- Describe the packaging type (blister pack, bottle, box, etc.)
+- Note the overall layout and text arrangement
+- Identify the most prominent visual elements
+
+**STEP 2: LIST ALL VISIBLE TEXT**
+- Scan the image systematically from top to bottom, left to right
+- List EVERY piece of text you can see, in order of prominence
+- Include even small text that might be relevant
+
+**STEP 3: IDENTIFY THE MAIN PRODUCT NAME**
+- Look for the LARGEST, MOST PROMINENT text on the packaging
+- This is usually the main product/medicine name
+- Verify this text is actually visible and readable
+
+**STEP 4: EXTRACT ACTIVE INGREDIENTS**
+- Look for ingredient lists or active ingredient sections
+- Extract exact names as written on packaging
+- If not visible, use null
+
+**STEP 5: EXTRACT STRENGTH/DOSAGE**
+- Look for dosage information, strengths, or concentrations
+- Extract exact values as written
+- If not visible, use null
+
+**STEP 6: VALIDATION CHECK**
+Before returning JSON, verify:
+- Is the product name the most prominent text?
+- Am I reading the text correctly?
+- Have I checked the entire image?
+- Am I guessing or reading actual text?
 
 **REQUIRED EXTRACTION FIELDS:**
-- product_name: Main medicine/brand name (exact text from packaging)
-- active_ingredient: All active ingredients (exact names as written)
-- strength: All dosage strengths and concentrations (exact values)
+- product_name: Main medicine/brand name (MOST PROMINENT text from packaging)
+- active_ingredient: All active ingredients (exact names as written, or null if not visible)
+- strength: All dosage strengths and concentrations (exact values, or null if not visible)
+- confidence: Your confidence level (0-1) in reading the text accurately
+- all_visible_text: List ALL text you can see on the packaging (for validation)
 
 **RETURN FORMAT:**
 Provide the extracted data in this JSON structure:
@@ -116,13 +155,11 @@ Provide the extracted data in this JSON structure:
 ${JSON.stringify(toolSchema, null, 2)}
 \`\`\`
 
-**EXTRACTION GUIDELINES:**
-- Be thorough and comprehensive in your analysis
-- Extract ALL visible text that could help identify the medicine
-- Use exact text from packaging, no modifications
-- If multiple active ingredients, include all of them
-- If multiple strengths, include all values
-- Focus on accuracy for successful database matching
+**CRITICAL REMINDER:**
+- Read ONLY what you can clearly see in the image
+- Do NOT use medicine names from memory
+- Do NOT guess or assume
+- Focus on the MOST PROMINENT text for the product name
 `;
     } else {
         // --- SECOND CALL PROMPT (Generate comprehensive medical report) ---
@@ -336,13 +373,21 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
                 console.log(`🔧 [GEMINI] Tool Signal Parsed Successfully:`, JSON.stringify(jsonSignal, null, 2));
                 
                 if (jsonSignal.tool_call && jsonSignal.tool_call.parameters) {
-                    const { product_name, active_ingredient, strength } = jsonSignal.tool_call.parameters;
+                    const { product_name, active_ingredient, strength, confidence, all_visible_text } = jsonSignal.tool_call.parameters;
                     
                     console.log(`🔍 [GEMINI] Extracted Parameters:`, {
                         product_name,
                         active_ingredient,
-                        strength
+                        strength,
+                        confidence,
+                        all_visible_text
                     });
+                    
+                    // Check confidence level
+                    if (confidence !== undefined && confidence < 0.7) {
+                        console.log(`⚠️ [GEMINI] Low confidence extraction (${confidence}). All visible text: "${all_visible_text}"`);
+                        console.log(`🔍 [GEMINI] Attempting to re-analyze with focus on most prominent text...`);
+                    }
                     
                     console.log(`🔍 [GEMINI] Executing medicine database lookup for: "${product_name}"`);
                     const dbLookupStartTime = Date.now();
