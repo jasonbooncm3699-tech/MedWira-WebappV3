@@ -14,6 +14,7 @@ import AIStatusDisplay from '@/components/AIStatusDisplay';
 import { getInitials, generateAvatarColor } from '@/lib/avatar-utils';
 import { MessageFormatter } from '@/lib/message-formatter';
 import { DatabaseService } from '@/lib/supabase';
+import { chatStorage, ChatMessage } from '@/lib/chat-storage';
 import { Share2 } from 'lucide-react';
 
 export default function Home() {
@@ -86,15 +87,7 @@ export default function Home() {
   const [userTokens, setUserTokens] = useState<number>(user?.tokens || 0);
   const [inputText, setInputText] = useState('');
   const [aiStatus, setAiStatus] = useState<'idle' | 'Analyzing image...' | 'Extracting text from packaging...' | 'Searching medicine database...' | 'Generating medical report...' | 'Finalizing analysis...'>('idle');
-  const [messages, setMessages] = useState<Array<{
-    id: string;
-    type: 'user' | 'ai' | 'structured';
-    content: string;
-    timestamp: Date;
-    image?: string;
-    structuredData?: any;
-    rawAnalysis?: string;
-  }>>([
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
       type: 'ai',
@@ -346,21 +339,72 @@ export default function Home() {
   }, [user, isLoading, refreshUserData]);
 
 
-  // Function to fetch user chat history
+  // Function to fetch user chat history (localStorage + database)
   const fetchUserChatHistory = useCallback(async () => {
     if (user?.id) {
       try {
+        // First, load from localStorage for instant display
+        const localMessages = chatStorage.loadChatHistory(user.id);
+        if (localMessages.length > 0) {
+          console.log('✅ Chat history loaded from localStorage:', localMessages.length, 'messages');
+          setMessages(localMessages);
+        }
+
+        // Then, fetch from database for sync
         const history = await DatabaseService.getUserScanHistory(user.id);
         setScanHistory(history || []);
-        console.log('✅ Chat history loaded:', history?.length || 0, 'conversations');
+        console.log('✅ Scan history loaded from database:', history?.length || 0, 'conversations');
+
+        // If database has newer data, update localStorage
+        if (history && history.length > 0) {
+          const lastDbUpdate = new Date(Math.max(...history.map(h => new Date(h.created_at).getTime())));
+          const lastLocalUpdate = localMessages.length > 0 ? 
+            new Date(Math.max(...localMessages.map(m => m.timestamp.getTime()))) : new Date(0);
+          
+          if (lastDbUpdate > lastLocalUpdate) {
+            console.log('🔄 Database has newer data, updating localStorage');
+            // Convert scan history to messages format and save to localStorage
+            const dbMessages: ChatMessage[] = history.slice(0, 5).map(scan => ({
+              id: `scan_${scan.id}`,
+              type: 'structured' as const,
+              content: '',
+              timestamp: new Date(scan.created_at),
+              structuredData: {
+                medicine_name: scan.medicine_name,
+                purpose: scan.purpose || 'Medicine analysis',
+                raw_analysis: `Medicine: ${scan.medicine_name}\nAnalysis completed on ${new Date(scan.created_at).toLocaleDateString()}`
+              }
+            }));
+            
+            // Merge with existing messages and save
+            const mergedMessages = [...localMessages.filter(m => !m.id.startsWith('scan_')), ...dbMessages];
+            chatStorage.saveChatHistory(mergedMessages, user.id);
+          }
+        }
       } catch (error) {
         console.error('❌ Failed to fetch chat history:', error);
         setScanHistory([]);
       }
     } else {
+      // For non-authenticated users, load from localStorage only
+      const localMessages = chatStorage.loadChatHistory();
+      if (localMessages.length > 0) {
+        console.log('✅ Chat history loaded from localStorage (guest):', localMessages.length, 'messages');
+        setMessages(localMessages);
+      }
       setScanHistory([]);
     }
   }, [user?.id]);
+
+  // Load chat history on initial page load (before user authentication)
+  useEffect(() => {
+    // Load from localStorage immediately for instant display
+    const localMessages = chatStorage.loadChatHistory();
+    if (localMessages.length > 0) {
+      console.log('✅ Initial chat history loaded from localStorage:', localMessages.length, 'messages');
+      setMessages(localMessages);
+    }
+  }, []);
 
   // Fetch user chat history when user logs in
   useEffect(() => {
@@ -474,7 +518,12 @@ export default function Home() {
       image: imageBase64
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages(prev => {
+      const updatedMessages = [...prev, userMessage];
+      // Save to localStorage immediately
+      chatStorage.saveChatHistory(updatedMessages, user?.id);
+      return updatedMessages;
+    });
 
     // FORCE DEFENSIVE PAYLOAD CREATION - Use ?? to force non-undefined, valid JSON types
     const userId = user?.id ?? ''; 
@@ -582,7 +631,12 @@ export default function Home() {
         }
 
         // Add structured message to chat
-        setMessages(prev => [...prev, structuredMessage]);
+        setMessages(prev => {
+          const updatedMessages = [...prev, structuredMessage];
+          // Save to localStorage immediately
+          chatStorage.saveChatHistory(updatedMessages, user?.id);
+          return updatedMessages;
+        });
 
         // Refresh chat history after successful analysis
         if (user) {
@@ -598,7 +652,12 @@ export default function Home() {
           timestamp: new Date()
         };
         
-        setMessages(prev => [...prev, errorMessage]);
+        setMessages(prev => {
+          const updatedMessages = [...prev, errorMessage];
+          // Save to localStorage immediately
+          chatStorage.saveChatHistory(updatedMessages, user?.id);
+          return updatedMessages;
+        });
       }
 
     } catch (error) {
@@ -620,7 +679,12 @@ export default function Home() {
         timestamp: new Date()
       };
       
-      setMessages(prev => [...prev, errorMsg]);
+      setMessages(prev => {
+        const updatedMessages = [...prev, errorMsg];
+        // Save to localStorage immediately
+        chatStorage.saveChatHistory(updatedMessages, user?.id);
+        return updatedMessages;
+      });
     } finally {
       setIsAnalyzing(false);
       setAiStatus('idle');
@@ -996,6 +1060,41 @@ export default function Home() {
             >
               {showFAQ ? 'Hide FAQ' : 'FAQ'}
             </button>
+            
+            {/* Chat Storage Info */}
+            <div className="storage-info" style={{
+              marginTop: '12px',
+              padding: '8px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '6px',
+              fontSize: '11px',
+              color: '#888'
+            }}>
+              <div>💾 Chat saved locally</div>
+              <button 
+                onClick={() => {
+                  chatStorage.clearChatHistory();
+                  setMessages([{
+                    id: '1',
+                    type: 'ai',
+                    content: getWelcomeMessage('English'),
+                    timestamp: new Date()
+                  }]);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#666',
+                  cursor: 'pointer',
+                  fontSize: '10px',
+                  textDecoration: 'underline',
+                  marginTop: '4px'
+                }}
+              >
+                Clear chat history
+              </button>
+            </div>
+            
             <p className="copyright">@ 2025 MedWira.com. AI Powered medicine database</p>
           </div>
         </nav>
