@@ -217,38 +217,26 @@ async function decrementToken(userId) {
     // We assume checkTokenAvailability was called successfully beforehand.
     const supabase = getSupabaseClient();
     
-    // 1. Get current token count
-    const { data: profile, error: selectError } = await supabase
+    // Use atomic decrement operation - only decrement if token_count > 0
+    const { data, error: updateError } = await supabase
         .from('profiles')
-        .select('token_count')
+        .update({ token_count: supabase.raw('token_count - 1') })
         .eq('id', userId)
+        .gt('token_count', 0) // Only update if token_count > 0
+        .select('token_count')
         .single();
-
-    if (selectError || !profile) {
-        console.error('❌ Failed to read token count before decrement:', selectError || 'No profile data');
-        return false;
-    }
-    
-    // 2. Decrement tokens by 1
-    const newCount = profile.token_count - 1;
-
-    // Use a safety check here, in case of a race condition
-    if (newCount < 0) {
-        console.warn(`⚠️ Attempted to decrement below zero for user ${userId}. Aborting.`);
-        return false;
-    }
-
-    const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ token_count: newCount }) 
-        .eq('id', userId);
 
     if (updateError) {
         console.error('❌ Token update error:', updateError);
         return false;
     }
 
-    console.log(`✅ User ${userId} token decremented. Remaining: ${newCount}`);
+    if (!data) {
+        console.warn(`⚠️ No rows updated for user ${userId} - likely insufficient tokens`);
+        return false;
+    }
+
+    console.log(`✅ User ${userId} token decremented by 1. Remaining: ${data.token_count}`);
     return true;
 }
 

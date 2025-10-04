@@ -4,7 +4,7 @@
  * Complete implementation of the Gemini 1.5 Pro pipeline with NPRA database integration,
  * token management, and structured output generation.
  * 
- * Maintains the same two-step architecture as MedGemma for consistency:
+ * Maintains the same two-step architecture for consistency:
  * Step 1: Image Analysis & Tool Signaling
  * Step 2: Database Augmentation & Final Report Generation
  */
@@ -154,7 +154,7 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
         console.log(`🔍 GeminiAgent: Token check result: ${isTokenAvailable}`);
         
         if (!isTokenAvailable) {
-            console.log(`❌ User ${userId} has insufficient tokens (Required: ${REQUIRED_COST})`);
+            console.log(`❌ User ${userId} blocked due to insufficient tokens (Required: ${REQUIRED_COST})`);
             return { 
                 status: "INSUFFICIENT_TOKENS", 
                 message: "Insufficient token. Please subscribe or redeem a referral code." 
