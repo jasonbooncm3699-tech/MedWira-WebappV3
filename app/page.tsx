@@ -143,7 +143,7 @@ export default function Home() {
     setIsAnalyzing(true);
     
     try {
-      const response = await fetch('/api/analyze-medicine-medgemma', {
+      const response = await fetch('/api/analyze-medicine-gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -437,7 +437,7 @@ export default function Home() {
       // Real AI processing - no fake delays
       setAiStatus('Analyzing Image...');
 
-      const response = await fetch('/api/analyze-medicine-medgemma', {
+      const response = await fetch('/api/analyze-medicine-gemini', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

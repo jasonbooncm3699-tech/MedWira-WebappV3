@@ -1,7 +1,7 @@
 /**
  * Next.js API Route for Gemini 1.5 Pro Medicine Analysis
  * 
- * This endpoint integrates with the Gemini pipeline for medicine analysis
+ * This endpoint integrates with the Gemini 1.5 Pro pipeline for medicine analysis
  * with NPRA database integration and token management.
  */
 
@@ -17,7 +17,7 @@ interface GeminiPipelineResponse {
 }
 
 export async function POST(request: NextRequest) {
-  console.log('🔍 MedGemma Medicine Analysis API Request received');
+  console.log('🔍 Gemini 1.5 Pro Medicine Analysis API Request received');
   
   try {
     // Parse request body
@@ -137,13 +137,13 @@ export async function POST(request: NextRequest) {
 
 /**
  * Health Check Endpoint
- * GET /api/analyze-medicine-medgemma
+ * GET /api/analyze-medicine-gemini
  */
 export async function GET() {
   return NextResponse.json({ 
     status: "OK", 
-    message: "MedGemma API is running",
-    endpoint: "/api/analyze-medicine-medgemma",
+    message: "Gemini 1.5 Pro API is running",
+    endpoint: "/api/analyze-medicine-gemini",
     timestamp: new Date().toISOString()
   });
 }
