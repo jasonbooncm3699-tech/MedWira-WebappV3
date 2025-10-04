@@ -133,51 +133,22 @@ const StructuredMedicineReply: React.FC<StructuredMedicineReplyProps> = ({ respo
 
   return (
     <div className="bg-gray-900/80 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden shadow-2xl p-4">
-      {/* Medicine Header - Show for Gemini format */}
-      {isGeminiFormat && (response.medicine_name || response.purpose) && (
-        <div className="mb-4">
-          {response.medicine_name && (
-            <div className="mb-3">
-              <h2 className="text-lg font-semibold text-white mb-1">Medicine</h2>
-              <p className="text-gray-300">{response.medicine_name}</p>
-            </div>
-          )}
-          {response.purpose && (
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold text-white mb-1">Purpose</h2>
-              <p className="text-gray-300 leading-relaxed">{response.purpose}</p>
-            </div>
-          )}
+      {/* Display raw analysis text directly with proper formatting */}
+      {response.raw_analysis && (
+        <div className="raw-analysis-content" style={{
+          fontSize: '14px',
+          lineHeight: '1.6',
+          color: '#ffffff',
+          whiteSpace: 'pre-wrap'
+        }}>
+          <div dangerouslySetInnerHTML={{
+            __html: response.raw_analysis
+              .replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: bold; color: #ffffff;">$1</strong>')
+              .replace(/\n/g, '<br>')
+              .replace(/Packaging:/g, '<strong style="font-weight: bold; color: #ffffff;">Packaging Detected:</strong>')
+          }} />
         </div>
       )}
-      
-      {/* All Information Displayed as Text - No Expandable Sections */}
-      {sections.map((section) => {
-        if (!section.data) return null;
-        
-        return (
-          <div key={section.id} className="mb-4 last:mb-0">
-            <div className="flex items-center gap-2 mb-2">
-              {section.icon}
-              <h3 className={`font-semibold text-lg ${section.textColor || 'text-white'}`}>
-                {section.title}
-              </h3>
-            </div>
-            <div className="ml-7">
-              <p className="text-gray-300 leading-relaxed mb-2">{section.data.content}</p>
-              {section.data.details && section.data.details.length > 0 && (
-                <div className="space-y-1">
-                  {section.data.details.map((detail, index) => (
-                    <p key={index} className="text-sm text-gray-400 ml-4">
-                      • {detail}
-                    </p>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })}
     </div>
   );
 };

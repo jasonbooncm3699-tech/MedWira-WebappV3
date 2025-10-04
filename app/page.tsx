@@ -346,23 +346,24 @@ export default function Home() {
   }, [user, isLoading, refreshUserData]);
 
 
-  // Fetch user chat history when user logs in
-  useEffect(() => {
-    const fetchUserChatHistory = async () => {
-      if (user?.id) {
-        try {
-          const history = await DatabaseService.getUserScanHistory(user.id);
-          setScanHistory(history || []);
-          console.log('✅ Chat history loaded:', history?.length || 0, 'conversations');
-        } catch (error) {
-          console.error('❌ Failed to fetch chat history:', error);
-          setScanHistory([]);
-        }
-      } else {
+  // Function to fetch user chat history
+  const fetchUserChatHistory = async () => {
+    if (user?.id) {
+      try {
+        const history = await DatabaseService.getUserScanHistory(user.id);
+        setScanHistory(history || []);
+        console.log('✅ Chat history loaded:', history?.length || 0, 'conversations');
+      } catch (error) {
+        console.error('❌ Failed to fetch chat history:', error);
         setScanHistory([]);
       }
-    };
+    } else {
+      setScanHistory([]);
+    }
+  };
 
+  // Fetch user chat history when user logs in
+  useEffect(() => {
     fetchUserChatHistory();
   }, [user]);
 
@@ -564,8 +565,8 @@ export default function Home() {
         // Create structured AI response message with comprehensive data
         const structuredMessage = {
           id: (Date.now() + 1).toString(),
-          type: 'ai' as const,
-          content: `**Medicine Analysis Complete**\n\n**Medicine:** ${result.data?.medicine_name || 'N/A'}\n**Purpose:** ${result.data?.purpose || 'N/A'}`,
+          type: 'structured' as const, // Use 'structured' type for medicine analysis
+          content: '', // Empty content - we'll use StructuredMedicineReply component
           timestamp: new Date(),
           structuredData: result.data,
           rawAnalysis: result.data?.raw_analysis || result.data?.rawAnalysis || result.data?.text || 'Analysis completed'
@@ -582,6 +583,11 @@ export default function Home() {
 
         // Add structured message to chat
         setMessages(prev => [...prev, structuredMessage]);
+
+        // Refresh chat history after successful analysis
+        if (user) {
+          await fetchUserChatHistory();
+        }
 
       } else {
         // Handle error responses (including insufficient tokens)
@@ -1105,18 +1111,6 @@ export default function Home() {
                   {/* Render structured medicine reply for structured messages */}
                   {message.type === 'structured' && message.structuredData ? (
                     <div className="structured-medicine-response">
-                      <div className="message-text">
-                        {message.content && message.content.includes('**') ? (
-                          <div dangerouslySetInnerHTML={{ 
-                            __html: message.content
-                              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                              .replace(/\n/g, '<br>')
-                              .replace(/⚠️/g, '⚠️')
-                          }} />
-                        ) : (
-                          <span>{message.content || ''}</span>
-                        )}
-                      </div>
                       <StructuredMedicineReply response={message.structuredData} />
                     </div>
                   ) : (
@@ -1145,44 +1139,47 @@ export default function Home() {
                           {message.rawAnalysis}
                         </div>
                       )}
-                      {/* Share icon for AI messages (excluding greeting) */}
-                      {message.type === 'ai' && message.id !== '1' && (
-                        <div className="share-icon-container" style={{
-                          display: 'flex',
-                          justifyContent: 'flex-end',
-                          marginTop: '8px'
-                        }}>
-                          <button
-                            onClick={() => shareToWhatsApp(message.rawAnalysis || message.content)}
-                            className="share-button"
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: '#ffffff',
-                              cursor: 'pointer',
-                              padding: '4px',
-                              borderRadius: '4px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              fontSize: '12px',
-                              opacity: 0.7,
-                              transition: 'opacity 0.2s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.opacity = '1';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.opacity = '0.7';
-                            }}
-                          >
-                            <Share2 size={14} />
-                            <span>Share</span>
-                          </button>
-                        </div>
-                      )}
                     </div>
                   )}
+                </div>
+                
+                {/* Share button positioned outside the message bubble */}
+                {(message.type === 'ai' || message.type === 'structured') && message.id !== '1' && (
+                  <div className="share-icon-container" style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    marginTop: '8px',
+                    marginLeft: '50px' // Align with message content
+                  }}>
+                    <button
+                      onClick={() => shareToWhatsApp(message.rawAnalysis || message.content)}
+                      className="share-button"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#ffffff',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '12px',
+                        opacity: 0.7,
+                        transition: 'opacity 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = '1';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = '0.7';
+                      }}
+                    >
+                      <Share2 size={14} />
+                      <span>Share</span>
+                    </button>
+                  </div>
+                )}
                   
                   <div className="message-footer">
                   <div className="message-time">
@@ -1192,7 +1189,6 @@ export default function Home() {
                       hour12: true 
                     })}
                   </div>
-                </div>
                 </div>
               </div>
             ))}
