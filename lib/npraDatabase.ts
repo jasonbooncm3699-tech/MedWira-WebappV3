@@ -78,7 +78,7 @@ export async function npraProductLookup(
     
     if (data && data.length > 0) {
       console.log(`✅ NPRA Found: ${data.length} result(s) for "${productName}"`);
-      console.log(`📋 Product: ${data[0].npra_product} | Reg: ${data[0].reg_no} | Status: ${data[0].status}`);
+      console.log(`📋 Product: ${data[0].product} | Reg: ${data[0].reg_no} | Status: ${data[0].status}`);
       return data[0] as NPRAProduct;
     } else {
       console.log(`⚠️ NPRA Not Found: No results for "${productName}"`);

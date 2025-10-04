@@ -64,7 +64,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Analyze the image
+    // Analyze the image using the comprehensive 10-step flow
+    console.log('🚀 Starting comprehensive medicine analysis with 10-step flow');
     const result = await geminiAnalyzer.analyzeMedicineImage(
       imageBase64,
       language,
