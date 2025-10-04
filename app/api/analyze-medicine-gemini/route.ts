@@ -62,9 +62,9 @@ export async function POST(request: NextRequest) {
     
     console.log(`📊 Pipeline result status: ${result.status}`);
     
-    if (result.status === "ERROR") {
+    if (result.status === "ERROR" || result.status === "INSUFFICIENT_TOKENS") {
       // Use httpStatus if available (from token check), otherwise default to 500
-      const statusCode = result.httpStatus || (result.message?.includes('tokens') ? 402 : 500);
+      const statusCode = result.httpStatus || (result.status === "INSUFFICIENT_TOKENS" || result.message?.includes('tokens') ? 402 : 500);
       console.log(`❌ Pipeline error (${statusCode}): ${result.message || 'Unknown error'}`);
       
       // For token errors, include current token count

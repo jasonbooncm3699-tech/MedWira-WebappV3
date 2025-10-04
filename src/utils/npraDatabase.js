@@ -172,8 +172,8 @@ async function getNpraStats() {
  * @param {string} userId - The unique user ID (UID from auth.users).
  * @returns {Promise<boolean>} True if the token was successfully decremented, False if user is out of tokens or failed.
  */
-async function checkTokenAvailability(userId) {
-    console.log(`🔍 Checking token availability for user: ${userId}`);
+async function checkTokenAvailability(userId, requiredCost = 1) {
+    console.log(`🔍 Checking token availability for user: ${userId} (required: ${requiredCost})`);
     
     const supabase = getSupabaseClient();
     
@@ -202,12 +202,12 @@ async function checkTokenAvailability(userId) {
         email: profile.email
     });
 
-    if (profile.token_count <= 0) {
-        console.log(`⚠️ User ${userId} has insufficient tokens (current: ${profile.token_count})`);
+    if (profile.token_count < requiredCost) {
+        console.log(`⚠️ User ${userId} has insufficient tokens (current: ${profile.token_count}, required: ${requiredCost})`);
         return false;
     }
 
-    console.log(`✅ User ${userId} has ${profile.token_count} tokens available`);
+    console.log(`✅ User ${userId} has ${profile.token_count} tokens available (required: ${requiredCost})`);
     return true;
 }
 

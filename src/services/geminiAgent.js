@@ -139,22 +139,28 @@ async function runGeminiPipeline(base64Image, textQuery, userId) {
     console.log(`🖼️ Image provided: ${base64Image ? 'Yes' : 'No'}`);
 
     try {
-        // 1. TOKEN CHECK (NO DEDUCTION YET)
+        // Define the cost of one analysis
+        const REQUIRED_COST = 10;
+        
+        // 1. CRITICAL: Check token availability
         if (!userId) {
             console.log(`❌ User ID missing for token check`);
             return { status: "ERROR", message: "User ID missing for token check." };
         }
         
-        console.log(`🔍 GeminiAgent: Starting token check for user: ${userId} (type: ${typeof userId})`);
-        console.log(`🔍 GeminiAgent: User ID length: ${userId ? userId.length : 'null'}`);
+        console.log(`🔍 GeminiAgent: Starting token check for user: ${userId} (required: ${REQUIRED_COST} tokens)`);
         
-        const tokenCheckResult = await checkTokenAvailability(userId);
-        console.log(`🔍 GeminiAgent: Token check result: ${tokenCheckResult}`);
+        const isTokenAvailable = await checkTokenAvailability(userId, REQUIRED_COST);
+        console.log(`🔍 GeminiAgent: Token check result: ${isTokenAvailable}`);
         
-        if (!tokenCheckResult) { 
-            console.log(`❌ GeminiAgent: Token check FAILED for user: ${userId}`);
-            return { status: "ERROR", message: "Out of tokens. Please renew your subscription or earn more tokens.", httpStatus: 402 }; 
+        if (!isTokenAvailable) {
+            console.log(`❌ User ${userId} has insufficient tokens (Required: ${REQUIRED_COST})`);
+            return { 
+                status: "INSUFFICIENT_TOKENS", 
+                message: "Insufficient token. Please subscribe or redeem a referral code." 
+            };
         }
+        
         console.log(`✅ GeminiAgent: Token check PASSED for user: ${userId}`);
 
         // 2. FIRST LLM CALL: IMAGE ANALYSIS & TOOL SIGNAL

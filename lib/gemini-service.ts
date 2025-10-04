@@ -2,12 +2,13 @@
  * Gemini 1.5 Pro Service - Active Implementation
  * 
  * This file contains the Gemini 1.5 Pro integration code.
- * Provides fallback medicine analysis functionality with NPRA database integration.
+ * Provides medicine analysis functionality with NPRA database integration.
  * 
- * Status: ✅ ACTIVE
- * - Gemini 1.5 Pro SDK integrated
+ * Status: ✅ ACTIVE - Fully functional Gemini 1.5 Pro service
+ * - Gemini 1.5 Pro SDK integrated and working
  * - Medicine analysis functionality enabled
  * - NPRA database lookup supported
+ * - Used by analyze-image and scan-medicine API routes
  */
 
 import { DatabaseService } from './supabase';
@@ -47,10 +48,12 @@ export interface NPRAMedicineData {
 }
 
 /**
- * GeminiMedicineAnalyzer class
+ * GeminiMedicineAnalyzer class - Active Gemini 1.5 Pro Service
  * 
  * This class provides Gemini 1.5 Pro powered medicine analysis.
  * Integrates with NPRA database for comprehensive medicine information.
+ * 
+ * ✅ ACTIVE SERVICE - No longer deprecated
  */
 export class GeminiMedicineAnalyzer {
   private model: any;
@@ -206,5 +209,5 @@ export class GeminiMedicineAnalyzer {
   }
 }
 
-// Active Gemini 1.5 Pro service singleton
+// Active Gemini 1.5 Pro service singleton - Used by multiple API routes
 export const geminiAnalyzer = new GeminiMedicineAnalyzer();
