@@ -35,10 +35,7 @@ export default function AIStatusDisplay({ status, className = '' }: AIStatusDisp
         .ai-status-display {
           display: flex;
           align-items: center;
-          padding: 12px 16px;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 12px;
+          padding: 8px 0;
           margin: 8px 0;
           animation: slideInUp 0.3s ease-out;
         }
@@ -51,11 +48,15 @@ export default function AIStatusDisplay({ status, className = '' }: AIStatusDisp
         }
 
         .ai-icon {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #ffffff;
-          opacity: 0.8;
+          background: linear-gradient(135deg, #666, #888);
+          color: white;
+          flex-shrink: 0;
         }
 
         .typing-indicator {
