@@ -850,7 +850,7 @@ export default function Home() {
           >
               <Menu size={20} />
             </button>
-          <button className="new-chat-header-btn">
+          <button className="new-chat-header-btn" onClick={handleNewChat}>
               <Plus size={16} />
             </button>
           <select
