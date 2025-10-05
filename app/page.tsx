@@ -1331,8 +1331,12 @@ export default function Home() {
                           });
                           if (message.id === messages[messages.length - 1]?.id) {
                             console.log(`📊 [Frontend] Structured output rendered - hiding status`);
-                            setAiStatus('idle');
-                            setIsAnalyzing(false);
+                            // Use setTimeout to ensure state update happens after render cycle
+                            setTimeout(() => {
+                              console.log(`📊 [Frontend] Executing status reset after timeout`);
+                              setAiStatus('idle');
+                              setIsAnalyzing(false);
+                            }, 100);
                           } else {
                             console.log(`📊 [Frontend] onRender fired but not for last message - status not hidden`);
                           }
