@@ -492,6 +492,7 @@ export default function Home() {
 
       const reader = new FileReader();
       reader.onload = () => {
+        console.log(`📊 [Frontend] Camera photo loaded - calling analyzeMedicineImageWithRealStatus`);
         const imageBase64 = reader.result as string;
         closeCamera();
         // Always use real status updates from AI processing
@@ -503,14 +504,22 @@ export default function Home() {
 
   // SSE-based AI Image Analysis with Real-Time Status Display
   const analyzeMedicineImageWithRealStatus = async (imageBase64: string) => {
+    console.log(`📊 [Frontend] ===== FUNCTION CALLED =====`);
+    console.log(`📊 [Frontend] Image length: ${imageBase64.length} characters`);
+    console.log(`📊 [Frontend] User state:`, { user: !!user, userId: user?.id });
+    
     // Refresh user data to get latest token count before proceeding
+    console.log(`📊 [Frontend] Refreshing user data...`);
     await refreshUserData();
+    console.log(`📊 [Frontend] User data refreshed`);
 
     // Check basic authentication (user exists) but NOT tokens yet
     if (!user) {
+      console.log(`📊 [Frontend] No user - showing registration modal`);
       setShowRegistrationModal(true);
       return;
     }
+    console.log(`📊 [Frontend] User authenticated - proceeding with analysis`);
 
     setIsAnalyzing(true);
     setAiStatus('Initializing AI...');
@@ -537,7 +546,9 @@ export default function Home() {
     const textQuery = "Please analyze this medicine image and provide detailed information.";
 
     // CRITICAL VALIDATION: Keep this check and add a user-facing error message
+    console.log(`📊 [Frontend] User ID validation:`, { userId, userIdLength: userId.length });
     if (!userId) {
+      console.log(`📊 [Frontend] No user ID - authentication failed`);
       setIsAnalyzing(false);
       setAiStatus('idle');
       // Add a chat message here: "Authentication required. Please log in to use AI analysis."
@@ -550,6 +561,7 @@ export default function Home() {
       setMessages(prev => [...prev, errorMessage]);
       return; // EXIT HERE ONLY IF UNAUTHENTICATED
     }
+    console.log(`📊 [Frontend] User ID validated - proceeding to fetch`);
 
     try {
       console.log(`📊 [Frontend] Starting fetch to /api/analyze-image-stream`);
@@ -719,15 +731,23 @@ export default function Home() {
 
   // Handle file upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log(`📊 [Frontend] ===== FILE UPLOAD TRIGGERED =====`);
     const file = e.target.files?.[0];
-    if (!file) return;
+    console.log(`📊 [Frontend] File selected:`, { fileName: file?.name, fileSize: file?.size });
+    if (!file) {
+      console.log(`📊 [Frontend] No file selected`);
+      return;
+    }
 
     // Check authentication before proceeding
+    console.log(`📊 [Frontend] Checking authentication...`);
     if (!checkAuthentication()) {
+      console.log(`📊 [Frontend] Authentication failed - resetting file input`);
       // Reset the file input
       e.target.value = '';
       return;
     }
+    console.log(`📊 [Frontend] Authentication passed - proceeding with file upload`);
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
@@ -743,6 +763,7 @@ export default function Home() {
 
     const reader = new FileReader();
     reader.onload = () => {
+      console.log(`📊 [Frontend] FileReader loaded - calling analyzeMedicineImageWithRealStatus`);
       const imageBase64 = reader.result as string;
       // Always use real status updates from AI processing
       analyzeMedicineImageWithRealStatus(imageBase64);
