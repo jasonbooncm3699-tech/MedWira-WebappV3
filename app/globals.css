@@ -895,10 +895,14 @@ body {
 
 .timestamp-bottom-right {
   right: 0px;
+  margin-top: 12px;
+  margin-bottom: 8px;
 }
 
 .timestamp-bottom-left {
   left: 0px;
+  margin-top: 12px;
+  margin-bottom: 8px;
 }
 
 .message-timestamp-external .message-time {
