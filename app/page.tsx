@@ -1383,24 +1383,8 @@ export default function Home() {
                 </div>
                 
                 {/* Timestamp and share button UNDER the chat bubble (not inside it) */}
-                {(() => {
-                  const shouldShowFooter = !(message.type === 'ai' && message.id === '1');
-                  console.log(`🔍 [DEBUG] Checking footer for message:`, {
-                    id: message.id,
-                    type: message.type,
-                    isGreeting: message.id === '1',
-                    shouldShowFooter: shouldShowFooter
-                  });
-                  
-                  // FORCE SHOW FOOTER FOR DEBUGGING
-                  if (true) {
-                    return (
-                      <div className="message-footer-external" style={{ 
-                        background: 'rgba(255, 0, 0, 0.3)', 
-                        border: '2px solid red', 
-                        padding: '8px',
-                        margin: '8px 0'
-                      }}>
+                {!(message.type === 'ai' && message.id === '1') && (
+                  <div className="message-footer-external">
                     <div className="message-time">
                       {message.timestamp.toLocaleTimeString('en-US', {
                         hour: '2-digit',
@@ -1439,13 +1423,8 @@ export default function Home() {
                         </svg>
                       </div>
                     )}
-                    </div>
-                    );
-                  } else {
-                    console.log(`🔍 [DEBUG] Skipping footer for greeting message`);
-                    return null;
-                  }
-                })()}
+                  </div>
+                )}
               </div>
             ))}
 

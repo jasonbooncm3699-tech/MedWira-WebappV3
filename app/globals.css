@@ -785,16 +785,15 @@ body {
   display: flex !important;
   align-items: center;
   justify-content: space-between;
-  margin-top: 12px !important;
+  margin-top: 8px !important;
   margin-left: 50px !important; /* Align with message content */
   margin-right: 50px !important; /* Align with message content */
   /* Ensure it's outside the message bubble */
   position: relative;
   z-index: 1;
   /* Override any existing footer styles */
-  background: rgba(255, 0, 0, 0.1) !important; /* DEBUG: Red background to see if it's applied */
+  background: transparent !important;
   padding: 4px 0 !important;
-  border: 1px solid red !important; /* DEBUG: Red border to see positioning */
 }
 
 /* For AI messages, show share button on left, timestamp on right */
