@@ -890,7 +890,7 @@ body {
 /* Timestamp positioning for AI and user messages */
 .message-timestamp-external {
   position: absolute;
-  bottom: -20px;
+  bottom: -30px;
 }
 
 .timestamp-bottom-right {
