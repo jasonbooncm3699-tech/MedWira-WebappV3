@@ -1442,7 +1442,7 @@ export default function Home() {
               shouldShowStatus: isAnalyzing && aiStatus !== 'idle'
             });
             return isAnalyzing && (
-              <AIStatusDisplay status={aiStatus} />
+              <AIStatusDisplay key={`${isAnalyzing}-${aiStatus}`} status={aiStatus} />
             );
           })()}
           </div>
