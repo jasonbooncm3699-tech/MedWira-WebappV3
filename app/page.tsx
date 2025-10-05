@@ -1345,7 +1345,7 @@ export default function Home() {
                       {/* Share button inside AI chat bubble at bottom right */}
                       <div className="message-share-internal">
                         <Share2 
-                          size={24}
+                          size={14}
                           onClick={() => shareToWhatsApp(message.content)}
                           style={{
                             cursor: 'pointer',
