@@ -1384,7 +1384,12 @@ export default function Home() {
                 
                 {/* Timestamp and share button UNDER the chat bubble (not inside it) */}
                 {!(message.type === 'ai' && message.id === '1') && (
-                  <div className="message-footer-external">
+                  <div className="message-footer-external" style={{ 
+                    background: 'rgba(255, 255, 0, 0.3)', 
+                    border: '2px solid yellow', 
+                    padding: '4px',
+                    margin: '4px 0'
+                  }}>
                     <div className="message-time">
                       {message.timestamp.toLocaleTimeString('en-US', {
                         hour: '2-digit',
