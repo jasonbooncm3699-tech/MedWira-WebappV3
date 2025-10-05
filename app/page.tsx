@@ -1383,19 +1383,23 @@ export default function Home() {
                 </div>
                 
                 {/* Timestamp and share button UNDER the chat bubble (not inside it) */}
-                {!(message.type === 'ai' && message.id === '1') && (() => {
-                  console.log(`🔍 [DEBUG] Rendering external footer for message:`, {
+                {(() => {
+                  const shouldShowFooter = !(message.type === 'ai' && message.id === '1');
+                  console.log(`🔍 [DEBUG] Checking footer for message:`, {
                     id: message.id,
                     type: message.type,
-                    isGreeting: message.id === '1'
+                    isGreeting: message.id === '1',
+                    shouldShowFooter: shouldShowFooter
                   });
-                  return (
-                    <div className="message-footer-external" style={{ 
-                      background: 'rgba(255, 0, 0, 0.3)', 
-                      border: '2px solid red', 
-                      padding: '8px',
-                      margin: '8px 0'
-                    }}>
+                  
+                  if (shouldShowFooter) {
+                    return (
+                      <div className="message-footer-external" style={{ 
+                        background: 'rgba(255, 0, 0, 0.3)', 
+                        border: '2px solid red', 
+                        padding: '8px',
+                        margin: '8px 0'
+                      }}>
                     <div className="message-time">
                       {message.timestamp.toLocaleTimeString('en-US', {
                         hour: '2-digit',
@@ -1433,9 +1437,13 @@ export default function Home() {
                           <path d="M17 8l4 4-4 4M19 12H3"/>
                         </svg>
                       </div>
-                    )}
-                  </div>
-                  );
+                      )}
+                    </div>
+                    );
+                  } else {
+                    console.log(`🔍 [DEBUG] Skipping footer for greeting message`);
+                    return null;
+                  }
                 })()}
               </div>
             ))}
