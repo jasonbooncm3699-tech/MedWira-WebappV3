@@ -881,11 +881,18 @@ body {
   right: 0px;
 }
 
-/* Timestamp at Box 9 position (bottom right) for AI messages */
+/* Timestamp positioning for AI and user messages */
 .message-timestamp-external {
   position: absolute;
   bottom: -25px;
+}
+
+.timestamp-bottom-right {
   right: 0px;
+}
+
+.timestamp-bottom-left {
+  left: 0px;
 }
 
 .message-timestamp-external .message-time {

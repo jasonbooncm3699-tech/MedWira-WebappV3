@@ -1382,9 +1382,22 @@ export default function Home() {
                   )}
                 </div>
                 
-                {/* Timestamp at Box 9 position (bottom right) for AI messages */}
+                {/* Timestamp for AI messages at bottom right */}
                 {message.type === 'ai' && (
                   <div className="message-timestamp-external timestamp-bottom-right">
+                    <div className="message-time">
+                      {message.timestamp.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Timestamp for user messages at bottom left */}
+                {message.type === 'user' && (
+                  <div className="message-timestamp-external timestamp-bottom-left">
                     <div className="message-time">
                       {message.timestamp.toLocaleTimeString('en-US', {
                         hour: '2-digit',
