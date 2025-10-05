@@ -88,7 +88,7 @@ export default function Home() {
   const [scanHistory, setScanHistory] = useState<any[]>([]);
   const [userTokens, setUserTokens] = useState<number>(user?.tokens || 0);
   const [inputText, setInputText] = useState('');
-  const [aiStatus, setAiStatus] = useState<'idle' | 'Starting analysis...' | 'Analyzing image...' | 'Extracting text from packaging...' | 'Searching medicine database...' | 'Generating medical report...' | 'Finalizing analysis...'>('idle');
+  const [aiStatus, setAiStatus] = useState<string>('idle');
   const [useRealStatusUpdates, setUseRealStatusUpdates] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -611,6 +611,10 @@ export default function Home() {
                 if (user) {
                   await fetchUserChatHistory();
                 }
+
+                // Reset AI status and analyzing state after successful completion
+                setAiStatus('idle');
+                setIsAnalyzing(false);
 
               } else if (data.type === 'error') {
                 // Handle error
@@ -1223,13 +1227,6 @@ export default function Home() {
                     <div className="structured-medicine-response">
                       <StructuredMedicineReply
                         response={message.structuredData}
-                        onRender={() => {
-                          // Hide status only after structured message is fully rendered
-                          if (message.id === messages[messages.length - 1]?.id) {
-                            setAiStatus('idle');
-                            setIsAnalyzing(false);
-                          }
-                        }}
                       />
                     </div>
                   ) : (

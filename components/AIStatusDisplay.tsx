@@ -4,7 +4,7 @@ import React from 'react';
 import { Bot } from 'lucide-react';
 
 interface AIStatusDisplayProps {
-  status: 'idle' | 'Analyzing image...' | 'Extracting text from packaging...' | 'Searching medicine database...' | 'Generating medical report...' | 'Finalizing analysis...' | string;
+  status: string;
   className?: string;
 }
 
