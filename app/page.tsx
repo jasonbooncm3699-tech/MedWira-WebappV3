@@ -86,7 +86,8 @@ export default function Home() {
   const [scanHistory, setScanHistory] = useState<any[]>([]);
   const [userTokens, setUserTokens] = useState<number>(user?.tokens || 0);
   const [inputText, setInputText] = useState('');
-  const [aiStatus, setAiStatus] = useState<'idle' | 'Analyzing image...' | 'Extracting text from packaging...' | 'Searching medicine database...' | 'Generating medical report...' | 'Finalizing analysis...'>('idle');
+  const [aiStatus, setAiStatus] = useState<'idle' | 'Starting analysis...' | 'Analyzing image...' | 'Extracting text from packaging...' | 'Searching medicine database...' | 'Generating medical report...' | 'Finalizing analysis...'>('idle');
+  const [useRealStatusUpdates, setUseRealStatusUpdates] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -489,13 +490,179 @@ export default function Home() {
       reader.onload = () => {
         const imageBase64 = reader.result as string;
         closeCamera();
-        analyzeMedicineImage(imageBase64);
+        // Use real status updates if enabled, otherwise use simulated
+        if (useRealStatusUpdates) {
+          analyzeMedicineImageWithRealStatus(imageBase64);
+        } else {
+          analyzeMedicineImage(imageBase64);
+        }
       };
       reader.readAsDataURL(blob);
     }, 'image/jpeg', 0.9);
   };
 
-  // Enhanced AI Image Analysis with Real-Time Status Display
+  // SSE-based AI Image Analysis with Real-Time Status Display
+  const analyzeMedicineImageWithRealStatus = async (imageBase64: string) => {
+    // Refresh user data to get latest token count before proceeding
+    await refreshUserData();
+    
+    // Check basic authentication (user exists) but NOT tokens yet
+    if (!user) {
+      setShowRegistrationModal(true);
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setAiStatus('Starting analysis...');
+
+    // Create user message immediately
+    const userMessage = {
+      id: Date.now().toString(),
+      type: 'user' as const,
+      content: "I've uploaded an image of a medicine for identification.",
+      timestamp: new Date(),
+      image: imageBase64
+    };
+
+    setMessages(prev => {
+      const updatedMessages = [...prev, userMessage];
+      // Save to localStorage immediately
+      chatStorage.saveChatHistory(updatedMessages, user?.id);
+      return updatedMessages;
+    });
+
+    // FORCE DEFENSIVE PAYLOAD CREATION - Use ?? to force non-undefined, valid JSON types
+    const userId = user?.id ?? ''; 
+    const imageBase64Data = imageBase64 ?? null;
+    const textQuery = "Please analyze this medicine image and provide detailed information.";
+
+    // CRITICAL VALIDATION: Keep this check and add a user-facing error message
+    if (!userId) {
+      setIsAnalyzing(false); 
+      setAiStatus('idle');
+      // Add a chat message here: "Authentication required. Please log in to use AI analysis."
+      const errorMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai' as const,
+        content: "⚠️ **Authentication Required**\n\nAuthentication required. Please log in to use AI analysis.",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      return; // EXIT HERE ONLY IF UNAUTHENTICATED
+    }
+
+    try {
+      const response = await fetch('/api/analyze-image-stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64: imageBase64Data,
+          userId: userId,
+          language: 'English',
+          textQuery: textQuery,
+          userAllergies: allergy
+        })
+      });
+
+      if (!response.body) throw new Error('No response body');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              if (data.type === 'status' && data.status) {
+                // Real status update from backend
+                setAiStatus(data.status);
+              } else if (data.type === 'complete' && data.result) {
+                // Analysis completed
+                setAiStatus('idle');
+                setIsAnalyzing(false);
+                
+                // Handle the result
+                const structuredMessage = {
+                  id: (Date.now() + 1).toString(),
+                  type: 'structured' as const,
+                  content: '',
+                  timestamp: new Date(),
+                  structuredData: data.result
+                };
+                
+                setMessages(prev => {
+                  const updatedMessages = [...prev, structuredMessage];
+                  // Save to localStorage immediately
+                  chatStorage.saveChatHistory(updatedMessages, user?.id);
+                  return updatedMessages;
+                });
+
+                // Update user tokens if provided
+                if (data.result.tokensRemaining !== undefined) {
+                  setUserTokens(data.result.tokensRemaining);
+                  await refreshUserData();
+                }
+
+                // Refresh chat history after successful analysis
+                if (user) {
+                  await fetchUserChatHistory();
+                }
+                
+              } else if (data.type === 'error') {
+                // Handle error
+                setAiStatus('idle');
+                setIsAnalyzing(false);
+                
+                const errorMessage = {
+                  id: (Date.now() + 1).toString(),
+                  type: 'ai' as const,
+                  content: `**Error**\n\n${data.error || 'Analysis failed. Please try again.'}`,
+                  timestamp: new Date()
+                };
+                
+                setMessages(prev => {
+                  const updatedMessages = [...prev, errorMessage];
+                  // Save to localStorage immediately
+                  chatStorage.saveChatHistory(updatedMessages, user?.id);
+                  return updatedMessages;
+                });
+              }
+            } catch (e) {
+              console.error('Error parsing SSE data:', e);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('SSE Error:', error);
+      setAiStatus('idle');
+      setIsAnalyzing(false);
+      
+      const errorMsg = {
+        id: (Date.now() + 1).toString(),
+        type: 'ai' as const,
+        content: 'Sorry, I encountered an error while analyzing your medicine. Please try again.',
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => {
+        const updatedMessages = [...prev, errorMsg];
+        // Save to localStorage immediately
+        chatStorage.saveChatHistory(updatedMessages, user?.id);
+        return updatedMessages;
+      });
+    }
+  };
+
+  // Enhanced AI Image Analysis with Real-Time Status Display (Original - Simulated)
   const analyzeMedicineImage = async (imageBase64: string) => {
     // Refresh user data to get latest token count before proceeding
     await refreshUserData();
@@ -735,7 +902,12 @@ export default function Home() {
     const reader = new FileReader();
     reader.onload = () => {
       const imageBase64 = reader.result as string;
-      analyzeMedicineImage(imageBase64);
+      // Use real status updates if enabled, otherwise use simulated
+      if (useRealStatusUpdates) {
+        analyzeMedicineImageWithRealStatus(imageBase64);
+      } else {
+        analyzeMedicineImage(imageBase64);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -1061,6 +1233,33 @@ export default function Home() {
               {showFAQ ? 'Hide FAQ' : 'FAQ'}
             </button>
             
+            {/* Real Status Updates Toggle */}
+            <div className="status-toggle" style={{
+              marginTop: '12px',
+              padding: '8px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '6px',
+              fontSize: '11px',
+              color: '#888'
+            }}>
+              <div style={{ marginBottom: '4px' }}>Status Updates:</div>
+              <button 
+                onClick={() => setUseRealStatusUpdates(!useRealStatusUpdates)}
+                style={{
+                  background: useRealStatusUpdates ? '#00d4ff' : 'rgba(255, 255, 255, 0.1)',
+                  color: useRealStatusUpdates ? '#000' : '#fff',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '4px',
+                  padding: '4px 8px',
+                  cursor: 'pointer',
+                  fontSize: '10px',
+                  width: '100%'
+                }}
+              >
+                {useRealStatusUpdates ? 'Real-time' : 'Simulated'}
+              </button>
+            </div>
+            
             {/* Chat Storage Info */}
             <div className="storage-info" style={{
               marginTop: '12px',
@@ -1242,12 +1441,12 @@ export default function Home() {
                       {/* Display raw analysis text for AI messages */}
                       {message.type === 'ai' && message.rawAnalysis && (
                         <div className="raw-analysis-text" style={{ 
-                          marginTop: '10px', 
-                          padding: '10px', 
+                          marginTop: '8px', 
+                          padding: '8px 12px', 
                           backgroundColor: 'rgba(255, 255, 255, 0.05)', 
                           borderRadius: '8px',
                           fontSize: '14px',
-                          lineHeight: '1.6',
+                          lineHeight: '1.4',
                           whiteSpace: 'pre-wrap'
                         }}>
                           {message.rawAnalysis}
@@ -1257,43 +1456,41 @@ export default function Home() {
                   )}
                 </div>
                 
-                {/* Share button positioned at bottom-right of chat bubble */}
+                {/* Simple share icon at bottom of chat */}
                 {(message.type === 'ai' || message.type === 'structured') && message.id !== '1' && (
                   <div className="share-icon-container" style={{
                     display: 'flex',
                     justifyContent: 'flex-end',
-                    marginTop: '4px',
+                    marginTop: '8px',
                     marginLeft: '50px' // Align with message content
                   }}>
-                    <button
+                    <svg 
+                      width="16" 
+                      height="16" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
                       onClick={() => shareToWhatsApp(message.rawAnalysis || message.content)}
-                      className="share-button"
                       style={{
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                        color: '#ffffff',
+                        opacity: 0.7,
                         cursor: 'pointer',
-                        padding: '6px 12px',
-                        borderRadius: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        fontSize: '12px',
-                        opacity: 0.8,
-                        transition: 'all 0.2s ease'
+                        transition: 'opacity 0.2s ease',
+                        color: '#ffffff'
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.opacity = '1';
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.opacity = '0.8';
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                        e.currentTarget.style.opacity = '0.7';
                       }}
                     >
-                      <Share2 size={14} />
-                      <span>Share</span>
-                    </button>
+                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                      <polyline points="16,6 12,2 8,6"/>
+                      <line x1="12" y1="2" x2="12" y2="15"/>
+                    </svg>
                   </div>
                 )}
                   

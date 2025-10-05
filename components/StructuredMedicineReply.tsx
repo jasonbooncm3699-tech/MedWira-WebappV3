@@ -132,13 +132,26 @@ const StructuredMedicineReply: React.FC<StructuredMedicineReplyProps> = ({ respo
     }
   ];
 
+  // Function to clean up the text formatting
+  const formatAnalysisText = (text: string): string => {
+    return text
+      // Remove excessive line breaks (more than 2 consecutive)
+      .replace(/\n{3,}/g, '\n\n')
+      // Ensure consistent spacing after colons
+      .replace(/:\s*\n/g, ':\n')
+      // Clean up bullet point spacing
+      .replace(/•\s*\n/g, '• ')
+      // Remove trailing whitespace
+      .trim();
+  };
+
   return (
     <div className="message-bubble" style={{
       background: 'rgba(255, 255, 255, 0.1)',
       border: '1px solid rgba(255, 255, 255, 0.2)',
-      borderRadius: '18px',
-      padding: '16px',
-      margin: '8px 0',
+      borderRadius: '12px',
+      padding: '8px 12px',
+      margin: '4px 0',
       maxWidth: '100%',
       wordWrap: 'break-word'
     }}>
@@ -146,17 +159,20 @@ const StructuredMedicineReply: React.FC<StructuredMedicineReplyProps> = ({ respo
       {response.raw_analysis && (
         <div className="raw-analysis-content" style={{
           fontSize: '14px',
-          lineHeight: '1.6',
+          lineHeight: '1.4',
           color: '#ffffff',
-          whiteSpace: 'pre-wrap'
+          whiteSpace: 'pre-wrap',
+          margin: 0,
+          padding: 0
         }}>
-          <div dangerouslySetInnerHTML={{
-            __html: response.raw_analysis
-              .replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: bold; color: #ffffff; display: block; margin: 12px 0 6px 0; font-size: 15px;">$1</strong>')
-              .replace(/\n/g, '<br>')
-              .replace(/Packaging:/g, '<strong style="font-weight: bold; color: #ffffff;">Packaging Detected:</strong>')
-              .replace(/(Adults:|Children:|General:|Common:|Serious:|Overdose:|Contains:|Reactions:|Emergency:|Medications:|Food\/Alcohol:|Children\/Pregnancy:|Elderly\/Driving:|Pre-existing Conditions:)/g, '<strong style="font-weight: bold; color: #ffffff; display: block; margin: 8px 0 4px 0;">$1</strong>')
-          }} />
+          <div style={{
+            whiteSpace: 'pre-wrap',
+            lineHeight: '1.4',
+            margin: 0,
+            padding: 0
+          }}>
+            {formatAnalysisText(response.raw_analysis)}
+          </div>
         </div>
       )}
     </div>
