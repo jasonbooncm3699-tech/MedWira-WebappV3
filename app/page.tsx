@@ -1382,54 +1382,6 @@ export default function Home() {
                   )}
                 </div>
                 
-                {/* Timestamp and share button UNDER the chat bubble (not inside it) */}
-                {!(message.type === 'ai' && message.id === '1') && (
-                  <div className="message-footer-external" style={{ 
-                    background: 'rgba(255, 255, 0, 0.3)', 
-                    border: '2px solid yellow', 
-                    padding: '4px',
-                    margin: '4px 0'
-                  }}>
-                    <div className="message-time">
-                      {message.timestamp.toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                      })}
-                    </div>
-                    {/* Share button for AI messages - positioned at bottom left as indicated */}
-                    {(message.type === 'ai' || message.type === 'structured') && (
-                      <div className="message-share-btn">
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          onClick={() => shareToWhatsApp(message.content)}
-                          style={{
-                            opacity: 0.7,
-                            cursor: 'pointer',
-                            transition: 'opacity 0.2s ease',
-                            color: '#888'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.opacity = '1';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.opacity = '0.7';
-                          }}
-                        >
-                          {/* Right-pointing arrow with curved tail from your image */}
-                          <path d="M17 8l4 4-4 4M19 12H3"/>
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             ))}
 

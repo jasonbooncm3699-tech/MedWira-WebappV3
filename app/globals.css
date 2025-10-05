@@ -780,26 +780,6 @@ body {
   margin-top: 8px;
 }
 
-/* External footer UNDER the chat bubble (not inside it) */
-.message .message-footer-external {
-  display: flex !important;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 8px !important;
-  margin-left: 50px !important; /* Align with message content */
-  margin-right: 50px !important; /* Align with message content */
-  /* Ensure it's outside the message bubble */
-  position: relative;
-  z-index: 1;
-  /* Override any existing footer styles */
-  background: transparent !important;
-  padding: 4px 0 !important;
-}
-
-/* For AI messages, show share button on left, timestamp on right */
-.message.ai .message-footer-external {
-  flex-direction: row-reverse; /* Reverse order: share button left, timestamp right */
-}
 
 .message-time {
   font-size: 11px;
