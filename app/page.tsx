@@ -1419,7 +1419,12 @@ export default function Home() {
                 
                 {/* Timestamp for user messages at bottom left */}
                 {message.type === 'user' && (
-                  <div className="message-timestamp-external timestamp-bottom-left">
+                  <div className="message-timestamp-external timestamp-bottom-left" style={{ 
+                    background: 'rgba(255, 0, 0, 0.3)', 
+                    border: '2px solid yellow', 
+                    padding: '4px',
+                    margin: '4px 0'
+                  }}>
                     <div className="message-time">
                       {message.timestamp.toLocaleTimeString('en-US', {
                         hour: '2-digit',
