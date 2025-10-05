@@ -340,7 +340,8 @@ Do not provide any other information. Only return the above format.`;
 
 **Drug Interactions**:
 • With medications: [Drug interactions]
-• With food/alcohol: [Food and alcohol interactions]
+• With food: [Food interactions]
+• With alcohol: [Alcohol interactions]
 
 **Safety Notes**:
 • Children/Pregnancy: [Safety information]
