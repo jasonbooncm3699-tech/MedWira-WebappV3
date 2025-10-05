@@ -1382,53 +1382,50 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* Simple share icon at bottom of chat */}
-                {(message.type === 'ai' || message.type === 'structured') && message.id !== '1' && (
-                  <div className="share-icon-container" style={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    marginTop: '8px',
-                    marginLeft: '50px' // Align with message content
-                  }}>
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      onClick={() => shareToWhatsApp(message.rawAnalysis || message.content)}
-                      style={{
-                        opacity: 0.7,
-                        cursor: 'pointer',
-                        transition: 'opacity 0.2s ease',
-                        color: '#ffffff'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.opacity = '1';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.opacity = '0.7';
-                      }}
-                    >
-                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-                      <polyline points="16,6 12,2 8,6"/>
-                      <line x1="12" y1="2" x2="12" y2="15"/>
-                    </svg>
+                {/* Show timestamp and share button only for non-greeting messages */}
+                {!(message.type === 'ai' && message.id === '1') && (
+                  <div className="message-footer">
+                    <div className="message-time">
+                      {message.timestamp.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
+                    </div>
+                    {/* Share button for AI messages - positioned at bottom left as indicated */}
+                    {(message.type === 'ai' || message.type === 'structured') && (
+                      <div className="message-share-btn">
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          onClick={() => shareToWhatsApp(message.content)}
+                          style={{
+                            opacity: 0.7,
+                            cursor: 'pointer',
+                            transition: 'opacity 0.2s ease',
+                            color: '#888'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.opacity = '1';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.opacity = '0.7';
+                          }}
+                        >
+                          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                          <polyline points="16,6 12,2 8,6"/>
+                          <line x1="12" y1="2" x2="12" y2="15"/>
+                        </svg>
+                      </div>
+                    )}
                   </div>
                 )}
-
-                  <div className="message-footer">
-                  <div className="message-time">
-                    {message.timestamp.toLocaleTimeString('en-US', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: true
-                    })}
-                  </div>
-                </div>
               </div>
             ))}
 

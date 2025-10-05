@@ -780,6 +780,11 @@ body {
   margin-top: 8px;
 }
 
+/* For AI messages, show share button on left, timestamp on right */
+.message.ai .message-footer {
+  flex-direction: row-reverse; /* Reverse order: share button left, timestamp right */
+}
+
 .message-time {
   font-size: 11px;
   color: #888;
