@@ -1297,12 +1297,10 @@ export default function Home() {
                       <StructuredMedicineReply
                         response={message.structuredData}
                         onRender={() => {
-                          // Hide status only after structured message is fully rendered
-                          if (message.id === messages[messages.length - 1]?.id) {
-                            console.log(`📊 [Frontend] Structured output rendered - hiding status`);
-                            setAiStatus('idle');
-                            setIsAnalyzing(false);
-                          }
+                          // Hide status after structured message is fully rendered
+                          console.log(`📊 [Frontend] Structured output rendered - hiding status`);
+                          setAiStatus('idle');
+                          setIsAnalyzing(false);
                         }}
                       />
                     </div>
