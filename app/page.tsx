@@ -1315,7 +1315,16 @@ export default function Home() {
                   )}
 
                   {/* Render structured medicine reply for structured messages */}
-                  {message.type === 'structured' && message.structuredData ? (
+                  {(() => {
+                    const shouldRender = message.type === 'structured' && message.structuredData;
+                    console.log(`📊 [Frontend] Structured rendering check:`, {
+                      messageId: message.id,
+                      messageType: message.type,
+                      hasStructuredData: !!message.structuredData,
+                      shouldRender: shouldRender
+                    });
+                    return shouldRender;
+                  })() ? (
                     <div className="structured-medicine-response">
                       <StructuredMedicineReply
                         response={message.structuredData}
