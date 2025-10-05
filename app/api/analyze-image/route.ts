@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // UPDATED: Using Gemini 1.5 Pro for medicine analysis
 import { geminiAnalyzer } from '@/lib/gemini-service';
 import { DatabaseService } from '@/lib/supabase';
+import { checkTokenAvailability, decrementToken } from '@/lib/npraDatabase';
 
 // Increase Vercel timeout to 120 seconds for comprehensive analysis
 export const maxDuration = 120;
@@ -50,8 +51,8 @@ export async function POST(request: NextRequest) {
     // Check user token balance if user is logged in
     if (userId) {
       try {
-        const user = await DatabaseService.getUser(userId);
-        if (user && user.tokens <= 0) {
+        const hasTokens = await checkTokenAvailability(userId);
+        if (!hasTokens) {
           return NextResponse.json(
             { 
               status: 'ERROR',
@@ -103,14 +104,11 @@ export async function POST(request: NextRequest) {
 
       // Deduct token (separate from scan history)
       try {
-        const user = await DatabaseService.getUser(userId);
-        if (user && user.tokens > 0) {
-          await DatabaseService.updateUser(userId, {
-            tokens: Math.max(0, user.tokens - 1)
-          });
-          console.log(`✅ Token deducted for user ${userId}. Remaining: ${user.tokens - 1}`);
+        const success = await decrementToken(userId);
+        if (success) {
+          console.log(`✅ Token deducted for user ${userId}`);
         } else {
-          console.log(`⚠️ User ${userId} not found or has no tokens - skipping token deduction`);
+          console.log(`⚠️ User ${userId} has no tokens - skipping token deduction`);
         }
       } catch (error) {
         console.error('Error deducting token:', error);

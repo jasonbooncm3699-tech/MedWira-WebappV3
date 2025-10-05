@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { geminiAnalyzer } from '@/lib/gemini-service';
+import { checkTokenAvailability, decrementToken } from '@/lib/npraDatabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,6 +13,25 @@ export async function POST(request: NextRequest) {
         JSON.stringify({ error: 'Missing required fields: imageBase64, userId' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Check user token balance if user is logged in
+    if (userId) {
+      try {
+        const hasTokens = await checkTokenAvailability(userId);
+        if (!hasTokens) {
+          return new Response(
+            JSON.stringify({ error: 'No tokens remaining. Please upgrade your plan or wait for daily reset.' }),
+            { status: 402, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+      } catch (error) {
+        console.error('Error checking user tokens:', error);
+        return new Response(
+          JSON.stringify({ error: 'Token validation failed. Please try again.' }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // Create a ReadableStream for Server-Sent Events
@@ -54,6 +74,21 @@ export async function POST(request: NextRequest) {
               userAllergies || '',
               sendStatus // Pass the status callback
             );
+
+            // Deduct token after successful analysis
+            if (userId && result.success) {
+              try {
+                const success = await decrementToken(userId);
+                if (success) {
+                  console.log(`✅ Token deducted for user ${userId}`);
+                } else {
+                  console.log(`⚠️ User ${userId} has no tokens - skipping token deduction`);
+                }
+              } catch (error) {
+                console.error('Error deducting token:', error);
+                // Don't fail the request if token deduction fails
+              }
+            }
 
             // Send final result
             const finalData = `data: ${JSON.stringify({ 
