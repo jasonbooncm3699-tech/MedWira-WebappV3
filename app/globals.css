@@ -645,7 +645,7 @@ body {
 }
 
 .message.user .message-avatar {
-  background: linear-gradient(135deg, #00d4ff, #0099cc);
+  background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
   color: white;
 }
 
@@ -758,7 +758,7 @@ body {
 }
 
 .message.user .message-text {
-  background: linear-gradient(135deg, #00d4ff, #0099cc);
+  background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
   color: white;
   border: none;
 }
