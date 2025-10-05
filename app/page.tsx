@@ -669,15 +669,18 @@ export default function Home() {
 
                 setMessages(prev => {
                   const updatedMessages = [...prev, structuredMessage];
+                  console.log(`📊 [Frontend] ===== MESSAGES STATE UPDATE =====`);
+                  console.log(`📊 [Frontend] Previous messages count:`, prev.length);
                   console.log(`📊 [Frontend] Updated messages count:`, updatedMessages.length);
-                  console.log(`📊 [Frontend] Last message details:`, {
+                  console.log(`📊 [Frontend] New structured message:`, {
                     id: structuredMessage.id,
                     type: structuredMessage.type,
                     hasStructuredData: !!structuredMessage.structuredData,
-                    medicineName: structuredMessage.structuredData?.medicineName,
-                    structuredDataKeys: structuredMessage.structuredData ? Object.keys(structuredMessage.structuredData) : 'none'
+                    medicineName: structuredMessage.structuredData?.medicineName
                   });
+                  console.log(`📊 [Frontend] All message IDs:`, updatedMessages.map(m => ({ id: m.id, type: m.type })));
                   console.log(`📊 [Frontend] FULL structuredData:`, structuredMessage.structuredData);
+                  console.log(`📊 [Frontend] ===== END MESSAGES STATE UPDATE =====`);
                   // Save to localStorage immediately
                   chatStorage.saveChatHistory(updatedMessages, user?.id);
                   return updatedMessages;
@@ -1308,7 +1311,13 @@ export default function Home() {
         {/* Chat Container */}
       <div className="main-content chat-container">
         <div className="chat-window">
-            {messages.map((message) => (
+            {(() => {
+              console.log(`📊 [Frontend] ===== MESSAGES RENDERING =====`);
+              console.log(`📊 [Frontend] Total messages to render:`, messages.length);
+              console.log(`📊 [Frontend] Messages:`, messages.map(m => ({ id: m.id, type: m.type, hasStructuredData: !!m.structuredData })));
+              console.log(`📊 [Frontend] ===== END MESSAGES RENDERING =====`);
+              return messages;
+            })().map((message) => (
               <div key={message.id} className={`message ${message.type}`}>
                 <div className="message-avatar">
                   {message.type === 'user' ? <User size={20} /> : <Bot size={20} />}
