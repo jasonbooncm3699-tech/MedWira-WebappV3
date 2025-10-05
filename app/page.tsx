@@ -1392,7 +1392,8 @@ export default function Home() {
                     shouldShowFooter: shouldShowFooter
                   });
                   
-                  if (shouldShowFooter) {
+                  // FORCE SHOW FOOTER FOR DEBUGGING
+                  if (true) {
                     return (
                       <div className="message-footer-external" style={{ 
                         background: 'rgba(255, 0, 0, 0.3)', 
