@@ -1323,10 +1323,18 @@ export default function Home() {
                         response={message.structuredData}
                         onRender={() => {
                           // Hide status only after structured message is fully rendered
+                          console.log(`📊 [Frontend] onRender callback fired for message:`, {
+                            messageId: message.id,
+                            lastMessageId: messages[messages.length - 1]?.id,
+                            messagesLength: messages.length,
+                            isLastMessage: message.id === messages[messages.length - 1]?.id
+                          });
                           if (message.id === messages[messages.length - 1]?.id) {
                             console.log(`📊 [Frontend] Structured output rendered - hiding status`);
                             setAiStatus('idle');
                             setIsAnalyzing(false);
+                          } else {
+                            console.log(`📊 [Frontend] onRender fired but not for last message - status not hidden`);
                           }
                         }}
                       />
