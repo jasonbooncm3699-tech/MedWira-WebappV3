@@ -166,7 +166,7 @@ export class GeminiMedicineAnalyzer {
 
     try {
       // ===== STEP 1: SYSTEMATIC TEXT EXTRACTION PROCESS =====
-      statusCallback?.('Analyzing image...');
+      statusCallback?.('Starting analysis...');
       console.log(`🔍 [${analysisId}] ===== STEP 1: SYSTEMATIC TEXT EXTRACTION PROCESS =====`);
       
       const textExtractionPrompt = `You are a specialized medicine text extraction AI. Follow this EXACT systematic process:
@@ -235,7 +235,7 @@ Do not provide any other information. Only return the above format.`;
       console.log(`🔍 [${analysisId}] Extracted: name="${extractedMedicineName}", reg="${extractedRegNumber}"`);
       
       // ===== STEP 2: NPRA DATABASE INTEGRATION =====
-      statusCallback?.('Extracting text from packaging...');
+      statusCallback?.('Analyzing image...');
       console.log(`🔍 [${analysisId}] ===== STEP 2: NPRA DATABASE INTEGRATION =====`);
       
       let dbResult = null;
@@ -256,7 +256,7 @@ Do not provide any other information. Only return the above format.`;
       }
       
       // ===== STEP 3: EXACT OUTPUT FORMAT DEFINITION =====
-      statusCallback?.('Searching medicine database...');
+      statusCallback?.('Extracting text from packaging...');
       console.log(`🔍 [${analysisId}] ===== STEP 3: EXACT OUTPUT FORMAT DEFINITION =====`);
       
       // Define the exact 11-section output format structure
@@ -291,7 +291,7 @@ Do not provide any other information. Only return the above format.`;
       console.log(`📋 [${analysisId}] Bullet formatting rules defined:`, Object.keys(bulletFormattingRules));
       
       // ===== STEP 5: ACTIVE INGREDIENT ANALYSIS ENHANCEMENT =====
-      statusCallback?.('Generating medical report...');
+      statusCallback?.('Searching medicine database...');
       console.log(`🔍 [${analysisId}] ===== STEP 5: ACTIVE INGREDIENT ANALYSIS ENHANCEMENT =====`);
       
       let comprehensiveAnalysis = '';
@@ -357,6 +357,9 @@ IMPORTANT: Use minimal line breaks. Keep sections compact. Use bullet points (�
             ]);
           };
 
+          // Send status update before AI processing
+          statusCallback?.('Generating medical report...');
+          
           const comprehensiveResponse = await timeoutPromise(
             this.model.generateContent(comprehensivePrompt),
             25000 // 25 second timeout (5 seconds before Vercel timeout)
@@ -692,6 +695,9 @@ IMPORTANT: Use minimal line breaks. Keep sections compact. Use bullet points (�
             ]);
           };
 
+          // Send status update before AI processing
+          statusCallback?.('Generating medical report...');
+          
           const comprehensiveResponse = await timeoutPromise(
             this.model.generateContent(comprehensivePrompt),
             25000 // 25 second timeout (5 seconds before Vercel timeout)
