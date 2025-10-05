@@ -513,7 +513,7 @@ export default function Home() {
     }
 
     setIsAnalyzing(true);
-    setAiStatus('Starting analysis...');
+    setAiStatus('Connecting to AI...');
 
     // Create user message immediately
     const userMessage = {
@@ -573,6 +573,18 @@ export default function Home() {
         const { done, value } = await reader.read();
         if (done) {
           console.log(`📊 [Frontend] SSE stream ended`);
+          // If we're still analyzing and haven't received a complete result, there might be an issue
+          if (isAnalyzing && aiStatus !== 'idle') {
+            console.warn(`📊 [Frontend] Stream ended but analysis still in progress. Status: ${aiStatus}`);
+            // Keep analyzing state for a bit longer in case result is delayed
+            setTimeout(() => {
+              if (isAnalyzing) {
+                console.error(`📊 [Frontend] Analysis timed out - resetting status`);
+                setAiStatus('idle');
+                setIsAnalyzing(false);
+              }
+            }, 2000);
+          }
           break;
         }
 

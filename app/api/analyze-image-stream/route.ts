@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
         // Start AI processing with real status updates
         const processAnalysis = async () => {
           try {
-            // Send initial status
+            // Send initial status - this should match frontend
             sendStatus('Starting analysis...');
 
             // Use the new method with status callback
@@ -127,8 +127,12 @@ export async function POST(request: NextRequest) {
               result 
             })}\n\n`;
             controller.enqueue(encoder.encode(finalData));
-            controller.close();
-            console.log(`📊 [SSE] Stream closed successfully`);
+            
+            // Add a small delay before closing to ensure frontend receives the data
+            setTimeout(() => {
+              controller.close();
+              console.log(`📊 [SSE] Stream closed successfully`);
+            }, 100);
 
           } catch (error) {
             console.error('Analysis error:', error);
