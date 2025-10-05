@@ -541,9 +541,14 @@ export default function Home() {
       image: imageBase64
     };
 
+    // Add user message AND initial AI message for better UX
     setMessages(prev => {
-      const updatedMessages = [...prev, userMessage];
-      // Save to localStorage immediately
+      const updatedMessages = [...prev, userMessage, {
+        id: (Date.now() + 1).toString(),
+        type: 'ai' as const,
+        content: 'Analyzing your image...',
+        timestamp: new Date()
+      }];
       chatStorage.saveChatHistory(updatedMessages, user?.id);
       return updatedMessages;
     });
@@ -557,16 +562,7 @@ export default function Home() {
     console.log(`📊 [Frontend] User ID validation:`, { userId, userIdLength: userId.length });
     if (!userId) {
       console.log(`📊 [Frontend] No user ID - authentication failed`);
-      setIsAnalyzing(false);
-      setAiStatus('idle');
-      // Add a chat message here: "Authentication required. Please log in to use AI analysis."
-      const errorMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai' as const,
-        content: "⚠️ **Authentication Required**\n\nAuthentication required. Please log in to use AI analysis.",
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      handleError('Authentication required. Please log in to use AI analysis.');
       return; // EXIT HERE ONLY IF UNAUTHENTICATED
     }
     console.log(`📊 [Frontend] User ID validated - proceeding to fetch`);
@@ -599,32 +595,51 @@ export default function Home() {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      console.log(`📊 [Frontend] Starting SSE reader loop`);
+      let buffer = ''; // Buffer for incomplete chunks
+      console.log(`📊 [Frontend] Starting SSE reader loop with buffering`);
 
       while (true) {
         console.log(`📊 [Frontend] Reading next chunk...`);
         const { done, value } = await reader.read();
         console.log(`📊 [Frontend] Read result:`, { done, hasValue: !!value, valueLength: value?.length });
+        
         if (done) {
           console.log(`📊 [Frontend] SSE stream ended`);
-          // If we're still analyzing and haven't received a complete result, there might be an issue
-          if (isAnalyzing && aiStatus !== 'idle') {
-            console.warn(`📊 [Frontend] Stream ended but analysis still in progress. Status: ${aiStatus}`);
-            console.error(`📊 [Frontend] Analysis incomplete - backend stream ended prematurely`);
-            setAiStatus('idle');
-            setIsAnalyzing(false);
+          // Process any remaining buffer
+          if (buffer.trim()) {
+            console.log(`📊 [Frontend] Processing remaining buffer:`, buffer);
+            const lines = buffer.split('\n');
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const data = JSON.parse(line.slice(6));
+                  console.log(`📊 [Frontend] Parsed remaining buffer data:`, data);
+                  if (data.type === 'complete') {
+                    handleComplete(data);
+                  } else if (data.type === 'error') {
+                    handleError(data.error);
+                  }
+                } catch (e) {
+                  console.error('Error parsing remaining buffer:', e);
+                }
+              }
+            }
           }
           break;
         }
 
-        const chunk = decoder.decode(value);
-        console.log(`📊 [Frontend] Received SSE chunk:`, chunk);
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
+        // Add new chunk to buffer
+        buffer += decoder.decode(value, { stream: true });
+        console.log(`📊 [Frontend] Buffer length:`, buffer.length);
+        
+        // Process complete chunks (separated by \n\n)
+        const chunks = buffer.split('\n\n');
+        buffer = chunks.pop() || ''; // Keep incomplete chunk in buffer
+        
+        chunks.forEach(chunk => {
+          if (chunk.startsWith('data: ')) {
             try {
-              const data = JSON.parse(line.slice(6));
+              const data = JSON.parse(chunk.slice(6));
               console.log(`📊 [Frontend] Parsed SSE data:`, data);
 
               if (data.type === 'status' && data.status) {
@@ -634,92 +649,21 @@ export default function Home() {
                 // Handle completion status
                 if (data.status === 'Analysis completed successfully') {
                   console.log(`📊 [Frontend] Analysis completed - preparing to show output`);
-                  // Don't reset status here - let the output render first
                 } else if (data.status === 'Analysis failed') {
                   console.log(`📊 [Frontend] Analysis failed - resetting status`);
-                  setAiStatus('idle');
-                  setIsAnalyzing(false);
+                  handleError('Analysis failed');
                 }
               } else if (data.type === 'complete' && data.result) {
-                // Handle the result
-                console.log(`📊 [Frontend] Received complete result:`, {
-                  success: data.result.success,
-                  medicineName: data.result.medicineName,
-                  hasData: !!data.result.rawAnalysis
-                });
-                const structuredMessage = {
-                  id: (Date.now() + 1).toString(),
-                  type: 'structured' as const,
-                  content: '',
-                  timestamp: new Date(),
-                  structuredData: data.result
-                };
-
-                console.log(`📊 [Frontend] Adding structured message:`, {
-                  messageId: structuredMessage.id,
-                  hasStructuredData: !!structuredMessage.structuredData,
-                  medicineName: structuredMessage.structuredData?.medicineName
-                });
-
-                setMessages(prev => {
-                  const updatedMessages = [...prev, structuredMessage];
-                  console.log(`📊 [Frontend] Updated messages count:`, updatedMessages.length);
-                  console.log(`📊 [Frontend] Last message details:`, {
-                    id: structuredMessage.id,
-                    type: structuredMessage.type,
-                    hasStructuredData: !!structuredMessage.structuredData,
-                    medicineName: structuredMessage.structuredData?.medicineName,
-                    structuredDataKeys: structuredMessage.structuredData ? Object.keys(structuredMessage.structuredData) : 'none'
-                  });
-                  console.log(`📊 [Frontend] FULL structuredData:`, structuredMessage.structuredData);
-                  // Save to localStorage immediately
-                  chatStorage.saveChatHistory(updatedMessages, user?.id);
-                  return updatedMessages;
-                });
-
-                // Update user tokens if provided
-                if (data.result.tokensRemaining !== undefined) {
-                  setUserTokens(data.result.tokensRemaining);
-                  await refreshUserData();
-                }
-
-                // Refresh chat history after successful analysis (async, non-blocking)
-                if (user) {
-                  fetchUserChatHistory().catch(error => {
-                    console.error('❌ Background chat history refresh failed:', error);
-                    // Don't let this affect the main flow
-                  });
-                }
-
-                // Reset AI status and analyzing state after successful completion
-                // Don't reset immediately - let the structured output render first
-                console.log(`📊 [Frontend] Analysis complete - keeping status visible until output renders`);
-
+                handleComplete(data);
               } else if (data.type === 'error') {
-                // Handle error
-                setAiStatus('idle');
-                setIsAnalyzing(false);
-
-                const errorMessage = {
-                  id: (Date.now() + 1).toString(),
-                  type: 'ai' as const,
-                  content: `**Error**\n\n${data.error || 'Analysis failed. Please try again.'}`,
-                  timestamp: new Date()
-                };
-
-                setMessages(prev => {
-                  const updatedMessages = [...prev, errorMessage];
-                  // Save to localStorage immediately
-                  chatStorage.saveChatHistory(updatedMessages, user?.id);
-                  return updatedMessages;
-                });
+                handleError(data.error);
               }
             } catch (e) {
-              console.error('Error parsing SSE data:', e);
-              console.error('Raw line that failed:', line);
+              console.error('Error parsing SSE chunk:', e);
+              console.error('Raw chunk that failed:', chunk);
             }
           }
-        }
+        });
       }
     } catch (error) {
       console.error('📊 [Frontend] SSE Error:', error);
@@ -728,19 +672,80 @@ export default function Home() {
         message: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : 'No stack'
       });
+      handleError('Sorry, I encountered an error while analyzing your medicine. Please try again.');
+    }
+
+    // Helper function to handle completion
+    function handleComplete(data: any) {
+      console.log(`📊 [Frontend] Handling complete result:`, {
+        success: data.result.success,
+        medicineName: data.result.medicineName,
+        hasData: !!data.result.rawAnalysis
+      });
+      
+      const structuredMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'structured' as const,
+        content: '',
+        timestamp: new Date(),
+        structuredData: data.result
+      };
+
+      console.log(`📊 [Frontend] Adding structured message:`, {
+        messageId: structuredMessage.id,
+        hasStructuredData: !!structuredMessage.structuredData,
+        medicineName: structuredMessage.structuredData?.medicineName
+      });
+
+      setMessages(prev => {
+        const updatedMessages = [...prev, structuredMessage];
+        console.log(`📊 [Frontend] Updated messages count:`, updatedMessages.length);
+        console.log(`📊 [Frontend] Last message details:`, {
+          id: structuredMessage.id,
+          type: structuredMessage.type,
+          hasStructuredData: !!structuredMessage.structuredData,
+          medicineName: structuredMessage.structuredData?.medicineName,
+          structuredDataKeys: structuredMessage.structuredData ? Object.keys(structuredMessage.structuredData) : 'none'
+        });
+        console.log(`📊 [Frontend] FULL structuredData:`, structuredMessage.structuredData);
+        chatStorage.saveChatHistory(updatedMessages, user?.id);
+        return updatedMessages;
+      });
+
+      // Update user tokens if provided
+      if (data.result.tokensRemaining !== undefined) {
+        setUserTokens(data.result.tokensRemaining);
+        refreshUserData();
+      }
+
+      // Refresh chat history after successful analysis (async, non-blocking)
+      if (user) {
+        fetchUserChatHistory().catch(error => {
+          console.error('❌ Background chat history refresh failed:', error);
+        });
+      }
+
+      // Reset states - this ensures they're reset even if rendering fails
+      setAiStatus('idle');
+      setIsAnalyzing(false);
+      console.log(`📊 [Frontend] Analysis complete - states reset`);
+    }
+
+    // Helper function to handle errors
+    function handleError(error: string) {
+      console.log(`📊 [Frontend] Handling error:`, error);
       setAiStatus('idle');
       setIsAnalyzing(false);
 
-      const errorMsg = {
+      const errorMessage = {
         id: (Date.now() + 1).toString(),
         type: 'ai' as const,
-        content: 'Sorry, I encountered an error while analyzing your medicine. Please try again.',
+        content: `**Error**\n\n${error}`,
         timestamp: new Date()
       };
 
       setMessages(prev => {
-        const updatedMessages = [...prev, errorMsg];
-        // Save to localStorage immediately
+        const updatedMessages = [...prev, errorMessage];
         chatStorage.saveChatHistory(updatedMessages, user?.id);
         return updatedMessages;
       });
@@ -1331,10 +1336,9 @@ export default function Home() {
                       <StructuredMedicineReply
                         response={message.structuredData}
                         onRender={() => {
-                          // Hide status after structured message is fully rendered
-                          console.log(`📊 [Frontend] Structured output rendered - hiding status`);
-                          setAiStatus('idle');
-                          setIsAnalyzing(false);
+                          // Optional: Additional post-render logic if needed
+                          console.log(`📊 [Frontend] Structured output rendered - additional post-render logic`);
+                          // Note: State reset is now handled in handleComplete function
                         }}
                       />
                     </div>
