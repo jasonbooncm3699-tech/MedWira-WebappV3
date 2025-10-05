@@ -658,9 +658,12 @@ export default function Home() {
                   await refreshUserData();
                 }
 
-                // Refresh chat history after successful analysis
+                // Refresh chat history after successful analysis (async, non-blocking)
                 if (user) {
-                  await fetchUserChatHistory();
+                  fetchUserChatHistory().catch(error => {
+                    console.error('❌ Background chat history refresh failed:', error);
+                    // Don't let this affect the main flow
+                  });
                 }
 
                 // Reset AI status and analyzing state after successful completion

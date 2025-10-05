@@ -132,15 +132,23 @@ export class DatabaseService {
   }
 
   static async getUserScanHistory(userId: string, limit = 50) {
-    const { data, error } = await supabase
-      .from('scan_history')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(limit)
-    
-    if (error) throw error
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('scan_history')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(limit)
+      
+      if (error) {
+        console.error('❌ Database error in getUserScanHistory:', error);
+        return []; // Return empty array instead of throwing
+      }
+      return data || []
+    } catch (error) {
+      console.error('❌ Exception in getUserScanHistory:', error);
+      return []; // Return empty array instead of throwing
+    }
   }
 
   // NPRA medicine database operations (using existing 'medicines' table)
