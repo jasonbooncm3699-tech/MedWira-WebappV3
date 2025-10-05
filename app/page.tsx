@@ -1382,6 +1382,40 @@ export default function Home() {
                   )}
                 </div>
                 
+                {/* Share button under AI messages only */}
+                {message.type === 'ai' && (
+                  <div className="message-share-external">
+                    <div className="message-share-btn">
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        onClick={() => shareToWhatsApp(message.content)}
+                        style={{
+                          opacity: 0.7,
+                          cursor: 'pointer',
+                          transition: 'opacity 0.2s ease',
+                          color: '#888'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.opacity = '1';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.opacity = '0.7';
+                        }}
+                      >
+                        {/* Right-pointing arrow with curved tail */}
+                        <path d="M17 8l4 4-4 4M19 12H3"/>
+                      </svg>
+                    </div>
+                  </div>
+                )}
+                
               </div>
             ))}
 
