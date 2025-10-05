@@ -881,6 +881,21 @@ body {
   right: 0px;
 }
 
+/* Timestamp at Box 9 position (bottom right) for AI messages */
+.message-timestamp-external {
+  position: absolute;
+  bottom: -25px;
+  right: 0px;
+}
+
+.message-timestamp-external .message-time {
+  font-size: 11px;
+  color: #888;
+  padding: 2px 4px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
 .typing-indicator {
   display: flex;
   gap: 4px;

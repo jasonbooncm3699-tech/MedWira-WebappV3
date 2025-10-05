@@ -1382,28 +1382,17 @@ export default function Home() {
                   )}
                 </div>
                 
-                {/* Debug positioning boxes for AI messages */}
+                {/* Timestamp at Box 9 position (bottom right) for AI messages */}
                 {message.type === 'ai' && (
-                  <>
-                    {/* Box 1: TOP */}
-                    <div className="debug-box debug-top">1</div>
-                    
-                    {/* Box 2: RIGHT */}
-                    <div className="debug-box debug-right">2</div>
-                    
-                    {/* Box 3: BOTTOM */}
-                    <div className="debug-box debug-bottom">3</div>
-                    
-                    {/* Box 4: LEFT */}
-                    <div className="debug-box debug-left">4</div>
-                    
-                    {/* 5 boxes under BOTTOM for fine positioning */}
-                    <div className="debug-box debug-bottom-left">5</div>
-                    <div className="debug-box debug-bottom-center-left">6</div>
-                    <div className="debug-box debug-bottom-center">7</div>
-                    <div className="debug-box debug-bottom-center-right">8</div>
-                    <div className="debug-box debug-bottom-right">9</div>
-                  </>
+                  <div className="message-timestamp-external timestamp-bottom-right">
+                    <div className="message-time">
+                      {message.timestamp.toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
+                    </div>
+                  </div>
                 )}
                 
               </div>
