@@ -479,6 +479,10 @@ Disclaimer: This information is for educational purposes only. Consult a healthc
       console.log(`🎉 [${analysisId}] Total processing time: ${processingTime}ms`);
       console.log(`🎉 [${analysisId}] Database verified: ${!!dbResult}`);
       console.log(`🎉 [${analysisId}] Confidence score: ${result.confidence}`);
+      
+      // ===== FINAL STATUS UPDATE =====
+      console.log(`📊 [${analysisId}] STATUS CALLBACK: Analysis completed successfully`);
+      statusCallback?.('Analysis completed successfully');
       console.log(`📋 [${analysisId}] Final result structure:`, {
         success: result.success,
         medicineName: result.medicineName,
@@ -498,6 +502,10 @@ Disclaimer: This information is for educational purposes only. Consult a healthc
       console.error(`❌ [${analysisId}] Error after ${processingTime}ms:`, error);
       console.error(`❌ [${analysisId}] Error type: ${error instanceof Error ? error.constructor.name : 'Unknown'}`);
       console.error(`❌ [${analysisId}] Error message: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      // ===== ERROR STATUS UPDATE =====
+      console.log(`📊 [${analysisId}] STATUS CALLBACK: Analysis failed`);
+      statusCallback?.('Analysis failed');
       
       return {
         success: false,
