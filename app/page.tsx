@@ -415,6 +415,7 @@ export default function Home() {
     fetchUserChatHistory();
   }, [fetchUserChatHistory]);
 
+
   const handleCameraCapture = async () => {
     try {
       // Check if getUserMedia is supported
@@ -588,12 +589,6 @@ export default function Home() {
                 // Real status update from backend
                 setAiStatus(data.status);
               } else if (data.type === 'complete' && data.result) {
-                // Analysis completed - delay hiding status to allow output to render
-                setTimeout(() => {
-                  setAiStatus('idle');
-                  setIsAnalyzing(false);
-                }, 2000); // 2 second delay to ensure output is visible
-                
                 // Handle the result
                 const structuredMessage = {
                   id: (Date.now() + 1).toString(),
@@ -1429,7 +1424,16 @@ export default function Home() {
                   {/* Render structured medicine reply for structured messages */}
                   {message.type === 'structured' && message.structuredData ? (
                     <div className="structured-medicine-response">
-                      <StructuredMedicineReply response={message.structuredData} />
+                      <StructuredMedicineReply 
+                        response={message.structuredData} 
+                        onRender={() => {
+                          // Hide status only after structured message is fully rendered
+                          if (message.id === messages[messages.length - 1]?.id) {
+                            setAiStatus('idle');
+                            setIsAnalyzing(false);
+                          }
+                        }}
+                      />
                     </div>
                   ) : (
                     <div className="message-text">

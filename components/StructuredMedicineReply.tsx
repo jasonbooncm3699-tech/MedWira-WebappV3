@@ -47,12 +47,23 @@ interface StructuredMedicineData {
 
 interface StructuredMedicineReplyProps {
   response: StructuredMedicineData;
+  onRender?: () => void;
 }
 
-const StructuredMedicineReply: React.FC<StructuredMedicineReplyProps> = ({ response }) => {
+const StructuredMedicineReply: React.FC<StructuredMedicineReplyProps> = ({ response, onRender }) => {
 
   // Check if this is Gemini format (new) or legacy format
   const isGeminiFormat = !!(response.medicine_name || response.purpose || response.dosage_instructions);
+
+  // Call onRender callback when component is fully rendered
+  React.useEffect(() => {
+    if (onRender) {
+      // Use requestAnimationFrame to ensure DOM is updated
+      requestAnimationFrame(() => {
+        onRender();
+      });
+    }
+  }, [onRender]);
 
 
   // Create sections based on format
