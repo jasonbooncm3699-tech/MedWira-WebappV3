@@ -1438,7 +1438,7 @@ export default function Home() {
                           <path d="M17 8l4 4-4 4M19 12H3"/>
                         </svg>
                       </div>
-                      )}
+                    )}
                     </div>
                     );
                   } else {
