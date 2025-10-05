@@ -571,15 +571,20 @@ export default function Home() {
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          console.log(`📊 [Frontend] SSE stream ended`);
+          break;
+        }
 
         const chunk = decoder.decode(value);
+        console.log(`📊 [Frontend] Received SSE chunk:`, chunk);
         const lines = chunk.split('\n');
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6));
+              console.log(`📊 [Frontend] Parsed SSE data:`, data);
 
               if (data.type === 'status' && data.status) {
                 // Real status update from backend
@@ -618,11 +623,8 @@ export default function Home() {
                 }
 
                 // Reset AI status and analyzing state after successful completion
-                // Add a small delay to ensure the structured output has time to render
-                setTimeout(() => {
-                  setAiStatus('idle');
-                  setIsAnalyzing(false);
-                }, 1000);
+                // Don't reset immediately - let the structured output render first
+                console.log(`📊 [Frontend] Analysis complete - keeping status visible until output renders`);
 
               } else if (data.type === 'error') {
                 // Handle error
@@ -645,6 +647,7 @@ export default function Home() {
               }
             } catch (e) {
               console.error('Error parsing SSE data:', e);
+              console.error('Raw line that failed:', line);
             }
           }
         }
@@ -1235,6 +1238,14 @@ export default function Home() {
                     <div className="structured-medicine-response">
                       <StructuredMedicineReply
                         response={message.structuredData}
+                        onRender={() => {
+                          // Hide status only after structured message is fully rendered
+                          if (message.id === messages[messages.length - 1]?.id) {
+                            console.log(`📊 [Frontend] Structured output rendered - hiding status`);
+                            setAiStatus('idle');
+                            setIsAnalyzing(false);
+                          }
+                        }}
                       />
                     </div>
                   ) : (
