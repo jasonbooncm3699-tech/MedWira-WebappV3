@@ -166,7 +166,7 @@ export class GeminiMedicineAnalyzer {
 
     try {
       // ===== STEP 1: SYSTEMATIC TEXT EXTRACTION PROCESS =====
-      statusCallback?.('Starting analysis...');
+      statusCallback?.('Extracting text from image...');
       console.log(`🔍 [${analysisId}] ===== STEP 1: SYSTEMATIC TEXT EXTRACTION PROCESS =====`);
       
       const textExtractionPrompt = `You are a specialized medicine text extraction AI. Follow this EXACT systematic process:
@@ -235,7 +235,7 @@ Do not provide any other information. Only return the above format.`;
       console.log(`🔍 [${analysisId}] Extracted: name="${extractedMedicineName}", reg="${extractedRegNumber}"`);
       
       // ===== STEP 2: NPRA DATABASE INTEGRATION =====
-      statusCallback?.('Analyzing image...');
+      statusCallback?.('Searching medicine database...');
       console.log(`🔍 [${analysisId}] ===== STEP 2: NPRA DATABASE INTEGRATION =====`);
       
       let dbResult = null;
@@ -256,7 +256,7 @@ Do not provide any other information. Only return the above format.`;
       }
       
       // ===== STEP 3: EXACT OUTPUT FORMAT DEFINITION =====
-      statusCallback?.('Extracting text from packaging...');
+      statusCallback?.('Formatting output structure...');
       console.log(`🔍 [${analysisId}] ===== STEP 3: EXACT OUTPUT FORMAT DEFINITION =====`);
       
       // Define the exact 11-section output format structure
@@ -276,6 +276,7 @@ Do not provide any other information. Only return the above format.`;
       console.log(`📋 [${analysisId}] Output format structure defined:`, Object.keys(outputFormatStructure));
       
       // ===== STEP 4: BULLET LIST FORMATTING =====
+      statusCallback?.('Applying formatting rules...');
       console.log(`🔍 [${analysisId}] ===== STEP 4: BULLET LIST FORMATTING =====`);
       
       // Define bullet formatting rules
@@ -291,7 +292,7 @@ Do not provide any other information. Only return the above format.`;
       console.log(`📋 [${analysisId}] Bullet formatting rules defined:`, Object.keys(bulletFormattingRules));
       
       // ===== STEP 5: ACTIVE INGREDIENT ANALYSIS ENHANCEMENT =====
-      statusCallback?.('Searching medicine database...');
+      statusCallback?.('Analyzing active ingredients...');
       console.log(`🔍 [${analysisId}] ===== STEP 5: ACTIVE INGREDIENT ANALYSIS ENHANCEMENT =====`);
       
       let comprehensiveAnalysis = '';
@@ -615,6 +616,7 @@ Do not provide any other information. Only return the above format.`;
       console.log(`📋 [${analysisId}] Output format structure defined:`, Object.keys(outputFormatStructure));
       
       // ===== STEP 4: BULLET LIST FORMATTING =====
+      statusCallback?.('Applying formatting rules...');
       console.log(`🔍 [${analysisId}] ===== STEP 4: BULLET LIST FORMATTING =====`);
       
       // Define bullet formatting rules
