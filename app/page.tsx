@@ -494,12 +494,8 @@ export default function Home() {
       reader.onload = () => {
         const imageBase64 = reader.result as string;
         closeCamera();
-        // Use real status updates if enabled, otherwise use simulated
-        if (useRealStatusUpdates) {
-          analyzeMedicineImageWithRealStatus(imageBase64);
-        } else {
-          analyzeMedicineImage(imageBase64);
-        }
+        // Always use real status updates from AI processing
+        analyzeMedicineImageWithRealStatus(imageBase64);
       };
       reader.readAsDataURL(blob);
     }, 'image/jpeg', 0.9);
@@ -662,8 +658,7 @@ export default function Home() {
     }
   };
 
-  // Enhanced AI Image Analysis with Real-Time Status Display (Original - Simulated)
-  const analyzeMedicineImage = async (imageBase64: string) => {
+  // REMOVED: Timer-based function - now using only real AI status updates
     // Refresh user data to get latest token count before proceeding
     await refreshUserData();
     
@@ -738,11 +733,7 @@ export default function Home() {
       // Real AI processing with actual status updates from Gemini pipeline
       setAiStatus('Analyzing image...');
       
-      // Update status based on actual Gemini pipeline progress
-      setTimeout(() => setAiStatus('Extracting text from packaging...'), 2000);
-      setTimeout(() => setAiStatus('Searching medicine database...'), 4000);
-      setTimeout(() => setAiStatus('Generating medical report...'), 6000);
-      setTimeout(() => setAiStatus('Finalizing analysis...'), 8000);
+      // REMOVED: Timer-based status updates - now using real AI status callbacks
 
       const response = await fetch('/api/analyze-image', {
         method: 'POST',
@@ -902,12 +893,8 @@ export default function Home() {
     const reader = new FileReader();
     reader.onload = () => {
       const imageBase64 = reader.result as string;
-      // Use real status updates if enabled, otherwise use simulated
-      if (useRealStatusUpdates) {
-        analyzeMedicineImageWithRealStatus(imageBase64);
-      } else {
-        analyzeMedicineImage(imageBase64);
-      }
+      // Always use real status updates from AI processing
+      analyzeMedicineImageWithRealStatus(imageBase64);
     };
     reader.readAsDataURL(file);
   };
