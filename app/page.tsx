@@ -613,8 +613,11 @@ export default function Home() {
                 }
 
                 // Reset AI status and analyzing state after successful completion
-                setAiStatus('idle');
-                setIsAnalyzing(false);
+                // Add a small delay to ensure the structured output has time to render
+                setTimeout(() => {
+                  setAiStatus('idle');
+                  setIsAnalyzing(false);
+                }, 1000);
 
               } else if (data.type === 'error') {
                 // Handle error

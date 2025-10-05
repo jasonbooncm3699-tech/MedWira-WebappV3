@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
         // Send status updates as AI processing progresses
         const sendStatus = (status: string) => {
           try {
+            console.log(`📊 [SSE] Sending status to frontend: ${status}`);
             const data = `data: ${JSON.stringify({ type: 'status', status })}\n\n`;
             controller.enqueue(encoder.encode(data));
           } catch (error) {

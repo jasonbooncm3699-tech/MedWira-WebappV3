@@ -166,6 +166,7 @@ export class GeminiMedicineAnalyzer {
 
     try {
       // ===== STEP 1: SYSTEMATIC TEXT EXTRACTION PROCESS =====
+      console.log(`📊 [${analysisId}] STATUS CALLBACK: Extracting text from image... (callback exists: ${!!statusCallback})`);
       statusCallback?.('Extracting text from image...');
       console.log(`🔍 [${analysisId}] ===== STEP 1: SYSTEMATIC TEXT EXTRACTION PROCESS =====`);
       
@@ -235,6 +236,7 @@ Do not provide any other information. Only return the above format.`;
       console.log(`🔍 [${analysisId}] Extracted: name="${extractedMedicineName}", reg="${extractedRegNumber}"`);
       
       // ===== STEP 2: NPRA DATABASE INTEGRATION =====
+      console.log(`📊 [${analysisId}] STATUS CALLBACK: Searching medicine database...`);
       statusCallback?.('Searching medicine database...');
       console.log(`🔍 [${analysisId}] ===== STEP 2: NPRA DATABASE INTEGRATION =====`);
       
@@ -256,6 +258,7 @@ Do not provide any other information. Only return the above format.`;
       }
       
       // ===== STEP 3: EXACT OUTPUT FORMAT DEFINITION =====
+      console.log(`📊 [${analysisId}] STATUS CALLBACK: Formatting output structure...`);
       statusCallback?.('Formatting output structure...');
       console.log(`🔍 [${analysisId}] ===== STEP 3: EXACT OUTPUT FORMAT DEFINITION =====`);
       
@@ -276,6 +279,7 @@ Do not provide any other information. Only return the above format.`;
       console.log(`📋 [${analysisId}] Output format structure defined:`, Object.keys(outputFormatStructure));
       
       // ===== STEP 4: BULLET LIST FORMATTING =====
+      console.log(`📊 [${analysisId}] STATUS CALLBACK: Applying formatting rules...`);
       statusCallback?.('Applying formatting rules...');
       console.log(`🔍 [${analysisId}] ===== STEP 4: BULLET LIST FORMATTING =====`);
       
@@ -292,6 +296,7 @@ Do not provide any other information. Only return the above format.`;
       console.log(`📋 [${analysisId}] Bullet formatting rules defined:`, Object.keys(bulletFormattingRules));
       
       // ===== STEP 5: ACTIVE INGREDIENT ANALYSIS ENHANCEMENT =====
+      console.log(`📊 [${analysisId}] STATUS CALLBACK: Analyzing active ingredients...`);
       statusCallback?.('Analyzing active ingredients...');
       console.log(`🔍 [${analysisId}] ===== STEP 5: ACTIVE INGREDIENT ANALYSIS ENHANCEMENT =====`);
       
@@ -359,8 +364,9 @@ IMPORTANT: Use minimal line breaks. Keep sections compact. Use bullet points (�
           };
 
           // Send status update before AI processing
+          console.log(`📊 [${analysisId}] STATUS CALLBACK: Generating medical report...`);
           statusCallback?.('Generating medical report...');
-          
+
           const comprehensiveResponse = await timeoutPromise(
             this.model.generateContent(comprehensivePrompt),
             25000 // 25 second timeout (5 seconds before Vercel timeout)
@@ -403,6 +409,7 @@ Disclaimer: This information is for educational purposes only. Consult a healthc
       console.log(`⚡ [${analysisId}] Analysis generation: SUCCESS`);
       
       // ===== STEP 8: RETURN STRUCTURE UPDATE =====
+      console.log(`📊 [${analysisId}] STATUS CALLBACK: Finalizing analysis...`);
       statusCallback?.('Finalizing analysis...');
       console.log(`🔍 [${analysisId}] ===== STEP 8: RETURN STRUCTURE UPDATE =====`);
       
