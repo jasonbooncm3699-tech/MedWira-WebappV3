@@ -890,26 +890,26 @@ body {
 /* Timestamp positioning for AI and user messages */
 .message-timestamp-external {
   position: absolute;
-  bottom: -25px;
+  bottom: -20px;
 }
 
 .timestamp-bottom-right {
   right: 0px;
-  margin-top: 12px;
-  margin-bottom: 8px;
+  margin-top: 16px;
+  margin-bottom: 12px;
 }
 
 .timestamp-bottom-left {
   left: 0px;
-  margin-top: 12px;
-  margin-bottom: 8px;
+  margin-top: 16px;
+  margin-bottom: 12px;
 }
 
 .message-timestamp-external .message-time {
   font-size: 11px;
   color: #888;
   padding: 2px 4px;
-  background: rgba(0, 0, 0, 0.3);
+  background: transparent;
   border-radius: 4px;
 }
 
