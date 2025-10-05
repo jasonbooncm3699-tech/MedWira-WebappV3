@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { geminiAnalyzer } from '@/lib/gemini-service';
-import { checkTokenAvailability, decrementToken } from '@/lib/npraDatabase';
+import { checkTokenAvailability, decrementToken, saveScanHistory } from '@/lib/npraDatabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -75,8 +75,32 @@ export async function POST(request: NextRequest) {
               sendStatus // Pass the status callback
             );
 
-            // Deduct token after successful analysis
+            // Save scan history and deduct token after successful analysis
             if (userId && result.success) {
+              // Save scan history
+              try {
+                await saveScanHistory({
+                  user_id: userId,
+                  image_url: imageBase64,
+                  medicine_name: result.medicineName,
+                  generic_name: result.genericName,
+                  dosage: result.dosage,
+                  side_effects: result.sideEffects,
+                  interactions: result.interactions,
+                  warnings: result.warnings,
+                  storage: result.storage,
+                  category: result.category,
+                  confidence: result.confidence,
+                  language: language || 'English',
+                  allergies: userAllergies || null,
+                });
+                console.log(`✅ Scan history saved for user ${userId}`);
+              } catch (error) {
+                console.error('Error saving scan history:', error);
+                // Don't fail the request if saving history fails
+              }
+
+              // Deduct token
               try {
                 const success = await decrementToken(userId);
                 if (success) {

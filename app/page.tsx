@@ -14,6 +14,7 @@ import AIStatusDisplay from '@/components/AIStatusDisplay';
 import { getInitials, generateAvatarColor } from '@/lib/avatar-utils';
 import { MessageFormatter } from '@/lib/message-formatter';
 import { DatabaseService } from '@/lib/supabase';
+import { getUserScanHistory } from '@/lib/npraDatabase';
 import { chatStorage, ChatMessage } from '@/lib/chat-storage';
 import { Share2 } from 'lucide-react';
 
@@ -172,9 +173,10 @@ export default function Home() {
 
     // Construct the GUARANTEED valid JSON payload
     const payload = {
-      image_data: imageBase64,
-      user_id: userId,
-      text_query: textQuery,
+      imageBase64: imageBase64,
+      userId: userId,
+      language: language,
+      allergy: allergy,
     };
 
     try {
@@ -352,7 +354,7 @@ export default function Home() {
         }
 
         // Then, fetch from database for sync
-        const history = await DatabaseService.getUserScanHistory(user.id);
+        const history = await getUserScanHistory(user.id);
         setScanHistory(history || []);
         console.log('✅ Scan history loaded from database:', history?.length || 0, 'conversations');
 

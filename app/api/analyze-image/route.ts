@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // UPDATED: Using Gemini 1.5 Pro for medicine analysis
 import { geminiAnalyzer } from '@/lib/gemini-service';
 import { DatabaseService } from '@/lib/supabase';
-import { checkTokenAvailability, decrementToken } from '@/lib/npraDatabase';
+import { checkTokenAvailability, decrementToken, saveScanHistory } from '@/lib/npraDatabase';
 
 // Increase Vercel timeout to 120 seconds for comprehensive analysis
 export const maxDuration = 120;
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     if (userId && result.success) {
       // Save scan history (separate from token deduction)
       try {
-        await DatabaseService.saveScanHistory({
+        await saveScanHistory({
           user_id: userId,
           image_url: imageBase64, // In production, upload to Supabase Storage
           medicine_name: result.medicineName,

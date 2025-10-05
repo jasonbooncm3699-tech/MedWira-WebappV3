@@ -313,3 +313,69 @@ export async function decrementToken(userId: string): Promise<boolean> {
     console.log(`✅ User ${userId} tokens decremented. Remaining: ${newCount}`);
     return true;
 }
+
+/**
+ * Save scan history using service role client to bypass RLS policies
+ * @param scanData - The scan history data to save
+ * @returns The saved scan history record
+ */
+export async function saveScanHistory(scanData: {
+    user_id: string;
+    image_url: string;
+    medicine_name?: string;
+    generic_name?: string;
+    dosage?: string;
+    side_effects?: string[];
+    interactions?: string[];
+    warnings?: string[];
+    storage?: string;
+    category?: string;
+    confidence?: number;
+    language: string;
+    allergies?: string;
+}): Promise<any> {
+    console.log(`🔍 Saving scan history for user: ${scanData.user_id}`);
+    
+    const supabase = getSupabaseClient();
+    
+    const { data, error } = await supabase
+        .from('scan_history')
+        .insert([scanData])
+        .select()
+        .single();
+    
+    if (error) {
+        console.error('❌ Scan history save error:', error);
+        throw error;
+    }
+    
+    console.log(`✅ Scan history saved for user ${scanData.user_id}`);
+    return data;
+}
+
+/**
+ * Get user scan history using service role client to bypass RLS policies
+ * @param userId - The user ID to get scan history for
+ * @param limit - Maximum number of records to return (default: 50)
+ * @returns Array of scan history records
+ */
+export async function getUserScanHistory(userId: string, limit: number = 50): Promise<any[]> {
+    console.log(`🔍 Getting scan history for user: ${userId}`);
+    
+    const supabase = getSupabaseClient();
+    
+    const { data, error } = await supabase
+        .from('scan_history')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+    
+    if (error) {
+        console.error('❌ Scan history fetch error:', error);
+        throw error;
+    }
+    
+    console.log(`✅ Retrieved ${data?.length || 0} scan history records for user ${userId}`);
+    return data || [];
+}
