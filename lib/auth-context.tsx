@@ -154,7 +154,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     console.log('🔄 refreshUser called - checking session...');
-    setIsLoading(true);
+    
+    // OPTIMIZATION: Only show loading if we don't have a cached user
+    // This prevents "Initializing MedWira AI" on tab switches
+    if (!user) {
+      setIsLoading(true);
+    }
     try {
       // CRITICAL: Check for session in URL first (OAuth redirects)
       if (typeof window !== 'undefined') {
