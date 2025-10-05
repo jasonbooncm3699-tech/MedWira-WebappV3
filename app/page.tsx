@@ -668,8 +668,10 @@ export default function Home() {
                     id: structuredMessage.id,
                     type: structuredMessage.type,
                     hasStructuredData: !!structuredMessage.structuredData,
-                    medicineName: structuredMessage.structuredData?.medicineName
+                    medicineName: structuredMessage.structuredData?.medicineName,
+                    structuredDataKeys: structuredMessage.structuredData ? Object.keys(structuredMessage.structuredData) : 'none'
                   });
+                  console.log(`📊 [Frontend] FULL structuredData:`, structuredMessage.structuredData);
                   // Save to localStorage immediately
                   chatStorage.saveChatHistory(updatedMessages, user?.id);
                   return updatedMessages;
