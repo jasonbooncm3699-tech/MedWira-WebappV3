@@ -1381,10 +1381,10 @@ export default function Home() {
                     </div>
                   )}
                 </div>
-
-                {/* Show timestamp and share button only for non-greeting messages */}
+                
+                {/* Timestamp and share button UNDER the chat bubble (not inside it) */}
                 {!(message.type === 'ai' && message.id === '1') && (
-                  <div className="message-footer">
+                  <div className="message-footer-external">
                     <div className="message-time">
                       {message.timestamp.toLocaleTimeString('en-US', {
                         hour: '2-digit',
@@ -1418,9 +1418,8 @@ export default function Home() {
                             e.currentTarget.style.opacity = '0.7';
                           }}
                         >
-                          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-                          <polyline points="16,6 12,2 8,6"/>
-                          <line x1="12" y1="2" x2="12" y2="15"/>
+                          {/* Right-pointing arrow with curved tail from your image */}
+                          <path d="M17 8l4 4-4 4M19 12H3"/>
                         </svg>
                       </div>
                     )}
