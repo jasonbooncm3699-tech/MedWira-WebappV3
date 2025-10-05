@@ -1383,8 +1383,19 @@ export default function Home() {
                 </div>
                 
                 {/* Timestamp and share button UNDER the chat bubble (not inside it) */}
-                {!(message.type === 'ai' && message.id === '1') && (
-                  <div className="message-footer-external">
+                {!(message.type === 'ai' && message.id === '1') && (() => {
+                  console.log(`🔍 [DEBUG] Rendering external footer for message:`, {
+                    id: message.id,
+                    type: message.type,
+                    isGreeting: message.id === '1'
+                  });
+                  return (
+                    <div className="message-footer-external" style={{ 
+                      background: 'rgba(255, 0, 0, 0.3)', 
+                      border: '2px solid red', 
+                      padding: '8px',
+                      margin: '8px 0'
+                    }}>
                     <div className="message-time">
                       {message.timestamp.toLocaleTimeString('en-US', {
                         hour: '2-digit',
@@ -1424,7 +1435,8 @@ export default function Home() {
                       </div>
                     )}
                   </div>
-                )}
+                  );
+                })()}
               </div>
             ))}
 
