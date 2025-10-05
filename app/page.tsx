@@ -653,34 +653,33 @@ export default function Home() {
                 setAiStatus('idle');
                 setIsAnalyzing(false);
                 
-                const structuredMessage = {
+                // DIRECT APPROACH: Add AI message with rawAnalysis content directly to chat
+                const aiMessage = {
                   id: (Date.now() + 1).toString(),
-                  type: 'structured' as const,
-                  content: '',
-                  timestamp: new Date(),
-                  structuredData: data.result
+                  type: 'ai' as const,
+                  content: data.result.rawAnalysis || 'Medicine analysis completed successfully.',
+                  timestamp: new Date()
                 };
 
-                console.log(`📊 [Frontend] Adding structured message:`, {
-                  messageId: structuredMessage.id,
-                  hasStructuredData: !!structuredMessage.structuredData,
-                  medicineName: structuredMessage.structuredData?.medicineName
+                console.log(`📊 [Frontend] Adding direct AI message:`, {
+                  messageId: aiMessage.id,
+                  type: aiMessage.type,
+                  contentLength: aiMessage.content.length,
+                  medicineName: data.result.medicineName
                 });
 
                 setMessages(prev => {
-                  const updatedMessages = [...prev, structuredMessage];
-                  console.log(`📊 [Frontend] ===== MESSAGES STATE UPDATE =====`);
+                  const updatedMessages = [...prev, aiMessage];
+                  console.log(`📊 [Frontend] ===== DIRECT MESSAGES STATE UPDATE =====`);
                   console.log(`📊 [Frontend] Previous messages count:`, prev.length);
                   console.log(`📊 [Frontend] Updated messages count:`, updatedMessages.length);
-                  console.log(`📊 [Frontend] New structured message:`, {
-                    id: structuredMessage.id,
-                    type: structuredMessage.type,
-                    hasStructuredData: !!structuredMessage.structuredData,
-                    medicineName: structuredMessage.structuredData?.medicineName
+                  console.log(`📊 [Frontend] New AI message:`, {
+                    id: aiMessage.id,
+                    type: aiMessage.type,
+                    contentPreview: aiMessage.content.substring(0, 100) + '...'
                   });
                   console.log(`📊 [Frontend] All message IDs:`, updatedMessages.map(m => ({ id: m.id, type: m.type })));
-                  console.log(`📊 [Frontend] FULL structuredData:`, structuredMessage.structuredData);
-                  console.log(`📊 [Frontend] ===== END MESSAGES STATE UPDATE =====`);
+                  console.log(`📊 [Frontend] ===== END DIRECT MESSAGES STATE UPDATE =====`);
                   // Save to localStorage immediately
                   chatStorage.saveChatHistory(updatedMessages, user?.id);
                   return updatedMessages;
@@ -1329,13 +1328,27 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* Render structured medicine reply for structured messages */}
-                  {message.type === 'structured' && message.structuredData ? (
+                  {/* Direct AI message rendering - no complex structured logic needed */}
+                  {message.type === 'ai' && message.content ? (
+                    <div className="ai-response">
+                      <div className="message-text">
+                        {message.content && message.content.includes('**') ? (
+                          <div dangerouslySetInnerHTML={{
+                            __html: message.content
+                              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                              .replace(/\n/g, '<br>')
+                              .replace(/⚠️/g, '⚠️')
+                          }} />
+                        ) : (
+                          <span>{message.content || ''}</span>
+                        )}
+                      </div>
+                    </div>
+                  ) : message.type === 'structured' && message.structuredData ? (
                     <div className="structured-medicine-response">
                       <StructuredMedicineReply
                         response={message.structuredData}
                         onRender={() => {
-                          // Status reset is now handled directly in SSE data reception
                           console.log(`📊 [Frontend] Structured output rendered - status already reset in SSE handler`);
                         }}
                       />
