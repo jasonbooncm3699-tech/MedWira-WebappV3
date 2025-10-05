@@ -19,6 +19,7 @@ import { chatStorage, ChatMessage } from '@/lib/chat-storage';
 import { Share2 } from 'lucide-react';
 
 export default function Home() {
+  // Test deployment - simple change
   const { user, logout, isLoading, refreshUser, refreshUserData } = useAuth();
   
   // Helper function to extract first name from display_name
