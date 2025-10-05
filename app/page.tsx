@@ -552,6 +552,7 @@ export default function Home() {
     }
 
     try {
+      console.log(`📊 [Frontend] Starting fetch to /api/analyze-image-stream`);
       const response = await fetch('/api/analyze-image-stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -564,13 +565,26 @@ export default function Home() {
         })
       });
 
-      if (!response.body) throw new Error('No response body');
+      console.log(`📊 [Frontend] Fetch response received:`, {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
+      if (!response.body) {
+        console.error(`📊 [Frontend] No response body received`);
+        throw new Error('No response body');
+      }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
+      console.log(`📊 [Frontend] Starting SSE reader loop`);
 
       while (true) {
+        console.log(`📊 [Frontend] Reading next chunk...`);
         const { done, value } = await reader.read();
+        console.log(`📊 [Frontend] Read result:`, { done, hasValue: !!value, valueLength: value?.length });
         if (done) {
           console.log(`📊 [Frontend] SSE stream ended`);
           // If we're still analyzing and haven't received a complete result, there might be an issue
@@ -665,7 +679,12 @@ export default function Home() {
         }
       }
     } catch (error) {
-      console.error('SSE Error:', error);
+      console.error('📊 [Frontend] SSE Error:', error);
+      console.error('📊 [Frontend] Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : 'No stack'
+      });
       setAiStatus('idle');
       setIsAnalyzing(false);
 
