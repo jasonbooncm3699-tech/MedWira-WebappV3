@@ -315,41 +315,43 @@ Do not provide any other information. Only return the above format.`;
         
         console.log(`🧪 [${analysisId}] Active ingredient analysis:`, activeIngredientAnalysis);
         
-        const comprehensivePrompt = `Analyze this medicine and provide COMPACT, well-formatted information:
+        const comprehensivePrompt = `Analyze this medicine and provide COMPACT, well-formatted information starting with Packaging Detected:
 
-Packaging Detected: ${packagingType}
-Medicine: ${(dbResult as any).product} (${(dbResult as any).active_ingredient})
-Purpose: [What this medicine treats - single line]
+**Packaging Detected**: ${packagingType} containing tablets/capsules. The text "${extractedMedicineName}" is visible, suggesting the brand name. "${(dbResult as any).active_ingredient}" is also visible, indicating the active ingredients.
 
-Dosage Instructions:
+**Medicine**: ${(dbResult as any).product} (${(dbResult as any).active_ingredient})
+
+**Purpose**: [What this medicine treats - single line]
+
+**Dosage Instructions**:
 • Adults: [Dosage for adults]
 • Children: [Dosage for children] 
 • General: [General instructions]
 
-Side Effects:
+**Side Effects**:
 • Common: [Most common side effects]
 • Serious: [Serious side effects]
 • Overdose: [Overdose symptoms]
 
-Allergy Warning:
+**Allergy Warning**:
 • Contains: ${(dbResult as any).active_ingredient}
 • Reactions: [Possible allergic reactions]
 • Emergency: [What to do if allergic reaction occurs]
 
-Drug Interactions:
+**Drug Interactions**:
 • With medications: [Drug interactions]
 • With food/alcohol: [Food and alcohol interactions]
 
-Safety Notes:
+**Safety Notes**:
 • Children/Pregnancy: [Safety information]
 • Elderly/Driving: [Elderly and driving considerations]
 • Pre-existing conditions: [Conditions to consider]
 
-Storage: [Storage instructions - single line]
+**Storage**: [Storage instructions - single line]
 
 ${userAllergies ? `User allergies: ${userAllergies}` : ''}
 
-Disclaimer: For informational purposes only. Consult healthcare professional.
+**Disclaimer**: For informational purposes only. Consult healthcare professional.
 
 IMPORTANT: Use minimal line breaks. Keep sections compact. Use bullet points (•) for lists.`;
 
