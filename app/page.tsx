@@ -1396,6 +1396,13 @@ export default function Home() {
                     
                     {/* Box 4: LEFT */}
                     <div className="debug-box debug-left">4</div>
+                    
+                    {/* 5 boxes under BOTTOM for fine positioning */}
+                    <div className="debug-box debug-bottom-left">5</div>
+                    <div className="debug-box debug-bottom-center-left">6</div>
+                    <div className="debug-box debug-bottom-center">7</div>
+                    <div className="debug-box debug-bottom-center-right">8</div>
+                    <div className="debug-box debug-bottom-right">9</div>
                   </>
                 )}
                 

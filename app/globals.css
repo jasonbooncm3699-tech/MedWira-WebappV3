@@ -852,6 +852,35 @@ body {
   transform: translateY(-50%);
 }
 
+/* 5 boxes under BOTTOM for fine positioning */
+.debug-bottom-left {
+  bottom: -35px;
+  left: 0px;
+}
+
+.debug-bottom-center-left {
+  bottom: -35px;
+  left: 25%;
+  transform: translateX(-50%);
+}
+
+.debug-bottom-center {
+  bottom: -35px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.debug-bottom-center-right {
+  bottom: -35px;
+  left: 75%;
+  transform: translateX(-50%);
+}
+
+.debug-bottom-right {
+  bottom: -35px;
+  right: 0px;
+}
+
 .typing-indicator {
   display: flex;
   gap: 4px;
