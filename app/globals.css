@@ -782,12 +782,18 @@ body {
 
 /* External footer UNDER the chat bubble (not inside it) */
 .message-footer-external {
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: space-between;
-  margin-top: 4px;
-  margin-left: 50px; /* Align with message content */
-  margin-right: 50px; /* Align with message content */
+  margin-top: 8px !important;
+  margin-left: 50px !important; /* Align with message content */
+  margin-right: 50px !important; /* Align with message content */
+  /* Ensure it's outside the message bubble */
+  position: relative;
+  z-index: 1;
+  /* Override any existing footer styles */
+  background: transparent !important;
+  padding: 0 !important;
 }
 
 /* For AI messages, show share button on left, timestamp on right */
