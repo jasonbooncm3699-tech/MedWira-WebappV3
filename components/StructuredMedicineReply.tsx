@@ -4,22 +4,35 @@ import React from 'react';
 import { Pill, AlertTriangle, Shield, AlertCircle } from 'lucide-react';
 
 interface StructuredMedicineData {
-  // Gemini output format (API response format)
+  // Backend format (camelCase) - PRIMARY
+  medicineName?: string;
+  genericName?: string;
+  purpose?: string;
+  dosageInstructions?: string;
+  sideEffects?: string;
+  drugInteractions?: string;
+  safetyNotes?: string;
+  storage?: string;
+  allergyWarning?: string;
+  packagingDetected?: string;
+  disclaimer?: string;
+  activeIngredients?: string;
+  databaseVerified?: boolean;
+  confidence?: number;
+  language?: string;
+  rawAnalysis?: string;
+  
+  // Legacy format (snake_case) - FALLBACK
   medicine_name?: string;
   generic_name?: string;
-  purpose?: string;
   dosage_instructions?: string;
   side_effects?: string;
   drug_interactions?: string;
   safety_notes?: string;
-  storage?: string;
   allergy_warning?: string;
   packaging_detected?: string;
-  disclaimer?: string;
   active_ingredients?: string;
   database_verified?: boolean;
-  confidence?: number;
-  language?: string;
   raw_analysis?: string;
   
   // Legacy format (for backward compatibility)
@@ -28,7 +41,7 @@ interface StructuredMedicineData {
     content: string;
     details?: string[];
   };
-  sideEffects?: {
+  legacySideEffects?: {
     title: string;
     content: string;
     details?: string[];
@@ -52,8 +65,8 @@ interface StructuredMedicineReplyProps {
 
 const StructuredMedicineReply: React.FC<StructuredMedicineReplyProps> = ({ response, onRender }) => {
 
-  // Check if this is Gemini format (new) or legacy format
-  const isGeminiFormat = !!(response.medicine_name || response.purpose || response.dosage_instructions);
+  // Check if this is backend format (camelCase) or legacy format
+  const isGeminiFormat = !!(response.medicineName || response.medicine_name || response.purpose || response.dosageInstructions || response.dosage_instructions);
 
   // Call onRender callback when component is fully rendered
   React.useEffect(() => {
@@ -66,49 +79,49 @@ const StructuredMedicineReply: React.FC<StructuredMedicineReplyProps> = ({ respo
   }, [onRender]);
 
 
-  // Create sections based on format
+  // Create sections based on format - prioritize backend camelCase format
   const sections = isGeminiFormat ? [
     {
       id: 'dosage',
-      title: 'Dosage & Administration',
+      title: 'Dosage Instructions',
       icon: <Pill className="w-5 h-5" />,
-      data: response.dosage_instructions ? {
-        title: 'Dosage & Administration',
-        content: response.dosage_instructions,
-        details: [response.dosage_instructions]
+      data: (response.dosageInstructions || response.dosage_instructions) ? {
+        title: 'Dosage Instructions',
+        content: response.dosageInstructions || response.dosage_instructions || 'See detailed analysis below',
+        details: [response.dosageInstructions || response.dosage_instructions || 'See detailed analysis below']
       } : null,
       textColor: 'text-green-400'
     },
     {
       id: 'sideEffects',
-      title: 'Potential Side Effects',
+      title: 'Side Effects',
       icon: <AlertTriangle className="w-5 h-5" />,
-      data: response.side_effects ? {
-        title: 'Potential Side Effects',
-        content: response.side_effects,
-        details: [response.side_effects]
+      data: (response.sideEffects || response.side_effects) ? {
+        title: 'Side Effects',
+        content: response.sideEffects || response.side_effects || 'See detailed analysis',
+        details: [response.sideEffects || response.side_effects || 'See detailed analysis']
       } : null,
       textColor: 'text-yellow-400'
     },
     {
       id: 'interactions',
-      title: 'Key Drug Interactions',
+      title: 'Drug Interactions',
       icon: <Shield className="w-5 h-5" />,
-      data: response.drug_interactions ? {
-        title: 'Key Drug Interactions',
-        content: response.drug_interactions,
-        details: [response.drug_interactions]
+      data: (response.drugInteractions || response.drug_interactions) ? {
+        title: 'Drug Interactions',
+        content: response.drugInteractions || response.drug_interactions || 'See detailed analysis',
+        details: [response.drugInteractions || response.drug_interactions || 'See detailed analysis']
       } : null,
       textColor: 'text-orange-400'
     },
     {
       id: 'warnings',
-      title: 'Warnings & Contraindications',
+      title: 'Safety Notes',
       icon: <AlertCircle className="w-5 h-5" />,
-      data: response.safety_notes ? {
-        title: 'Warnings & Contraindications',
-        content: response.safety_notes,
-        details: [response.safety_notes]
+      data: (response.safetyNotes || response.safety_notes) ? {
+        title: 'Safety Notes',
+        content: response.safetyNotes || response.safety_notes || 'See detailed analysis',
+        details: [response.safetyNotes || response.safety_notes || 'See detailed analysis']
       } : null,
       textColor: 'text-red-400'
     }
@@ -166,8 +179,8 @@ const StructuredMedicineReply: React.FC<StructuredMedicineReplyProps> = ({ respo
       maxWidth: '100%',
       wordWrap: 'break-word'
     }}>
-      {/* Display raw analysis text with clean formatting */}
-      {response.raw_analysis && (
+      {/* Display raw analysis text with clean formatting - prioritize backend format */}
+      {(response.rawAnalysis || response.raw_analysis) && (
         <div className="raw-analysis-content" style={{
           fontSize: '14px',
           lineHeight: '1.4',
@@ -182,7 +195,7 @@ const StructuredMedicineReply: React.FC<StructuredMedicineReplyProps> = ({ respo
             margin: 0,
             padding: 0
           }}>
-            {formatAnalysisText(response.raw_analysis)}
+            {formatAnalysisText(response.rawAnalysis || response.raw_analysis || '')}
           </div>
         </div>
       )}
@@ -204,7 +217,7 @@ export const sampleMedicineData: StructuredMedicineData = {
       'Store at room temperature away from moisture'
     ]
   },
-  sideEffects: {
+  legacySideEffects: {
     title: 'Potential Side Effects',
     content: 'Common side effects include nausea, headache, and dizziness. Contact your doctor if you experience severe reactions.',
     details: [
