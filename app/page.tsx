@@ -647,6 +647,12 @@ export default function Home() {
                   medicineName: data.result.medicineName,
                   hasData: !!data.result.rawAnalysis
                 });
+                
+                // CRITICAL FIX: Force AI status to disappear immediately after receiving complete data
+                console.log(`📊 [Frontend] FORCING AI status to disappear after receiving complete data`);
+                setAiStatus('idle');
+                setIsAnalyzing(false);
+                
                 const structuredMessage = {
                   id: (Date.now() + 1).toString(),
                   type: 'structured' as const,
@@ -691,9 +697,7 @@ export default function Home() {
                   });
                 }
 
-                // Reset AI status and analyzing state after successful completion
-                // Don't reset immediately - let the structured output render first
-                console.log(`📊 [Frontend] Analysis complete - keeping status visible until output renders`);
+                console.log(`📊 [Frontend] Analysis complete - AI status forced to disappear`);
 
               } else if (data.type === 'error') {
                 // Handle error
@@ -1322,36 +1326,8 @@ export default function Home() {
                       <StructuredMedicineReply
                         response={message.structuredData}
                         onRender={() => {
-                          // Hide status only after structured message is fully rendered
-                          console.log(`📊 [Frontend] onRender callback fired for message:`, {
-                            messageId: message.id,
-                            lastMessageId: messages[messages.length - 1]?.id,
-                            messagesLength: messages.length,
-                            isLastMessage: message.id === messages[messages.length - 1]?.id
-                          });
-                          if (message.id === messages[messages.length - 1]?.id) {
-                            console.log(`📊 [Frontend] Structured output rendered - hiding status`);
-                            // Use setTimeout to ensure state update happens after render cycle
-                            setTimeout(() => {
-                              console.log(`📊 [Frontend] Executing status reset after timeout`);
-                              console.log(`📊 [Frontend] Current state before reset:`, {
-                                aiStatus: aiStatus,
-                                isAnalyzing: isAnalyzing
-                              });
-                              setAiStatus('idle');
-                              setIsAnalyzing(false);
-                              console.log(`📊 [Frontend] State reset calls made`);
-                              // Check state after a brief delay
-                              setTimeout(() => {
-                                console.log(`📊 [Frontend] State after reset:`, {
-                                  aiStatus: aiStatus,
-                                  isAnalyzing: isAnalyzing
-                                });
-                              }, 50);
-                            }, 100);
-                          } else {
-                            console.log(`📊 [Frontend] onRender fired but not for last message - status not hidden`);
-                          }
+                          // Status reset is now handled directly in SSE data reception
+                          console.log(`📊 [Frontend] Structured output rendered - status already reset in SSE handler`);
                         }}
                       />
                     </div>
