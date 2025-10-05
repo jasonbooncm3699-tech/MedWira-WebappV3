@@ -1334,8 +1334,20 @@ export default function Home() {
                             // Use setTimeout to ensure state update happens after render cycle
                             setTimeout(() => {
                               console.log(`📊 [Frontend] Executing status reset after timeout`);
+                              console.log(`📊 [Frontend] Current state before reset:`, {
+                                aiStatus: aiStatus,
+                                isAnalyzing: isAnalyzing
+                              });
                               setAiStatus('idle');
                               setIsAnalyzing(false);
+                              console.log(`📊 [Frontend] State reset calls made`);
+                              // Check state after a brief delay
+                              setTimeout(() => {
+                                console.log(`📊 [Frontend] State after reset:`, {
+                                  aiStatus: aiStatus,
+                                  isAnalyzing: isAnalyzing
+                                });
+                              }, 50);
                             }, 100);
                           } else {
                             console.log(`📊 [Frontend] onRender fired but not for last message - status not hidden`);
