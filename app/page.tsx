@@ -664,6 +664,12 @@ export default function Home() {
                 setMessages(prev => {
                   const updatedMessages = [...prev, structuredMessage];
                   console.log(`📊 [Frontend] Updated messages count:`, updatedMessages.length);
+                  console.log(`📊 [Frontend] Last message details:`, {
+                    id: structuredMessage.id,
+                    type: structuredMessage.type,
+                    hasStructuredData: !!structuredMessage.structuredData,
+                    medicineName: structuredMessage.structuredData?.medicineName
+                  });
                   // Save to localStorage immediately
                   chatStorage.saveChatHistory(updatedMessages, user?.id);
                   return updatedMessages;
