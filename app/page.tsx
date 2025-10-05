@@ -21,7 +21,7 @@ import { Share2 } from 'lucide-react';
 export default function Home() {
   // Test deployment - simple change
   const { user, logout, isLoading, refreshUser, refreshUserData } = useAuth();
-  
+
   // Helper function to extract first name from display_name
   const getFirstName = (displayName?: string): string => {
     if (!displayName) return 'User';
@@ -35,7 +35,7 @@ export default function Home() {
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
-  
+
   // Get welcome message in user's language
   const getWelcomeMessage = (lang: string): string => {
     const messages: { [key: string]: string } = {
@@ -105,7 +105,7 @@ export default function Home() {
       setShowRegistrationModal(true);
       return false;
     }
-    
+
     // Check if user has tokens available (defensive check)
     if (user && user.tokens <= 0) {
       const errorMessage = {
@@ -117,17 +117,17 @@ export default function Home() {
       setMessages(prev => [...prev, errorMessage]);
       return false;
     }
-    
+
     return true;
   };
 
   // Handle text input submission
   const handleTextSubmit = async () => {
     if (!inputText.trim()) return;
-    
+
     // Refresh user data to get latest token count before proceeding
     await refreshUserData();
-    
+
     // Check basic authentication (user exists) but NOT tokens yet
     if (!user) {
       setShowRegistrationModal(true);
@@ -136,7 +136,7 @@ export default function Home() {
 
     const userMessage = inputText.trim();
     setInputText('');
-    
+
     // Add user message to chat
     const newUserMessage = {
       id: Date.now().toString(),
@@ -144,18 +144,18 @@ export default function Home() {
       content: userMessage,
       timestamp: new Date()
     };
-    
+
     setMessages(prev => [...prev, newUserMessage]);
     setIsAnalyzing(true);
-    
+
     // FORCE DEFENSIVE PAYLOAD CREATION - Use ?? to force non-undefined, valid JSON types
-    const userId = user?.id ?? ''; 
+    const userId = user?.id ?? '';
     const imageBase64 = null; // Text-only query, always null
-    const textQuery = userMessage ?? ''; 
+    const textQuery = userMessage ?? '';
 
     // CRITICAL VALIDATION: Keep this check and add a user-facing error message
     if (!userId) {
-      setIsAnalyzing(false); 
+      setIsAnalyzing(false);
       // Add a chat message here: "Authentication required. Please log in to use AI analysis."
       const errorMessage = {
         id: (Date.now() + 1).toString(),
@@ -187,9 +187,9 @@ export default function Home() {
         // The body is now guaranteed to be valid JSON.
         body: JSON.stringify(payload)
       });
-      
+
       const result = await response.json();
-      
+
       if (response.status === 200 && result.status === 'SUCCESS') {
         // Add AI response
         const aiMessage = {
@@ -198,9 +198,9 @@ export default function Home() {
           content: result.data?.text || result.message || 'Analysis complete',
           timestamp: new Date()
         };
-        
+
         setMessages(prev => [...prev, aiMessage]);
-        
+
         // Add structured data if available (new Gemini format)
         if (result.data && (result.data.medicine_name || result.data.purpose)) {
           const structuredMessage = {
@@ -212,7 +212,7 @@ export default function Home() {
           };
           setMessages(prev => [...prev, structuredMessage]);
         }
-        
+
         // Update user tokens
         if (result.tokensRemaining !== undefined) {
           setUserTokens(result.tokensRemaining);
@@ -228,7 +228,7 @@ export default function Home() {
           timestamp: new Date()
         };
         setMessages(prev => [...prev, errorMessage]);
-        
+
         // Update tokens if provided
         if (result.tokensRemaining !== undefined) {
           setUserTokens(result.tokensRemaining);
@@ -286,10 +286,10 @@ export default function Home() {
       const isMobileDevice = window.innerWidth <= 767;
       setIsMobile(isMobileDevice);
     };
-    
+
     checkDevice();
     window.addEventListener('resize', checkDevice);
-    
+
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
@@ -297,11 +297,11 @@ export default function Home() {
   useEffect(() => {
     // Only run on client side after hydration
     if (typeof window === 'undefined') return;
-    
+
     const params = new URLSearchParams(window.location.search);
     if (params.get('session_refresh') === 'true') {
       console.log('🔄 Session refresh detected in page.tsx, updating user state...');
-      
+
       // Give auth context time to process the session
       setTimeout(() => {
         refreshUser();
@@ -322,12 +322,12 @@ export default function Home() {
       referral_count: user?.referral_count,
       isLoading: isLoading
     });
-    
+
     // Update local token state when user changes
     if (user?.tokens !== undefined) {
       setUserTokens(user.tokens);
     }
-    
+
     // CRITICAL: If user is authenticated but missing tokens or referral code, refresh data
     if (user && !isLoading) {
       if (user.tokens === 0 || !user.referral_code) {
@@ -362,9 +362,9 @@ export default function Home() {
         // If database has newer data, update localStorage
         if (history && history.length > 0) {
           const lastDbUpdate = new Date(Math.max(...history.map(h => new Date(h.created_at).getTime())));
-          const lastLocalUpdate = localMessages.length > 0 ? 
+          const lastLocalUpdate = localMessages.length > 0 ?
             new Date(Math.max(...localMessages.map(m => m.timestamp.getTime()))) : new Date(0);
-          
+
           if (lastDbUpdate > lastLocalUpdate) {
             console.log('🔄 Database has newer data, updating localStorage');
             // Convert scan history to messages format and save to localStorage
@@ -379,7 +379,7 @@ export default function Home() {
                 raw_analysis: `Medicine: ${scan.medicine_name}\nAnalysis completed on ${new Date(scan.created_at).toLocaleDateString()}`
               }
             }));
-            
+
             // Merge with existing messages and save
             const mergedMessages = [...localMessages.filter(m => !m.id.startsWith('scan_')), ...dbMessages];
             chatStorage.saveChatHistory(mergedMessages, user.id);
@@ -433,7 +433,7 @@ export default function Home() {
       // Detect if device is tablet (simple detection)
       const isTabletDevice = window.innerWidth >= 768 && window.innerWidth <= 1024;
       setIsTablet(isTabletDevice);
-      
+
       // Detect if device is mobile
       const isMobileDevice = window.innerWidth <= 767;
       setIsMobile(isMobileDevice);
@@ -443,10 +443,10 @@ export default function Home() {
           facingMode: { exact: 'environment' } // Force back camera
         }
       });
-      
+
       setCameraStream(stream);
       setShowCamera(true);
-      
+
     } catch (error) {
       console.error('Camera error:', error);
       alert('Camera access failed: ' + (error as Error).message + '\n\nTry:\n1. Allow camera permission\n2. Use HTTPS (https://localhost:3000)\n3. Use a modern browser');
@@ -489,7 +489,7 @@ export default function Home() {
 
     canvas.toBlob((blob) => {
       if (!blob) return;
-      
+
       const reader = new FileReader();
       reader.onload = () => {
         const imageBase64 = reader.result as string;
@@ -505,7 +505,7 @@ export default function Home() {
   const analyzeMedicineImageWithRealStatus = async (imageBase64: string) => {
     // Refresh user data to get latest token count before proceeding
     await refreshUserData();
-    
+
     // Check basic authentication (user exists) but NOT tokens yet
     if (!user) {
       setShowRegistrationModal(true);
@@ -532,13 +532,13 @@ export default function Home() {
     });
 
     // FORCE DEFENSIVE PAYLOAD CREATION - Use ?? to force non-undefined, valid JSON types
-    const userId = user?.id ?? ''; 
+    const userId = user?.id ?? '';
     const imageBase64Data = imageBase64 ?? null;
     const textQuery = "Please analyze this medicine image and provide detailed information.";
 
     // CRITICAL VALIDATION: Keep this check and add a user-facing error message
     if (!userId) {
-      setIsAnalyzing(false); 
+      setIsAnalyzing(false);
       setAiStatus('idle');
       // Add a chat message here: "Authentication required. Please log in to use AI analysis."
       const errorMessage = {
@@ -580,7 +580,7 @@ export default function Home() {
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6));
-              
+
               if (data.type === 'status' && data.status) {
                 // Real status update from backend
                 setAiStatus(data.status);
@@ -593,7 +593,7 @@ export default function Home() {
                   timestamp: new Date(),
                   structuredData: data.result
                 };
-                
+
                 setMessages(prev => {
                   const updatedMessages = [...prev, structuredMessage];
                   // Save to localStorage immediately
@@ -611,19 +611,19 @@ export default function Home() {
                 if (user) {
                   await fetchUserChatHistory();
                 }
-                
+
               } else if (data.type === 'error') {
                 // Handle error
                 setAiStatus('idle');
                 setIsAnalyzing(false);
-                
+
                 const errorMessage = {
                   id: (Date.now() + 1).toString(),
                   type: 'ai' as const,
                   content: `**Error**\n\n${data.error || 'Analysis failed. Please try again.'}`,
                   timestamp: new Date()
                 };
-                
+
                 setMessages(prev => {
                   const updatedMessages = [...prev, errorMessage];
                   // Save to localStorage immediately
@@ -641,14 +641,14 @@ export default function Home() {
       console.error('SSE Error:', error);
       setAiStatus('idle');
       setIsAnalyzing(false);
-      
+
       const errorMsg = {
         id: (Date.now() + 1).toString(),
         type: 'ai' as const,
         content: 'Sorry, I encountered an error while analyzing your medicine. Please try again.',
         timestamp: new Date()
       };
-      
+
       setMessages(prev => {
         const updatedMessages = [...prev, errorMsg];
         // Save to localStorage immediately
@@ -658,196 +658,6 @@ export default function Home() {
     }
   };
 
-  // REMOVED: Timer-based function - now using only real AI status updates
-    // Refresh user data to get latest token count before proceeding
-    await refreshUserData();
-    
-    // Check basic authentication (user exists) but NOT tokens yet
-    if (!user) {
-      setShowRegistrationModal(true);
-      return;
-    }
-
-    setIsAnalyzing(true);
-    setAiStatus('Analyzing image...');
-
-    // Create user message immediately
-    const userMessage = {
-      id: Date.now().toString(),
-      type: 'user' as const,
-      content: "I've uploaded an image of a medicine for identification.",
-      timestamp: new Date(),
-      image: imageBase64
-    };
-
-    setMessages(prev => {
-      const updatedMessages = [...prev, userMessage];
-      // Save to localStorage immediately
-      chatStorage.saveChatHistory(updatedMessages, user?.id);
-      return updatedMessages;
-    });
-
-    // FORCE DEFENSIVE PAYLOAD CREATION - Use ?? to force non-undefined, valid JSON types
-    const userId = user?.id ?? ''; 
-    const imageBase64Data = imageBase64 ?? null;
-    const textQuery = "Please analyze this medicine image and provide detailed information.";
-
-    // CRITICAL VALIDATION: Keep this check and add a user-facing error message
-    if (!userId) {
-      setIsAnalyzing(false); 
-      setAiStatus('idle');
-      // Add a chat message here: "Authentication required. Please log in to use AI analysis."
-      const errorMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai' as const,
-        content: "⚠️ **Authentication Required**\n\nAuthentication required. Please log in to use AI analysis.",
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-      return; // EXIT HERE ONLY IF UNAUTHENTICATED
-    }
-
-    // -------------------------------------------------------------
-    // DEBUGGING LOGS (Keep these to confirm execution)
-    console.log('🔍 Debug - Extracted values:', { userId, imageBase64: imageBase64Data ? 'BASE64_EXISTS' : null, textQuery });
-    // -------------------------------------------------------------
-
-    // Construct the GUARANTEED valid JSON payload
-    const payload = {
-      imageBase64: imageBase64Data,
-      userId: userId,
-      language: 'English',
-      textQuery: textQuery,
-    };
-
-    // DEBUG: Log the payload to ensure it's valid
-    console.log('🔍 Sending payload:', {
-      hasImageData: !!payload.imageBase64,
-      imageDataLength: payload.imageBase64?.length || 0,
-      userId: payload.userId,
-      textQuery: payload.textQuery,
-      payloadType: typeof payload
-    });
-
-    try {
-      // Real AI processing with actual status updates from Gemini pipeline
-      setAiStatus('Analyzing image...');
-      
-      // REMOVED: Timer-based status updates - now using real AI status callbacks
-
-      const response = await fetch('/api/analyze-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // The body is now guaranteed to be valid JSON.
-        body: JSON.stringify(payload)
-      });
-
-      const result = await response.json();
-      
-      // Debug: Log the actual result structure
-      console.log('🔍 [UI] API Response received:', {
-        status: result.status,
-        hasData: !!result.data,
-        dataKeys: result.data ? Object.keys(result.data) : [],
-        medicineName: result.data?.medicine_name,
-        purpose: result.data?.purpose,
-        rawAnalysis: result.data?.raw_analysis,
-        fullData: result.data
-      });
-      
-      // Additional validation
-      if (!result.status) {
-        console.error('❌ [UI] Missing status in API response:', result);
-      }
-      if (result.status === 'SUCCESS' && !result.data) {
-        console.error('❌ [UI] SUCCESS status but no data:', result);
-      }
-      
-      // Reset AI status
-      setAiStatus('idle');
-      
-      if (response.status === 200 && result.status === 'SUCCESS') {
-        // Create structured AI response message with comprehensive data
-        const structuredMessage = {
-          id: (Date.now() + 1).toString(),
-          type: 'structured' as const, // Use 'structured' type for medicine analysis
-          content: '', // Empty content - we'll use StructuredMedicineReply component
-          timestamp: new Date(),
-          structuredData: result.data,
-          rawAnalysis: result.data?.raw_analysis || result.data?.rawAnalysis || result.data?.text || 'Analysis completed'
-        };
-
-        // Update user tokens
-        if (result.tokensRemaining !== undefined) {
-          setUserTokens(result.tokensRemaining);
-          // Also refresh user data to get latest tokens and referral info
-          if (user) {
-            await refreshUserData();
-          }
-        }
-
-        // Add structured message to chat
-        setMessages(prev => {
-          const updatedMessages = [...prev, structuredMessage];
-          // Save to localStorage immediately
-          chatStorage.saveChatHistory(updatedMessages, user?.id);
-          return updatedMessages;
-        });
-
-        // Refresh chat history after successful analysis
-        if (user) {
-          await fetchUserChatHistory();
-        }
-
-      } else {
-        // Handle error responses (including insufficient tokens)
-        const errorMessage = {
-          id: (Date.now() + 1).toString(),
-          type: 'ai' as const,
-          content: `**${response.status === 402 ? '⚠️ Insufficient Tokens' : 'Error'}**\n\n${result.error || result.message || 'Analysis failed. Please try again.'}`,
-          timestamp: new Date()
-        };
-        
-        setMessages(prev => {
-          const updatedMessages = [...prev, errorMessage];
-          // Save to localStorage immediately
-          chatStorage.saveChatHistory(updatedMessages, user?.id);
-          return updatedMessages;
-        });
-      }
-
-    } catch (error) {
-      console.error('❌ [UI] Analysis error:', error);
-      
-      // Determine error type and provide specific message
-      let errorMessage = '**Error:** Analysis failed. Please try again with a clearer image.';
-      
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        errorMessage = '**Network Error:** Unable to connect to the server. Please check your internet connection and try again.';
-      } else if (error instanceof Error) {
-        errorMessage = `**Error:** ${error.message}`;
-      }
-      
-      const errorMsg = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai' as const,
-        content: errorMessage,
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => {
-        const updatedMessages = [...prev, errorMsg];
-        // Save to localStorage immediately
-        chatStorage.saveChatHistory(updatedMessages, user?.id);
-        return updatedMessages;
-      });
-    } finally {
-      setIsAnalyzing(false);
-      setAiStatus('idle');
-    }
-  };
 
   // Get upload message in user's language
   const getUploadMessage = (lang: string): string => {
@@ -930,8 +740,8 @@ export default function Home() {
           }}>
             Setting up your medicine assistant
           </p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             style={{
               marginTop: '20px',
               padding: '8px 16px',
@@ -960,8 +770,8 @@ export default function Home() {
       {/* Header */}
       <header className="header">
           <div className="header-left">
-          <button 
-            className="burger-btn" 
+          <button
+            className="burger-btn"
             aria-label="Toggle menu"
             onClick={() => setSideNavOpen(!sideNavOpen)}
           >
@@ -970,7 +780,7 @@ export default function Home() {
           <button className="new-chat-header-btn">
               <Plus size={16} />
             </button>
-          <select 
+          <select
             className="language-select"
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
@@ -999,16 +809,16 @@ export default function Home() {
             <option value="Lao">{isMobile ? 'LA' : 'Lao'}</option>
             </select>
           </div>
-          
+
           <div className="logo">
-            <Image 
-              src="/MedWira logo.001.svg" 
-              alt="MedWira" 
+            <Image
+              src="/MedWira logo.001.svg"
+              alt="MedWira"
               className="header-logo"
               priority
             />
           </div>
-          
+
           <div className="header-right">
           {user ? (
             <div className="user-dropdown">
@@ -1040,8 +850,8 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <button 
-              className="auth-btn" 
+            <button
+              className="auth-btn"
               onClick={() => {
                 console.log('🔐 Sign In / Sign Up button clicked');
                 console.log('🔐 Current showAuthModal state:', showAuthModal);
@@ -1066,7 +876,7 @@ export default function Home() {
               <Plus size={16} />
               New Chat
             </button>
-          <button 
+          <button
             className="close-nav"
             onClick={() => setSideNavOpen(false)}
           >
@@ -1080,8 +890,8 @@ export default function Home() {
               <div className="chat-list">
                 {scanHistory.length > 0 ? (
                   scanHistory.slice(0, 5).map((scan, index) => (
-                    <div 
-                      key={scan.id} 
+                    <div
+                      key={scan.id}
                       className="chat-item"
                       onClick={() => {
                         // Load previous conversation
@@ -1092,7 +902,7 @@ export default function Home() {
                           image: scan.image_url,
                           timestamp: new Date(scan.created_at)
                         };
-                        
+
                         const aiResponse = {
                           id: `ai-history-${scan.id}`,
                           type: 'ai' as const,
@@ -1127,7 +937,7 @@ export default function Home() {
                           } : undefined,
                           timestamp: new Date(scan.created_at)
                         };
-                        
+
                         setMessages([previousMessage, aiResponse]);
                       }}
                     >
@@ -1156,17 +966,17 @@ export default function Home() {
             <div className="user-info">
               <div className="user-avatar">
                 {user?.avatar_url && user.avatar_url.trim() !== '' ? (
-                  <Image 
-                    src={user.avatar_url} 
-                    alt={getFirstName(user?.display_name) || user?.email} 
+                  <Image
+                    src={user.avatar_url}
+                    alt={getFirstName(user?.display_name) || user?.email}
                     className="nav-avatar-image"
                     width={32}
                     height={32}
                   />
                 ) : (
-                  <div 
+                  <div
                     className="nav-avatar-initials"
-                    style={{ 
+                    style={{
                       backgroundColor: generateAvatarColor(user?.display_name || user?.name || user?.email),
                       color: '#ffffff',
                       fontSize: '11px',
@@ -1193,12 +1003,12 @@ export default function Home() {
                 )}
               </div>
             </div>
-            
+
             {/* Compact Referral Code Button */}
             <div className="referral-section">
               <p className="referral-header-text">Share to earn free tokens</p>
               {user?.referral_code ? (
-                <CompactReferralButton 
+                <CompactReferralButton
                   referralCode={user.referral_code}
                   className="nav-referral-button"
                 />
@@ -1212,14 +1022,14 @@ export default function Home() {
                 </div>
               )}
             </div>
-            
-            <button 
+
+            <button
               className="nav-faq-btn"
               onClick={() => setShowFAQ(!showFAQ)}
             >
               {showFAQ ? 'Hide FAQ' : 'FAQ'}
             </button>
-            
+
             {/* Real Status Updates Toggle */}
             <div className="status-toggle" style={{
               marginTop: '12px',
@@ -1230,7 +1040,7 @@ export default function Home() {
               color: '#888'
             }}>
               <div style={{ marginBottom: '4px' }}>Status Updates:</div>
-              <button 
+              <button
                 onClick={() => setUseRealStatusUpdates(!useRealStatusUpdates)}
                 style={{
                   background: useRealStatusUpdates ? '#00d4ff' : 'rgba(255, 255, 255, 0.1)',
@@ -1246,7 +1056,7 @@ export default function Home() {
                 {useRealStatusUpdates ? 'Real-time' : 'Simulated'}
               </button>
             </div>
-            
+
             {/* Chat Storage Info */}
             <div className="storage-info" style={{
               marginTop: '12px',
@@ -1257,7 +1067,7 @@ export default function Home() {
               color: '#888'
             }}>
               <div>💾 Chat saved locally</div>
-              <button 
+              <button
                 onClick={() => {
                   chatStorage.clearChatHistory();
                   setMessages([{
@@ -1280,7 +1090,7 @@ export default function Home() {
                 Clear chat history
               </button>
             </div>
-            
+
             <p className="copyright">@ 2025 MedWira.com. AI Powered medicine database</p>
           </div>
         </nav>
@@ -1291,26 +1101,26 @@ export default function Home() {
             <div className="faq-content">
               <div className="faq-header">
                 <h2>Frequently Asked Questions</h2>
-                <button 
+                <button
                   className="faq-close"
                   onClick={() => setShowFAQ(false)}
                 >
                   <X size={20} />
                 </button>
               </div>
-              
+
               <div className="faq-section">
                 <h3>📱 How to Use MedWira AI</h3>
                 <div className="faq-item">
                   <h4>How do I scan a medicine?</h4>
                   <p>Click the camera button (📷) or upload button (📁) in the input area. Take a clear photo of the medicine packaging, label, or pill. Our AI will analyze it instantly.</p>
                 </div>
-                
+
                 <div className="faq-item">
                   <h4>What information will I get?</h4>
                   <p>You&apos;ll receive detailed information including medicine name, active ingredients, dosage, side effects, interactions, and usage instructions.</p>
                 </div>
-                
+
                 <div className="faq-item">
                   <h4>Is the camera feature free?</h4>
                   <p>Yes! Camera scanning is free for all users. You get 10 free scans per day, with additional scans available through our token system.</p>
@@ -1323,12 +1133,12 @@ export default function Home() {
                   <h4>Do I need to sign up?</h4>
                   <p>No! You can use MedWira AI without an account. However, signing up allows you to save chat history and get more tokens.</p>
                 </div>
-                
+
                 <div className="faq-item">
                   <h4>How do I sign up?</h4>
                   <p>Click &quot;Sign In / Sign Up&quot; in the header, then choose &quot;Sign Up&quot;. You can use Google, Apple, or email to create your account.</p>
                 </div>
-                
+
                 <div className="faq-item">
                   <h4>What are tokens?</h4>
                   <p>Tokens are used for additional scans beyond your free daily limit. You earn tokens by signing up, referring friends, or purchasing premium plans.</p>
@@ -1341,12 +1151,12 @@ export default function Home() {
                   <h4>How accurate is the medicine identification?</h4>
                   <p>Our AI is trained on extensive medicine databases and achieves high accuracy. However, always consult healthcare professionals for medical decisions.</p>
                 </div>
-                
+
                 <div className="faq-item">
                   <h4>Can I scan any medicine?</h4>
                   <p>Yes! MedWira can identify prescription drugs, over-the-counter medicines, supplements, and herbal products from around the world.</p>
                 </div>
-                
+
                 <div className="faq-item">
                   <h4>What if the medicine isn&apos;t recognized?</h4>
                   <p>If our AI can&apos;t identify the medicine, try taking a clearer photo of the packaging or label. You can also describe the medicine in text.</p>
@@ -1359,12 +1169,12 @@ export default function Home() {
                   <h4>What languages are supported?</h4>
                   <p>Currently, MedWira responds in English, but you can ask questions in your preferred language. We&apos;re working on multi-language support.</p>
                 </div>
-                
+
                 <div className="faq-item">
                   <h4>How do I change the language?</h4>
                   <p>Use the language selector in the header to choose your preferred language. The AI will respond in the selected language.</p>
                 </div>
-                
+
                 <div className="faq-item">
                   <h4>Is this a replacement for medical advice?</h4>
                   <p>No! MedWira provides information only. Always consult healthcare professionals for medical advice, diagnosis, or treatment decisions.</p>
@@ -1377,12 +1187,12 @@ export default function Home() {
                   <h4>Camera not working?</h4>
                   <p>Make sure you&apos;re using HTTPS or localhost. Allow camera permissions in your browser. Try refreshing the page or using the upload button instead.</p>
                 </div>
-                
+
                 <div className="faq-item">
                   <h4>App not loading?</h4>
                   <p>Check your internet connection. Clear your browser cache. Try refreshing the page or using a different browser.</p>
                 </div>
-                
+
                 <div className="faq-item">
                   <h4>Need more help?</h4>
                   <p>Contact us through the app or visit our support page. We&apos;re here to help with any technical issues or questions.</p>
@@ -1407,12 +1217,12 @@ export default function Home() {
                       <Image src={message.image} alt="Uploaded medicine" width={200} height={200} />
                     </div>
                   )}
-                  
+
                   {/* Render structured medicine reply for structured messages */}
                   {message.type === 'structured' && message.structuredData ? (
                     <div className="structured-medicine-response">
-                      <StructuredMedicineReply 
-                        response={message.structuredData} 
+                      <StructuredMedicineReply
+                        response={message.structuredData}
                         onRender={() => {
                           // Hide status only after structured message is fully rendered
                           if (message.id === messages[messages.length - 1]?.id) {
@@ -1425,7 +1235,7 @@ export default function Home() {
                   ) : (
                     <div className="message-text">
                       {message.content && message.content.includes('**') ? (
-                        <div dangerouslySetInnerHTML={{ 
+                        <div dangerouslySetInnerHTML={{
                           __html: message.content
                             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                             .replace(/\n/g, '<br>')
@@ -1436,10 +1246,10 @@ export default function Home() {
                       )}
                       {/* Display raw analysis text for AI messages */}
                       {message.type === 'ai' && message.rawAnalysis && (
-                        <div className="raw-analysis-text" style={{ 
-                          marginTop: '8px', 
-                          padding: '8px 12px', 
-                          backgroundColor: 'rgba(255, 255, 255, 0.05)', 
+                        <div className="raw-analysis-text" style={{
+                          marginTop: '8px',
+                          padding: '8px 12px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
                           borderRadius: '8px',
                           fontSize: '14px',
                           lineHeight: '1.4',
@@ -1451,7 +1261,7 @@ export default function Home() {
                     </div>
                   )}
                 </div>
-                
+
                 {/* Simple share icon at bottom of chat */}
                 {(message.type === 'ai' || message.type === 'structured') && message.id !== '1' && (
                   <div className="share-icon-container" style={{
@@ -1460,14 +1270,14 @@ export default function Home() {
                     marginTop: '8px',
                     marginLeft: '50px' // Align with message content
                   }}>
-                    <svg 
-                      width="16" 
-                      height="16" 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      strokeWidth="2" 
-                      strokeLinecap="round" 
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
                       strokeLinejoin="round"
                       onClick={() => shareToWhatsApp(message.rawAnalysis || message.content)}
                       style={{
@@ -1489,24 +1299,24 @@ export default function Home() {
                     </svg>
                   </div>
                 )}
-                  
+
                   <div className="message-footer">
                   <div className="message-time">
-                    {message.timestamp.toLocaleTimeString('en-US', { 
-                      hour: '2-digit', 
+                    {message.timestamp.toLocaleTimeString('en-US', {
+                      hour: '2-digit',
                       minute: '2-digit',
-                      hour12: true 
+                      hour12: true
                     })}
                   </div>
                 </div>
               </div>
             ))}
-            
+
           {isAnalyzing && (
             <AIStatusDisplay status={aiStatus} />
           )}
           </div>
-          
+
           <div className="input-container">
             {/* Allergy Input Field */}
             <div className="allergy-input-wrapper">
@@ -1518,7 +1328,7 @@ export default function Home() {
                 onChange={(e) => setAllergy(e.target.value)}
               />
             </div>
-            
+
             <div className="input-wrapper">
               <input
                 type="file"
@@ -1530,15 +1340,15 @@ export default function Home() {
               <label htmlFor="upload" className="upload-btn">
                 <Upload size={18} />
             </label>
-              
-              <button 
+
+              <button
                 className="camera-btn"
-              title="Take photo with camera" 
+              title="Take photo with camera"
                 onClick={handleCameraCapture}
               >
                 <Camera size={18} />
               </button>
-              
+
               <div className="text-input-wrapper">
                 <input
                   type="text"
@@ -1548,7 +1358,7 @@ export default function Home() {
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyPress={handleKeyPress}
                 />
-                <button 
+                <button
                   className="send-btn"
                   onClick={handleTextSubmit}
                   disabled={!inputText.trim() || isAnalyzing}
@@ -1562,27 +1372,27 @@ export default function Home() {
 
       {/* Camera Modal */}
         {showCamera && (
-        <div style={{ 
-          position: 'fixed', 
-          top: 0, 
-          left: 0, 
-          width: '100%', 
-          height: '100%', 
-          background: 'black', 
-          zIndex: 1000 
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'black',
+          zIndex: 1000
         }}>
-          <button 
-            onClick={closeCamera} 
-            style={{ 
-              position: 'absolute', 
-              top: '20px', 
-              right: '20px', 
-              zIndex: 1001, 
-              background: 'red', 
-              color: 'white', 
-              border: 'none', 
-              padding: '10px', 
-              borderRadius: '8px' 
+          <button
+            onClick={closeCamera}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              zIndex: 1001,
+              background: 'red',
+              color: 'white',
+              border: 'none',
+              padding: '10px',
+              borderRadius: '8px'
             }}
           >
               Close
@@ -1595,17 +1405,17 @@ export default function Home() {
               }}
               autoPlay
             playsInline
-            style={{ 
-              width: '100%', 
+            style={{
+              width: '100%',
               height: '100%',
               transform: isTablet ? 'scaleX(-1)' : 'none' // Fix mirroring on tablets only
             }}
           />
-          <div style={{ 
-            position: 'absolute', 
-            bottom: '20px', 
-            left: '50%', 
-            transform: 'translateX(-50%)', 
+          <div style={{
+            position: 'absolute',
+            bottom: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -1628,11 +1438,11 @@ export default function Home() {
             >
               <Camera size={30} color="white" />
             </button>
-            <p style={{ 
-              color: 'white', 
-              textAlign: 'center', 
-              background: 'rgba(0,0,0,0.7)', 
-              padding: '8px 16px', 
+            <p style={{
+              color: 'white',
+              textAlign: 'center',
+              background: 'rgba(0,0,0,0.7)',
+              padding: '8px 16px',
               borderRadius: '8px',
               margin: 0,
               fontSize: '14px'
@@ -1683,7 +1493,7 @@ export default function Home() {
                 <X size={20} />
               </button>
             </div>
-            
+
             <div style={{
               marginBottom: '24px',
               lineHeight: '1.6'
@@ -1695,7 +1505,7 @@ export default function Home() {
               }}>
                 <strong style={{color: '#00d4ff'}}>Free 30 tokens, No credit card</strong>
               </p>
-              
+
               <div style={{
                 background: 'rgba(0, 212, 255, 0.1)',
                 border: '1px solid rgba(0, 212, 255, 0.3)',
@@ -1758,7 +1568,7 @@ export default function Home() {
               >
                 Sign Up
               </button>
-              
+
               <button
                 onClick={() => setShowRegistrationModal(false)}
                 style={{

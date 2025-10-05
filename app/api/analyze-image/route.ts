@@ -71,10 +71,13 @@ export async function POST(request: NextRequest) {
 
     // Analyze the image using the comprehensive 10-step flow
     console.log('🚀 Starting comprehensive medicine analysis with 10-step flow');
-    const result = await geminiAnalyzer.analyzeMedicineImage(
+    const result = await geminiAnalyzer.analyzeMedicineImageWithStatus(
       imageBase64,
       language,
-      allergy || ''
+      allergy || '',
+      (status: string) => {
+        console.log(`📊 Analysis status: ${status}`);
+      }
     );
 
     // Only deduct token and save history if analysis was successful
