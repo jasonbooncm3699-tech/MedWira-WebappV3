@@ -807,6 +807,51 @@ body {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Make AI message container relative for debug box positioning */
+.message.ai {
+  position: relative;
+}
+
+/* Debug positioning boxes around AI chat bubbles */
+.debug-box {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  background: rgba(255, 0, 0, 0.8);
+  border: 2px solid yellow;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  z-index: 1000;
+}
+
+.debug-top {
+  top: -35px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.debug-right {
+  top: 50%;
+  right: -35px;
+  transform: translateY(-50%);
+}
+
+.debug-bottom {
+  bottom: -35px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.debug-left {
+  top: 50%;
+  left: -35px;
+  transform: translateY(-50%);
+}
+
 .typing-indicator {
   display: flex;
   gap: 4px;
