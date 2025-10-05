@@ -1342,26 +1342,28 @@ export default function Home() {
                           <span>{message.content || ''}</span>
                         )}
                       </div>
-                      {/* Share button inside AI chat bubble at bottom right */}
-                      <div className="message-share-internal">
-                        <Share2 
-                          size={14}
-                          onClick={() => shareToWhatsApp(message.content)}
-                          style={{
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            color: '#00d4ff'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'scale(1.1)';
-                            e.currentTarget.style.background = 'rgba(0, 212, 255, 0.2)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'scale(1)';
-                            e.currentTarget.style.background = 'none';
-                          }}
-                        />
-                      </div>
+                      {/* Share button inside AI chat bubble at bottom right (except greeting message) */}
+                      {message.id !== '1' && (
+                        <div className="message-share-internal">
+                          <Share2 
+                            size={14}
+                            onClick={() => shareToWhatsApp(message.content)}
+                            style={{
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              color: '#00d4ff'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'scale(1.1)';
+                              e.currentTarget.style.background = 'rgba(0, 212, 255, 0.2)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'scale(1)';
+                              e.currentTarget.style.background = 'none';
+                            }}
+                          />
+                        </div>
+                      )}
                     </div>
                   ) : message.type === 'structured' && message.structuredData ? (
                     <div className="structured-medicine-response">
