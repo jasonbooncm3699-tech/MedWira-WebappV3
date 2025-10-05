@@ -588,9 +588,11 @@ export default function Home() {
                 // Real status update from backend
                 setAiStatus(data.status);
               } else if (data.type === 'complete' && data.result) {
-                // Analysis completed
-                setAiStatus('idle');
-                setIsAnalyzing(false);
+                // Analysis completed - delay hiding status to allow output to render
+                setTimeout(() => {
+                  setAiStatus('idle');
+                  setIsAnalyzing(false);
+                }, 2000); // 2 second delay to ensure output is visible
                 
                 // Handle the result
                 const structuredMessage = {
