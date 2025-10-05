@@ -14,7 +14,7 @@ import AIStatusDisplay from '@/components/AIStatusDisplay';
 import { getInitials, generateAvatarColor } from '@/lib/avatar-utils';
 import { MessageFormatter } from '@/lib/message-formatter';
 import { DatabaseService } from '@/lib/supabase';
-import { getUserScanHistory } from '@/lib/npraDatabase';
+// Using DatabaseService instead of broken getUserScanHistory import
 import { chatStorage, ChatMessage } from '@/lib/chat-storage';
 import { Share2 } from 'lucide-react';
 
@@ -355,9 +355,17 @@ export default function Home() {
         }
 
         // Then, fetch from database for sync
-        const history = await getUserScanHistory(user.id);
-        setScanHistory(history || []);
-        console.log('✅ Scan history loaded from database:', history?.length || 0, 'conversations');
+        let history: any[] = [];
+        try {
+          console.log('🔍 Calling DatabaseService.getUserScanHistory for user:', user.id);
+          history = await DatabaseService.getUserScanHistory(user.id);
+          setScanHistory(history || []);
+          console.log('✅ Scan history loaded from database:', history?.length || 0, 'conversations');
+        } catch (error) {
+          console.error('❌ Error fetching scan history:', error);
+          // Don't fail the entire function if scan history fails
+          setScanHistory([]);
+        }
 
         // If database has newer data, update localStorage
         if (history && history.length > 0) {

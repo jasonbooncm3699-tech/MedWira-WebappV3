@@ -24,6 +24,33 @@ function getSupabaseClient() {
   return supabaseClient;
 }
 
+// MOVED TO TOP: getUserScanHistory function
+export async function getUserScanHistory(userId: string, limit: number = 50): Promise<any[]> {
+    console.log(`🔍 Getting scan history for user: ${userId}`);
+    
+    try {
+        const supabase = getSupabaseClient();
+        
+        const { data, error } = await supabase
+            .from('scan_history')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(limit);
+        
+        if (error) {
+            console.error('❌ Scan history fetch error:', error);
+            throw error;
+        }
+        
+        console.log(`✅ Retrieved ${data?.length || 0} scan history records for user ${userId}`);
+        return data || [];
+    } catch (error) {
+        console.error('❌ Error in getUserScanHistory:', error);
+        return [];
+    }
+}
+
 // Type definitions
 export interface NPRAProduct {
   id: string;
@@ -359,23 +386,3 @@ export async function saveScanHistory(scanData: {
  * @param limit - Maximum number of records to return (default: 50)
  * @returns Array of scan history records
  */
-export async function getUserScanHistory(userId: string, limit: number = 50): Promise<any[]> {
-    console.log(`🔍 Getting scan history for user: ${userId}`);
-    
-    const supabase = getSupabaseClient();
-    
-    const { data, error } = await supabase
-        .from('scan_history')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-    
-    if (error) {
-        console.error('❌ Scan history fetch error:', error);
-        throw error;
-    }
-    
-    console.log(`✅ Retrieved ${data?.length || 0} scan history records for user ${userId}`);
-    return data || [];
-}
