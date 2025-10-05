@@ -1317,9 +1317,6 @@ export default function Home() {
                   {/* Render structured medicine reply for structured messages */}
                   {message.type === 'structured' && message.structuredData ? (
                     <div className="structured-medicine-response">
-                      <div style={{background: 'red', color: 'white', padding: '10px'}}>
-                        TEST: StructuredMedicineReply should render here
-                      </div>
                       <StructuredMedicineReply
                         response={message.structuredData}
                         onRender={() => {
