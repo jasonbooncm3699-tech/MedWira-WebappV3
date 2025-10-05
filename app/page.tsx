@@ -645,8 +645,15 @@ export default function Home() {
                   structuredData: data.result
                 };
 
+                console.log(`📊 [Frontend] Adding structured message:`, {
+                  messageId: structuredMessage.id,
+                  hasStructuredData: !!structuredMessage.structuredData,
+                  medicineName: structuredMessage.structuredData?.medicineName
+                });
+
                 setMessages(prev => {
                   const updatedMessages = [...prev, structuredMessage];
+                  console.log(`📊 [Frontend] Updated messages count:`, updatedMessages.length);
                   // Save to localStorage immediately
                   chatStorage.saveChatHistory(updatedMessages, user?.id);
                   return updatedMessages;

@@ -64,15 +64,22 @@ interface StructuredMedicineReplyProps {
 }
 
 const StructuredMedicineReply: React.FC<StructuredMedicineReplyProps> = ({ response, onRender }) => {
+  console.log(`📊 [StructuredMedicineReply] Component rendering with:`, {
+    medicineName: response.medicineName || response.medicine_name,
+    hasOnRender: !!onRender,
+    responseKeys: Object.keys(response)
+  });
 
   // Check if this is backend format (camelCase) or legacy format
   const isGeminiFormat = !!(response.medicineName || response.medicine_name || response.purpose || response.dosageInstructions || response.dosage_instructions);
 
   // Call onRender callback when component is fully rendered
   React.useEffect(() => {
+    console.log(`📊 [StructuredMedicineReply] Component mounted, onRender exists:`, !!onRender);
     if (onRender) {
       // Use requestAnimationFrame to ensure DOM is updated
       requestAnimationFrame(() => {
+        console.log(`📊 [StructuredMedicineReply] Calling onRender callback`);
         onRender();
       });
     }
