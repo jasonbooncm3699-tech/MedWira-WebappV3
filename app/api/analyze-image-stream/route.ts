@@ -78,24 +78,25 @@ export async function POST(request: NextRequest) {
 
             // Save scan history and deduct token after successful analysis
             if (userId && result.success) {
-              // Save scan history
+              // TEMPORARILY DISABLED: Save scan history
               try {
-                await saveScanHistory({
-                  user_id: userId,
-                  image_url: imageBase64,
-                  medicine_name: result.medicineName,
-                  generic_name: result.genericName,
-                  dosage: result.dosage,
-                  side_effects: result.sideEffects,
-                  interactions: result.interactions,
-                  warnings: result.warnings,
-                  storage: result.storage,
-                  category: result.category,
-                  confidence: result.confidence,
-                  language: language || 'English',
-                  allergies: userAllergies || null,
-                });
-                console.log(`✅ Scan history saved for user ${userId}`);
+                console.log(`🔍 Attempting to save scan history for user ${userId}`);
+                // await saveScanHistory({
+                //   user_id: userId,
+                //   image_url: imageBase64,
+                //   medicine_name: result.medicineName,
+                //   generic_name: result.genericName,
+                //   dosage: result.dosage,
+                //   side_effects: result.sideEffects,
+                //   interactions: result.interactions,
+                //   warnings: result.warnings,
+                //   storage: result.storage,
+                //   category: result.category,
+                //   confidence: result.confidence,
+                //   language: language || 'English',
+                //   allergies: userAllergies || null,
+                // });
+                console.log(`✅ Scan history save disabled for debugging`);
               } catch (error) {
                 console.error('Error saving scan history:', error);
                 // Don't fail the request if saving history fails
@@ -116,12 +117,18 @@ export async function POST(request: NextRequest) {
             }
 
             // Send final result
+            console.log(`📊 [SSE] Sending final result to frontend:`, {
+              success: result.success,
+              medicineName: result.medicineName,
+              hasData: !!result.rawAnalysis
+            });
             const finalData = `data: ${JSON.stringify({ 
               type: 'complete', 
               result 
             })}\n\n`;
             controller.enqueue(encoder.encode(finalData));
             controller.close();
+            console.log(`📊 [SSE] Stream closed successfully`);
 
           } catch (error) {
             console.error('Analysis error:', error);

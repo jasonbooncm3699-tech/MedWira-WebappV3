@@ -586,6 +586,11 @@ export default function Home() {
                 setAiStatus(data.status);
               } else if (data.type === 'complete' && data.result) {
                 // Handle the result
+                console.log(`📊 [Frontend] Received complete result:`, {
+                  success: data.result.success,
+                  medicineName: data.result.medicineName,
+                  hasData: !!data.result.rawAnalysis
+                });
                 const structuredMessage = {
                   id: (Date.now() + 1).toString(),
                   type: 'structured' as const,
