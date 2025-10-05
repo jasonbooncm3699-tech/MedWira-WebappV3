@@ -1317,24 +1317,17 @@ export default function Home() {
                   )}
 
                   {/* Render structured medicine reply for structured messages */}
-                  {(() => {
-                    const shouldRender = message.type === 'structured' && message.structuredData;
-                    console.log(`📊 [Frontend] Structured rendering check:`, {
-                      messageId: message.id,
-                      messageType: message.type,
-                      hasStructuredData: !!message.structuredData,
-                      shouldRender: shouldRender
-                    });
-                    return shouldRender;
-                  })() ? (
+                  {message.type === 'structured' && message.structuredData ? (
                     <div className="structured-medicine-response">
                       <StructuredMedicineReply
                         response={message.structuredData}
                         onRender={() => {
-                          // Hide status after structured message is fully rendered
-                          console.log(`📊 [Frontend] Structured output rendered - hiding status`);
-                          setAiStatus('idle');
-                          setIsAnalyzing(false);
+                          // Hide status only after structured message is fully rendered
+                          if (message.id === messages[messages.length - 1]?.id) {
+                            console.log(`📊 [Frontend] Structured output rendered - hiding status`);
+                            setAiStatus('idle');
+                            setIsAnalyzing(false);
+                          }
                         }}
                       />
                     </div>
