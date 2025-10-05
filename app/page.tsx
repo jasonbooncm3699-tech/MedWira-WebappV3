@@ -1342,6 +1342,35 @@ export default function Home() {
                           <span>{message.content || ''}</span>
                         )}
                       </div>
+                      {/* Share button inside AI chat bubble at bottom right */}
+                      <div className="message-share-internal">
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          onClick={() => shareToWhatsApp(message.content)}
+                          style={{
+                            opacity: 0.6,
+                            cursor: 'pointer',
+                            transition: 'opacity 0.2s ease',
+                            color: '#ccc'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.opacity = '1';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.opacity = '0.6';
+                          }}
+                        >
+                          {/* Right-pointing arrow with curved tail */}
+                          <path d="M17 8l4 4-4 4M19 12H3"/>
+                        </svg>
+                      </div>
                     </div>
                   ) : message.type === 'structured' && message.structuredData ? (
                     <div className="structured-medicine-response">
@@ -1382,8 +1411,8 @@ export default function Home() {
                   )}
                 </div>
                 
-                {/* Timestamp for AI messages at bottom right */}
-                {message.type === 'ai' && (
+                {/* Timestamp for AI messages at bottom right (except greeting message) */}
+                {message.type === 'ai' && message.id !== '1' && (
                   <div className="message-timestamp-external timestamp-bottom-right">
                     <div className="message-time">
                       {message.timestamp.toLocaleTimeString('en-US', {

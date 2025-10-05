@@ -807,8 +807,13 @@ body {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Make AI message container relative for debug box positioning */
+/* Make AI message container relative for positioning */
 .message.ai {
+  position: relative;
+}
+
+/* Make AI response container relative for internal share button */
+.ai-response {
   position: relative;
 }
 
@@ -901,6 +906,24 @@ body {
   padding: 2px 4px;
   background: rgba(0, 0, 0, 0.3);
   border-radius: 4px;
+}
+
+/* Share button inside AI chat bubble at bottom right */
+.message-share-internal {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.message-share-internal:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .typing-indicator {
