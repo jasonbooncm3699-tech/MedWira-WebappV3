@@ -695,13 +695,8 @@ export default function Home() {
                   });
                 }
 
-                // Refresh chat history after successful analysis (async, non-blocking)
-                if (user) {
-                  fetchUserChatHistory().catch(error => {
-                    console.error('❌ Background chat history refresh failed:', error);
-                    // Don't let this affect the main flow
-                  });
-                }
+                // Note: fetchUserChatHistory() removed to prevent overwriting newly added AI message
+                // The AI message is already saved to localStorage via chatStorage.saveChatHistory()
 
                 console.log(`📊 [Frontend] Analysis complete - AI status forced to disappear`);
 
