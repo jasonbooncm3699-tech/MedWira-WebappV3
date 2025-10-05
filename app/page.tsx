@@ -685,10 +685,14 @@ export default function Home() {
                   return updatedMessages;
                 });
 
-                // Update user tokens if provided
+                // Update user tokens if provided (non-blocking)
                 if (data.result.tokensRemaining !== undefined) {
                   setUserTokens(data.result.tokensRemaining);
-                  await refreshUserData();
+                  // Make refreshUserData non-blocking to prevent UI blocking
+                  refreshUserData().catch(error => {
+                    console.error('❌ Background user data refresh failed:', error);
+                    // Don't let this affect the main flow
+                  });
                 }
 
                 // Refresh chat history after successful analysis (async, non-blocking)
