@@ -630,6 +630,16 @@ export default function Home() {
               if (data.type === 'status' && data.status) {
                 // Real status update from backend
                 setAiStatus(data.status);
+                
+                // Handle completion status
+                if (data.status === 'Analysis completed successfully') {
+                  console.log(`📊 [Frontend] Analysis completed - preparing to show output`);
+                  // Don't reset status here - let the output render first
+                } else if (data.status === 'Analysis failed') {
+                  console.log(`📊 [Frontend] Analysis failed - resetting status`);
+                  setAiStatus('idle');
+                  setIsAnalyzing(false);
+                }
               } else if (data.type === 'complete' && data.result) {
                 // Handle the result
                 console.log(`📊 [Frontend] Received complete result:`, {
