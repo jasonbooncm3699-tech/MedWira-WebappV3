@@ -10,8 +10,15 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!imageBase64 || !userId) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: imageBase64, userId' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        `data: ${JSON.stringify({ type: 'error', error: 'Missing required fields: imageBase64, userId' })}\n\n`,
+        { 
+          status: 200, 
+          headers: { 
+            'Content-Type': 'text/plain',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+          } 
+        }
       );
     }
 
@@ -21,15 +28,29 @@ export async function POST(request: NextRequest) {
         const hasTokens = await checkTokenAvailability(userId);
         if (!hasTokens) {
           return new Response(
-            JSON.stringify({ error: 'No tokens remaining. Please upgrade your plan or wait for daily reset.' }),
-            { status: 402, headers: { 'Content-Type': 'application/json' } }
+            `data: ${JSON.stringify({ type: 'error', error: 'No tokens remaining. Please upgrade your plan or wait for daily reset.' })}\n\n`,
+            { 
+              status: 200, 
+              headers: { 
+                'Content-Type': 'text/plain',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive'
+              } 
+            }
           );
         }
       } catch (error) {
         console.error('Error checking user tokens:', error);
         return new Response(
-          JSON.stringify({ error: 'Token validation failed. Please try again.' }),
-          { status: 500, headers: { 'Content-Type': 'application/json' } }
+          `data: ${JSON.stringify({ type: 'error', error: 'Token validation failed. Please try again.' })}\n\n`,
+          { 
+            status: 200, 
+            headers: { 
+              'Content-Type': 'text/plain',
+              'Cache-Control': 'no-cache',
+              'Connection': 'keep-alive'
+            } 
+          }
         );
       }
     }
@@ -159,8 +180,15 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('SSE endpoint error:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      `data: ${JSON.stringify({ type: 'error', error: 'Internal server error' })}\n\n`,
+      { 
+        status: 200, 
+        headers: { 
+          'Content-Type': 'text/plain',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive'
+        } 
+      }
     );
   }
 }

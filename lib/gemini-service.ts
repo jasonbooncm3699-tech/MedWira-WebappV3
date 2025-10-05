@@ -365,8 +365,8 @@ IMPORTANT: Use minimal line breaks. Keep sections compact. Use bullet points (�
           };
 
           // Send status update before AI processing
-          console.log(`📊 [${analysisId}] STATUS CALLBACK: Generating medical report...`);
-          statusCallback?.('Generating medical report...');
+          console.log(`📊 [${analysisId}] STATUS CALLBACK: Generating medicine report...`);
+          statusCallback?.('Generating medicine report...');
           
           // Log the comprehensive prompt being sent to Gemini
           console.log(`📝 [${analysisId}] ===== SENDING PROMPT TO GEMINI =====`);
