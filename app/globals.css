@@ -908,7 +908,7 @@ body {
   border-radius: 4px;
 }
 
-/* Share button inside AI chat bubble at bottom right */
+/* Share button inside AI chat bubble at bottom right - matching referral code style */
 .message-share-internal {
   position: absolute;
   bottom: 8px;
@@ -919,11 +919,7 @@ body {
   width: 24px;
   height: 24px;
   border-radius: 4px;
-  transition: background-color 0.2s ease;
-}
-
-.message-share-internal:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
 }
 
 .typing-indicator {
