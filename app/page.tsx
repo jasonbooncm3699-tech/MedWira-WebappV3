@@ -513,7 +513,7 @@ export default function Home() {
     }
 
     setIsAnalyzing(true);
-    setAiStatus('Connecting to AI...');
+    setAiStatus('Initializing AI...');
 
     // Create user message immediately
     const userMessage = {
@@ -590,14 +590,9 @@ export default function Home() {
           // If we're still analyzing and haven't received a complete result, there might be an issue
           if (isAnalyzing && aiStatus !== 'idle') {
             console.warn(`📊 [Frontend] Stream ended but analysis still in progress. Status: ${aiStatus}`);
-            // Keep analyzing state for a bit longer in case result is delayed
-            setTimeout(() => {
-              if (isAnalyzing) {
-                console.error(`📊 [Frontend] Analysis timed out - resetting status`);
-                setAiStatus('idle');
-                setIsAnalyzing(false);
-              }
-            }, 2000);
+            console.error(`📊 [Frontend] Analysis incomplete - backend stream ended prematurely`);
+            setAiStatus('idle');
+            setIsAnalyzing(false);
           }
           break;
         }

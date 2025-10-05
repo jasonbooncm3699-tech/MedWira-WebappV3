@@ -149,6 +149,7 @@ export class GeminiMedicineAnalyzer {
     console.log(`🚀 [${analysisId}] ===== STARTING COMPREHENSIVE MEDICINE ANALYSIS =====`);
     console.log(`📊 [${analysisId}] Parameters: language=${language}, allergies=${userAllergies ? 'provided' : 'none'}`);
     console.log(`🕐 [${analysisId}] Start time: ${new Date().toISOString()}`);
+    console.log(`📸 [${analysisId}] Image received: ${imageBase64.length} characters`);
     
     if (!this.model) {
       console.log(`⚠️ [${analysisId}] Gemini model not initialized - retrying initialization`);
@@ -366,12 +367,24 @@ IMPORTANT: Use minimal line breaks. Keep sections compact. Use bullet points (�
           // Send status update before AI processing
           console.log(`📊 [${analysisId}] STATUS CALLBACK: Generating medical report...`);
           statusCallback?.('Generating medical report...');
+          
+          // Log the comprehensive prompt being sent to Gemini
+          console.log(`📝 [${analysisId}] ===== SENDING PROMPT TO GEMINI =====`);
+          console.log(`📝 [${analysisId}] Prompt length: ${comprehensivePrompt.length} characters`);
+          console.log(`📝 [${analysisId}] Prompt preview: ${comprehensivePrompt.substring(0, 300)}...`);
 
           const comprehensiveResponse = await timeoutPromise(
             this.model.generateContent(comprehensivePrompt),
             25000 // 25 second timeout (5 seconds before Vercel timeout)
           );
           const rawAnalysis = comprehensiveResponse.response.text();
+          
+          // CRITICAL DEBUG: Log the actual AI-generated content
+          console.log(`📋 [${analysisId}] ===== AI-GENERATED CONTENT =====`);
+          console.log(`📋 [${analysisId}] Raw AI Analysis Length: ${rawAnalysis.length} characters`);
+          console.log(`📋 [${analysisId}] Raw AI Analysis Preview: ${rawAnalysis.substring(0, 500)}...`);
+          console.log(`📋 [${analysisId}] Full AI Analysis:`, rawAnalysis);
+          
           // Use raw analysis directly
           comprehensiveAnalysis = rawAnalysis;
           console.log(`✅ [${analysisId}] STEP 4: Bullet formatting applied successfully`);
@@ -466,6 +479,15 @@ Disclaimer: This information is for educational purposes only. Consult a healthc
       console.log(`🎉 [${analysisId}] Total processing time: ${processingTime}ms`);
       console.log(`🎉 [${analysisId}] Database verified: ${!!dbResult}`);
       console.log(`🎉 [${analysisId}] Confidence score: ${result.confidence}`);
+      console.log(`📋 [${analysisId}] Final result structure:`, {
+        success: result.success,
+        medicineName: result.medicineName,
+        rawAnalysisLength: result.rawAnalysis?.length || 0,
+        hasDosageInstructions: !!result.dosageInstructions,
+        hasSideEffects: !!result.sideEffects,
+        hasDrugInteractions: !!result.drugInteractions,
+        hasSafetyNotes: !!result.safetyNotes
+      });
       
       return result;
       
