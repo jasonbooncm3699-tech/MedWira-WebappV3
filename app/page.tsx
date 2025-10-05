@@ -1435,9 +1435,16 @@ export default function Home() {
               </div>
             ))}
 
-          {isAnalyzing && (
-            <AIStatusDisplay status={aiStatus} />
-          )}
+          {(() => {
+            console.log(`📊 [Frontend] Render check:`, {
+              isAnalyzing: isAnalyzing,
+              aiStatus: aiStatus,
+              shouldShowStatus: isAnalyzing && aiStatus !== 'idle'
+            });
+            return isAnalyzing && (
+              <AIStatusDisplay status={aiStatus} />
+            );
+          })()}
           </div>
 
           <div className="input-container">
