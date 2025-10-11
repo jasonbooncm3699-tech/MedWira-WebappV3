@@ -100,7 +100,6 @@ export async function GET(request: Request) {
             id: user.id,
             tokens: 30,
             referral_code: fallbackReferralCode || generateRandomCode(),
-            referral_count: 0,
             referred_by: referralCode || null,
             email: user.email,
             display_name: userName,
