@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     // Query user's token count
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('token_count, updated_at')
+      .select('tokens, updated_at')
       .eq('id', userId)
       .single();
     
@@ -47,13 +47,13 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    console.log(`✅ Token status retrieved for user: ${userId}, tokens: ${profile?.token_count || 0}`);
+    console.log(`✅ Token status retrieved for user: ${userId}, tokens: ${profile?.tokens || 0}`);
     
     return NextResponse.json({
       status: "SUCCESS",
       data: {
         user_id: userId,
-        token_count: profile?.token_count || 0,
+        token_count: profile?.tokens || 0,
         last_updated: profile?.updated_at
       }
     });

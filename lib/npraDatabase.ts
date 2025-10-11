@@ -284,7 +284,7 @@ export async function checkTokenAvailability(userId: string): Promise<boolean> {
     // Check current tokens
     const { data: profile, error: selectError } = await supabase
         .from('profiles')
-        .select('token_count')
+        .select('tokens')
         .eq('id', userId)
         .single();
 
@@ -293,12 +293,12 @@ export async function checkTokenAvailability(userId: string): Promise<boolean> {
         return false;
     }
 
-    if (!profile || profile.token_count <= 0) {
-        console.log(`⚠️ User ${userId} has insufficient tokens (current: ${profile?.token_count || 0})`);
+    if (!profile || profile.tokens <= 0) {
+        console.log(`⚠️ User ${userId} has insufficient tokens (current: ${profile?.tokens || 0})`);
         return false;
     }
 
-    console.log(`✅ User ${userId} has ${profile.token_count} tokens available`);
+    console.log(`✅ User ${userId} has ${profile.tokens} tokens available`);
     return true;
 }
 
@@ -309,7 +309,7 @@ export async function decrementToken(userId: string): Promise<boolean> {
     const supabase = getSupabaseClient();
     const { data: profile, error: selectError } = await supabase
         .from('profiles')
-        .select('token_count')
+        .select('tokens')
         .eq('id', userId)
         .single();
 
@@ -319,17 +319,17 @@ export async function decrementToken(userId: string): Promise<boolean> {
         return false;
     }
 
-    if (!profile || profile.token_count <= 0) {
-        console.log(`⚠️ User ${userId} out of tokens (current: ${profile?.token_count || 0})`);
+    if (!profile || profile.tokens <= 0) {
+        console.log(`⚠️ User ${userId} out of tokens (current: ${profile?.tokens || 0})`);
         return false;
     }
 
     // 2. Decrement tokens
-    const newCount = profile.token_count - 1;
+    const newCount = profile.tokens - 1;
 
     const { error: updateError } = await supabase
         .from('profiles')
-        .update({ token_count: newCount })
+        .update({ tokens: newCount })
         .eq('id', userId);
 
     if (updateError) {

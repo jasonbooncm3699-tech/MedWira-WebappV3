@@ -4,9 +4,8 @@ import { createClient } from '@/lib/supabase-server';
 // Interface for user profile data
 interface UserProfile {
   id: string;
-  token_count: number;
+  tokens: number;
   referral_code: string | null;
-  referral_count: number;
   referred_by: string | null;
   created_at: string;
   updated_at: string;
@@ -111,7 +110,7 @@ export async function POST(request: NextRequest) {
     if (existingProfile) {
       console.log('✅ User profile already exists:', {
         userId: existingProfile.id,
-        tokenCount: existingProfile.token_count,
+        tokenCount: existingProfile.tokens,
         referralCode: existingProfile.referral_code
       });
       
@@ -140,9 +139,8 @@ export async function POST(request: NextRequest) {
     // Create new user profile
     const newProfile: Omit<UserProfile, 'created_at' | 'updated_at'> = {
       id: user.id,
-      token_count: 30, // Welcome bonus: 30 tokens
+      tokens: 30, // Welcome bonus: 30 tokens
       referral_code: referralCode,
-      referral_count: 0,
       referred_by: null
     };
     
@@ -164,7 +162,7 @@ export async function POST(request: NextRequest) {
     
     console.log('🎉 User profile created successfully:', {
       userId: createdProfile.id,
-      tokenCount: createdProfile.token_count,
+      tokenCount: createdProfile.tokens,
       referralCode: createdProfile.referral_code
     });
     
