@@ -664,14 +664,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     
-    // Set global flag to prevent future initializations
-    globalInitializationComplete = true;
-    initializationRef.current = true;
-    
-    console.log('🚀 AuthProvider initializing...');
-    
-    // DEFENSIVE: Use setTimeout to prevent React error #18 (hydration mismatch)
-    const initializeAuth = async () => {
+    // CRITICAL: Add delay after hydration to ensure React is fully settled
+    console.log('🔍 Hydration complete, waiting for React to settle before auth initialization...');
+    setTimeout(() => {
+      console.log('🔍 React settled, proceeding with auth initialization');
+      
+      // Set global flag to prevent future initializations
+      globalInitializationComplete = true;
+      initializationRef.current = true;
+      
+      console.log('🚀 AuthProvider initializing...');
+      
+      // DEFENSIVE: Use setTimeout to prevent React error #18 (hydration mismatch)
+      const initializeAuth = async () => {
       try {
         console.log('🚀 Starting auth initialization...');
         
@@ -699,6 +704,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     // Defer initialization to next tick to avoid hydration issues
     setTimeout(initializeAuth, 0);
+    }, 100); // Close the setTimeout for React settling
     
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       // DEFENSIVE: Prevent processing auth events before initialization is complete
