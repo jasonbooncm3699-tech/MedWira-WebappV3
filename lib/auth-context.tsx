@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ErrorInfo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo, ErrorInfo } from 'react';
 import { createClient, getSessionFromCookies } from './supabase-browser';
 
 interface User {
@@ -38,8 +38,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // DEBUG: Track component mounting
   console.log('🔍 AuthProvider component mounted/re-rendered');
   
-  // CRITICAL: Create Supabase client instance for cookie-based authentication
-  const supabase = createClient();
+  // CRITICAL: Create Supabase client instance ONCE using useMemo to prevent recreation
+  const supabase = useMemo(() => {
+    console.log('🔍 Creating new Supabase client instance');
+    return createClient();
+  }, []); // Empty dependency array = create only once
 
   // SAFETY: Add timeout to prevent infinite loading
   useEffect(() => {
@@ -834,6 +837,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // DEFENSIVE: Wrap provider in error boundary to catch React error #18
   try {
+    console.log('🔍 AuthProvider rendering successfully');
     return (
       <AuthContext.Provider value={contextValue}>
         {children}
@@ -841,6 +845,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
   } catch (error) {
     console.error('❌ AuthProvider render error (React error #18):', error);
+    console.log('🔍 AuthProvider falling back to error state');
     // Return minimal provider to prevent complete crash
     return (
       <AuthContext.Provider value={{
