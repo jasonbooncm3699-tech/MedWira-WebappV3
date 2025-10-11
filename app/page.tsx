@@ -501,14 +501,6 @@ export default function Home() {
 
   // Force UI re-render when user state changes
   useEffect(() => {
-    console.log('👤 User state changed in page.tsx:', {
-      isAuthenticated: !!user,
-      email: user?.email,
-      tokens: user?.tokens,
-      name: user?.name,
-      referral_code: user?.referral_code,
-      isLoading: isLoading
-    });
 
     // Update local token state when user changes
     if (user?.tokens !== undefined) {

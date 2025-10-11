@@ -21,7 +21,6 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔄 Auth state changed:', event, session?.user?.email || 'No session');
 
       // If we were loading and user comes back without a session, they likely cancelled
       if (socialLoading && !session && event === 'SIGNED_OUT') {
@@ -317,7 +316,6 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
     handleAuthCallback();
   }, [onClose]);
 
-  console.log('🔐 SocialAuthModal render:', { isOpen, mode, socialLoading });
   
   if (!isOpen) return null;
 

@@ -88,12 +88,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             display_name: displayName,
             avatar_url: avatarUrl
           };
-          console.log('✅ Profile data retrieved from public.profiles:', { 
-            tokens: userData.tokens, 
-            referral_code: userData.referral_code,
-            display_name: userData.display_name,
-            name: userData.name
-          });
         } else {
           console.warn('⚠️ Profile fetch error:', profileError);
           // Create fallback user with basic data
@@ -149,7 +143,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshUser = useCallback(async () => {
-    console.log('🔄 refreshUser called - checking session...');
     
     // OPTIMIZATION: Only show loading if we don't have a cached user
     // This prevents "Initializing MedWira AI" on tab switches
@@ -620,17 +613,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('⏳ Skipping auth event - not yet initialized:', event);
         return;
       }
-      
-      console.log('🔄 Auth state changed:', event, {
-        hasSession: !!session,
-        sessionType: typeof session,
-        sessionKeys: session ? Object.keys(session) : 'no-session',
-        hasUser: !!session?.user,
-        userKeys: session?.user ? Object.keys(session.user) : 'no-user',
-        email: session?.user?.email,
-        emailType: typeof session?.user?.email,
-        userId: session?.user?.id
-      });
       
       if (event === 'SIGNED_IN') {
         console.log('🎉 User signed in event detected!');
