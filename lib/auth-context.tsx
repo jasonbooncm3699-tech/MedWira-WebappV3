@@ -26,6 +26,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// GLOBAL: Track initialization across component remounts
+let globalInitializationComplete = false;
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -625,13 +628,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     
-    // CRITICAL: Prevent multiple initializations using ref (doesn't trigger re-renders)
-    if (initializationRef.current) {
-      console.log('⚠️ Auth already initialized (ref), skipping...');
+    // CRITICAL: Prevent multiple initializations using global variable (persists across remounts)
+    if (globalInitializationComplete) {
+      console.log('⚠️ Auth already initialized (global), skipping...');
       return;
     }
     
-    // Set the ref to prevent future initializations
+    // Set global flag to prevent future initializations
+    globalInitializationComplete = true;
     initializationRef.current = true;
     
     console.log('🚀 AuthProvider initializing...');
