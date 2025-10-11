@@ -25,7 +25,7 @@ async function generateUniqueReferralCode(supabase: any): Promise<string> {
     
     // Check if this code already exists
     const { data: existingProfile } = await supabase
-      .from('user_profiles')
+      .from('profiles')
       .select('referral_code')
       .eq('referral_code', referralCode)
       .single();
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     // Check if user profile already exists in user_profiles table
     console.log('🔍 Checking if user profile exists in user_profiles table...');
     const { data: existingProfile, error: fetchError } = await supabase
-      .from('user_profiles')
+      .from('profiles')
       .select('*')
       .eq('id', user.id)
       .single();
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
     console.log('📝 Creating user profile:', newProfile);
     
     const { data: createdProfile, error: createError } = await supabase
-      .from('user_profiles')
+      .from('profiles')
       .insert([newProfile])
       .select('*')
       .single();

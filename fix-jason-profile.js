@@ -41,7 +41,7 @@ async function fixJasonProfile() {
       .from('profiles')
       .upsert({
         id: jasonUserId,
-        token_count: 30,
+        tokens: 30,
         referral_code: 'C275226B',
         referral_count: 0,
         referred_by: null,
@@ -65,7 +65,7 @@ async function fixJasonProfile() {
         .from('profiles')
         .upsert({
           id: jasonUserId,
-          token_count: 30
+          tokens: 30
         }, {
           onConflict: 'id',
           ignoreDuplicates: false
@@ -95,7 +95,7 @@ async function fixJasonProfile() {
     } else {
       console.log('✅ Profile verified:', {
         id: verifyProfile.id,
-        token_count: verifyProfile.token_count,
+        tokens: verifyProfile.tokens,
         referral_code: verifyProfile.referral_code,
         display_name: verifyProfile.display_name
       });
@@ -111,11 +111,11 @@ async function fixJasonProfile() {
         // Check updated count
         const { data: updatedProfile } = await supabase
           .from('profiles')
-          .select('token_count')
+          .select('tokens')
           .eq('id', jasonUserId)
           .single();
           
-        console.log('Updated token count:', updatedProfile.token_count);
+        console.log('Updated token count:', updatedProfile.tokens);
       } else {
         console.log('❌ Token deduction failed');
       }
