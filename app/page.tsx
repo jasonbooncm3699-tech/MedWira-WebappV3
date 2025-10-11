@@ -134,18 +134,7 @@ export default function Home() {
   const [chatSearchQuery, setChatSearchQuery] = useState('');
   const [userTokens, setUserTokens] = useState<number>(user?.tokens || 0);
   const [inputText, setInputText] = useState('');
-  // Medication Stack Management
-  const [medicationStack, setMedicationStack] = useState<any[]>([]);
-  const [showMedicationPanel, setShowMedicationPanel] = useState(false);
-  const [newMedication, setNewMedication] = useState({
-    name: '',
-    dosage: '',
-    frequency: '',
-    startDate: '',
-    notes: ''
-  });
   const [aiStatus, setAiStatus] = useState<string>('idle');
-  const [useRealStatusUpdates, setUseRealStatusUpdates] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -314,13 +303,7 @@ export default function Home() {
       userId: userId,
       language: language,
       userContext: {
-        currentMedications: medicationStack.map(med => ({
-          name: med.medicine_name,
-          activeIngredients: med.active_ingredients || '',
-          frequency: med.frequency || '',
-          startDate: med.start_date || '',
-          dosage: med.dosage || ''
-        })),
+        currentMedications: [],
         allergies: allergy ? [allergy] : [],
         medicalConditions: [] // TODO: Load from user profile
       }
@@ -660,37 +643,13 @@ export default function Home() {
   }, []);
 
   // Medication Stack Management Functions
-  const fetchUserMedicationStack = useCallback(async () => {
-    if (!user?.id) return;
-
-    try {
-      const { supabase } = await import('@/lib/supabase');
-      const { data, error } = await supabase
-        .from('user_medication_stack')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching medication stack:', error);
-        return;
-      }
-
-      setMedicationStack(data || []);
-      console.log('✅ Medication stack loaded:', data?.length || 0, 'medications');
-    } catch (error) {
-      console.error('Failed to fetch medication stack:', error);
-    }
-  }, [user?.id]);
 
   // Fetch user chat history when user logs in
   useEffect(() => {
     if (user?.id) {
       fetchUserChatHistory(1, chatSearchQuery, false);
-      fetchUserMedicationStack();
     }
-  }, [fetchUserChatHistory, fetchUserMedicationStack, user?.id, chatSearchQuery]);
+  }, [fetchUserChatHistory, user?.id, chatSearchQuery]);
 
   // Load more chat history when scrolling
   const loadMoreChatHistory = useCallback(() => {
@@ -701,70 +660,7 @@ export default function Home() {
     }
   }, [chatHistoryLoading, hasMoreChatHistory, user?.id, chatHistoryPage, chatSearchQuery, fetchUserChatHistory]);
 
-  const addMedication = async () => {
-    if (!newMedication.name.trim() || !user?.id) return;
 
-    try {
-      const { supabase } = await import('@/lib/supabase');
-      const { data, error } = await supabase
-        .from('user_medication_stack')
-        .insert([{
-          user_id: user.id,
-          medicine_name: newMedication.name,
-          dosage: newMedication.dosage,
-          frequency: newMedication.frequency,
-          start_date: newMedication.startDate || new Date().toISOString().split('T')[0],
-          notes: newMedication.notes,
-          is_active: true
-        }])
-        .select();
-
-      if (error) {
-        console.error('Error adding medication:', error);
-        return;
-      }
-
-      // Add to local state
-      setMedicationStack(prev => [...prev, ...data]);
-      
-      // Reset form
-      setNewMedication({
-        name: '',
-        dosage: '',
-        frequency: '',
-        startDate: '',
-        notes: ''
-      });
-
-      console.log('✅ Medication added successfully');
-    } catch (error) {
-      console.error('Failed to add medication:', error);
-    }
-  };
-
-  const removeMedication = async (medicationId: string) => {
-    if (!user?.id) return;
-
-    try {
-      const { supabase } = await import('@/lib/supabase');
-      const { error } = await supabase
-        .from('user_medication_stack')
-        .update({ is_active: false, end_date: new Date().toISOString().split('T')[0] })
-        .eq('id', medicationId)
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('Error removing medication:', error);
-        return;
-      }
-
-      // Remove from local state
-      setMedicationStack(prev => prev.filter(med => med.id !== medicationId));
-      console.log('✅ Medication removed successfully');
-    } catch (error) {
-      console.error('Failed to remove medication:', error);
-    }
-  };
 
 
   const handleCameraCapture = async () => {
@@ -1471,109 +1367,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Medication Stack Management */}
-          {user && (
-            <div className="medication-stack-section">
-              <div className="medication-stack-header">
-                <h3>My Medications</h3>
-                <button 
-                  className="add-medication-btn"
-                  onClick={() => setShowMedicationPanel(!showMedicationPanel)}
-                >
-                  <Plus size={14} />
-                  Add
-                </button>
-              </div>
-
-              {/* Add Medication Form */}
-              {showMedicationPanel && (
-                <div className="add-medication-form">
-                  <input
-                    type="text"
-                    placeholder="Medicine name (e.g., Paracetamol)"
-                    value={newMedication.name}
-                    onChange={(e) => setNewMedication(prev => ({ ...prev, name: e.target.value }))}
-                    className="medication-input"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Dosage (e.g., 500mg)"
-                    value={newMedication.dosage}
-                    onChange={(e) => setNewMedication(prev => ({ ...prev, dosage: e.target.value }))}
-                    className="medication-input"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Frequency (e.g., Twice daily)"
-                    value={newMedication.frequency}
-                    onChange={(e) => setNewMedication(prev => ({ ...prev, frequency: e.target.value }))}
-                    className="medication-input"
-                  />
-                  <input
-                    type="date"
-                    placeholder="Start date"
-                    value={newMedication.startDate}
-                    onChange={(e) => setNewMedication(prev => ({ ...prev, startDate: e.target.value }))}
-                    className="medication-input"
-                  />
-                  <textarea
-                    placeholder="Notes (optional)"
-                    value={newMedication.notes}
-                    onChange={(e) => setNewMedication(prev => ({ ...prev, notes: e.target.value }))}
-                    className="medication-textarea"
-                    rows={2}
-                  />
-                  <div className="medication-form-actions">
-                    <button 
-                      className="save-medication-btn"
-                      onClick={addMedication}
-                      disabled={!newMedication.name.trim()}
-                    >
-                      Save
-                    </button>
-                    <button 
-                      className="cancel-medication-btn"
-                      onClick={() => setShowMedicationPanel(false)}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Current Medications List */}
-              <div className="current-medications">
-                {medicationStack.length > 0 ? (
-                  medicationStack.map((medication) => (
-                    <div key={medication.id} className="medication-item">
-                      <div className="medication-info">
-                        <div className="medication-name">{medication.medicine_name}</div>
-                        <div className="medication-details">
-                          {medication.dosage && <span>Dose: {medication.dosage}</span>}
-                          {medication.frequency && <span>Frequency: {medication.frequency}</span>}
-                        </div>
-                        {medication.notes && (
-                          <div className="medication-notes">{medication.notes}</div>
-                        )}
-                      </div>
-                      <button 
-                        className="remove-medication-btn"
-                        onClick={() => removeMedication(medication.id)}
-                        title="Remove medication"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ))
-                ) : (
-                  <div className="no-medications">
-                    <p>No medications added yet</p>
-                    <p className="medication-hint">Add your current medications for personalized advice</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
 
           <div className="nav-footer">
             <div className="user-info">
@@ -1643,32 +1436,6 @@ export default function Home() {
               {showFAQ ? 'Hide FAQ' : 'FAQ'}
             </button>
 
-            {/* Real Status Updates Toggle */}
-            <div className="status-toggle" style={{
-              marginTop: '12px',
-              padding: '8px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '6px',
-              fontSize: '11px',
-              color: '#888'
-            }}>
-              <div style={{ marginBottom: '4px' }}>Status Updates:</div>
-              <button
-                onClick={() => setUseRealStatusUpdates(!useRealStatusUpdates)}
-                style={{
-                  background: useRealStatusUpdates ? '#00d4ff' : 'rgba(255, 255, 255, 0.1)',
-                  color: useRealStatusUpdates ? '#000' : '#fff',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '4px',
-                  padding: '4px 8px',
-                  cursor: 'pointer',
-                  fontSize: '10px',
-                  width: '100%'
-                }}
-              >
-                {useRealStatusUpdates ? 'Real-time' : 'Simulated'}
-              </button>
-            </div>
 
             {/* Chat Storage Info */}
             <div className="storage-info" style={{
