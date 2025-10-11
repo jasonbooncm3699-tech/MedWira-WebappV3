@@ -319,7 +319,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [fetchUserData, supabase, user]);
+  }, [fetchUserData, supabase]); // REMOVED user from deps to prevent circular dependency
 
   const logout = useCallback(async () => {
     try {
@@ -451,7 +451,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     }
-  }, [user?.id, user?.email, user?.name, user?.display_name, user?.avatar_url, fetchUserData]);
+  }, [fetchUserData]); // REMOVED all user properties from deps to prevent circular dependency
 
   // CRITICAL: Force fetch user profile data from profiles table
   const forceFetchUserProfile = useCallback(async (userId: string, userEmail: string, userName: string) => {
@@ -605,7 +605,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isHydrated && user?.id && !isLoading) {
       refreshUserData();
     }
-  }, [isHydrated, user?.id, isLoading]); // REMOVED refreshUserData from deps to prevent infinite loop
+  }, [isHydrated, isLoading]); // REMOVED user?.id and refreshUserData from deps to prevent infinite loop
 
   useEffect(() => {
     // Only initialize auth after hydration
@@ -811,7 +811,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }, 1000);
       }
     }
-  }, [isHydrated, user?.id, user?.tokens, user?.referral_code, isLoading]); // REMOVED refreshUserData from deps to prevent infinite loop
+  }, [isHydrated, isLoading]); // REMOVED user properties and refreshUserData from deps to prevent infinite loop
 
   // CRITICAL: Force refresh user data on component mount if user is authenticated
   useEffect(() => {
@@ -821,7 +821,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refreshUserData();
       }, 500);
     }
-  }, [isHydrated, user?.id, isLoading]); // REMOVED refreshUserData from deps to prevent infinite loop
+  }, [isHydrated, isLoading]); // REMOVED user?.id and refreshUserData from deps to prevent infinite loop
 
   const contextValue: AuthContextType = {
     user: user || null, // Ensure user is never undefined
