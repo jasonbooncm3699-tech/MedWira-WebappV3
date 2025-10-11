@@ -434,7 +434,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user?.id, user?.email, user?.name, user?.display_name, user?.avatar_url, fetchUserData]);
 
-  // CRITICAL: Force fetch user profile data from user_profiles table
+  // CRITICAL: Force fetch user profile data from profiles table
   const forceFetchUserProfile = useCallback(async (userId: string, userEmail: string, userName: string) => {
     console.log('🚀 FORCE FETCHING user profile data for:', userEmail);
     
@@ -475,7 +475,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       if (userData) {
-        // Combine user_profiles data with auth user data
+        // Combine profiles data with auth user data
         const completeUserData: User = {
           ...userData,
           email: userEmail,
