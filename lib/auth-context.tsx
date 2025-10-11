@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('token_count, referral_code, referred_by, display_name, avatar_url')
+          .select('tokens, referral_code, referred_by, display_name, avatar_url, email, subscription_tier')
           .eq('id', userId)
           .single();
         
@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             id: userId,
             email: userEmail || authUser.user.email || '',
             name: displayName ? displayName.split(' ')[0] : '',
-            tokens: profileData.token_count || 0,
+            tokens: profileData.tokens || 0,
             subscription_tier: 'free',
             referral_code: profileData.referral_code || '',
             referral_count: 0,
@@ -150,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('❌ Exception fetching user data:', error);
       return null;
     }
-  }, [supabase]);
+  }, []);
 
   const refreshUser = useCallback(async () => {
     console.log('🔄 refreshUser called - checking session...');
@@ -333,7 +333,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [fetchUserData, supabase]);
+  }, [fetchUserData, supabase, user]);
 
   const logout = useCallback(async () => {
     try {
@@ -344,7 +344,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('❌ Error logging out:', error);
     }
-  }, [supabase]);
+  }, []);
 
   const refreshUserData = useCallback(async () => {
     if (!user?.id) {
@@ -432,7 +432,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(safeFallbackUser);
       }
     }
-  }, [user?.id, user?.email, user?.name, user?.display_name, user?.avatar_url, fetchUserData, supabase]);
+  }, [user?.id, user?.email, user?.name, user?.display_name, user?.avatar_url, fetchUserData]);
 
   // CRITICAL: Force fetch user profile data from user_profiles table
   const forceFetchUserProfile = useCallback(async (userId: string, userEmail: string, userName: string) => {

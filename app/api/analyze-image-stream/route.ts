@@ -97,44 +97,45 @@ export async function POST(request: NextRequest) {
               sendStatus // Pass the status callback
             );
 
-            // Save scan history and deduct token after successful analysis
+            // CRITICAL: Save scan history and deduct tokens asynchronously to avoid blocking AI response
             if (userId && result.success) {
-              // TEMPORARILY DISABLED: Save scan history
-              try {
-                console.log(`🔍 Attempting to save scan history for user ${userId}`);
-                // await saveScanHistory({
-                //   user_id: userId,
-                //   image_url: imageBase64,
-                //   medicine_name: result.medicineName,
-                //   generic_name: result.genericName,
-                //   dosage: result.dosage,
-                //   side_effects: result.sideEffects,
-                //   interactions: result.interactions,
-                //   warnings: result.warnings,
-                //   storage: result.storage,
-                //   category: result.category,
-                //   confidence: result.confidence,
-                //   language: language || 'English',
-                //   allergies: userAllergies || null,
-                // });
-                console.log(`✅ Scan history save disabled for debugging`);
-              } catch (error) {
-                console.error('Error saving scan history:', error);
-                // Don't fail the request if saving history fails
-              }
-
-              // Deduct token
-              try {
-                const success = await decrementToken(userId);
-                if (success) {
-                  console.log(`✅ Token deducted for user ${userId}`);
-                } else {
-                  console.log(`⚠️ User ${userId} has no tokens - skipping token deduction`);
+              // Use setImmediate to defer non-critical operations
+              setImmediate(async () => {
+                // Save scan history to database
+                try {
+                  console.log(`🔍 Attempting to save scan history for user ${userId}`);
+                  await saveScanHistory({
+                    user_id: userId,
+                    image_url: imageBase64,
+                    medicine_name: result.medicineName,
+                    generic_name: result.genericName,
+                    dosage: result.dosage,
+                    side_effects: result.sideEffects,
+                    interactions: result.interactions,
+                    warnings: result.warnings,
+                    storage: result.storage,
+                    category: result.category,
+                    confidence: result.confidence,
+                    language: language || 'English',
+                    allergies: userAllergies || null,
+                  });
+                  console.log(`✅ Scan history saved successfully for user ${userId} (async)`);
+                } catch (error) {
+                  console.error('Error saving scan history (async):', error);
                 }
-              } catch (error) {
-                console.error('Error deducting token:', error);
-                // Don't fail the request if token deduction fails
-              }
+
+                // Deduct token
+                try {
+                  const success = await decrementToken(userId);
+                  if (success) {
+                    console.log(`✅ Token deducted for user ${userId} (async)`);
+                  } else {
+                    console.log(`⚠️ User ${userId} has no tokens - skipping token deduction (async)`);
+                  }
+                } catch (error) {
+                  console.error('Error deducting token (async):', error);
+                }
+              });
             }
 
             // Send final result

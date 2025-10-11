@@ -10,14 +10,17 @@ export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey)
 // Database types
 export interface User {
   id: string
-  email: string
-  name?: string
+  email?: string
+  display_name?: string
   avatar_url?: string
   tokens: number
-  subscription_tier: 'free' | 'premium' | 'pro'
-  created_at: string
-  updated_at: string
-  last_login: string
+  subscription_tier?: 'free' | 'premium' | 'pro'
+  referral_code?: string
+  referred_by?: string
+  referral_count?: number
+  created_at?: string
+  updated_at?: string
+  last_login?: string
 }
 
 export interface ScanHistory {
@@ -61,13 +64,13 @@ export interface NPRAMedicine {
 
 // Database helper functions
 export class DatabaseService {
-  // User operations
+  // User operations - Updated to use profiles table
   static async createUser(userData: Omit<User, 'created_at' | 'updated_at' | 'last_login'>) {
     console.log('🔍 Creating user with data:', userData);
     
     // First, check if user already exists
     const { data: existingUser, error: checkError } = await supabase
-      .from('users')
+      .from('profiles')
       .select('*')
       .eq('id', userData.id)
       .single();
@@ -78,7 +81,7 @@ export class DatabaseService {
     }
     
     const { data, error } = await supabase
-      .from('users')
+      .from('profiles')
       .insert([{
         ...userData,
         // Ensure we're using the Supabase Auth user ID
@@ -98,7 +101,7 @@ export class DatabaseService {
 
   static async getUser(userId: string) {
     const { data, error } = await supabase
-      .from('users')
+      .from('profiles')
       .select('*')
       .eq('id', userId)
       .single()
@@ -109,7 +112,7 @@ export class DatabaseService {
 
   static async updateUser(userId: string, updates: Partial<User>) {
     const { data, error } = await supabase
-      .from('users')
+      .from('profiles')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', userId)
       .select()

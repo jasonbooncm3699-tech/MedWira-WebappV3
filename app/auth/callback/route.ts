@@ -91,14 +91,20 @@ export async function GET(request: Request) {
       if (provisionError) {
         console.error('❌ User provisioning failed:', provisionError);
         // Fallback to direct insert into profiles table
+        const { data: fallbackReferralCode } = await supabase
+          .rpc('generate_referral_code', { user_uuid: user.id });
+          
         await supabase
           .from('profiles')
           .upsert({
             id: user.id,
-            token_count: 30,
-            referral_code: generateRandomCode(),
+            tokens: 30,
+            referral_code: fallbackReferralCode || generateRandomCode(),
             referral_count: 0,
             referred_by: referralCode || null,
+            email: user.email,
+            display_name: userName,
+            subscription_tier: 'free',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           }, {

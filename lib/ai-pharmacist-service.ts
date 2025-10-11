@@ -1,0 +1,480 @@
+/**
+ * AI Pharmacist Service - Professional Medicine Assistant
+ * 
+ * This service transforms MedWira from a medicine scanner into a comprehensive
+ * AI pharmacist that can handle any medicine-related conversation.
+ * 
+ * Features:
+ * - Professional pharmacist persona
+ * - Text-only queries (no photo required)
+ * - Photo analysis when provided
+ * - Food-drug and drug-drug interactions
+ * - Medication stack tracking
+ * - Conversational follow-up questions
+ */
+
+import { DatabaseService } from './supabase';
+import { npraProductLookup } from './npraDatabase';
+
+export interface PharmacistAnalysisResult {
+  success: boolean;
+  message: string;
+  messageType: 'text' | 'image' | 'interaction_warning';
+  medicineName?: string;
+  genericName?: string;
+  dosage?: string;
+  sideEffects?: string[];
+  interactions?: string[];
+  warnings?: string[];
+  storage?: string;
+  category?: string;
+  confidence?: number;
+  error?: string;
+  language?: string;
+  // Enhanced fields for pharmacist responses
+  pharmacistAdvice?: string;
+  followUpQuestions?: string[];
+  medicationContext?: string;
+  interactionAnalysis?: string;
+  // Database integration
+  databaseVerified?: boolean;
+  activeIngredients?: string;
+  rawAnalysis?: string;
+  dosageInstructions?: string;
+  allergyWarning?: string;
+  drugInteractions?: string;
+  safetyNotes?: string;
+  disclaimer?: string;
+  purpose?: string;
+}
+
+export interface UserMedicationContext {
+  currentMedications: Array<{
+    name: string;
+    activeIngredients: string;
+    frequency: string;
+    startDate: string;
+  }>;
+  allergies: string[];
+  medicalConditions?: string[];
+}
+
+/**
+ * AI Pharmacist class - Professional Medicine Assistant
+ * 
+ * Acts as a professional pharmacist who can:
+ * - Answer any medicine-related question
+ * - Analyze medicine photos when provided
+ * - Check food-drug and drug-drug interactions
+ * - Provide dosage and safety information
+ * - Give professional advice with appropriate disclaimers
+ */
+export class AIPharmacistService {
+  private model: any;
+
+  constructor() {
+    console.log('✅ AIPharmacistService: Professional AI pharmacist initialized');
+    this.initializeModel();
+  }
+
+  private async initializeModel() {
+    try {
+      const { GoogleGenerativeAI } = await import('@google/generative-ai');
+      const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY!);
+      this.model = genAI.getGenerativeModel({ 
+        model: "gemini-2.5-flash",
+        generationConfig: {
+          temperature: 0.3, // More consistent for medical advice
+          maxOutputTokens: 4096,
+        }
+      });
+      console.log('✅ AI Pharmacist model initialized successfully');
+    } catch (error) {
+      console.error('❌ Failed to initialize AI Pharmacist model:', error);
+      this.model = null;
+    }
+  }
+
+  /**
+   * Main conversation handler - routes to appropriate analysis method
+   */
+  async handleConversation(
+    userMessage: string,
+    imageBase64?: string,
+    userContext?: UserMedicationContext,
+    language: string = 'English',
+    statusCallback?: (status: string) => void
+  ): Promise<PharmacistAnalysisResult> {
+    const analysisId = `pharmacist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    console.log(`🚀 [${analysisId}] ===== AI PHARMACIST CONVERSATION =====`);
+    console.log(`📊 [${analysisId}] Message: "${userMessage}"`);
+    console.log(`📊 [${analysisId}] Has image: ${!!imageBase64}`);
+    console.log(`📊 [${analysisId}] User context:`, userContext);
+
+    if (!this.model) {
+      await this.initializeModel();
+      if (!this.model) {
+        return {
+          success: false,
+          message: 'AI Pharmacist service temporarily unavailable. Please try again later.',
+          messageType: 'text' as const,
+          language
+        };
+      }
+    }
+
+    try {
+      statusCallback?.('Analyzing your question...');
+
+      // Determine if this is a text-only query or needs image analysis
+      if (imageBase64) {
+        return await this.analyzeMedicineWithImage(userMessage, imageBase64, userContext, language, statusCallback);
+      } else {
+        return await this.handleTextOnlyQuery(userMessage, userContext, language, statusCallback);
+      }
+
+    } catch (error) {
+      console.error(`❌ [${analysisId}] AI Pharmacist error:`, error);
+      return {
+        success: false,
+        message: `I apologize, but I encountered an error while processing your question. Please try again or consult with a healthcare professional.`,
+        messageType: 'text' as const,
+        language
+      };
+    }
+  }
+
+  /**
+   * Handle text-only medicine questions
+   */
+  private async handleTextOnlyQuery(
+    userMessage: string,
+    userContext?: UserMedicationContext,
+    language: string = 'English',
+    statusCallback?: (status: string) => void
+  ): Promise<PharmacistAnalysisResult> {
+    
+    statusCallback?.('Consulting medicine database...');
+
+    // Create professional pharmacist prompt
+    const pharmacistPrompt = `You are a professional AI pharmacist assistant. Your role is to provide accurate, helpful, and safe information about medicines and health.
+
+**YOUR PERSONALITY:**
+- Professional, knowledgeable, and caring
+- Always cautious and safety-focused
+- Encourages consulting healthcare professionals for medical decisions
+- Provides clear, easy-to-understand information
+- Asks clarifying questions when needed
+
+**USER CONTEXT:**
+${userContext ? `
+Current medications: ${userContext.currentMedications.map(m => `${m.name} (${m.frequency})`).join(', ') || 'None'}
+Known allergies: ${userContext.allergies.join(', ') || 'None'}
+Medical conditions: ${userContext.medicalConditions?.join(', ') || 'None specified'}
+` : 'No additional user context provided'}
+
+**USER QUESTION:** "${userMessage}"
+
+**RESPONSE GUIDELINES:**
+1. **Safety First**: Always prioritize patient safety
+2. **Food-Drug Interactions**: Check for common interactions (coffee, alcohol, grapefruit, etc.)
+3. **Drug-Drug Interactions**: Consider user's current medications
+4. **Dosage Information**: Provide appropriate dosage guidance
+5. **Side Effects**: Mention common and serious side effects
+6. **Storage**: Include storage instructions when relevant
+7. **Professional Disclaimer**: Always recommend consulting healthcare professionals
+
+**FORMAT YOUR RESPONSE AS:**
+
+**Professional Assessment:**
+[Your professional analysis and recommendations]
+
+**Key Information:**
+• [Important point 1]
+• [Important point 2]
+• [Important point 3]
+
+**Safety Considerations:**
+• [Safety warning 1]
+• [Safety warning 2]
+
+**Important Reminder:**
+This information is for educational purposes only. Always consult with your healthcare provider or pharmacist for personalized medical advice.
+
+**Follow-up Questions:**
+• [Question 1 to help the user]
+• [Question 2 to gather more context]
+
+Note: You are a conversational AI pharmacist. Answer general health and medicine questions directly. Database lookup is optional and only when you identify a specific medicine name.`;
+
+    try {
+      const response = await this.model.generateContent(pharmacistPrompt);
+      const aiResponse = response.response.text();
+
+      // Extract medicine name from user message for database lookup
+      const medicineName = this.extractMedicineName(userMessage);
+      let dbResult = null;
+      
+      if (medicineName) {
+        try {
+          dbResult = await npraProductLookup(medicineName);
+          console.log('✅ NPRA database lookup result:', dbResult ? 'FOUND' : 'NOT FOUND');
+        } catch (error) {
+          console.error('❌ Database lookup error:', error);
+        }
+      }
+
+      return {
+        success: true,
+        message: aiResponse,
+        messageType: 'text',
+        language,
+        // Include database info if found
+        medicineName: dbResult ? (dbResult as any).product : medicineName,
+        genericName: dbResult ? (dbResult as any).generic_name : undefined,
+        activeIngredients: dbResult ? (dbResult as any).active_ingredient : undefined,
+        databaseVerified: !!dbResult,
+        rawAnalysis: aiResponse,
+        pharmacistAdvice: aiResponse,
+        disclaimer: 'This information is for educational purposes only. Always consult with your healthcare provider or pharmacist for personalized medical advice.',
+        confidence: dbResult ? 0.95 : 0.85
+      };
+
+    } catch (error) {
+      console.error('❌ Text-only query error:', error);
+      return {
+        success: false,
+        message: 'I apologize, but I encountered an error while processing your question. Please try again.',
+        messageType: 'text' as const,
+        language
+      };
+    }
+  }
+
+  /**
+   * Handle medicine analysis with image
+   */
+  private async analyzeMedicineWithImage(
+    userMessage: string,
+    imageBase64: string,
+    userContext?: UserMedicationContext,
+    language: string = 'English',
+    statusCallback?: (status: string) => void
+  ): Promise<PharmacistAnalysisResult> {
+    
+    statusCallback?.('Analyzing medicine image...');
+
+    // First extract medicine information from image
+    const imageAnalysis = await this.analyzeMedicineImage(imageBase64, userContext, language, statusCallback);
+    
+    if (!imageAnalysis.success) {
+      return imageAnalysis;
+    }
+
+    // Then provide pharmacist advice based on the image analysis and user question
+    statusCallback?.('Providing pharmacist consultation...');
+
+    const consultationPrompt = `You are a professional AI pharmacist. A user has uploaded a medicine image and asked: "${userMessage}"
+
+**MEDICINE IDENTIFIED FROM IMAGE:**
+Medicine: ${imageAnalysis.medicineName || 'Medicine from image'}
+Generic Name: ${imageAnalysis.genericName || 'Not specified'}
+Active Ingredients: ${imageAnalysis.activeIngredients || 'Not specified'}
+Purpose: ${imageAnalysis.purpose || 'Not specified'}
+
+**USER CONTEXT:**
+${userContext ? `
+Current medications: ${userContext.currentMedications.map(m => `${m.name} (${m.frequency})`).join(', ') || 'None'}
+Known allergies: ${userContext.allergies.join(', ') || 'None'}
+` : 'No additional user context provided'}
+
+**USER QUESTION:** "${userMessage}"
+
+Provide a comprehensive pharmacist consultation that addresses their specific question while incorporating the medicine information from the image. Focus on:
+1. Safety considerations
+2. Interactions with current medications
+3. Food-drug interactions
+4. Proper usage instructions
+5. Important warnings
+
+Format your response professionally and include appropriate disclaimers.`;
+
+    try {
+      const response = await this.model.generateContent(consultationPrompt);
+      const pharmacistAdvice = response.response.text();
+
+      return {
+        ...imageAnalysis,
+        pharmacistAdvice,
+        message: pharmacistAdvice,
+        messageType: 'image',
+        followUpQuestions: this.generateFollowUpQuestions(userMessage, imageAnalysis.medicineName)
+      };
+
+    } catch (error) {
+      console.error('❌ Image consultation error:', error);
+      return {
+        ...imageAnalysis,
+        pharmacistAdvice: 'I can see the medicine in your image, but I encountered an error providing detailed consultation. Please consult with your healthcare provider.',
+        message: 'I can see the medicine in your image, but I encountered an error providing detailed consultation. Please consult with your healthcare provider.',
+        messageType: 'image'
+      };
+    }
+  }
+
+  /**
+   * Analyze medicine image (adapted from original service)
+   */
+  private async analyzeMedicineImage(
+    imageBase64: string,
+    userContext?: UserMedicationContext,
+    language: string = 'English',
+    statusCallback?: (status: string) => void
+  ): Promise<PharmacistAnalysisResult> {
+    
+    statusCallback?.('Extracting medicine information from image...');
+
+    const textExtractionPrompt = `You are a specialized medicine text extraction AI. Extract ALL visible text from this medicine packaging systematically.
+
+**REQUIRED OUTPUT FORMAT:**
+Packaging Type: [Type of packaging observed]
+Medicine Name: [Extracted medicine name exactly as you see it]
+Registration Number: [MAL/NOT number if visible, or "Not visible"]
+All Visible Text: [List all text found in order of prominence]
+
+Focus on the MOST PROMINENT text for the product name. Only extract text that is actually visible.`;
+
+    try {
+      const imageData = imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`;
+      const content = [textExtractionPrompt, {
+        inlineData: {
+          mimeType: 'image/jpeg',
+          data: imageData.replace(/^data:image\/[a-z]+;base64,/, '')
+        }
+      }];
+
+      const response = await this.model.generateContent(content);
+      const extractionResult = response.response.text();
+      
+      // Parse extraction results
+      const packagingMatch = extractionResult.match(/Packaging Type:\s*([^\n]+)/i);
+      const medicineNameMatch = extractionResult.match(/Medicine Name:\s*([^\n]+)/i);
+      const regNumberMatch = extractionResult.match(/Registration Number:\s*([^\n]+)/i);
+      
+      const extractedMedicineName = medicineNameMatch ? medicineNameMatch[1].trim() : null;
+      const extractedRegNumber = regNumberMatch && !regNumberMatch[1].toLowerCase().includes('not visible') 
+        ? regNumberMatch[1].trim() : null;
+      const packagingType = packagingMatch ? packagingMatch[1].trim() : 'Medicine packaging';
+
+      // Optional database lookup - only if medicine name is clearly identified
+      let dbResult = null;
+      if (extractedMedicineName) {
+        statusCallback?.('Searching medicine database...');
+        try {
+          dbResult = await npraProductLookup(extractedMedicineName, extractedRegNumber);
+          console.log('✅ NPRA database lookup for image:', dbResult ? 'FOUND' : 'NOT FOUND');
+        } catch (error) {
+          console.error('❌ Database lookup error (non-critical):', error);
+        }
+      }
+
+      statusCallback?.('Analyzing medicine information...');
+
+      // Generate comprehensive analysis with conversational AI approach
+      const comprehensivePrompt = `You are a professional AI pharmacist. A user has uploaded a medicine image.
+
+**Image Analysis:**
+- Packaging: ${packagingType}
+- Medicine Name Visible: ${extractedMedicineName || 'Could not clearly identify'}
+${dbResult ? `- Database Match: ${(dbResult as any).product} (${(dbResult as any).active_ingredient})` : '- Database: No match found (this is okay, provide general guidance)'}
+
+**USER CONTEXT:**
+${userContext ? `
+Current medications: ${userContext.currentMedications.map(m => `${m.name} (${m.frequency})`).join(', ') || 'None'}
+Known allergies: ${userContext.allergies.join(', ') || 'None'}
+` : 'No additional user context provided'}
+
+As an AI pharmacist, provide helpful information about this medicine:
+1. What you can identify from the image
+2. General information about this type of medicine (if identifiable)
+3. Important safety considerations
+4. Interaction warnings (check against user's current medications)
+5. Food-drug interaction warnings
+6. Storage requirements
+7. Safety warnings
+8. General health advice related to the medicine
+
+**Important**: You are a conversational AI pharmacist. Even if the medicine is not in the database, provide helpful general information based on what you can see and your medical knowledge. Focus on education and safety.
+
+Format as a professional, friendly pharmacist consultation.`;
+
+      const comprehensiveResponse = await this.model.generateContent(comprehensivePrompt);
+      const rawAnalysis = comprehensiveResponse.response.text();
+
+      return {
+        success: true,
+        message: rawAnalysis,
+        messageType: 'image',
+        medicineName: dbResult ? (dbResult as any).product : extractedMedicineName || 'Medicine identified',
+        genericName: dbResult ? (dbResult as any).generic_name : 'Analysis completed',
+        activeIngredients: dbResult ? (dbResult as any).active_ingredient : null,
+        confidence: dbResult ? 0.95 : 0.75,
+        language,
+        databaseVerified: !!dbResult,
+        rawAnalysis,
+        disclaimer: 'This information is for educational purposes only. Always consult with your healthcare provider or pharmacist for personalized medical advice.'
+      };
+
+    } catch (error) {
+      console.error('❌ Image analysis error:', error);
+      return {
+        success: false,
+        message: 'I apologize, but I encountered an error analyzing the medicine image. Please try again or consult with your healthcare provider.',
+        messageType: 'text' as const,
+        language
+      };
+    }
+  }
+
+  /**
+   * Extract medicine name from user message
+   */
+  private extractMedicineName(message: string): string | null {
+    const commonMedicines = [
+      'paracetamol', 'acetaminophen', 'ibuprofen', 'aspirin', 'vitamin c', 'vitamin d',
+      'amoxicillin', 'penicillin', 'metformin', 'atorvastatin', 'omeprazole'
+    ];
+    
+    const lowerMessage = message.toLowerCase();
+    
+    for (const medicine of commonMedicines) {
+      if (lowerMessage.includes(medicine)) {
+        return medicine;
+      }
+    }
+    
+    return null;
+  }
+
+  /**
+   * Generate follow-up questions based on context
+   */
+  private generateFollowUpQuestions(userMessage: string, medicineName?: string): string[] {
+    const questions = [
+      'Are you currently taking any other medications?',
+      'Do you have any known allergies to medicines?',
+      'When do you plan to take this medicine?',
+      'Would you like to know about food interactions?'
+    ];
+
+    if (medicineName) {
+      questions.unshift(`Would you like to know more about ${medicineName}?`);
+    }
+
+    return questions.slice(0, 3); // Return up to 3 questions
+  }
+}
+
+// Export singleton instance
+export const aiPharmacist = new AIPharmacistService();

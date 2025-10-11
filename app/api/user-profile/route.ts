@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     // Note: This will only work if RLS policies allow anon access or if user is authenticated
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('token_count, referral_code, referred_by, display_name, avatar_url')
+      .select('tokens, referral_code, referred_by, display_name, avatar_url, email, subscription_tier')
       .eq('id', userId)
       .single();
       
@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
       id: userId,
       email: '', // Email not available without admin access
       name: displayName ? displayName.split(' ')[0] : '',
-      tokens: profile.token_count,
+      tokens: profile.tokens,
       referral_code: profile.referral_code,
       referred_by: profile.referred_by,
       display_name: displayName,

@@ -39,16 +39,16 @@ export default function Home() {
   // Get welcome message in user's language
   const getWelcomeMessage = (lang: string): string => {
     const messages: { [key: string]: string } = {
-      'English': 'Hi👋 Start this conversation by taking your medicine photo.',
-      'Chinese': '你好👋 通过拍摄您的药品照片开始这次对话。',
-      'Malay': 'Hai👋 Mulakan perbualan ini dengan mengambil foto ubat anda.',
-      'Indonesian': 'Hai👋 Mulai percakapan ini dengan mengambil foto obat Anda.',
-      'Thai': 'สวัสดี👋 เริ่มการสนทนานี้โดยถ่ายภาพยาของคุณ',
-      'Vietnamese': 'Xin chào👋 Bắt đầu cuộc trò chuyện này bằng cách chụp ảnh thuốc của bạn.',
-      'Tagalog': 'Kumusta👋 Simulan ang usapang ito sa pamamagitan ng pagkuha ng larawan ng inyong gamot.',
-      'Burmese': 'မင်္ဂလာပါ👋 သင့်ဆေးပုံကို ရိုက်ယူခြင်းဖြင့် ဤစကားပြောဆိုမှုကို စတင်ပါ။',
-      'Khmer': 'សួស្តី👋 ចាប់ផ្តើមការសន្ទនានេះដោយថតរូបថ្នាំរបស់អ្នក។',
-      'Lao': 'ສະບາຍດີ👋 ເລີ່ມການສົນທະນານີ້ໂດຍການຖ່າຍຮູບຢາຂອງທ່ານ.'
+      'English': 'Hi👋, how can i help you today?',
+      'Chinese': '你好👋，今天我能为您做什么？',
+      'Malay': 'Hai👋, bagaimana saya boleh membantu anda hari ini?',
+      'Indonesian': 'Hai👋, bagaimana saya bisa membantu Anda hari ini?',
+      'Thai': 'สวัสดี👋 วันนี้ฉันสามารถช่วยคุณได้อย่างไร?',
+      'Vietnamese': 'Xin chào👋, hôm nay tôi có thể giúp gì cho bạn?',
+      'Tagalog': 'Kumusta👋, paano ko kayo matutulungan ngayong araw?',
+      'Burmese': 'မင်္ဂလာပါ👋 ဒီနေ့ ဘယ်လိုကူညီနိုင်မလဲ?',
+      'Khmer': 'សួស្តី👋 ថ្ងៃនេះ ខ្ញុំអាចជួយអ្នកបានយ៉ាងណា?',
+      'Lao': 'ສະບາຍດີ👋 ມື້ນີ້ ຂ້ອຍສາມາດຊ່ວຍເຈົ້າໄດ້ແນວໃດ?'
     };
     return messages[lang] || messages['English'];
   };
@@ -73,6 +73,46 @@ export default function Home() {
     return lang;
   };
 
+  // Get rotating prompt suggestions
+  const getPromptSuggestions = (): string[] => {
+    const suggestions: { [key: string]: string[] } = {
+      'English': [
+        'Can I take paracetamol with coffee?',
+        'What happens if I take medicine after drinking alcohol?',
+        'Can I eat durian with my medicine?',
+        'What medicine should I avoid before surgery?'
+      ],
+      'Chinese': [
+        '我可以和咖啡一起服用扑热息痛吗？',
+        '喝酒后服药会怎样？',
+        '我可以和榴莲一起吃药吗？',
+        '手术前应该避免什么药物？'
+      ],
+      'Malay': [
+        'Bolehkah saya ambil paracetamol dengan kopi?',
+        'Apa yang berlaku jika saya ambil ubat selepas minum alkohol?',
+        'Bolehkah saya makan durian dengan ubat saya?',
+        'Ubat apa yang patut saya elakkan sebelum pembedahan?'
+      ],
+      'Indonesian': [
+        'Bisakah saya minum parasetamol dengan kopi?',
+        'Apa yang terjadi jika saya minum obat setelah minum alkohol?',
+        'Bisakah saya makan durian dengan obat saya?',
+        'Obat apa yang harus saya hindari sebelum operasi?'
+      ]
+    };
+    
+    const langSuggestions = suggestions[language] || suggestions['English'];
+    return langSuggestions.slice(currentPromptIndex, currentPromptIndex + 2);
+  };
+
+  // Handle prompt suggestion click
+  const handlePromptSuggestion = (suggestion: string) => {
+    setInputText(suggestion);
+    // Auto-submit the suggestion
+    handleTextSubmit(suggestion);
+  };
+
   const [showCamera, setShowCamera] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isTablet, setIsTablet] = useState(false);
@@ -83,11 +123,27 @@ export default function Home() {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [allergy, setAllergy] = useState('');
+  const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   const [showFAQ, setShowFAQ] = useState(false);
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
   const [scanHistory, setScanHistory] = useState<any[]>([]);
+  const [chatHistory, setChatHistory] = useState<any[]>([]);
+  const [chatHistoryLoading, setChatHistoryLoading] = useState(false);
+  const [chatHistoryPage, setChatHistoryPage] = useState(1);
+  const [hasMoreChatHistory, setHasMoreChatHistory] = useState(true);
+  const [chatSearchQuery, setChatSearchQuery] = useState('');
   const [userTokens, setUserTokens] = useState<number>(user?.tokens || 0);
   const [inputText, setInputText] = useState('');
+  // Medication Stack Management
+  const [medicationStack, setMedicationStack] = useState<any[]>([]);
+  const [showMedicationPanel, setShowMedicationPanel] = useState(false);
+  const [newMedication, setNewMedication] = useState({
+    name: '',
+    dosage: '',
+    frequency: '',
+    startDate: '',
+    notes: ''
+  });
   const [aiStatus, setAiStatus] = useState<string>('idle');
   const [useRealStatusUpdates, setUseRealStatusUpdates] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -98,6 +154,64 @@ export default function Home() {
       timestamp: new Date()
     }
   ]);
+
+  // Helper function for smart time display
+  const getSmartTimeDisplay = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+    return date.toLocaleDateString();
+  };
+
+  // Helper function to get conversation category/tags
+  const getConversationTags = (conversation: any): string[] => {
+    const tags: string[] = [];
+    
+    if (conversation.medicineName) {
+      tags.push('Medicine');
+    }
+    
+    if (conversation.firstUserMessage) {
+      const message = conversation.firstUserMessage.toLowerCase();
+      if (message.includes('interaction') || message.includes('coffee') || message.includes('alcohol') || message.includes('food')) {
+        tags.push('Interaction');
+      }
+      if (message.includes('dosage') || message.includes('dose') || message.includes('take')) {
+        tags.push('Dosage');
+      }
+      if (message.includes('side effect') || message.includes('allergy')) {
+        tags.push('Safety');
+      }
+    }
+    
+    if (conversation.imageUrl) {
+      tags.push('Photo');
+    }
+    
+    return tags.length > 0 ? tags : ['General'];
+  };
+
+  // Rotate prompt suggestions
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentPromptIndex((prev) => {
+        const maxIndex = language === 'English' ? 2 : 2; // Show 2 suggestions at a time
+        return prev >= maxIndex ? 0 : prev + 1;
+      });
+    }, 5000); // Rotate every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [language]);
 
   // Function to check authentication and tokens before allowing actions
   const checkAuthentication = (): boolean => {
@@ -121,9 +235,10 @@ export default function Home() {
     return true;
   };
 
-  // Handle text input submission
-  const handleTextSubmit = async () => {
-    if (!inputText.trim()) return;
+  // Handle text input submission - AI Pharmacist
+  const handleTextSubmit = async (textInput?: string) => {
+    const userMessage = (textInput || inputText).trim();
+    if (!userMessage) return;
 
     // Refresh user data to get latest token count before proceeding
     await refreshUserData();
@@ -134,8 +249,10 @@ export default function Home() {
       return;
     }
 
-    const userMessage = inputText.trim();
-    setInputText('');
+    // Clear input if using the input field
+    if (!textInput) {
+      setInputText('');
+    }
 
     // Add user message to chat
     const newUserMessage = {
@@ -148,15 +265,11 @@ export default function Home() {
     setMessages(prev => [...prev, newUserMessage]);
     setIsAnalyzing(true);
 
-    // FORCE DEFENSIVE PAYLOAD CREATION - Use ?? to force non-undefined, valid JSON types
     const userId = user?.id ?? '';
-    const imageBase64 = null; // Text-only query, always null
-    const textQuery = userMessage ?? '';
 
     // CRITICAL VALIDATION: Keep this check and add a user-facing error message
     if (!userId) {
       setIsAnalyzing(false);
-      // Add a chat message here: "Authentication required. Please log in to use AI analysis."
       const errorMessage = {
         id: (Date.now() + 1).toString(),
         type: 'ai' as const,
@@ -164,54 +277,102 @@ export default function Home() {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
-      return; // EXIT HERE ONLY IF UNAUTHENTICATED
+      return;
     }
 
-    // -------------------------------------------------------------
-    // DEBUGGING LOGS (Keep these to confirm execution)
-    console.log('🔍 Debug - Extracted values:', { userId, imageBase64: imageBase64 ? 'BASE64_EXISTS' : null, textQuery });
-    // -------------------------------------------------------------
+    console.log('🤖 AI Pharmacist query:', { userId, userMessage, language });
 
-    // Construct the GUARANTEED valid JSON payload
+    // Construct payload for AI Pharmacist API with current medication stack
     const payload = {
-      imageBase64: imageBase64,
+      userMessage: userMessage,
       userId: userId,
       language: language,
-      allergy: allergy,
+      userContext: {
+        currentMedications: medicationStack.map(med => ({
+          name: med.medicine_name,
+          activeIngredients: med.active_ingredients || '',
+          frequency: med.frequency || '',
+          startDate: med.start_date || '',
+          dosage: med.dosage || ''
+        })),
+        allergies: allergy ? [allergy] : [],
+        medicalConditions: [] // TODO: Load from user profile
+      }
     };
 
     try {
-      const response = await fetch('/api/analyze-image', {
+      const response = await fetch('/api/ai-pharmacist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // The body is now guaranteed to be valid JSON.
         body: JSON.stringify(payload)
       });
 
       const result = await response.json();
 
       if (response.status === 200 && result.status === 'SUCCESS') {
-        // Add AI response
+        // Create comprehensive AI pharmacist response with all information
+        let fullResponse = result.data?.message || result.data?.pharmacistAdvice || 'AI Pharmacist consultation complete';
+        
+        // Add structured medicine information if available
+        if (result.data && result.data.medicineName) {
+          fullResponse += `\n\n**Medicine Information:**`;
+          fullResponse += `\n• **Medicine**: ${result.data.medicineName}`;
+          
+          if (result.data.genericName) {
+            fullResponse += `\n• **Generic Name**: ${result.data.genericName}`;
+          }
+          
+          if (result.data.activeIngredients) {
+            fullResponse += `\n• **Active Ingredients**: ${result.data.activeIngredients}`;
+          }
+          
+          if (result.data.dosageInstructions) {
+            fullResponse += `\n\n**Dosage Instructions:**`;
+            fullResponse += `\n${result.data.dosageInstructions}`;
+          }
+          
+          if (result.data.sideEffects && result.data.sideEffects.length > 0) {
+            fullResponse += `\n\n**Side Effects:**`;
+            result.data.sideEffects.forEach((effect: string) => {
+              fullResponse += `\n• ${effect}`;
+            });
+          }
+          
+          if (result.data.drugInteractions) {
+            fullResponse += `\n\n**Drug Interactions:**`;
+            fullResponse += `\n${result.data.drugInteractions}`;
+          }
+          
+          if (result.data.safetyNotes) {
+            fullResponse += `\n\n**Safety Notes:**`;
+            fullResponse += `\n${result.data.safetyNotes}`;
+          }
+          
+          if (result.data.storage) {
+            fullResponse += `\n\n**Storage Instructions:**`;
+            fullResponse += `\n${result.data.storage}`;
+          }
+          
+          if (result.data.purpose) {
+            fullResponse += `\n\n**Purpose:**`;
+            fullResponse += `\n${result.data.purpose}`;
+          }
+          
+          if (result.data.disclaimer) {
+            fullResponse += `\n\n**Important Reminder:**`;
+            fullResponse += `\n${result.data.disclaimer}`;
+          }
+        }
+
+        // Add single comprehensive AI message
         const aiMessage = {
           id: (Date.now() + 1).toString(),
           type: 'ai' as const,
-          content: result.data?.text || result.message || 'Analysis complete',
+          content: fullResponse,
           timestamp: new Date()
         };
 
         setMessages(prev => [...prev, aiMessage]);
-
-        // Add structured data if available (new Gemini format)
-        if (result.data && (result.data.medicine_name || result.data.purpose)) {
-          const structuredMessage = {
-            id: (Date.now() + 2).toString(),
-            type: 'structured' as const,
-            content: '',
-            timestamp: new Date(),
-            structuredData: result.data // New Gemini format
-          };
-          setMessages(prev => [...prev, structuredMessage]);
-        }
 
         // Update user tokens
         if (result.tokensRemaining !== undefined) {
@@ -343,61 +504,9 @@ export default function Home() {
   }, [user, isLoading, refreshUserData]);
 
 
-  // Function to fetch user chat history (localStorage + database)
-  const fetchUserChatHistory = useCallback(async () => {
-    if (user?.id) {
-      try {
-        // First, load from localStorage for instant display
-        const localMessages = chatStorage.loadChatHistory(user.id);
-        if (localMessages.length > 0) {
-          console.log('✅ Chat history loaded from localStorage:', localMessages.length, 'messages');
-          setMessages(localMessages);
-        }
-
-        // Then, fetch from database for sync
-        let history: any[] = [];
-        try {
-          console.log('🔍 Calling DatabaseService.getUserScanHistory for user:', user.id);
-          history = await DatabaseService.getUserScanHistory(user.id);
-          setScanHistory(history || []);
-          console.log('✅ Scan history loaded from database:', history?.length || 0, 'conversations');
-        } catch (error) {
-          console.error('❌ Error fetching scan history:', error);
-          // Don't fail the entire function if scan history fails
-          setScanHistory([]);
-        }
-
-        // If database has newer data, update localStorage
-        if (history && history.length > 0) {
-          const lastDbUpdate = new Date(Math.max(...history.map(h => new Date(h.created_at).getTime())));
-          const lastLocalUpdate = localMessages.length > 0 ?
-            new Date(Math.max(...localMessages.map(m => m.timestamp.getTime()))) : new Date(0);
-
-          if (lastDbUpdate > lastLocalUpdate) {
-            console.log('🔄 Database has newer data, updating localStorage');
-            // Convert scan history to messages format and save to localStorage
-            const dbMessages: ChatMessage[] = history.slice(0, 5).map(scan => ({
-              id: `scan_${scan.id}`,
-              type: 'structured' as const,
-              content: '',
-              timestamp: new Date(scan.created_at),
-              structuredData: {
-                medicine_name: scan.medicine_name,
-                purpose: scan.purpose || 'Medicine analysis',
-                raw_analysis: `Medicine: ${scan.medicine_name}\nAnalysis completed on ${new Date(scan.created_at).toLocaleDateString()}`
-              }
-            }));
-
-            // Merge with existing messages and save
-            const mergedMessages = [...localMessages.filter(m => !m.id.startsWith('scan_')), ...dbMessages];
-            chatStorage.saveChatHistory(mergedMessages, user.id);
-          }
-        }
-      } catch (error) {
-        console.error('❌ Failed to fetch chat history:', error);
-        setScanHistory([]);
-      }
-    } else {
+  // Enhanced function to fetch user chat history with pagination and search
+  const fetchUserChatHistory = useCallback(async (page: number = 1, searchQuery: string = '', append: boolean = false) => {
+    if (!user?.id) {
       // For non-authenticated users, load from localStorage only
       const localMessages = chatStorage.loadChatHistory();
       if (localMessages.length > 0) {
@@ -405,8 +514,129 @@ export default function Home() {
         setMessages(localMessages);
       }
       setScanHistory([]);
+      return;
+    }
+
+    setChatHistoryLoading(true);
+    try {
+      // Try to fetch from new chat_history table first
+      const { supabase } = await import('@/lib/supabase');
+
+      let query = supabase
+        .from('chat_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      // Apply search filter if provided
+      if (searchQuery) {
+        query = query.or(`message_text.ilike.%${searchQuery}%,ai_response.ilike.%${searchQuery}%,medicine_name.ilike.%${searchQuery}%`);
+      }
+
+      // Apply pagination
+      const limit = 20;
+      const offset = (page - 1) * limit;
+      query = query.range(offset, offset + limit - 1);
+
+      const { data: chatData, error: chatError } = await query;
+
+      if (chatError) {
+        console.log('⚠️ Chat history table not available, falling back to scan history');
+        // Fallback to old scan_history
+        const history = await DatabaseService.getUserScanHistory(user.id);
+        if (history) {
+          setScanHistory(history || []);
+          console.log('✅ Fallback: Scan history loaded from database:', history?.length || 0, 'conversations');
+        }
+        return;
+      }
+
+      if (chatData && chatData.length > 0) {
+        // Group messages by session_id to create conversation thumbnails
+        const conversations = groupMessagesBySession(chatData);
+        
+        if (append) {
+          setChatHistory(prev => [...prev, ...conversations]);
+        } else {
+          setChatHistory(conversations);
+          // Also update scanHistory for backward compatibility
+          setScanHistory(conversations.map(conv => ({
+            id: conv.id,
+            medicine_name: conv.medicineName,
+            generic_name: conv.genericName,
+            created_at: conv.createdAt,
+            image_url: conv.imageUrl
+          })));
+        }
+
+        setHasMoreChatHistory(chatData.length === limit);
+        console.log(`✅ Chat history loaded: page ${page}, ${conversations.length} conversations`);
+      } else {
+        setHasMoreChatHistory(false);
+        if (page === 1) {
+          setChatHistory([]);
+          setScanHistory([]);
+        }
+      }
+
+      // Also load current conversation from localStorage
+      const localMessages = chatStorage.loadChatHistory(user.id);
+      if (localMessages.length > 0 && page === 1) {
+        setMessages(localMessages);
+      }
+
+    } catch (error) {
+      console.error('❌ Failed to fetch chat history:', error);
+      setChatHistory([]);
+      setScanHistory([]);
+    } finally {
+      setChatHistoryLoading(false);
     }
   }, [user?.id]);
+
+  // Helper function to group messages by session into conversation thumbnails
+  const groupMessagesBySession = (messages: any[]) => {
+    const sessionMap = new Map();
+    
+    messages.forEach(msg => {
+      const sessionId = msg.session_id || msg.id;
+      if (!sessionMap.has(sessionId)) {
+        sessionMap.set(sessionId, {
+          id: sessionId,
+          sessionId: sessionId,
+          messages: [],
+          createdAt: msg.created_at,
+          medicineName: msg.medicine_name,
+          genericName: msg.generic_name,
+          imageUrl: msg.image_url,
+          messageCount: 0,
+          firstUserMessage: '',
+          lastAiMessage: ''
+        });
+      }
+      
+      const conversation = sessionMap.get(sessionId);
+      conversation.messages.push(msg);
+      conversation.messageCount++;
+      
+      // Store first user message and last AI message for preview
+      if (msg.message_type === 'user' && !conversation.firstUserMessage) {
+        conversation.firstUserMessage = msg.message_text;
+      }
+      if (msg.message_type === 'ai') {
+        conversation.lastAiMessage = msg.ai_response || msg.message_text;
+      }
+      
+      // Update creation time to earliest message
+      if (new Date(msg.created_at) < new Date(conversation.createdAt)) {
+        conversation.createdAt = msg.created_at;
+      }
+    });
+
+    return Array.from(sessionMap.values()).sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  };
 
   // Load chat history on initial page load (before user authentication)
   useEffect(() => {
@@ -418,10 +648,112 @@ export default function Home() {
     }
   }, []);
 
+  // Medication Stack Management Functions
+  const fetchUserMedicationStack = useCallback(async () => {
+    if (!user?.id) return;
+
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { data, error } = await supabase
+        .from('user_medication_stack')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching medication stack:', error);
+        return;
+      }
+
+      setMedicationStack(data || []);
+      console.log('✅ Medication stack loaded:', data?.length || 0, 'medications');
+    } catch (error) {
+      console.error('Failed to fetch medication stack:', error);
+    }
+  }, [user?.id]);
+
   // Fetch user chat history when user logs in
   useEffect(() => {
-    fetchUserChatHistory();
-  }, [fetchUserChatHistory]);
+    if (user?.id) {
+      fetchUserChatHistory(1, chatSearchQuery, false);
+      fetchUserMedicationStack();
+    }
+  }, [fetchUserChatHistory, fetchUserMedicationStack, user?.id, chatSearchQuery]);
+
+  // Load more chat history when scrolling
+  const loadMoreChatHistory = useCallback(() => {
+    if (!chatHistoryLoading && hasMoreChatHistory && user?.id) {
+      const nextPage = chatHistoryPage + 1;
+      setChatHistoryPage(nextPage);
+      fetchUserChatHistory(nextPage, chatSearchQuery, true);
+    }
+  }, [chatHistoryLoading, hasMoreChatHistory, user?.id, chatHistoryPage, chatSearchQuery, fetchUserChatHistory]);
+
+  const addMedication = async () => {
+    if (!newMedication.name.trim() || !user?.id) return;
+
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { data, error } = await supabase
+        .from('user_medication_stack')
+        .insert([{
+          user_id: user.id,
+          medicine_name: newMedication.name,
+          dosage: newMedication.dosage,
+          frequency: newMedication.frequency,
+          start_date: newMedication.startDate || new Date().toISOString().split('T')[0],
+          notes: newMedication.notes,
+          is_active: true
+        }])
+        .select();
+
+      if (error) {
+        console.error('Error adding medication:', error);
+        return;
+      }
+
+      // Add to local state
+      setMedicationStack(prev => [...prev, ...data]);
+      
+      // Reset form
+      setNewMedication({
+        name: '',
+        dosage: '',
+        frequency: '',
+        startDate: '',
+        notes: ''
+      });
+
+      console.log('✅ Medication added successfully');
+    } catch (error) {
+      console.error('Failed to add medication:', error);
+    }
+  };
+
+  const removeMedication = async (medicationId: string) => {
+    if (!user?.id) return;
+
+    try {
+      const { supabase } = await import('@/lib/supabase');
+      const { error } = await supabase
+        .from('user_medication_stack')
+        .update({ is_active: false, end_date: new Date().toISOString().split('T')[0] })
+        .eq('id', medicationId)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error removing medication:', error);
+        return;
+      }
+
+      // Remove from local state
+      setMedicationStack(prev => prev.filter(med => med.id !== medicationId));
+      console.log('✅ Medication removed successfully');
+    } catch (error) {
+      console.error('Failed to remove medication:', error);
+    }
+  };
 
 
   const handleCameraCapture = async () => {
@@ -988,10 +1320,89 @@ export default function Home() {
           </div>
 
           <div className="nav-content">
+            {/* Enhanced Chat History with Search */}
             <div className="recent-chats">
-              <h3>Chat History</h3>
-              <div className="chat-list">
-                {scanHistory.length > 0 ? (
+              <div className="chat-history-header">
+                <h3>Chat History</h3>
+                {user && (
+                  <div className="chat-search">
+                    <input
+                      type="text"
+                      placeholder="Search conversations..."
+                      value={chatSearchQuery}
+                      onChange={(e) => setChatSearchQuery(e.target.value)}
+                      className="chat-search-input"
+                    />
+                  </div>
+                )}
+              </div>
+              
+              <div className="chat-list" onScroll={(e) => {
+                const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+                if (scrollHeight - scrollTop <= clientHeight + 100) {
+                  loadMoreChatHistory();
+                }
+              }}>
+                {chatHistory.length > 0 ? (
+                  chatHistory.map((conversation, index) => (
+                    <div
+                      key={conversation.id}
+                      className="chat-item enhanced"
+                      onClick={() => {
+                        // Load previous conversation
+                        const conversationMessages = conversation.messages
+                          .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                          .map((msg: any) => ({
+                            id: msg.id,
+                            type: msg.message_type as 'user' | 'ai',
+                            content: msg.message_type === 'user' ? msg.message_text : (msg.ai_response || msg.message_text),
+                            timestamp: new Date(msg.created_at),
+                            image: msg.image_url || undefined,
+                            structuredData: msg.message_type === 'ai' && conversation.medicineName ? {
+                              medicine_name: conversation.medicineName,
+                              generic_name: conversation.genericName,
+                              purpose: 'Previous analysis',
+                              raw_analysis: msg.ai_response || msg.message_text
+                            } : undefined
+                          }));
+
+                        setMessages(conversationMessages);
+                        setSideNavOpen(false);
+                      }}
+                    >
+                      <div className="chat-item-icon">
+                        {conversation.imageUrl ? (
+                          <img src={conversation.imageUrl} alt="Medicine" className="chat-medicine-thumbnail" />
+                        ) : (
+                          <div className="chat-icon-placeholder">
+                            {conversation.medicineName ? '💊' : '💬'}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="chat-item-content">
+                        <div className="chat-item-title">
+                          {conversation.medicineName || 'AI Chat'}
+                        </div>
+                        <div className="chat-item-preview">
+                          {conversation.firstUserMessage || 'Conversation with AI Pharmacist'}
+                        </div>
+                        <div className="chat-item-meta">
+                          <span className="chat-time">{getSmartTimeDisplay(conversation.createdAt)}</span>
+                          <div className="chat-tags">
+                            {getConversationTags(conversation).map((tag, tagIndex) => (
+                              <span key={tagIndex} className="chat-tag">{tag}</span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : chatHistoryLoading ? (
+                  <div className="chat-list-loading">
+                    <span>Loading chat history...</span>
+                  </div>
+                ) : scanHistory.length > 0 ? (
                   scanHistory.slice(0, 5).map((scan, index) => (
                     <div
                       key={scan.id}
@@ -1058,12 +1469,116 @@ export default function Home() {
                 ) : (
                   <div className="no-scans">
                     <p>No chat yet</p>
-                    <p className="scan-hint">Upload a medicine image to get started</p>
+                    <p className="scan-hint">Start a conversation with AI Pharmacist</p>
                   </div>
                 )}
               </div>
             </div>
           </div>
+
+          {/* Medication Stack Management */}
+          {user && (
+            <div className="medication-stack-section">
+              <div className="medication-stack-header">
+                <h3>My Medications</h3>
+                <button 
+                  className="add-medication-btn"
+                  onClick={() => setShowMedicationPanel(!showMedicationPanel)}
+                >
+                  <Plus size={14} />
+                  Add
+                </button>
+              </div>
+
+              {/* Add Medication Form */}
+              {showMedicationPanel && (
+                <div className="add-medication-form">
+                  <input
+                    type="text"
+                    placeholder="Medicine name (e.g., Paracetamol)"
+                    value={newMedication.name}
+                    onChange={(e) => setNewMedication(prev => ({ ...prev, name: e.target.value }))}
+                    className="medication-input"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Dosage (e.g., 500mg)"
+                    value={newMedication.dosage}
+                    onChange={(e) => setNewMedication(prev => ({ ...prev, dosage: e.target.value }))}
+                    className="medication-input"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Frequency (e.g., Twice daily)"
+                    value={newMedication.frequency}
+                    onChange={(e) => setNewMedication(prev => ({ ...prev, frequency: e.target.value }))}
+                    className="medication-input"
+                  />
+                  <input
+                    type="date"
+                    placeholder="Start date"
+                    value={newMedication.startDate}
+                    onChange={(e) => setNewMedication(prev => ({ ...prev, startDate: e.target.value }))}
+                    className="medication-input"
+                  />
+                  <textarea
+                    placeholder="Notes (optional)"
+                    value={newMedication.notes}
+                    onChange={(e) => setNewMedication(prev => ({ ...prev, notes: e.target.value }))}
+                    className="medication-textarea"
+                    rows={2}
+                  />
+                  <div className="medication-form-actions">
+                    <button 
+                      className="save-medication-btn"
+                      onClick={addMedication}
+                      disabled={!newMedication.name.trim()}
+                    >
+                      Save
+                    </button>
+                    <button 
+                      className="cancel-medication-btn"
+                      onClick={() => setShowMedicationPanel(false)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Current Medications List */}
+              <div className="current-medications">
+                {medicationStack.length > 0 ? (
+                  medicationStack.map((medication) => (
+                    <div key={medication.id} className="medication-item">
+                      <div className="medication-info">
+                        <div className="medication-name">{medication.medicine_name}</div>
+                        <div className="medication-details">
+                          {medication.dosage && <span>Dose: {medication.dosage}</span>}
+                          {medication.frequency && <span>Frequency: {medication.frequency}</span>}
+                        </div>
+                        {medication.notes && (
+                          <div className="medication-notes">{medication.notes}</div>
+                        )}
+                      </div>
+                      <button 
+                        className="remove-medication-btn"
+                        onClick={() => removeMedication(medication.id)}
+                        title="Remove medication"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="no-medications">
+                    <p>No medications added yet</p>
+                    <p className="medication-hint">Add your current medications for personalized advice</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="nav-footer">
             <div className="user-info">
@@ -1445,13 +1960,29 @@ export default function Home() {
           })()}
           </div>
 
+          {/* AI Pharmacist Prompt Suggestions */}
+          <div className="prompt-suggestions-section">
+            <div className="prompt-suggestions-title">💡 Try asking:</div>
+            <div className="prompt-suggestions">
+              {getPromptSuggestions().map((suggestion, index) => (
+                <button
+                  key={index}
+                  className="prompt-suggestion"
+                  onClick={() => handlePromptSuggestion(suggestion)}
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="input-container">
             {/* Allergy Input Field */}
             <div className="allergy-input-wrapper">
               <input
                 type="text"
-              placeholder="Enter allergies (e.g., penicillin, sulfa drugs)"
-              className="allergy-input"
+                placeholder="Enter allergies (e.g., penicillin, sulfa drugs)"
+                className="allergy-input"
                 value={allergy}
                 onChange={(e) => setAllergy(e.target.value)}
               />
@@ -1488,7 +2019,7 @@ export default function Home() {
                 />
                 <button
                   className="send-btn"
-                  onClick={handleTextSubmit}
+                  onClick={() => handleTextSubmit()}
                   disabled={!inputText.trim() || isAnalyzing}
                 >
                   <Send size={18} />
