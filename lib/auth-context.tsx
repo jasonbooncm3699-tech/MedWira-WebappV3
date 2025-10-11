@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ErrorInfo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ErrorInfo } from 'react';
 import { createClient, getSessionFromCookies } from './supabase-browser';
 
 interface User {
@@ -31,6 +31,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  
+  // CRITICAL: Use ref to prevent infinite loops - refs don't trigger re-renders
+  const initializationRef = useRef(false);
   
   // CRITICAL: Create Supabase client instance for cookie-based authentication
   const supabase = createClient();
@@ -611,11 +614,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Only initialize auth after hydration
     if (!isHydrated) return;
     
-    // CRITICAL: Prevent multiple initializations
-    if (isInitialized) {
-      console.log('⚠️ Auth already initialized, skipping...');
+    // CRITICAL: Prevent multiple initializations using ref (doesn't trigger re-renders)
+    if (initializationRef.current) {
+      console.log('⚠️ Auth already initialized (ref), skipping...');
       return;
     }
+    
+    // Set the ref to prevent future initializations
+    initializationRef.current = true;
     
     console.log('🚀 AuthProvider initializing...');
     
