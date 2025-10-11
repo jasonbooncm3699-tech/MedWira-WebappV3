@@ -90,8 +90,8 @@ export async function POST(request: NextRequest) {
       name: user.user_metadata?.full_name || user.user_metadata?.name || 'User'
     });
     
-    // Check if user profile already exists in user_profiles table
-    console.log('🔍 Checking if user profile exists in user_profiles table...');
+    // Check if user profile already exists in profiles table
+    console.log('🔍 Checking if user profile exists in profiles table...');
     const { data: existingProfile, error: fetchError } = await supabase
       .from('profiles')
       .select('*')

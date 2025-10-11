@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
       status: "SUCCESS",
       data: {
         user_id: userId,
-        token_count: profile?.tokens || 0,
+        tokens: profile?.tokens || 0,
         last_updated: profile?.updated_at
       }
     });

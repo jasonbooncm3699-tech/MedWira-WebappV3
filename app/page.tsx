@@ -507,7 +507,6 @@ export default function Home() {
       tokens: user?.tokens,
       name: user?.name,
       referral_code: user?.referral_code,
-      referral_count: user?.referral_count,
       isLoading: isLoading
     });
 

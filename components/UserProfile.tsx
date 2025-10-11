@@ -116,7 +116,6 @@ export default function UserProfile({
         ) : (
           <ReferralCodeDisplay
             referralCode={user.referral_code}
-            referralCount={user.referral_count}
             showHeader={true}
           />
         )

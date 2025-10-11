@@ -10,7 +10,6 @@ interface User {
   tokens: number;
   subscription_tier: string;
   referral_code?: string;
-  referral_count?: number;
   referred_by?: string | null;
   display_name?: string;
   avatar_url?: string;
@@ -85,7 +84,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             tokens: profileData.tokens || 0,
             subscription_tier: 'free',
             referral_code: profileData.referral_code || '',
-            referral_count: 0,
             referred_by: profileData.referred_by,
             display_name: displayName,
             avatar_url: avatarUrl
@@ -106,7 +104,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             tokens: 0, 
             subscription_tier: 'free', 
             referral_code: '', 
-            referral_count: 0, 
             referred_by: null, 
             display_name: '', 
             avatar_url: '' 
@@ -123,7 +120,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           tokens: 0, // NO TOKENS when API fails - prevents stale data
           subscription_tier: 'free',
           referral_code: '', // NO REFERRAL CODE when API fails
-          referral_count: 0,
           referred_by: null,
           display_name: '',
           avatar_url: ''
@@ -232,7 +228,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             tokens: 30, // Default tokens for new users
             subscription_tier: 'free', // Default subscription tier
             referral_code: undefined, // Will be fetched from database
-            referral_count: 0,
             referred_by: null
           };
           
@@ -319,7 +314,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           tokens: 0, // NO TOKENS when API fails - prevents stale data
           subscription_tier: 'free',
           referral_code: '', // NO REFERRAL CODE when API fails
-          referral_count: 0,
           referred_by: null,
           display_name: '',
           avatar_url: ''
@@ -369,7 +363,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           tokens: 0, // NO TOKENS when fetch fails - prevents stale data
           subscription_tier: 'free',
           referral_code: '', // NO REFERRAL CODE when fetch fails
-          referral_count: 0,
           referred_by: null,
           display_name: user.display_name || '',
           avatar_url: user.avatar_url || ''
@@ -391,7 +384,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name: completeUserData.name,
           tokens: completeUserData.tokens,
           referral_code: completeUserData.referral_code,
-          referral_count: completeUserData.referral_count
         });
         setUser(completeUserData);
       } else {
@@ -404,7 +396,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           tokens: 0, // NO TOKENS when fetchUserData returns null - prevents stale data
           subscription_tier: 'free',
           referral_code: '', // NO REFERRAL CODE when fetchUserData returns null
-          referral_count: 0,
           referred_by: null,
           display_name: user.display_name || '',
           avatar_url: user.avatar_url || ''
@@ -423,7 +414,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           tokens: 0, // NO TOKENS when unexpected error occurs
           subscription_tier: 'free',
           referral_code: '', // NO REFERRAL CODE when unexpected error occurs
-          referral_count: 0,
           referred_by: null,
           display_name: user.display_name || '',
           avatar_url: user.avatar_url || ''
@@ -469,7 +459,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('✅ User profile found after force fetch:', {
             tokens: userData.tokens,
             referral_code: userData.referral_code,
-            referral_count: userData.referral_count
           });
         }
       }
@@ -546,7 +535,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           tokens: 0, // NO TOKENS when all attempts fail - prevents stale data
           subscription_tier: 'free',
           referral_code: '', // NO REFERRAL CODE when all attempts fail
-          referral_count: 0,
           referred_by: null,
           display_name: userName,
           avatar_url: ''
@@ -567,7 +555,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         tokens: 0, // NO TOKENS when unexpected error occurs
         subscription_tier: 'free',
         referral_code: '', // NO REFERRAL CODE when unexpected error occurs
-        referral_count: 0,
         referred_by: null,
         display_name: userName,
         avatar_url: ''
@@ -694,7 +681,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log('✅ User profile data loaded after sign-in:', {
               tokens: userProfileData.tokens,
               referral_code: userProfileData.referral_code,
-              referral_count: userProfileData.referral_count,
               name: userProfileData.name,
               email: userProfileData.email
             });
@@ -766,7 +752,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   tokens: 0,
                   subscription_tier: 'free',
                   referral_code: '',
-                  referral_count: 0,
                   referred_by: null,
                   display_name: '',
                   avatar_url: ''
@@ -804,7 +789,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userId: user.id,
         tokens: user.tokens,
         hasReferralCode: !!user.referral_code,
-        referralCount: user.referral_count
       });
       
       // If user is authenticated but has 0 tokens or no referral code, try to refresh
@@ -815,7 +799,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }, 1000);
       }
     }
-  }, [isHydrated, user?.id, user?.tokens, user?.referral_code, user?.referral_count, isLoading, refreshUserData]);
+  }, [isHydrated, user?.id, user?.tokens, user?.referral_code, isLoading, refreshUserData]);
 
   // CRITICAL: Force refresh user data on component mount if user is authenticated
   useEffect(() => {

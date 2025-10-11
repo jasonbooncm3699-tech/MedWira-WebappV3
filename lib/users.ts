@@ -9,7 +9,6 @@ export interface UserProfile {
   name: string;
   tokens: number;
   referral_code?: string;
-  referral_count?: number;
   referred_by?: string | null;
   display_name?: string;
   avatar_url?: string;
@@ -131,7 +130,6 @@ export function createFallbackUserProfile(userId: string, email?: string): UserP
     tokens: 0, // No tokens when API fails
     subscription_tier: 'free',
     referral_code: '', // Empty when API fails
-    referral_count: 0,
     referred_by: null,
     display_name: email ? email.split('@')[0] : '',
     avatar_url: ''

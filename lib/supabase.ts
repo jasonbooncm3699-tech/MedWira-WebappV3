@@ -17,7 +17,6 @@ export interface User {
   subscription_tier?: 'free' | 'premium' | 'pro'
   referral_code?: string
   referred_by?: string
-  referral_count?: number
   created_at?: string
   updated_at?: string
   last_login?: string
