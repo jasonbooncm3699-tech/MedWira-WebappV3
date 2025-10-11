@@ -35,6 +35,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // CRITICAL: Use ref to prevent infinite loops - refs don't trigger re-renders
   const initializationRef = useRef(false);
   
+  // DEBUG: Track component mounting
+  console.log('🔍 AuthProvider component mounted/re-rendered');
+  
   // CRITICAL: Create Supabase client instance for cookie-based authentication
   const supabase = createClient();
 
@@ -611,8 +614,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isHydrated, isLoading]); // REMOVED user?.id to prevent circular dependency
 
   useEffect(() => {
+    console.log('🔍 Auth initialization useEffect triggered');
+    
     // Only initialize auth after hydration
-    if (!isHydrated) return;
+    if (!isHydrated) {
+      console.log('🔍 Skipping auth initialization - not hydrated yet');
+      return;
+    }
     
     // CRITICAL: Prevent multiple initializations using ref (doesn't trigger re-renders)
     if (initializationRef.current) {
