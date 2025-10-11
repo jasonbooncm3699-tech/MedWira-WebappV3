@@ -797,7 +797,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('🧹 Cleaning up auth listener');
       authListener.subscription.unsubscribe();
     };
-  }, [fetchUserData, forceFetchUserProfile, isHydrated, isInitialized, supabase]); // REMOVED refreshUser from deps to prevent infinite loop
+  }, [fetchUserData, forceFetchUserProfile, isHydrated, supabase]); // REMOVED isInitialized from deps to prevent infinite loop
 
   // REMOVED: Redundant useEffect that was causing infinite loops
 
