@@ -574,10 +574,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Auto-refresh user data when component mounts and user is authenticated
   useEffect(() => {
     if (isHydrated && user?.id && !isLoading) {
-      console.log('🔄 Auto-refreshing user data on mount...');
       refreshUserData();
     }
-  }, [isHydrated, user?.id, isLoading, refreshUserData]);
+  }, [isHydrated, user?.id, isLoading]); // REMOVED refreshUserData from deps to prevent infinite loop
 
   useEffect(() => {
     // Only initialize auth after hydration
@@ -785,11 +784,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // CRITICAL: Auto-refresh user data when user is authenticated but has no tokens or referral code
   useEffect(() => {
     if (isHydrated && user?.id && !isLoading) {
-      console.log('🔍 Checking user data completeness...', {
-        userId: user.id,
-        tokens: user.tokens,
-        hasReferralCode: !!user.referral_code,
-      });
       
       // If user is authenticated but has 0 tokens or no referral code, try to refresh
       if (user.tokens === 0 || !user.referral_code) {
@@ -799,18 +793,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }, 1000);
       }
     }
-  }, [isHydrated, user?.id, user?.tokens, user?.referral_code, isLoading, refreshUserData]);
+  }, [isHydrated, user?.id, user?.tokens, user?.referral_code, isLoading]); // REMOVED refreshUserData from deps to prevent infinite loop
 
   // CRITICAL: Force refresh user data on component mount if user is authenticated
   useEffect(() => {
     if (isHydrated && user?.id && !isLoading) {
-      console.log('🔄 Force refreshing user data on mount for authenticated user...');
       // Small delay to ensure auth state is fully settled
       setTimeout(() => {
         refreshUserData();
       }, 500);
     }
-  }, [isHydrated, user?.id, isLoading, refreshUserData]);
+  }, [isHydrated, user?.id, isLoading]); // REMOVED refreshUserData from deps to prevent infinite loop
 
   const contextValue: AuthContextType = {
     user: user || null, // Ensure user is never undefined
