@@ -797,7 +797,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('🧹 Cleaning up auth listener');
       authListener.subscription.unsubscribe();
     };
-  }, [refreshUser, fetchUserData, forceFetchUserProfile, isHydrated, isInitialized, supabase]);
+  }, [fetchUserData, forceFetchUserProfile, isHydrated, isInitialized, supabase]); // REMOVED refreshUser from deps to prevent infinite loop
 
   // CRITICAL: Auto-refresh user data when user is authenticated but has no tokens or referral code
   useEffect(() => {
