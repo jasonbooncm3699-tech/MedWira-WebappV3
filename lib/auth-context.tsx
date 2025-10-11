@@ -31,6 +31,16 @@ let globalInitializationComplete = false;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  
+  // DEBUG: Track setUser calls
+  const debugSetUser = useCallback((newUser: User | null) => {
+    console.log('🔍 setUser called', {
+      previousUser: user?.id || 'null',
+      newUser: newUser?.id || 'null',
+      stackTrace: new Error().stack?.split('\n').slice(1, 4).join('\n')
+    });
+    setUser(newUser);
+  }, [user]);
   const [isLoading, setIsLoading] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -38,8 +48,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // CRITICAL: Use ref to prevent infinite loops - refs don't trigger re-renders
   const initializationRef = useRef(false);
   
-  // DEBUG: Track component mounting
-  console.log('🔍 AuthProvider component mounted/re-rendered');
+  // DEBUG: Track component lifecycle and state
+  console.log('🔍 AuthProvider component mounted/re-rendered', {
+    timestamp: new Date().toISOString(),
+    user: user?.id ? 'has user' : 'no user',
+    isLoading,
+    isHydrated,
+    isInitialized,
+    globalInitializationComplete,
+    stackTrace: new Error().stack?.split('\n').slice(1, 4).join('\n')
+  });
   
   // CRITICAL: Create Supabase client instance ONCE using useMemo to prevent recreation
   const supabase = useMemo(() => {
@@ -235,7 +253,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             referred_by: null
           };
           
-          setUser(cookieUser);
+          debugSetUser(cookieUser);
           setIsLoading(false);
           return;
         }
@@ -306,7 +324,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           tokens: userData.tokens,
           tier: userData.subscription_tier
         });
-        setUser(userData);
+        debugSetUser(userData);
       } else {
         console.log('⚠️ No user data in database, creating fallback user with zero tokens');
         // DEFENSIVE: Safe property access for fallback user creation
@@ -401,7 +419,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             tokens: completeUserData.tokens,
             referral_code: completeUserData.referral_code,
           });
-          setUser(completeUserData);
+          debugSetUser(completeUserData);
         } else {
           console.log('✅ User data unchanged, skipping state update to prevent infinite loop');
         }
@@ -609,6 +627,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Handle hydration
   useEffect(() => {
+    console.log('🔍 Hydration useEffect triggered');
     setIsHydrated(true);
   }, []);
 
