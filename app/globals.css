@@ -962,51 +962,37 @@ body {
   z-index: 100;
 }
 
-/* AI Pharmacist Prompt Suggestions */
-.prompt-suggestions-section {
-  margin-bottom: 16px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* Rotating Prompt Suggestions (replaces allergy input) */
+.prompt-suggestion-container {
+  width: 100%;
 }
 
-.prompt-suggestions-title {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 8px;
-  font-weight: 500;
-}
-
-.prompt-suggestions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.prompt-suggestion {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+.prompt-suggestion-display {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 8px 12px;
   color: #ffffff;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: left;
   font-family: inherit;
-  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.prompt-suggestion:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.25);
+.prompt-suggestion-display:hover {
+  border-color: rgba(0, 212, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
   transform: translateY(-1px);
 }
 
-.prompt-suggestion:active {
+.prompt-suggestion-display:active {
   transform: translateY(0);
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 /* Enhanced Chat History Styles */

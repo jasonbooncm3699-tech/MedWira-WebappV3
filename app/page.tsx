@@ -103,7 +103,7 @@ export default function Home() {
     };
     
     const langSuggestions = suggestions[language] || suggestions['English'];
-    return langSuggestions.slice(currentPromptIndex, currentPromptIndex + 2);
+    return langSuggestions.slice(currentPromptIndex, currentPromptIndex + 1); // Show only 1 suggestion
   };
 
   // Handle prompt suggestion click
@@ -205,7 +205,34 @@ export default function Home() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentPromptIndex((prev) => {
-        const maxIndex = language === 'English' ? 2 : 2; // Show 2 suggestions at a time
+        const suggestions: { [key: string]: string[] } = {
+          'English': [
+            'Can I take paracetamol with coffee?',
+            'What happens if I take medicine after drinking alcohol?',
+            'Can I eat durian with my medicine?',
+            'What medicine should I avoid before surgery?'
+          ],
+          'Chinese': [
+            '我可以和咖啡一起服用扑热息痛吗？',
+            '喝酒后吃药会怎样？',
+            '我可以和榴莲一起吃药吗？',
+            '手术前应该避免什么药物？'
+          ],
+          'Malay': [
+            'Bolehkah saya ambil paracetamol dengan kopi?',
+            'Apa yang berlaku jika saya ambil ubat selepas minum arak?',
+            'Bolehkah saya makan durian dengan ubat saya?',
+            'Ubat apa yang patut saya elakkan sebelum pembedahan?'
+          ],
+          'Indonesian': [
+            'Bisakah saya minum paracetamol dengan kopi?',
+            'Apa yang terjadi jika saya minum obat setelah minum alkohol?',
+            'Bisakah saya makan durian dengan obat saya?',
+            'Obat apa yang harus saya hindari sebelum operasi?'
+          ]
+        };
+        const langSuggestions = suggestions[language] || suggestions['English'];
+        const maxIndex = langSuggestions.length - 1;
         return prev >= maxIndex ? 0 : prev + 1;
       });
     }, 5000); // Rotate every 5 seconds
@@ -1960,32 +1987,22 @@ export default function Home() {
           })()}
           </div>
 
-          {/* AI Pharmacist Prompt Suggestions */}
-          <div className="prompt-suggestions-section">
-            <div className="prompt-suggestions-title">💡 Try asking:</div>
-            <div className="prompt-suggestions">
-              {getPromptSuggestions().map((suggestion, index) => (
-                <button
-                  key={index}
-                  className="prompt-suggestion"
-                  onClick={() => handlePromptSuggestion(suggestion)}
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-          </div>
-
           <div className="input-container">
-            {/* Allergy Input Field */}
+            {/* Rotating Prompt Suggestions - Replaces Allergy Input */}
             <div className="allergy-input-wrapper">
-              <input
-                type="text"
-                placeholder="Enter allergies (e.g., penicillin, sulfa drugs)"
-                className="allergy-input"
-                value={allergy}
-                onChange={(e) => setAllergy(e.target.value)}
-              />
+              <div className="prompt-suggestion-container">
+                <div 
+                  className="prompt-suggestion-display"
+                  onClick={() => {
+                    const currentSuggestions = getPromptSuggestions();
+                    if (currentSuggestions.length > 0) {
+                      handlePromptSuggestion(currentSuggestions[0]);
+                    }
+                  }}
+                >
+                  {getPromptSuggestions()[0] || 'Can I take paracetamol with coffee?'}
+                </div>
+              </div>
             </div>
 
             <div className="input-wrapper">
