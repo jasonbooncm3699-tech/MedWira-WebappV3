@@ -102,7 +102,7 @@ serve(async (req) => {
     
     const { data: userProfile, error: userError } = await supabase
       .from('profiles')
-      .select('token_count')
+      .select('tokens')
       .eq('id', userId)
       .single()
 
@@ -120,7 +120,7 @@ serve(async (req) => {
       )
     }
 
-    if (userProfile.token_count <= 0) {
+    if (userProfile.tokens <= 0) {
       return new Response(
         JSON.stringify({
           success: false,
@@ -139,7 +139,7 @@ serve(async (req) => {
     const { error: deductError } = await supabase
       .from('profiles')
       .update({ 
-        token_count: userProfile.token_count - 1,
+        tokens: userProfile.tokens - 1,
         updated_at: new Date().toISOString()
       })
       .eq('id', userId)
@@ -159,7 +159,7 @@ serve(async (req) => {
       )
     }
 
-    console.log('✅ Token deducted successfully. Remaining:', userProfile.token_count - 1)
+    console.log('✅ Token deducted successfully. Remaining:', userProfile.tokens - 1)
 
     // Phase 2: AI Multimodal Analysis (Image Verification)
     console.log('🔍 Phase 2: Analyzing image with AI...')
@@ -211,7 +211,7 @@ Respond with JSON format containing all required fields for comprehensive medici
             success: false,
             status: 'ERROR',
             message: medicineData.message,
-            tokensRemaining: userProfile.token_count - 1
+            tokensRemaining: userProfile.tokens - 1
           }),
           { 
             status: 400, 
@@ -362,7 +362,7 @@ IMPORTANT GUIDELINES:
       success: true,
       status: 'SUCCESS',
       data: finalAnalysis,
-      tokensRemaining: userProfile.token_count - 1
+      tokensRemaining: userProfile.tokens - 1
     }
 
     return new Response(
