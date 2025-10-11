@@ -372,12 +372,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name: user.name    // Preserve existing name
         };
         
-        console.log('✅ User data refreshed successfully:', {
-          name: completeUserData.name,
-          tokens: completeUserData.tokens,
-          referral_code: completeUserData.referral_code,
-        });
-        setUser(completeUserData);
+        // CRITICAL FIX: Only update user state if data has actually changed
+        // This prevents infinite loops caused by unnecessary re-renders
+        const hasDataChanged = (
+          user.tokens !== completeUserData.tokens ||
+          user.referral_code !== completeUserData.referral_code ||
+          user.referred_by !== completeUserData.referred_by ||
+          user.display_name !== completeUserData.display_name ||
+          user.avatar_url !== completeUserData.avatar_url ||
+          user.subscription_tier !== completeUserData.subscription_tier
+        );
+        
+        if (hasDataChanged) {
+          console.log('✅ User data refreshed successfully:', {
+            name: completeUserData.name,
+            tokens: completeUserData.tokens,
+            referral_code: completeUserData.referral_code,
+          });
+          setUser(completeUserData);
+        } else {
+          console.log('✅ User data unchanged, skipping state update to prevent infinite loop');
+        }
       } else {
         // CRITICAL: fetchUserData returned null - set safe fallback to prevent stale data
         console.warn('⚠️ fetchUserData returned null - setting safe fallback with zero tokens');
@@ -392,8 +407,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           display_name: user.display_name || '',
           avatar_url: user.avatar_url || ''
         };
-        console.log('🛡️ Setting safe fallback user due to null return:', safeFallbackUser);
-        setUser(safeFallbackUser);
+        // Only update if data has changed to prevent infinite loops
+        const hasDataChanged = (
+          user.tokens !== safeFallbackUser.tokens ||
+          user.referral_code !== safeFallbackUser.referral_code ||
+          user.subscription_tier !== safeFallbackUser.subscription_tier
+        );
+        
+        if (hasDataChanged) {
+          console.log('🛡️ Setting safe fallback user due to null return:', safeFallbackUser);
+          setUser(safeFallbackUser);
+        } else {
+          console.log('✅ Safe fallback data unchanged, skipping state update');
+        }
       }
     } catch (error) {
       console.error('❌ CRITICAL: Unexpected error in refreshUserData:', error);
@@ -410,8 +436,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           display_name: user.display_name || '',
           avatar_url: user.avatar_url || ''
         };
-        console.log('🛡️ Setting safe fallback user due to unexpected error:', safeFallbackUser);
-        setUser(safeFallbackUser);
+        // Only update if data has changed to prevent infinite loops
+        const hasDataChanged = (
+          user.tokens !== safeFallbackUser.tokens ||
+          user.referral_code !== safeFallbackUser.referral_code ||
+          user.subscription_tier !== safeFallbackUser.subscription_tier
+        );
+        
+        if (hasDataChanged) {
+          console.log('🛡️ Setting safe fallback user due to unexpected error:', safeFallbackUser);
+          setUser(safeFallbackUser);
+        } else {
+          console.log('✅ Error fallback data unchanged, skipping state update');
+        }
       }
     }
   }, [user?.id, user?.email, user?.name, user?.display_name, user?.avatar_url, fetchUserData]);
