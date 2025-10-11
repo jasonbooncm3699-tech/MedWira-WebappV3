@@ -52,7 +52,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Fetch user data directly from auth.users (Google data) + profiles (tokens/referrals)
   const fetchUserData = useCallback(async (userId: string, userEmail?: string): Promise<User | null> => {
     try {
-      console.log('📡 Fetching user data directly from auth.users + profiles...');
       
       // Get Google OAuth data from auth.users
       const { data: authUser, error: authError } = await supabase.auth.getUser();

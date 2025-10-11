@@ -307,7 +307,6 @@ export default function Home() {
       return;
     }
 
-    console.log('🤖 AI Pharmacist query:', { userId, userMessage, language });
 
     // Construct payload for AI Pharmacist API with current medication stack
     const payload = {
@@ -488,7 +487,6 @@ export default function Home() {
 
     const params = new URLSearchParams(window.location.search);
     if (params.get('session_refresh') === 'true') {
-      console.log('🔄 Session refresh detected in page.tsx, updating user state...');
 
       // Give auth context time to process the session
       setTimeout(() => {
@@ -510,10 +508,6 @@ export default function Home() {
     // CRITICAL: If user is authenticated but missing tokens or referral code, refresh data
     if (user && !isLoading) {
       if (user.tokens === 0 || !user.referral_code) {
-        console.log('🔄 User missing tokens or referral code, attempting to refresh user data...', {
-          tokens: user.tokens,
-          hasReferralCode: !!user.referral_code
-        });
         setTimeout(() => {
           refreshUserData();
         }, 1000);
@@ -661,7 +655,6 @@ export default function Home() {
     // Load from localStorage immediately for instant display
     const localMessages = chatStorage.loadChatHistory();
     if (localMessages.length > 0) {
-      console.log('✅ Initial chat history loaded from localStorage:', localMessages.length, 'messages');
       setMessages(localMessages);
     }
   }, []);
@@ -1881,7 +1874,6 @@ export default function Home() {
                       <StructuredMedicineReply
                         response={message.structuredData}
                         onRender={() => {
-                          console.log(`📊 [Frontend] Structured output rendered - status already reset in SSE handler`);
                         }}
                       />
                     </div>
