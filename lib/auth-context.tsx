@@ -611,6 +611,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Only initialize auth after hydration
     if (!isHydrated) return;
     
+    // CRITICAL: Prevent multiple initializations
+    if (isInitialized) {
+      console.log('⚠️ Auth already initialized, skipping...');
+      return;
+    }
+    
     console.log('🚀 AuthProvider initializing...');
     
     // DEFENSIVE: Use setTimeout to prevent React error #18 (hydration mismatch)
