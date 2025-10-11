@@ -68,49 +68,42 @@ export async function GET(request: Request) {
       name: userName
     });
 
-    // Create user record using the new provisioning function
+    // Create user record using direct database operations (no functions)
     try {
       // Check for referral code in URL parameters
       const referralCode = requestUrl.searchParams.get('ref');
       
-      console.log('💾 Provisioning user with database function:', {
+      console.log('💾 Creating user profile directly:', {
         userId: user.id,
         email: user.email,
         name: userName,
         referralCode: referralCode || 'none'
       });
 
+      // Generate a simple referral code
+      const simpleReferralCode = generateRandomCode();
+      
+      // Direct insert/update into profiles table
       const { data: provisionResult, error: provisionError } = await supabase
-        .rpc('provision_user_profile_manually', {
-          user_id: user.id,
-          user_email: user.email,
-          user_name: userName,
-          referral_code_param: referralCode
-        });
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          tokens: 30,
+          referral_code: simpleReferralCode,
+          referred_by: referralCode || null,
+          email: user.email,
+          display_name: userName,
+          subscription_tier: 'free',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'id',
+          ignoreDuplicates: false
+        })
+        .select();
 
       if (provisionError) {
         console.error('❌ User provisioning failed:', provisionError);
-        // Fallback to direct insert into profiles table
-        const { data: fallbackReferralCode } = await supabase
-          .rpc('generate_referral_code', { user_uuid: user.id });
-          
-        await supabase
-          .from('profiles')
-          .upsert({
-            id: user.id,
-            tokens: 30,
-            referral_code: fallbackReferralCode || generateRandomCode(),
-            referred_by: referralCode || null,
-            email: user.email,
-            display_name: userName,
-            subscription_tier: 'free',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }, {
-            onConflict: 'id',
-            ignoreDuplicates: false
-          });
-        console.log('✅ User record created/updated via fallback method');
       } else {
         console.log('✅ User provisioned successfully:', provisionResult);
       }

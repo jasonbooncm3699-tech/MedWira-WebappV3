@@ -496,15 +496,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Last resort: try manual provisioning
         try {
+          // Direct database operation instead of calling function
           const { data: provisionResult, error: provisionError } = await supabase
-            .rpc('provision_user_profile_manually', {
-              user_id: userId,
-              user_email: userEmail,
-              user_name: userName,
-              referral_code_param: null
-            });
+            .from('profiles')
+            .upsert({
+              id: userId,
+              tokens: 30,
+              referral_code: `REF${userId.substring(0, 6).toUpperCase()}`,
+              referred_by: null,
+              email: userEmail,
+              display_name: userName,
+              subscription_tier: 'free',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            }, {
+              onConflict: 'id',
+              ignoreDuplicates: false
+            })
+            .select();
           
-          if (provisionResult && provisionResult.success) {
+          if (!provisionError && provisionResult) {
             console.log('✅ Manual provisioning successful during force fetch:', provisionResult);
             
             // Try to fetch the newly created data
