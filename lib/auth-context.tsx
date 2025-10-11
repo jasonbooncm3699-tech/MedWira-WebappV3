@@ -294,7 +294,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       console.log('✅ Valid session found for:', userEmail);
       
-      // Fetch user data from users table
+      // Fetch user data from profiles table
       const userData = await fetchUserData(userId, userEmail);
       if (userData) {
         console.log('✅ User data loaded from database:', {

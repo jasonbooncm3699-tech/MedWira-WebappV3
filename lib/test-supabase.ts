@@ -7,7 +7,7 @@ export async function testSupabaseConnection() {
     
     // Test basic connection
     const { data, error } = await supabase
-      .from('users')
+      .from('profiles')
       .select('count')
       .limit(1);
     

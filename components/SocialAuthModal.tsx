@@ -288,10 +288,10 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
             if (data.session.user.user_metadata?.full_name || data.session.user.user_metadata?.name) {
               try {
                 const userName = data.session.user.user_metadata?.full_name || data.session.user.user_metadata?.name || 'User';
-                await supabase.from('users').upsert({
+                await supabase.from('profiles').upsert({
                   id: data.session.user.id,
                   email: data.session.user.email,
-                  name: userName,
+                  display_name: userName,
                   tokens: 30,
                   subscription_tier: 'free',
                   created_at: new Date().toISOString(),
