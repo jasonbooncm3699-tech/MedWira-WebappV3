@@ -858,7 +858,7 @@ export default function Home() {
 
       const reader = new FileReader();
       reader.onload = () => {
-        console.log(`📊 [Frontend] Camera photo loaded - calling analyzeMedicineImageWithRealStatus`);
+        console.log(`📊 [Frontend] Camera photo loaded`);
         const imageBase64 = reader.result as string;
         closeCamera();
         // Always use real status updates from AI processing
@@ -870,9 +870,7 @@ export default function Home() {
 
   // SSE-based AI Image Analysis with Real-Time Status Display
   const analyzeMedicineImageWithRealStatus = async (imageBase64: string) => {
-    console.log(`📊 [Frontend] ===== FUNCTION CALLED =====`);
-    console.log(`📊 [Frontend] Image length: ${imageBase64.length} characters`);
-    console.log(`📊 [Frontend] User state:`, { user: !!user, userId: user?.id });
+        console.log(`📊 [Frontend] Starting image analysis`);
     
     // Refresh user data to get latest token count before proceeding
     console.log(`📊 [Frontend] Refreshing user data...`);
@@ -960,9 +958,7 @@ export default function Home() {
       console.log(`📊 [Frontend] Starting SSE reader loop`);
 
       while (true) {
-        console.log(`📊 [Frontend] Reading next chunk...`);
         const { done, value } = await reader.read();
-        console.log(`📊 [Frontend] Read result:`, { done, hasValue: !!value, valueLength: value?.length });
         if (done) {
           console.log(`📊 [Frontend] SSE stream ended`);
           // If we're still analyzing and haven't received a complete result, there might be an issue
@@ -976,7 +972,6 @@ export default function Home() {
         }
 
         const chunk = decoder.decode(value);
-        console.log(`📊 [Frontend] Received SSE chunk:`, chunk);
         const lines = chunk.split('\n');
 
         for (const line of lines) {
@@ -1028,16 +1023,6 @@ export default function Home() {
 
                 setMessages(prev => {
                   const updatedMessages = [...prev, aiMessage];
-                  console.log(`📊 [Frontend] ===== DIRECT MESSAGES STATE UPDATE =====`);
-                  console.log(`📊 [Frontend] Previous messages count:`, prev.length);
-                  console.log(`📊 [Frontend] Updated messages count:`, updatedMessages.length);
-                  console.log(`📊 [Frontend] New AI message:`, {
-                    id: aiMessage.id,
-                    type: aiMessage.type,
-                    contentPreview: aiMessage.content.substring(0, 100) + '...'
-                  });
-                  console.log(`📊 [Frontend] All message IDs:`, updatedMessages.map(m => ({ id: m.id, type: m.type })));
-                  console.log(`📊 [Frontend] ===== END DIRECT MESSAGES STATE UPDATE =====`);
                   // Save to localStorage immediately
                   chatStorage.saveChatHistory(updatedMessages, user?.id);
                   return updatedMessages;
@@ -1130,9 +1115,8 @@ export default function Home() {
 
   // Handle file upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(`📊 [Frontend] ===== FILE UPLOAD TRIGGERED =====`);
-    const file = e.target.files?.[0];
-    console.log(`📊 [Frontend] File selected:`, { fileName: file?.name, fileSize: file?.size });
+      console.log(`📊 [Frontend] File upload triggered`);
+      const file = e.target.files?.[0];
     if (!file) {
       console.log(`📊 [Frontend] No file selected`);
       return;
@@ -1162,7 +1146,7 @@ export default function Home() {
 
     const reader = new FileReader();
     reader.onload = () => {
-      console.log(`📊 [Frontend] FileReader loaded - calling analyzeMedicineImageWithRealStatus`);
+      console.log(`📊 [Frontend] FileReader loaded`);
       const imageBase64 = reader.result as string;
       // Always use real status updates from AI processing
       analyzeMedicineImageWithRealStatus(imageBase64);
@@ -1850,13 +1834,7 @@ export default function Home() {
         {/* Chat Container */}
       <div className="main-content chat-container">
         <div className="chat-window">
-            {(() => {
-              console.log(`📊 [Frontend] ===== MESSAGES RENDERING =====`);
-              console.log(`📊 [Frontend] Total messages to render:`, messages.length);
-              console.log(`📊 [Frontend] Messages:`, messages.map(m => ({ id: m.id, type: m.type, hasStructuredData: !!m.structuredData })));
-              console.log(`📊 [Frontend] ===== END MESSAGES RENDERING =====`);
-              return messages;
-            })().map((message) => (
+            {messages.map((message) => (
               <div key={message.id} className={`message ${message.type}`}>
                 <div className="message-avatar">
                   {message.type === 'user' ? <User size={20} /> : <Bot size={20} />}
@@ -1974,16 +1952,9 @@ export default function Home() {
               </div>
             ))}
 
-          {(() => {
-            console.log(`📊 [Frontend] Render check:`, {
-              isAnalyzing: isAnalyzing,
-              aiStatus: aiStatus,
-              shouldShowStatus: isAnalyzing && aiStatus !== 'idle'
-            });
-            return isAnalyzing && (
-              <AIStatusDisplay key={`${isAnalyzing}-${aiStatus}`} status={aiStatus} />
-            );
-          })()}
+          {isAnalyzing && (
+            <AIStatusDisplay key={`${isAnalyzing}-${aiStatus}`} status={aiStatus} />
+          )}
           </div>
 
           <div className="input-container">
