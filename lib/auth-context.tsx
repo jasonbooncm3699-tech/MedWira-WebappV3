@@ -31,19 +31,30 @@ let globalInitializationComplete = false;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   
-  // DEBUG: Track setUser calls
+  // DEBUG: Track setUser calls with hydration safety
   const debugSetUser = useCallback((newUser: User | null) => {
     console.log('🔍 setUser called', {
       previousUser: user?.id || 'null',
       newUser: newUser?.id || 'null',
+      isHydrated,
       stackTrace: new Error().stack?.split('\n').slice(1, 4).join('\n')
     });
-    setUser(newUser);
-  }, [user]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isHydrated, setIsHydrated] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
+    
+    // CRITICAL: Defer setUser calls during hydration to prevent remounting
+    if (!isHydrated) {
+      console.log('🔍 Deferring setUser call until hydration is complete');
+      setTimeout(() => {
+        console.log('🔍 Executing deferred setUser call');
+        setUser(newUser);
+      }, 0);
+    } else {
+      setUser(newUser);
+    }
+  }, [user, isHydrated]);
   
   // CRITICAL: Use ref to prevent infinite loops - refs don't trigger re-renders
   const initializationRef = useRef(false);
