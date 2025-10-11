@@ -605,7 +605,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isHydrated && user?.id && !isLoading) {
       refreshUserData();
     }
-  }, [isHydrated, isLoading]); // REMOVED user?.id and refreshUserData from deps to prevent infinite loop
+  }, [isHydrated, isLoading]); // REMOVED user?.id to prevent circular dependency
 
   useEffect(() => {
     // Only initialize auth after hydration
@@ -799,29 +799,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [fetchUserData, forceFetchUserProfile, isHydrated, isInitialized, supabase]); // REMOVED refreshUser from deps to prevent infinite loop
 
-  // CRITICAL: Auto-refresh user data when user is authenticated but has no tokens or referral code
-  useEffect(() => {
-    if (isHydrated && user?.id && !isLoading) {
-      
-      // If user is authenticated but has 0 tokens or no referral code, try to refresh
-      if (user.tokens === 0 || !user.referral_code) {
-        console.log('⚠️ User missing tokens or referral code, attempting refresh...');
-        setTimeout(() => {
-          refreshUserData();
-        }, 1000);
-      }
-    }
-  }, [isHydrated, isLoading]); // REMOVED user properties and refreshUserData from deps to prevent infinite loop
+  // REMOVED: Redundant useEffect that was causing infinite loops
 
-  // CRITICAL: Force refresh user data on component mount if user is authenticated
-  useEffect(() => {
-    if (isHydrated && user?.id && !isLoading) {
-      // Small delay to ensure auth state is fully settled
-      setTimeout(() => {
-        refreshUserData();
-      }, 500);
-    }
-  }, [isHydrated, isLoading]); // REMOVED user?.id and refreshUserData from deps to prevent infinite loop
+  // REMOVED: Another redundant useEffect that was causing infinite loops
 
   const contextValue: AuthContextType = {
     user: user || null, // Ensure user is never undefined
