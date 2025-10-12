@@ -342,9 +342,10 @@ export async function saveChatMessage(chatData: {
     allergies?: string;
     conversation_context?: string;
 }): Promise<any> {
-    console.log(`🔍 Saving chat message for user: ${chatData.user_id}, session: ${chatData.session_id}`);
+    console.log(`🔍 [DEBUG] saveChatMessage called for user: ${chatData.user_id}, session: ${chatData.session_id}`);
     
     const supabase = getSupabaseClient();
+    console.log(`🔍 [DEBUG] Supabase client created, about to insert data`);
     
     // Prepare data with proper defaults for NOT NULL constraints
     const insertData = {

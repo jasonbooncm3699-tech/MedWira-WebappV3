@@ -97,8 +97,10 @@ export async function POST(request: NextRequest) {
               sendStatus // Pass the status callback
             );
 
-            // CRITICAL: Save scan history and deduct tokens asynchronously to avoid blocking AI response
+            // CRITICAL: Save chat history and deduct tokens asynchronously to avoid blocking AI response
+            console.log(`🔍 [DEBUG] Checking save conditions - userId: ${userId}, result.success: ${result.success}`);
             if (userId && result.success) {
+              console.log(`🔍 [DEBUG] Conditions met, proceeding with database save`);
               // Use setImmediate to defer non-critical operations
               setImmediate(async () => {
                 // Save chat history to database
