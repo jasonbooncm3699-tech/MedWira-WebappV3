@@ -415,6 +415,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userId: user?.id || 'null',
         userEmail: user?.email || 'null'
       });
+      console.log('⚠️ [DEBUG] Skipping refreshUserData - waiting for user authentication to complete');
       return;
     }
 

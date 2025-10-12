@@ -270,9 +270,6 @@ export default function Home() {
     const userMessage = (textInput || inputText).trim();
     if (!userMessage) return;
 
-    // Refresh user data to get latest token count before proceeding
-    await refreshUserData();
-
     // Check basic authentication (user exists) but NOT tokens yet
     if (!user) {
       setShowRegistrationModal(true);
@@ -771,11 +768,6 @@ export default function Home() {
   const analyzeMedicineImageWithRealStatus = async (imageBase64: string) => {
         console.log(`📊 [Frontend] Starting image analysis`);
     
-    // Refresh user data to get latest token count before proceeding
-    console.log(`📊 [Frontend] Refreshing user data...`);
-    await refreshUserData();
-    console.log(`📊 [Frontend] User data refreshed`);
-
     // Check basic authentication (user exists) but NOT tokens yet
     if (!user) {
       console.log(`📊 [Frontend] No user - showing registration modal`);
