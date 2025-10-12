@@ -228,5 +228,6 @@ async function saveChatMessage(messageData: {
 
 // Helper function to generate session ID
 function generateSessionId(): string {
-  return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // Use built-in crypto.randomUUID() for proper UUID format
+  return crypto.randomUUID();
 }
