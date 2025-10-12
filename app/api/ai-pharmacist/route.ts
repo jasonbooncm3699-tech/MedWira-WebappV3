@@ -62,10 +62,17 @@ export async function POST(request: NextRequest) {
     );
 
     // CRITICAL: Save chat history and deduct tokens asynchronously to avoid blocking AI response
+    console.log('🔍 [DEBUG] Checking save conditions:', {
+      userId: userId,
+      resultSuccess: result.success,
+      resultMessage: result.message?.substring(0, 50) + '...'
+    });
+    
     if (userId && result.success) {
       // Use setImmediate to defer non-critical operations
       setImmediate(async () => {
         try {
+          console.log('🔍 [DEBUG] About to save user message to database');
           // Save user message
           await saveChatMessage({
             user_id: userId,
@@ -76,6 +83,7 @@ export async function POST(request: NextRequest) {
             message_sequence: 1
           });
 
+          console.log('🔍 [DEBUG] About to save AI response to database');
           // Save AI response
           await saveChatMessage({
             user_id: userId,
