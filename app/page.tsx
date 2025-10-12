@@ -1660,23 +1660,7 @@ export default function Home() {
 
           {/* AI Thinking Animation for Text Queries */}
           {isAiThinking && (
-            <div className="message ai ai-thinking">
-              <div className="message-avatar">
-                <Bot size={20} />
-              </div>
-              <div className="message-content">
-                <div className="ai-thinking-content">
-                  <div className="ai-thinking-dots">
-                    <span className="dot"></span>
-                    <span className="dot"></span>
-                    <span className="dot"></span>
-                  </div>
-                  <div className="ai-thinking-text">
-                    🤖 AI Pharmacist is thinking...
-                  </div>
-                </div>
-              </div>
-            </div>
+            <AIStatusDisplay status="🤖 AI Pharmacist is thinking..." />
           )}
 
           {isAnalyzing && (
