@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   
-  // DEBUG: Track setUser calls with hydration safety
+  // DEBUG: Track setUser calls - REMOVED hydration deferral as it was causing state loss
   const debugSetUser = useCallback((newUser: User | null) => {
     console.log('🔍 setUser called', {
       previousUser: user?.id || 'null',
@@ -44,17 +44,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       stackTrace: new Error().stack?.split('\n').slice(1, 4).join('\n')
     });
     
-    // CRITICAL: Defer setUser calls during hydration to prevent remounting
-    if (!isHydrated) {
-      console.log('🔍 Deferring setUser call until hydration is complete');
-      setTimeout(() => {
-        console.log('🔍 Executing deferred setUser call');
-        setUser(newUser);
-      }, 0);
-    } else {
-      console.log('🔍 Executing setUser call immediately (hydrated)');
-      setUser(newUser);
-    }
+    // CRITICAL FIX: Execute setUser immediately - hydration deferral was causing state loss
+    console.log('🔍 Executing setUser call immediately');
+    setUser(newUser);
   }, [user, isHydrated]);
   
   // CRITICAL: Use ref to prevent infinite loops - refs don't trigger re-renders
@@ -411,7 +403,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUserData = useCallback(async () => {
     if (!user?.id) {
-      console.log('⚠️ No user ID available for data refresh');
+      console.log('⚠️ No user ID available for data refresh - user state:', {
+        hasUser: !!user,
+        userId: user?.id || 'null',
+        userEmail: user?.email || 'null'
+      });
       return;
     }
 
