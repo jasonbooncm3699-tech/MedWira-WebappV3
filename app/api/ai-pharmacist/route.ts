@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
           message_text: result.message || result.pharmacistAdvice || 'AI response',
           message_type: 'ai',
           ai_response: result.message || result.pharmacistAdvice || '',
+          image_url: '', // CRITICAL: Use empty string for AI responses (text-only)
           conversation_context: JSON.stringify({
             medicineName: result.medicineName,
             messageType: result.messageType,
