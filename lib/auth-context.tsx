@@ -911,24 +911,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // REMOVED: Another redundant useEffect that was causing infinite loops
 
-  // DEBUG: Add manual refresh function for testing
-  const debugRefreshAuth = useCallback(async () => {
-    console.log('🔧 DEBUG: Manual auth refresh triggered');
-    console.log('🔧 Current state before refresh:', {
-      user: user?.id || 'null',
-      isLoading,
-      isHydrated,
-      isInitialized
-    });
-    
-    // Reset states
-    setIsLoading(true);
-    setUser(null);
-    
-    // Force fresh authentication
-    await refreshUser();
-  }, [user, isLoading, isHydrated, isInitialized, refreshUser]);
-
   const contextValue: AuthContextType = {
     user: user || null, // Ensure user is never undefined
     logout,
@@ -936,8 +918,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser,
     refreshUserData,
     forceFetchUserProfile,
-    // @ts-ignore - Adding debug function
-    debugRefreshAuth,
   };
 
   // DEFENSIVE: Wrap provider in error boundary to catch React error #18
