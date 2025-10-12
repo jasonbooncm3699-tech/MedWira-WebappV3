@@ -20,6 +20,12 @@ function getSupabaseClient() {
     }
     
     supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    // Debug: Verify we're using service role key
+    console.log('🔍 [DEBUG] Supabase client created with key type:', 
+      SUPABASE_KEY === process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SERVICE_ROLE' : 
+      SUPABASE_KEY === process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'ANON' : 'OTHER'
+    );
   }
   return supabaseClient;
 }
