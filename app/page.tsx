@@ -21,6 +21,9 @@ import { Share2 } from 'lucide-react';
 export default function Home() {
   // Test deployment - simple change
   const { user, logout, isLoading, refreshUser, refreshUserData } = useAuth();
+  
+  // @ts-ignore - Access debug function
+  const debugRefreshAuth = (useAuth() as any).debugRefreshAuth;
 
   // Helper function to extract first name from display_name
   const getFirstName = (displayName?: string): string => {
@@ -482,6 +485,14 @@ export default function Home() {
 
   // Force UI re-render when user state changes
   useEffect(() => {
+    console.log('🔍 MAIN PAGE: User state changed', {
+      timestamp: new Date().toISOString(),
+      hasUser: !!user,
+      userId: user?.id || 'null',
+      userEmail: user?.email || 'null',
+      userTokens: user?.tokens || 'null',
+      userName: user?.name || 'null'
+    });
 
     // Update local token state when user changes
     if (user?.tokens !== undefined) {
@@ -1146,6 +1157,26 @@ export default function Home() {
           </div>
 
           <div className="header-right">
+          {/* DEBUG: Add debug refresh button */}
+          {debugRefreshAuth && (
+            <button
+              onClick={debugRefreshAuth}
+              style={{
+                background: '#ff6b6b',
+                color: 'white',
+                border: 'none',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                fontSize: '10px',
+                marginRight: '8px',
+                cursor: 'pointer'
+              }}
+              title="Debug: Force auth refresh"
+            >
+              🔧 Debug Auth
+            </button>
+          )}
+          
           {user ? (
             <div className="user-dropdown">
               <button className="auth-btn user-profile-btn">

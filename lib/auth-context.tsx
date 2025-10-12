@@ -52,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(newUser);
       }, 0);
     } else {
+      console.log('🔍 Executing setUser call immediately (hydrated)');
       setUser(newUser);
     }
   }, [user, isHydrated]);
@@ -63,6 +64,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   console.log('🔍 AuthProvider component mounted/re-rendered', {
     timestamp: new Date().toISOString(),
     user: user?.id ? 'has user' : 'no user',
+    userId: user?.id || 'null',
+    userEmail: user?.email || 'null',
+    userTokens: user?.tokens || 'null',
     isLoading,
     isHydrated,
     isInitialized,
@@ -90,58 +94,83 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isLoading]);
 
 
-  // Fetch user data directly from auth.users (Google data) + profiles (tokens/referrals)
+  // Fetch user data directly from public.profiles (which now includes email from auth.users)
   const fetchUserData = useCallback(async (userId: string, userEmail?: string): Promise<User | null> => {
     try {
+      console.log('🔍 fetchUserData called with:', { userId, userEmail });
       
-      // Get Google OAuth data from auth.users
-      const { data: authUser, error: authError } = await supabase.auth.getUser();
-      
-      if (authError || !authUser.user) {
-        console.error('❌ Error fetching auth user:', authError);
-        return null;
-      }
-
-
-      // Get profile data directly from Supabase (bypassing problematic API route)
+      // Get profile data directly from Supabase profiles table (now includes email)
       let userData: User | null = null;
       
       try {
+        console.log('🔍 Fetching profile data from Supabase for userId:', userId);
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('tokens, referral_code, referred_by, display_name, avatar_url, email, subscription_tier')
           .eq('id', userId)
           .single();
         
+        console.log('🔍 Profile fetch result:', { profileData, profileError });
+        
         if (profileData && !profileError) {
-          // Use profile data directly from Supabase (now includes display_name from auth.users)
+          console.log('✅ Profile data found:', profileData);
+          
+          // Validate that we have the required data
+          if (!profileData.email) {
+            console.error('❌ CRITICAL: Profile found but email is missing. This should not happen with the new sync trigger.');
+            return null;
+          }
+          
+          // Use profile data directly from Supabase (now includes email from auth.users)
           const displayName = profileData.display_name || '';
           const avatarUrl = profileData.avatar_url || '';
           userData = {
             id: userId,
-            email: userEmail || authUser.user.email || '',
+            email: profileData.email, // Now comes from profiles table (synced from auth.users)
             name: displayName ? displayName.split(' ')[0] : '',
             tokens: profileData.tokens || 0,
-            subscription_tier: 'free',
+            subscription_tier: profileData.subscription_tier || 'free',
             referral_code: profileData.referral_code || '',
             referred_by: profileData.referred_by,
             display_name: displayName,
             avatar_url: avatarUrl
           };
+          console.log('✅ Constructed userData from profile:', userData);
         } else {
           console.warn('⚠️ Profile fetch error:', profileError);
-          // Create fallback user with basic data
-          userData = { 
-            id: userId, 
-            email: userEmail || authUser.user.email || '', 
-            name: 'User', 
-            tokens: 0, 
-            subscription_tier: 'free', 
-            referral_code: '', 
-            referred_by: null, 
-            display_name: '', 
-            avatar_url: '' 
-          };
+          
+          // If profile doesn't exist, try to create it using the provided email
+          if (profileError?.code === 'PGRST116' && userEmail) { // PGRST116 = not found
+            console.log('🔍 Profile not found, attempting to create one with email:', userEmail);
+            
+            // Create fallback user with provided email
+            userData = { 
+              id: userId, 
+              email: userEmail, 
+              name: 'User', 
+              tokens: 0, 
+              subscription_tier: 'free', 
+              referral_code: '', 
+              referred_by: null, 
+              display_name: '', 
+              avatar_url: '' 
+            };
+            console.log('⚠️ Created fallback userData (profile not found):', userData);
+          } else {
+            // Other error - create fallback user with zero tokens
+            userData = { 
+              id: userId, 
+              email: userEmail || '', 
+              name: 'User', 
+              tokens: 0, 
+              subscription_tier: 'free', 
+              referral_code: '', 
+              referred_by: null, 
+              display_name: '', 
+              avatar_url: '' 
+            };
+            console.log('⚠️ Created fallback userData (other error):', userData);
+          }
         }
       } catch (directError) {
         console.error('❌ Direct Supabase fetch error:', directError);
@@ -149,7 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Network error - create fallback with zero tokens
         userData = {
           id: userId,
-          email: userEmail || authUser.user.email || '',
+          email: userEmail || '',
           name: 'User',
           tokens: 0, // NO TOKENS when API fails - prevents stale data
           subscription_tier: 'free',
@@ -158,6 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           display_name: '',
           avatar_url: ''
         };
+        console.log('❌ Created error fallback userData:', userData);
       }
       
       // CRITICAL: Check if userData is null before accessing properties
@@ -166,7 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
       
-      console.log('✅ User data loaded directly from auth.users + profiles:', {
+      console.log('✅ User data loaded from profiles table:', {
         tokens: userData.tokens,
         referral_code: userData.referral_code,
         display_name: userData.display_name,
@@ -175,6 +205,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: userData.email
       });
       
+      console.log('🔍 fetchUserData returning userData:', userData);
       return userData;
     } catch (error) {
       console.error('❌ Exception fetching user data:', error);
@@ -327,15 +358,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       console.log('✅ Valid session found for:', userEmail);
       
-      // Fetch user data from profiles table
+      // Fetch user data from profiles table (now includes email from auth.users via trigger)
       const userData = await fetchUserData(userId, userEmail);
       if (userData) {
         console.log('✅ User data loaded from database:', {
           name: userData.name,
           tokens: userData.tokens,
-          tier: userData.subscription_tier
+          tier: userData.subscription_tier,
+          email: userData.email
         });
+        console.log('🔍 About to call debugSetUser with userData:', userData);
         debugSetUser(userData);
+        console.log('🔍 debugSetUser call completed');
       } else {
         console.log('⚠️ No user data in database, creating fallback user with zero tokens');
         // DEFENSIVE: Safe property access for fallback user creation
@@ -352,7 +386,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           avatar_url: ''
         };
         console.log('📝 Setting fallback user with zero tokens:', fallbackUser);
-        setUser(fallbackUser);
+        console.log('🔍 About to call debugSetUser with fallbackUser:', fallbackUser);
+        debugSetUser(fallbackUser);
+        console.log('🔍 debugSetUser call completed for fallback');
       }
     } catch (error) {
       console.error('❌ Error refreshing user:', error);
@@ -642,6 +678,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsHydrated(true);
   }, []);
 
+  // DEBUG: Track user state changes
+  useEffect(() => {
+    console.log('🔍 USER STATE CHANGED:', {
+      timestamp: new Date().toISOString(),
+      hasUser: !!user,
+      userId: user?.id || 'null',
+      userEmail: user?.email || 'null',
+      userTokens: user?.tokens || 'null',
+      userName: user?.name || 'null',
+      userReferralCode: user?.referral_code || 'null'
+    });
+  }, [user]);
+
   // Auto-refresh user data when component mounts and user is authenticated
   useEffect(() => {
     if (isHydrated && user?.id && !isLoading) {
@@ -866,6 +915,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // REMOVED: Another redundant useEffect that was causing infinite loops
 
+  // DEBUG: Add manual refresh function for testing
+  const debugRefreshAuth = useCallback(async () => {
+    console.log('🔧 DEBUG: Manual auth refresh triggered');
+    console.log('🔧 Current state before refresh:', {
+      user: user?.id || 'null',
+      isLoading,
+      isHydrated,
+      isInitialized
+    });
+    
+    // Reset states
+    setIsLoading(true);
+    setUser(null);
+    
+    // Force fresh authentication
+    await refreshUser();
+  }, [user, isLoading, isHydrated, isInitialized, refreshUser]);
+
   const contextValue: AuthContextType = {
     user: user || null, // Ensure user is never undefined
     logout,
@@ -873,6 +940,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser,
     refreshUserData,
     forceFetchUserProfile,
+    // @ts-ignore - Adding debug function
+    debugRefreshAuth,
   };
 
   // DEFENSIVE: Wrap provider in error boundary to catch React error #18
