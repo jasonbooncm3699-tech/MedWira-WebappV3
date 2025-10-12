@@ -366,7 +366,7 @@ export async function saveChatMessage(chatData: {
     // Prepare data with proper defaults for NOT NULL constraints
     const insertData = {
         ...chatData,
-        image_url: chatData.image_url || '', // Handle NOT NULL constraint - use empty string for text-only messages
+        image_url: chatData.image_url || '', // CRITICAL: Use empty string instead of null for NOT NULL constraint
         language: chatData.language || 'English', // Default language
         message_sequence: chatData.message_sequence || 1, // Default sequence
         created_at: new Date().toISOString() // Explicit timestamp

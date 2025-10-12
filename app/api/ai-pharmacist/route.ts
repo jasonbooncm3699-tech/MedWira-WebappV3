@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
           user_id: userId,
           message_text: userMessage,
           message_type: 'user',
-          image_url: imageBase64 || null,
+          image_url: imageBase64 || '', // Use empty string instead of null for NOT NULL constraint
           session_id: sessionId,
           message_sequence: 1
         });
