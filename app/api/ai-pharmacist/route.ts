@@ -114,16 +114,15 @@ export async function POST(request: NextRequest) {
         // Don't throw - we still want to return the AI response even if save fails
       }
 
-        // Deduct token after successful analysis
-        try {
-          const success = await decrementToken(userId);
-          if (success) {
-            console.log(`✅ Token deducted for user ${userId} (async)`);
-          }
-        } catch (error) {
-          console.error('Error deducting token (async):', error);
+      // Deduct token after successful analysis
+      try {
+        const success = await decrementToken(userId);
+        if (success) {
+          console.log(`✅ Token deducted for user ${userId}`);
         }
-      });
+      } catch (error) {
+        console.error('Error deducting token:', error);
+      }
     }
 
     // Return the result
