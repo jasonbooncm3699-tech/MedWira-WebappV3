@@ -1774,7 +1774,7 @@ body {
   }
   
   .chat-window {
-    padding-bottom: 20px;
+    padding-bottom: 300px; /* Fixed: Prevent input container from covering AI responses on mobile */
   }
   
   .message {
@@ -1873,7 +1873,7 @@ body {
   }
   
   .chat-window {
-    padding-bottom: 20px;
+    padding-bottom: 300px; /* Fixed: Prevent input container from covering AI responses on mobile */
   }
   
   .message-text {
