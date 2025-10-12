@@ -331,7 +331,7 @@ export default function Home() {
         userMessage,
         userId,
         language,
-        userContext: userContext ? 'present' : 'missing'
+        userContext: payload.userContext ? 'present' : 'missing'
       });
       const response = await fetch('/api/ai-pharmacist', {
         method: 'POST',
