@@ -127,9 +127,9 @@ export async function POST(request: NextRequest) {
               {
                 medicine_name: result.medicineName,
                 generic_name: result.genericName,
-                side_effects: result.sideEffects,
-                interactions: result.drugInteractions,
-                warnings: result.safetyNotes,
+                side_effects: Array.isArray(result.sideEffects) ? result.sideEffects : (result.sideEffects ? [result.sideEffects] : undefined),
+                interactions: Array.isArray(result.drugInteractions) ? result.drugInteractions : (result.drugInteractions ? [result.drugInteractions] : undefined),
+                warnings: Array.isArray(result.safetyNotes) ? result.safetyNotes : (result.safetyNotes ? [result.safetyNotes] : undefined),
                 dosage: result.dosageInstructions,
                 storage: result.storage,
                 confidence: result.confidence
