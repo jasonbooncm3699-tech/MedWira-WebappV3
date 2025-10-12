@@ -402,6 +402,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshUserData = useCallback(async () => {
+    console.log('🔍 [DEBUG] refreshUserData called with user state:', {
+      hasUser: !!user,
+      userId: user?.id || 'null',
+      userEmail: user?.email || 'null',
+      userTokens: user?.tokens || 'null'
+    });
+    
     if (!user?.id) {
       console.log('⚠️ No user ID available for data refresh - user state:', {
         hasUser: !!user,
