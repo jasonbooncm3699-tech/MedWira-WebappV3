@@ -326,10 +326,23 @@ export default function Home() {
     };
 
     try {
+      console.log('🔍 [FRONTEND DEBUG] Making API call to /api/ai-pharmacist');
+      console.log('🔍 [FRONTEND DEBUG] Request payload:', {
+        userMessage,
+        userId,
+        language,
+        userContext: userContext ? 'present' : 'missing'
+      });
       const response = await fetch('/api/ai-pharmacist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
+      });
+
+      console.log('🔍 [FRONTEND DEBUG] API response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
       });
 
       const result = await response.json();
