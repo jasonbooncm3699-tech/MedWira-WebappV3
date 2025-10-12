@@ -24,32 +24,7 @@ function getSupabaseClient() {
   return supabaseClient;
 }
 
-// MOVED TO TOP: getUserScanHistory function
-export async function getUserScanHistory(userId: string, limit: number = 50): Promise<any[]> {
-    console.log(`🔍 Getting scan history for user: ${userId}`);
-    
-    try {
-        const supabase = getSupabaseClient();
-        
-        const { data, error } = await supabase
-            .from('scan_history')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false })
-            .limit(limit);
-        
-        if (error) {
-            console.error('❌ Scan history fetch error:', error);
-            throw error;
-        }
-        
-        console.log(`✅ Retrieved ${data?.length || 0} scan history records for user ${userId}`);
-        return data || [];
-    } catch (error) {
-        console.error('❌ Error in getUserScanHistory:', error);
-        return [];
-    }
-}
+// REMOVED: getUserScanHistory function - replaced with unified chat history
 
 // Type definitions
 export interface NPRAProduct {
@@ -342,13 +317,18 @@ export async function decrementToken(userId: string): Promise<boolean> {
 }
 
 /**
- * Save scan history using service role client to bypass RLS policies
- * @param scanData - The scan history data to save
- * @returns The saved scan history record
+ * Save unified chat message to chat_history table
+ * @param chatData - The chat message data to save
+ * @returns The saved chat history record
  */
-export async function saveScanHistory(scanData: {
+export async function saveChatMessage(chatData: {
     user_id: string;
-    image_url: string;
+    message_type: 'user' | 'ai';
+    message_text?: string;
+    ai_response?: string;
+    session_id: string;
+    message_sequence: number;
+    image_url?: string;
     medicine_name?: string;
     generic_name?: string;
     dosage?: string;
@@ -358,25 +338,35 @@ export async function saveScanHistory(scanData: {
     storage?: string;
     category?: string;
     confidence?: number;
-    language: string;
+    language?: string;
     allergies?: string;
+    conversation_context?: string;
 }): Promise<any> {
-    console.log(`🔍 Saving scan history for user: ${scanData.user_id}`);
+    console.log(`🔍 Saving chat message for user: ${chatData.user_id}, session: ${chatData.session_id}`);
     
     const supabase = getSupabaseClient();
     
+    // Prepare data with proper defaults for NOT NULL constraints
+    const insertData = {
+        ...chatData,
+        image_url: chatData.image_url || '', // Handle NOT NULL constraint - use empty string for text-only messages
+        language: chatData.language || 'English', // Default language
+        message_sequence: chatData.message_sequence || 1, // Default sequence
+        created_at: new Date().toISOString() // Explicit timestamp
+    };
+    
     const { data, error } = await supabase
-        .from('scan_history')
-        .insert([scanData])
+        .from('chat_history')
+        .insert([insertData])
         .select()
         .single();
     
     if (error) {
-        console.error('❌ Scan history save error:', error);
+        console.error('❌ Chat history save error:', error);
         throw error;
     }
     
-    console.log(`✅ Scan history saved for user ${scanData.user_id}`);
+    console.log(`✅ Chat message saved for user ${chatData.user_id}`);
     return data;
 }
 

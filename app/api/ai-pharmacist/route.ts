@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { aiPharmacist } from '@/lib/ai-pharmacist-service';
 import { checkTokenAvailability, decrementToken } from '@/lib/npraDatabase';
+import { chatHistoryManager } from '@/lib/chat-history-manager';
 
 // Increase Vercel timeout for comprehensive analysis
 export const maxDuration = 30;
@@ -109,6 +110,41 @@ export async function POST(request: NextRequest) {
 
     // Return the result
     if (result.success) {
+      // Save conversation to unified chat history (async, don't block response)
+      if (userId) {
+        // Generate session ID (in real implementation, this should come from frontend)
+        const sessionId = chatHistoryManager.generateSessionId();
+        
+        // Save conversation asynchronously
+        setImmediate(async () => {
+          try {
+            await chatHistoryManager.saveConversation(
+              userId,
+              sessionId,
+              userMessage,
+              result.message || result.pharmacistAdvice || result.rawAnalysis || 'AI Pharmacist consultation complete',
+              1, // message sequence
+              {
+                medicine_name: result.medicineName,
+                generic_name: result.genericName,
+                side_effects: result.sideEffects,
+                interactions: result.drugInteractions,
+                warnings: result.safetyNotes,
+                dosage: result.dosageInstructions,
+                storage: result.storage,
+                confidence: result.confidence
+              },
+              imageBase64, // if image was provided
+              language,
+              userContext?.allergies?.join(', ')
+            );
+            console.log(`✅ AI Pharmacist conversation saved for user ${userId}, session ${sessionId}`);
+          } catch (error) {
+            console.error('Error saving AI Pharmacist conversation:', error);
+          }
+        });
+      }
+
       return NextResponse.json({
         status: 'SUCCESS',
         data: {

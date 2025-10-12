@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { geminiAnalyzer } from '@/lib/gemini-service';
-import { checkTokenAvailability, decrementToken, saveScanHistory } from '@/lib/npraDatabase';
+import { checkTokenAvailability, decrementToken, saveChatMessage } from '@/lib/npraDatabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -101,12 +101,33 @@ export async function POST(request: NextRequest) {
             if (userId && result.success) {
               // Use setImmediate to defer non-critical operations
               setImmediate(async () => {
-                // Save scan history to database
+                // Save chat history to database
                 try {
-                  console.log(`🔍 Attempting to save scan history for user ${userId}`);
-                  await saveScanHistory({
+                  // Generate session ID for this conversation
+                  const sessionId = crypto.randomUUID();
+                  
+                  console.log(`🔍 Attempting to save chat history for user ${userId}, session ${sessionId}`);
+                  
+                  // Save user message (image upload)
+                  await saveChatMessage({
                     user_id: userId,
+                    message_type: 'user',
+                    message_text: 'Uploaded medicine image for analysis',
+                    session_id: sessionId,
+                    message_sequence: 1,
                     image_url: imageBase64,
+                    language: language || 'English',
+                    allergies: userAllergies || null,
+                    conversation_context: `Medicine analysis: ${result.medicineName}`
+                  });
+                  
+                  // Save AI response
+                  await saveChatMessage({
+                    user_id: userId,
+                    message_type: 'ai',
+                    ai_response: result.rawAnalysis,
+                    session_id: sessionId,
+                    message_sequence: 2,
                     medicine_name: result.medicineName,
                     generic_name: result.genericName,
                     dosage: result.dosage,
@@ -118,10 +139,12 @@ export async function POST(request: NextRequest) {
                     confidence: result.confidence,
                     language: language || 'English',
                     allergies: userAllergies || null,
+                    conversation_context: `Medicine analysis: ${result.medicineName}`
                   });
-                  console.log(`✅ Scan history saved successfully for user ${userId} (async)`);
+                  
+                  console.log(`✅ Chat history saved successfully for user ${userId}, session ${sessionId} (async)`);
                 } catch (error) {
-                  console.error('Error saving scan history (async):', error);
+                  console.error('Error saving chat history (async):', error);
                 }
 
                 // Deduct token

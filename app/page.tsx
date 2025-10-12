@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { Bot, User, Send, Upload, Camera, Menu, X, Plus, MessageSquare, Settings, LogOut, LogIn, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
@@ -126,7 +126,6 @@ export default function Home() {
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   const [showFAQ, setShowFAQ] = useState(false);
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
-  const [scanHistory, setScanHistory] = useState<any[]>([]);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [chatHistoryLoading, setChatHistoryLoading] = useState(false);
   const [chatHistoryPage, setChatHistoryPage] = useState(1);
@@ -135,6 +134,15 @@ export default function Home() {
   const [userTokens, setUserTokens] = useState<number>(user?.tokens || 0);
   const [inputText, setInputText] = useState('');
   const [aiStatus, setAiStatus] = useState<string>('idle');
+  const chatWindowRef = useRef<HTMLDivElement>(null);
+  
+  // Auto-scroll to bottom function
+  const scrollToBottom = useCallback(() => {
+    if (chatWindowRef.current) {
+      chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+    }
+  }, []);
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -244,7 +252,13 @@ export default function Home() {
         content: '⚠️ **Insufficient Tokens**\n\nYou have no tokens remaining. Please earn more tokens through referrals or contact support.',
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, errorMessage]);
+        setMessages(prev => [...prev, errorMessage]);
+        
+        // Auto-scroll to show the error message
+        setTimeout(() => {
+          scrollToBottom();
+        }, 100);
+        
       return false;
     }
 
@@ -382,6 +396,11 @@ export default function Home() {
         };
 
         setMessages(prev => [...prev, aiMessage]);
+        
+        // Auto-scroll to show the new AI message
+        setTimeout(() => {
+          scrollToBottom();
+        }, 100);
 
         // Update user tokens
         if (result.tokensRemaining !== undefined) {
@@ -516,7 +535,6 @@ export default function Home() {
         console.log('✅ Chat history loaded from localStorage (guest):', localMessages.length, 'messages');
         setMessages(localMessages);
       }
-      setScanHistory([]);
       return;
     }
 
@@ -544,13 +562,8 @@ export default function Home() {
       const { data: chatData, error: chatError } = await query;
 
       if (chatError) {
-        console.log('⚠️ Chat history table not available, falling back to scan history');
-        // Fallback to old scan_history
-        const history = await DatabaseService.getUserScanHistory(user.id);
-        if (history) {
-          setScanHistory(history || []);
-          console.log('✅ Fallback: Scan history loaded from database:', history?.length || 0, 'conversations');
-        }
+        console.log('⚠️ Chat history table not available:', chatError);
+        setChatHistory([]);
         return;
       }
 
@@ -562,14 +575,6 @@ export default function Home() {
           setChatHistory(prev => [...prev, ...conversations]);
         } else {
           setChatHistory(conversations);
-          // Also update scanHistory for backward compatibility
-          setScanHistory(conversations.map(conv => ({
-            id: conv.id,
-            medicine_name: conv.medicineName,
-            generic_name: conv.genericName,
-            created_at: conv.createdAt,
-            image_url: conv.imageUrl
-          })));
         }
 
         setHasMoreChatHistory(chatData.length === limit);
@@ -578,7 +583,6 @@ export default function Home() {
         setHasMoreChatHistory(false);
         if (page === 1) {
           setChatHistory([]);
-          setScanHistory([]);
         }
       }
 
@@ -591,7 +595,6 @@ export default function Home() {
     } catch (error) {
       console.error('❌ Failed to fetch chat history:', error);
       setChatHistory([]);
-      setScanHistory([]);
     } finally {
       setChatHistoryLoading(false);
     }
@@ -649,6 +652,13 @@ export default function Home() {
       setMessages(localMessages);
     }
   }, []);
+
+  // Auto-scroll when messages change
+  useEffect(() => {
+    setTimeout(() => {
+      scrollToBottom();
+    }, 100);
+  }, [messages, scrollToBottom]);
 
   // Medication Stack Management Functions
 
@@ -916,6 +926,11 @@ export default function Home() {
                   chatStorage.saveChatHistory(updatedMessages, user?.id);
                   return updatedMessages;
                 });
+
+                // Auto-scroll to show the new AI message
+                setTimeout(() => {
+                  scrollToBottom();
+                }, 100);
 
                 // Update user tokens if provided (non-blocking)
                 if (data.result.tokensRemaining !== undefined) {
@@ -1301,70 +1316,6 @@ export default function Home() {
                   <div className="chat-list-loading">
                     <span>Loading chat history...</span>
                   </div>
-                ) : scanHistory.length > 0 ? (
-                  scanHistory.slice(0, 5).map((scan, index) => (
-                    <div
-                      key={scan.id}
-                      className="chat-item"
-                      onClick={() => {
-                        // Load previous conversation
-                        const previousMessage = {
-                          id: `history-${scan.id}`,
-                          type: 'user' as const,
-                          content: 'Previous medicine analysis',
-                          image: scan.image_url,
-                          timestamp: new Date(scan.created_at)
-                        };
-
-                        const aiResponse = {
-                          id: `ai-history-${scan.id}`,
-                          type: 'ai' as const,
-                          content: 'Medicine Analysis Complete',
-                          structuredData: {
-                            medicine: scan.medicine_name || 'Unknown Medicine',
-                            genericName: scan.generic_name || '',
-                            purpose: 'Previous analysis result',
-                            packagingDetected: 'Previously analyzed medicine',
-                            confidence: scan.confidence || 0.85,
-                            disclaimer: 'This information is for educational purposes only. Consult a healthcare professional before use.'
-                          },
-                          dosage: scan.dosage ? {
-                            title: 'Dosage & Administration',
-                            content: scan.dosage,
-                            details: [scan.dosage]
-                          } : undefined,
-                          sideEffects: scan.side_effects && scan.side_effects.length > 0 ? {
-                            title: 'Potential Side Effects',
-                            content: Array.isArray(scan.side_effects) ? scan.side_effects.join('. ') : scan.side_effects,
-                            details: Array.isArray(scan.side_effects) ? scan.side_effects : [scan.side_effects]
-                          } : undefined,
-                          interactions: scan.interactions && scan.interactions.length > 0 ? {
-                            title: 'Key Drug Interactions',
-                            content: Array.isArray(scan.interactions) ? scan.interactions.join('. ') : scan.interactions,
-                            details: Array.isArray(scan.interactions) ? scan.interactions : [scan.interactions]
-                          } : undefined,
-                          warnings: scan.warnings && scan.warnings.length > 0 ? {
-                            title: 'Warnings & Contraindications',
-                            content: Array.isArray(scan.warnings) ? scan.warnings.join('. ') : scan.warnings,
-                            details: Array.isArray(scan.warnings) ? scan.warnings : [scan.warnings]
-                          } : undefined,
-                          timestamp: new Date(scan.created_at)
-                        };
-
-                        setMessages([previousMessage, aiResponse]);
-                      }}
-                    >
-                    <MessageSquare size={16} />
-                    <div className="chat-info">
-                        <span className="chat-title">
-                          {scan.medicine_name || 'Medicine Scan'}
-                        </span>
-                        <span className="chat-time">
-                          {new Date(scan.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  ))
                 ) : (
                   <div className="no-scans">
                     <p>No chat yet</p>
@@ -1593,7 +1544,7 @@ export default function Home() {
 
         {/* Chat Container */}
       <div className="main-content chat-container">
-        <div className="chat-window">
+        <div className="chat-window" ref={chatWindowRef}>
             {messages.map((message) => (
               <div key={message.id} className={`message ${message.type}`}>
                 <div className="message-avatar">

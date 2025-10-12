@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // UPDATED: Using Gemini 1.5 Pro for medicine analysis
 import { geminiAnalyzer } from '@/lib/gemini-service';
 import { DatabaseService } from '@/lib/supabase';
-import { checkTokenAvailability, decrementToken, saveScanHistory } from '@/lib/npraDatabase';
+import { checkTokenAvailability, decrementToken, saveChatMessage } from '@/lib/npraDatabase';
 
 // Increase Vercel timeout to 120 seconds for comprehensive analysis
 export const maxDuration = 120;
@@ -82,11 +82,30 @@ export async function POST(request: NextRequest) {
 
     // Only deduct token and save history if analysis was successful
     if (userId && result.success) {
-      // Save scan history (separate from token deduction)
+      // Save to unified chat history (separate from token deduction)
       try {
-        await saveScanHistory({
+        // Generate session ID for this conversation (or use existing one)
+        const sessionId = crypto.randomUUID();
+        
+        // Save user message (image upload)
+        await saveChatMessage({
           user_id: userId,
+          message_type: 'user',
+          message_text: 'Uploaded medicine image for analysis',
+          session_id: sessionId,
+          message_sequence: 1,
           image_url: imageBase64, // In production, upload to Supabase Storage
+          language,
+          allergies: allergy || null,
+        });
+        
+        // Save AI response
+        await saveChatMessage({
+          user_id: userId,
+          message_type: 'ai',
+          ai_response: result.rawAnalysis,
+          session_id: sessionId,
+          message_sequence: 2,
           medicine_name: result.medicineName,
           generic_name: result.genericName,
           dosage: result.dosage,
@@ -98,10 +117,12 @@ export async function POST(request: NextRequest) {
           confidence: result.confidence,
           language,
           allergies: allergy || null,
+          conversation_context: `Medicine analysis: ${result.medicineName}`,
         });
-        console.log(`✅ Scan history saved for user ${userId}`);
+        
+        console.log(`✅ Chat history saved for user ${userId}, session ${sessionId}`);
       } catch (error) {
-        console.error('Error saving scan history:', error);
+        console.error('Error saving chat history:', error);
         // Don't fail the request if saving history fails
       }
 
