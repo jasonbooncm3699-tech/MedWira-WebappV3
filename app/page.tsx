@@ -409,8 +409,8 @@ export default function Home() {
         // Update user tokens
         if (result.tokensRemaining !== undefined) {
           setUserTokens(result.tokensRemaining);
-          // Also refresh user data to get latest tokens and referral info
-          await refreshUserData();
+          // Note: refreshUserData removed to prevent race condition
+          console.log('⚠️ Tokens updated but skipping refreshUserData to prevent race condition');
         }
       } else if (response.status === 402) {
         // Handle insufficient tokens error
@@ -527,7 +527,7 @@ export default function Home() {
         console.log('⚠️ User has low tokens or missing referral code, but skipping refreshUserData to prevent race condition');
       }
     }
-  }, [user, isLoading, refreshUserData]);
+  }, [user, isLoading]); // Removed refreshUserData to prevent race condition
 
 
   // Enhanced function to fetch user chat history with pagination and search

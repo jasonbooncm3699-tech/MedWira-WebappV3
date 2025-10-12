@@ -696,11 +696,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   // Auto-refresh user data when component mounts and user is authenticated
-  useEffect(() => {
-    if (isHydrated && user?.id && !isLoading) {
-      refreshUserData();
-    }
-  }, [isHydrated, isLoading]); // REMOVED user?.id to prevent circular dependency
+  // REMOVED: This was causing race conditions where refreshUserData was called before user state was properly set
+  // useEffect(() => {
+  //   if (isHydrated && user?.id && !isLoading) {
+  //     refreshUserData();
+  //   }
+  // }, [isHydrated, isLoading]);
 
   useEffect(() => {
     console.log('🔍 Auth initialization useEffect triggered');
