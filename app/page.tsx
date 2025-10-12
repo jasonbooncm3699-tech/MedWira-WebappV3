@@ -1660,7 +1660,7 @@ export default function Home() {
 
           {/* AI Thinking Animation for Text Queries */}
           {isAiThinking && (
-            <AIStatusDisplay status="🤖 AI Pharmacist is thinking..." />
+            <AIStatusDisplay status="🤖 AI Pharmacist is analyzing..." />
           )}
 
           {isAnalyzing && (

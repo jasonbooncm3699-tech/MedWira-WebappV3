@@ -342,10 +342,20 @@ export async function saveChatMessage(chatData: {
     allergies?: string;
     conversation_context?: string;
 }): Promise<any> {
-    console.log(`🔍 [DEBUG] saveChatMessage called for user: ${chatData.user_id}, session: ${chatData.session_id}`);
+    console.log(`🔍 [DEBUG] ===== saveChatMessage FUNCTION CALLED =====`);
+    console.log(`🔍 [DEBUG] Input data:`, {
+        user_id: chatData.user_id,
+        user_id_type: typeof chatData.user_id,
+        message_type: chatData.message_type,
+        session_id: chatData.session_id,
+        message_sequence: chatData.message_sequence,
+        has_message_text: !!chatData.message_text,
+        has_ai_response: !!chatData.ai_response,
+        timestamp: new Date().toISOString()
+    });
     
     const supabase = getSupabaseClient();
-    console.log(`🔍 [DEBUG] Supabase client created, about to insert data`);
+    console.log(`🔍 [DEBUG] Supabase client created successfully`);
     
     // Prepare data with proper defaults for NOT NULL constraints
     const insertData = {
@@ -356,18 +366,47 @@ export async function saveChatMessage(chatData: {
         created_at: new Date().toISOString() // Explicit timestamp
     };
     
+    console.log(`🔍 [DEBUG] About to execute database insert with data:`, {
+        table: 'chat_history',
+        insertDataKeys: Object.keys(insertData),
+        insertDataPreview: {
+            user_id: insertData.user_id,
+            message_type: insertData.message_type,
+            session_id: insertData.session_id,
+            message_sequence: insertData.message_sequence
+        }
+    });
+    
     const { data, error } = await supabase
         .from('chat_history')
         .insert([insertData])
         .select()
         .single();
     
+    console.log(`🔍 [DEBUG] Database insert result:`, {
+        hasData: !!data,
+        hasError: !!error,
+        errorDetails: error ? {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint
+        } : null,
+        dataPreview: data ? {
+            id: data.id,
+            user_id: data.user_id,
+            message_type: data.message_type
+        } : null
+    });
+    
     if (error) {
-        console.error('❌ Chat history save error:', error);
+        console.error('❌ CRITICAL: Chat history save error:', error);
+        console.error('❌ Full error object:', JSON.stringify(error, null, 2));
         throw error;
     }
     
-    console.log(`✅ Chat message saved for user ${chatData.user_id}`);
+    console.log(`✅ SUCCESS: Chat message saved for user ${chatData.user_id}`);
+    console.log(`🔍 [DEBUG] ===== saveChatMessage FUNCTION COMPLETED =====`);
     return data;
 }
 

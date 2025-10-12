@@ -62,10 +62,15 @@ export async function POST(request: NextRequest) {
     );
 
     // CRITICAL: Save chat history and deduct tokens asynchronously to avoid blocking AI response
-    console.log('🔍 [DEBUG] Checking save conditions:', {
+    console.log('🔍 [DEBUG] ===== CHAT HISTORY SAVE DEBUG START =====');
+    console.log('🔍 [DEBUG] Save conditions check:', {
       userId: userId,
+      userIdType: typeof userId,
+      userIdLength: userId?.length,
       resultSuccess: result.success,
-      resultMessage: result.message?.substring(0, 50) + '...'
+      resultSuccessType: typeof result.success,
+      resultMessage: result.message?.substring(0, 50) + '...',
+      timestamp: new Date().toISOString()
     });
     
     if (userId && result.success) {
