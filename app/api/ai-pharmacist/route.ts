@@ -69,40 +69,45 @@ export async function POST(request: NextRequest) {
     });
     
     if (userId && result.success) {
-      // Use setImmediate to defer non-critical operations
-      setImmediate(async () => {
-        try {
-          console.log('🔍 [DEBUG] About to save user message to database');
-          // Save user message
-          await saveChatMessage({
-            user_id: userId,
-            message_text: userMessage,
-            message_type: 'user',
-            image_url: imageBase64 || null,
-            session_id: generateSessionId(),
-            message_sequence: 1
-          });
+      // CRITICAL: Save SYNCHRONOUSLY to ensure it actually happens
+      try {
+        // Generate ONE session ID for this conversation
+        const sessionId = generateSessionId();
+        console.log('🔍 [DEBUG] Generated session ID:', sessionId);
+        
+        console.log('🔍 [DEBUG] About to save user message to database');
+        // Save user message
+        await saveChatMessage({
+          user_id: userId,
+          message_text: userMessage,
+          message_type: 'user',
+          image_url: imageBase64 || null,
+          session_id: sessionId,
+          message_sequence: 1
+        });
 
-          console.log('🔍 [DEBUG] About to save AI response to database');
-          // Save AI response
-          await saveChatMessage({
-            user_id: userId,
-            message_text: result.message || result.pharmacistAdvice || 'AI response',
-            message_type: 'ai',
-            ai_response: result.message || result.pharmacistAdvice || '',
-            conversation_context: JSON.stringify({
-              medicineName: result.medicineName,
-              messageType: result.messageType,
-              confidence: result.confidence
-            }),
-            session_id: generateSessionId(),
-            message_sequence: 2
-          });
+        console.log('🔍 [DEBUG] About to save AI response to database');
+        // Save AI response with SAME session ID
+        await saveChatMessage({
+          user_id: userId,
+          message_text: result.message || result.pharmacistAdvice || 'AI response',
+          message_type: 'ai',
+          ai_response: result.message || result.pharmacistAdvice || '',
+          conversation_context: JSON.stringify({
+            medicineName: result.medicineName,
+            messageType: result.messageType,
+            confidence: result.confidence
+          }),
+          session_id: sessionId, // SAME session ID
+          message_sequence: 2
+        });
 
-          console.log('✅ Conversation saved to chat history (async)');
-        } catch (error) {
-          console.error('Error saving conversation (async):', error);
-        }
+        console.log('✅ AI response saved to database');
+        console.log('✅ Conversation saved to chat history successfully');
+      } catch (error) {
+        console.error('❌ CRITICAL ERROR saving conversation to chat history:', error);
+        // Don't throw - we still want to return the AI response even if save fails
+      }
 
         // Deduct token after successful analysis
         try {
@@ -118,40 +123,7 @@ export async function POST(request: NextRequest) {
 
     // Return the result
     if (result.success) {
-      // Save conversation to unified chat history (async, don't block response)
-      if (userId) {
-        // Generate session ID (in real implementation, this should come from frontend)
-        const sessionId = chatHistoryManager.generateSessionId();
-        
-        // Save conversation asynchronously
-        setImmediate(async () => {
-          try {
-            await chatHistoryManager.saveConversation(
-              userId,
-              sessionId,
-              userMessage,
-              result.message || result.pharmacistAdvice || result.rawAnalysis || 'AI Pharmacist consultation complete',
-              1, // message sequence
-              {
-                medicine_name: result.medicineName,
-                generic_name: result.genericName,
-                side_effects: Array.isArray(result.sideEffects) ? result.sideEffects : (result.sideEffects ? [result.sideEffects] : undefined),
-                interactions: Array.isArray(result.drugInteractions) ? result.drugInteractions : (result.drugInteractions ? [result.drugInteractions] : undefined),
-                warnings: Array.isArray(result.safetyNotes) ? result.safetyNotes : (result.safetyNotes ? [result.safetyNotes] : undefined),
-                dosage: result.dosageInstructions,
-                storage: result.storage,
-                confidence: result.confidence
-              },
-              imageBase64, // if image was provided
-              language,
-              userContext?.allergies?.join(', ')
-            );
-            console.log(`✅ AI Pharmacist conversation saved for user ${userId}, session ${sessionId}`);
-          } catch (error) {
-            console.error('Error saving AI Pharmacist conversation:', error);
-          }
-        });
-      }
+      // Note: Chat history saving is now handled synchronously above to ensure it actually happens
 
       return NextResponse.json({
         status: 'SUCCESS',
