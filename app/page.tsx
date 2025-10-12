@@ -134,6 +134,7 @@ export default function Home() {
   const [userTokens, setUserTokens] = useState<number>(user?.tokens || 0);
   const [inputText, setInputText] = useState('');
   const [aiStatus, setAiStatus] = useState<string>('idle');
+  const [isAiThinking, setIsAiThinking] = useState(false);
   const chatWindowRef = useRef<HTMLDivElement>(null);
   
   // Auto-scroll to bottom function
@@ -289,6 +290,9 @@ export default function Home() {
       timestamp: new Date()
     };
 
+    // Show AI thinking animation
+    setIsAiThinking(true);
+
     setMessages(prev => [...prev, newUserMessage]);
     setIsAnalyzing(true);
 
@@ -297,6 +301,7 @@ export default function Home() {
     // CRITICAL VALIDATION: Keep this check and add a user-facing error message
     if (!userId) {
       setIsAnalyzing(false);
+      setIsAiThinking(false);
       const errorMessage = {
         id: (Date.now() + 1).toString(),
         type: 'ai' as const,
@@ -392,6 +397,8 @@ export default function Home() {
           timestamp: new Date()
         };
 
+        // Hide AI thinking animation and add AI response
+        setIsAiThinking(false);
         setMessages(prev => [...prev, aiMessage]);
         
         // Auto-scroll to show the new AI message
@@ -418,7 +425,7 @@ export default function Home() {
         // Update tokens if provided
         if (result.tokensRemaining !== undefined) {
           setUserTokens(result.tokensRemaining);
-          await refreshUserData();
+          // Note: refreshUserData removed to prevent race condition
         }
       } else {
         // Handle other errors
@@ -432,6 +439,7 @@ export default function Home() {
       }
     } catch (error) {
       console.error('Error analyzing medicine:', error);
+      setIsAiThinking(false);
       const errorMessage = {
         id: (Date.now() + 1).toString(),
         type: 'ai' as const,
@@ -515,9 +523,8 @@ export default function Home() {
     // CRITICAL: If user is authenticated but missing tokens or referral code, refresh data
     if (user && !isLoading) {
       if (user.tokens === 0 || !user.referral_code) {
-        setTimeout(() => {
-          refreshUserData();
-        }, 1000);
+        // Note: refreshUserData removed to prevent race condition
+        console.log('⚠️ User has low tokens or missing referral code, but skipping refreshUserData to prevent race condition');
       }
     }
   }, [user, isLoading, refreshUserData]);
@@ -927,11 +934,8 @@ export default function Home() {
                 // Update user tokens if provided (non-blocking)
                 if (data.result.tokensRemaining !== undefined) {
                   setUserTokens(data.result.tokensRemaining);
-                  // Make refreshUserData non-blocking to prevent UI blocking
-                  refreshUserData().catch(error => {
-                    console.error('❌ Background user data refresh failed:', error);
-                    // Don't let this affect the main flow
-                  });
+                  // Note: refreshUserData removed to prevent race condition
+                  console.log('⚠️ Tokens updated but skipping refreshUserData to prevent race condition');
                 }
 
                 // Note: fetchUserChatHistory() removed to prevent overwriting newly added AI message
@@ -1653,6 +1657,27 @@ export default function Home() {
                 
               </div>
             ))}
+
+          {/* AI Thinking Animation for Text Queries */}
+          {isAiThinking && (
+            <div className="message ai ai-thinking">
+              <div className="message-avatar">
+                <Bot size={20} />
+              </div>
+              <div className="message-content">
+                <div className="ai-thinking-content">
+                  <div className="ai-thinking-dots">
+                    <span className="dot"></span>
+                    <span className="dot"></span>
+                    <span className="dot"></span>
+                  </div>
+                  <div className="ai-thinking-text">
+                    🤖 AI Pharmacist is thinking...
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {isAnalyzing && (
             <AIStatusDisplay key={`${isAnalyzing}-${aiStatus}`} status={aiStatus} />
