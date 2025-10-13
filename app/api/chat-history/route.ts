@@ -35,8 +35,7 @@ export async function GET(request: NextRequest) {
       .from('chat_history')
       .select('*')
       .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('❌ [CHAT HISTORY API] Database error:', error);
@@ -50,28 +49,24 @@ export async function GET(request: NextRequest) {
 
     console.log('🔍 [CHAT HISTORY API] Conversations grouped:', conversations.length);
 
-    // Get total count for pagination
-    const { count } = await supabase
-      .from('chat_history')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId);
-
-    const totalPages = Math.ceil((count || 0) / limit);
+    // Apply pagination to conversations (not individual messages)
+    const paginatedConversations = conversations.slice(offset, offset + limit);
+    const totalPages = Math.ceil(conversations.length / limit);
 
     console.log('✅ [CHAT HISTORY API] Success:', {
-      conversations: conversations.length,
-      totalMessages: count,
+      totalConversations: conversations.length,
+      paginatedConversations: paginatedConversations.length,
       page,
       totalPages
     });
 
     return NextResponse.json({
-      conversations,
+      conversations: paginatedConversations,
       pagination: {
         page,
         limit,
         totalPages,
-        totalMessages: count || 0
+        totalMessages: conversations.length
       }
     });
 
