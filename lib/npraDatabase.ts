@@ -9,7 +9,7 @@ import { createClient } from '@supabase/supabase-js';
 // Lazy initialization of Supabase client to avoid build-time errors
 let supabaseClient: any = null;
 
-function getSupabaseClient() {
+export function getSupabaseClient() {
   if (!supabaseClient) {
     const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     // Use service role key for server-side operations to bypass RLS policies
