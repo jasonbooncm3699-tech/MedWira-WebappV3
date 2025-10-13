@@ -210,16 +210,18 @@ export async function POST(request: NextRequest) {
               
               // Deduct token FIRST to ensure it happens
               try {
+                console.log(`🔍 [DEBUG] Attempting to deduct token for user ${userId}`);
                 const success = await decrementToken(userId);
                 if (success) {
-                  console.log(`✅ Token deducted for user ${userId} - proceeding with chat history save`);
+                  console.log(`✅ Token deducted successfully for user ${userId} - proceeding with chat history save`);
                 } else {
-                  console.log(`⚠️ User ${userId} has no tokens - skipping token deduction and chat history save`);
+                  console.log(`⚠️ User ${userId} has no tokens or deduction failed - skipping chat history save`);
                   return; // Exit early if no tokens
                 }
               } catch (error) {
                 console.error('❌ CRITICAL ERROR deducting token:', error);
                 console.error('❌ Full error details:', JSON.stringify(error, null, 2));
+                console.log(`⚠️ Token deduction failed for user ${userId} - continuing with chat history save`);
                 // Continue with chat history save even if token deduction fails
               }
               
@@ -230,22 +232,7 @@ export async function POST(request: NextRequest) {
                 
                 console.log(`🔍 Attempting to save chat history for user ${userId}, session ${sessionId}`);
                 
-                // Save user message (image upload)
-                await saveChatMessage({
-                  user_id: userId,
-                  message_type: 'user',
-                  message_text: 'Uploaded medicine image for analysis',
-                  session_id: sessionId,
-                  message_sequence: 1,
-                  image_url: imageBase64,
-                  language: language || 'English',
-                  allergies: userAllergies || null,
-                  conversation_context: `Medicine analysis: ${result.medicineName}`
-                });
-                
-                console.log(`✅ User message saved successfully for user ${userId}, session ${sessionId}`);
-                
-                // Generate conversation metadata for image analysis
+                // Generate conversation metadata for image analysis (generate once for the conversation)
                 const conversationTitle = generateConversationTitle(`Medicine image analysis: ${result.medicineName || 'Unknown medicine'}`, result.rawAnalysis || '');
                 const conversationPreview = generateConversationPreview(result.rawAnalysis || '');
                 const conversationTags = generateConversationTags(`Medicine image analysis`, result);
@@ -255,6 +242,24 @@ export async function POST(request: NextRequest) {
                   preview: conversationPreview?.substring(0, 50) + '...',
                   tags: conversationTags
                 });
+                
+                // Save user message (image upload) with conversation metadata
+                await saveChatMessage({
+                  user_id: userId,
+                  message_type: 'user',
+                  message_text: 'Uploaded medicine image for analysis',
+                  session_id: sessionId,
+                  message_sequence: 1,
+                  image_url: imageBase64,
+                  language: language || 'English',
+                  allergies: userAllergies || null,
+                  conversation_context: `Medicine analysis: ${result.medicineName}`,
+                  conversation_title: conversationTitle,
+                  conversation_preview: conversationPreview,
+                  conversation_tags: conversationTags
+                });
+                
+                console.log(`✅ User message saved successfully for user ${userId}, session ${sessionId}`);
                 
                 // Save AI response with metadata
                 await saveChatMessage({
@@ -348,12 +353,32 @@ export async function POST(request: NextRequest) {
 // Helper functions for conversation metadata generation
 function generateConversationTitle(userMessage: string, aiResponse: string): string {
   // Extract medicine name from AI response for personalized titles
-  const medicineNameMatch = aiResponse.match(/\*\*Medicine\*\*:\s*([A-Za-z0-9\s\-\(\)]+)/i);
-  if (medicineNameMatch) {
-    const medicineName = medicineNameMatch[1].trim();
-    // Clean up the medicine name (remove extra details in parentheses)
+  // Try multiple patterns to match different AI response formats
+  
+  // Pattern 1: **Medicine**: FEDAC TABLET (format from logs)
+  const medicineNameMatch1 = aiResponse.match(/\*\*Medicine\*\*:\s*([A-Za-z0-9\s\-\(\)]+)/i);
+  if (medicineNameMatch1) {
+    const medicineName = medicineNameMatch1[1].trim();
     const cleanName = medicineName.split('(')[0].trim();
     return `${cleanName} Analysis`;
+  }
+  
+  // Pattern 2: Medicine: FEDAC TABLET (without bold formatting)
+  const medicineNameMatch2 = aiResponse.match(/Medicine:\s*([A-Za-z0-9\s\-\(\)]+)/i);
+  if (medicineNameMatch2) {
+    const medicineName = medicineNameMatch2[1].trim();
+    const cleanName = medicineName.split('(')[0].trim();
+    return `${cleanName} Analysis`;
+  }
+  
+  // Pattern 3: Look for medicine name in the first few lines
+  const lines = aiResponse.split('\n').slice(0, 5);
+  for (const line of lines) {
+    const medicineMatch = line.match(/([A-Z][A-Za-z0-9\s\-]+(?:TABLET|CAPSULE|PILL|POWDER|SYRUP|DROPS|INJECTION))/i);
+    if (medicineMatch) {
+      const medicineName = medicineMatch[1].trim();
+      return `${medicineName} Analysis`;
+    }
   }
   
   // Fallback: Extract from user message if available

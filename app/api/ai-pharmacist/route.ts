@@ -81,22 +81,32 @@ export async function POST(request: NextRequest) {
         console.log('🔍 [DEBUG] Generated session ID:', sessionId);
         
         console.log('🔍 [DEBUG] About to save user message to database');
-        // Save user message
+        
+        // Generate conversation metadata (generate once for the conversation)
+        const conversationTitle = generateConversationTitle(userMessage, result.message || result.pharmacistAdvice || '');
+        const conversationPreview = generateConversationPreview(result.message || result.pharmacistAdvice || '');
+        const conversationTags = generateConversationTags(userMessage, result);
+        
+        console.log('🔍 [DEBUG] Generated conversation metadata:', {
+          title: conversationTitle,
+          preview: conversationPreview?.substring(0, 50) + '...',
+          tags: conversationTags
+        });
+        
+        // Save user message with conversation metadata
         await saveChatMessage({
           user_id: userId,
           message_text: userMessage,
           message_type: 'user',
           image_url: imageBase64 || '', // Use empty string instead of null for NOT NULL constraint
           session_id: sessionId,
-          message_sequence: 1
+          message_sequence: 1,
+          conversation_title: conversationTitle,
+          conversation_preview: conversationPreview,
+          conversation_tags: conversationTags
         });
 
         console.log('🔍 [DEBUG] About to save AI response to database');
-        
-        // Generate conversation metadata
-        const conversationTitle = generateConversationTitle(userMessage, result.message || result.pharmacistAdvice || '');
-        const conversationPreview = generateConversationPreview(result.message || result.pharmacistAdvice || '');
-        const conversationTags = generateConversationTags(userMessage, result);
         
         // Extract medical data from AI response for text chats
         const medicalData = extractMedicalDataFromResponse(result);
