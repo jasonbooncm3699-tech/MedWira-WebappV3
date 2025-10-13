@@ -1,6 +1,112 @@
 import { NextRequest } from 'next/server';
 import { geminiAnalyzer } from '@/lib/gemini-service';
-import { checkTokenAvailability, decrementToken, saveChatMessage } from '@/lib/npraDatabase';
+import { checkTokenAvailability, decrementToken } from '@/lib/npraDatabase';
+import { createClient } from '@supabase/supabase-js';
+
+// Create Supabase client directly in API route to avoid import issues
+function getSupabaseClient() {
+  const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    throw new Error('Missing Supabase environment variables');
+  }
+  
+  return createClient(SUPABASE_URL, SUPABASE_KEY);
+}
+
+// Local saveChatMessage function to avoid import issues
+async function saveChatMessage(chatData: {
+  user_id: string;
+  message_type: 'user' | 'ai';
+  message_text?: string;
+  ai_response?: string;
+  session_id: string;
+  message_sequence: number;
+  image_url?: string;
+  medicine_name?: string;
+  generic_name?: string;
+  dosage?: string;
+  side_effects?: string[];
+  interactions?: string[];
+  warnings?: string[];
+  storage?: string;
+  category?: string;
+  confidence?: number;
+  language?: string;
+  allergies?: string;
+  conversation_context?: string;
+  conversation_title?: string;
+  conversation_preview?: string;
+  conversation_tags?: string[];
+}): Promise<any> {
+  console.log(`🔍 [DEBUG] ===== saveChatMessage FUNCTION CALLED =====`);
+  console.log(`🔍 [DEBUG] Input data:`, {
+    user_id: chatData.user_id,
+    user_id_type: typeof chatData.user_id,
+    message_type: chatData.message_type,
+    session_id: chatData.session_id,
+    message_sequence: chatData.message_sequence,
+    has_message_text: !!chatData.message_text,
+    has_ai_response: !!chatData.ai_response,
+    timestamp: new Date().toISOString()
+  });
+  
+  const supabase = getSupabaseClient();
+  console.log(`🔍 [DEBUG] Supabase client created successfully`);
+  
+  // Prepare data with proper defaults for NOT NULL constraints
+  const insertData = {
+    ...chatData,
+    image_url: chatData.image_url || '', // CRITICAL: Use empty string instead of null for NOT NULL constraint
+    language: chatData.language || 'English', // Default language
+    message_sequence: chatData.message_sequence || 1, // Default sequence
+    created_at: new Date().toISOString() // Explicit timestamp
+  };
+  
+  console.log(`🔍 [DEBUG] About to execute database insert with data:`, {
+    table: 'chat_history',
+    insertDataKeys: Object.keys(insertData),
+    insertDataPreview: {
+      user_id: insertData.user_id,
+      message_type: insertData.message_type,
+      session_id: insertData.session_id,
+      message_sequence: insertData.message_sequence
+    }
+  });
+  
+  const { data, error } = await supabase
+    .from('chat_history')
+    .insert([insertData])
+    .select()
+    .single();
+  
+  console.log(`🔍 [DEBUG] Database insert result:`, {
+    hasData: !!data,
+    hasError: !!error,
+    errorDetails: error ? {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint
+    } : null,
+    dataPreview: data ? {
+      id: data.id,
+      user_id: data.user_id,
+      message_type: data.message_type
+    } : null
+  });
+  
+  if (error) {
+    console.error('❌ CRITICAL: Chat history save error:', error);
+    console.error('❌ Full error object:', JSON.stringify(error, null, 2));
+    throw error;
+  }
+  
+  console.log(`✅ SUCCESS: Chat message saved for user ${chatData.user_id}`);
+  console.log(`🔍 [DEBUG] ===== saveChatMessage FUNCTION COMPLETED =====`);
+  return data;
+}
 
 export async function POST(request: NextRequest) {
   try {
