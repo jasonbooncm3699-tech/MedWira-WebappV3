@@ -139,7 +139,7 @@ function generateConversationThumbnail(userMessage: any, aiMessage: any): string
   const response = aiMessage.ai_response;
   
   // Extract first meaningful sentence
-  const sentences = response.split('\n').filter(line => line.trim().length > 0);
+  const sentences = response.split('\n').filter((line: string) => line.trim().length > 0);
   const firstSentence = sentences[0] || '';
   
   return firstSentence.length > 100 
