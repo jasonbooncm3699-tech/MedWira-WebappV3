@@ -97,78 +97,87 @@ export async function POST(request: NextRequest) {
               sendStatus // Pass the status callback
             );
 
-            // CRITICAL: Save chat history and deduct tokens asynchronously to avoid blocking AI response
+            // CRITICAL: Save chat history and deduct tokens SYNCHRONOUSLY to ensure it happens
             console.log(`🔍 [DEBUG] Checking save conditions - userId: ${userId}, result.success: ${result.success}`);
             if (userId && result.success) {
               console.log(`🔍 [DEBUG] Conditions met, proceeding with database save`);
-              // Use setImmediate to defer non-critical operations
-              setImmediate(async () => {
-                // Save chat history to database
-                try {
-                  // Generate session ID for this conversation
-                  const sessionId = crypto.randomUUID();
-                  
-                  console.log(`🔍 Attempting to save chat history for user ${userId}, session ${sessionId}`);
-                  
-                  // Save user message (image upload)
-                  await saveChatMessage({
-                    user_id: userId,
-                    message_type: 'user',
-                    message_text: 'Uploaded medicine image for analysis',
-                    session_id: sessionId,
-                    message_sequence: 1,
-                    image_url: imageBase64,
-                    language: language || 'English',
-                    allergies: userAllergies || null,
-                    conversation_context: `Medicine analysis: ${result.medicineName}`
-                  });
-                  
-                  // Generate conversation metadata for image analysis
-                  const conversationTitle = generateConversationTitle(`Medicine image analysis: ${result.medicineName || 'Unknown medicine'}`, result.rawAnalysis || '');
-                  const conversationPreview = generateConversationPreview(result.rawAnalysis || '');
-                  const conversationTags = generateConversationTags(`Medicine image analysis`, result);
-                  
-                  // Save AI response with metadata
-                  await saveChatMessage({
-                    user_id: userId,
-                    message_type: 'ai',
-                    ai_response: result.rawAnalysis,
-                    session_id: sessionId,
-                    message_sequence: 2,
-                    conversation_title: conversationTitle,
-                    conversation_preview: conversationPreview,
-                    conversation_tags: conversationTags,
-                    medicine_name: result.medicineName,
-                    generic_name: result.genericName,
-                    dosage: result.dosage,
-                    side_effects: Array.isArray(result.sideEffects) ? result.sideEffects : (result.sideEffects ? [result.sideEffects] : undefined),
-                    interactions: Array.isArray(result.interactions) ? result.interactions : (result.interactions ? [result.interactions] : undefined),
-                    warnings: Array.isArray(result.warnings) ? result.warnings : (result.warnings ? [result.warnings] : undefined),
-                    storage: result.storage,
-                    category: result.category,
-                    confidence: result.confidence,
-                    language: language || 'English',
-                    allergies: userAllergies || null,
-                    conversation_context: `Medicine analysis: ${result.medicineName}`
-                  });
-                  
-                  console.log(`✅ Chat history saved successfully for user ${userId}, session ${sessionId} (async)`);
-                } catch (error) {
-                  console.error('Error saving chat history (async):', error);
-                }
+              
+              // Save chat history to database SYNCHRONOUSLY
+              try {
+                // Generate session ID for this conversation
+                const sessionId = crypto.randomUUID();
+                
+                console.log(`🔍 Attempting to save chat history for user ${userId}, session ${sessionId}`);
+                
+                // Save user message (image upload)
+                await saveChatMessage({
+                  user_id: userId,
+                  message_type: 'user',
+                  message_text: 'Uploaded medicine image for analysis',
+                  session_id: sessionId,
+                  message_sequence: 1,
+                  image_url: imageBase64,
+                  language: language || 'English',
+                  allergies: userAllergies || null,
+                  conversation_context: `Medicine analysis: ${result.medicineName}`
+                });
+                
+                console.log(`✅ User message saved successfully for user ${userId}, session ${sessionId}`);
+                
+                // Generate conversation metadata for image analysis
+                const conversationTitle = generateConversationTitle(`Medicine image analysis: ${result.medicineName || 'Unknown medicine'}`, result.rawAnalysis || '');
+                const conversationPreview = generateConversationPreview(result.rawAnalysis || '');
+                const conversationTags = generateConversationTags(`Medicine image analysis`, result);
+                
+                console.log(`🔍 Generated conversation metadata:`, {
+                  title: conversationTitle,
+                  preview: conversationPreview?.substring(0, 50) + '...',
+                  tags: conversationTags
+                });
+                
+                // Save AI response with metadata
+                await saveChatMessage({
+                  user_id: userId,
+                  message_type: 'ai',
+                  ai_response: result.rawAnalysis,
+                  session_id: sessionId,
+                  message_sequence: 2,
+                  conversation_title: conversationTitle,
+                  conversation_preview: conversationPreview,
+                  conversation_tags: conversationTags,
+                  medicine_name: result.medicineName,
+                  generic_name: result.genericName,
+                  dosage: result.dosage,
+                  side_effects: Array.isArray(result.sideEffects) ? result.sideEffects : (result.sideEffects ? [result.sideEffects] : undefined),
+                  interactions: Array.isArray(result.interactions) ? result.interactions : (result.interactions ? [result.interactions] : undefined),
+                  warnings: Array.isArray(result.warnings) ? result.warnings : (result.warnings ? [result.warnings] : undefined),
+                  storage: result.storage,
+                  category: result.category,
+                  confidence: result.confidence,
+                  language: language || 'English',
+                  allergies: userAllergies || null,
+                  conversation_context: `Medicine analysis: ${result.medicineName}`
+                });
+                
+                console.log(`✅ AI response saved successfully for user ${userId}, session ${sessionId}`);
+                console.log(`✅ Chat history saved successfully for user ${userId}, session ${sessionId}`);
+              } catch (error) {
+                console.error('❌ CRITICAL ERROR saving chat history:', error);
+                console.error('❌ Full error details:', JSON.stringify(error, null, 2));
+                // Don't throw - we still want to return the AI response even if save fails
+              }
 
-                // Deduct token
-                try {
-                  const success = await decrementToken(userId);
-                  if (success) {
-                    console.log(`✅ Token deducted for user ${userId} (async)`);
-                  } else {
-                    console.log(`⚠️ User ${userId} has no tokens - skipping token deduction (async)`);
-                  }
-                } catch (error) {
-                  console.error('Error deducting token (async):', error);
+              // Deduct token
+              try {
+                const success = await decrementToken(userId);
+                if (success) {
+                  console.log(`✅ Token deducted for user ${userId}`);
+                } else {
+                  console.log(`⚠️ User ${userId} has no tokens - skipping token deduction`);
                 }
-              });
+              } catch (error) {
+                console.error('Error deducting token:', error);
+              }
             }
 
             // Send final result
