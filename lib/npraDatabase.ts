@@ -347,6 +347,9 @@ export async function saveChatMessage(chatData: {
     language?: string;
     allergies?: string;
     conversation_context?: string;
+    conversation_title?: string;
+    conversation_preview?: string;
+    conversation_tags?: string[];
 }): Promise<any> {
     console.log(`🔍 [DEBUG] ===== saveChatMessage FUNCTION CALLED =====`);
     console.log(`🔍 [DEBUG] Input data:`, {
