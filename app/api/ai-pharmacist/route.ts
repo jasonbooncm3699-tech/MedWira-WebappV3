@@ -217,6 +217,20 @@ async function saveChatMessage(messageData: {
   conversation_context?: string;
   session_id: string;
   message_sequence: number;
+  conversation_title?: string;
+  conversation_preview?: string;
+  conversation_tags?: string[];
+  medicine_name?: string;
+  generic_name?: string;
+  dosage?: string;
+  side_effects?: string[];
+  interactions?: string[];
+  warnings?: string[];
+  storage?: string;
+  category?: string;
+  confidence?: number;
+  language?: string;
+  allergies?: string;
 }) {
   try {
     // Import supabase client
@@ -233,7 +247,21 @@ async function saveChatMessage(messageData: {
         ai_response: messageData.ai_response,
         conversation_context: messageData.conversation_context,
         session_id: messageData.session_id,
-        message_sequence: messageData.message_sequence
+        message_sequence: messageData.message_sequence,
+        conversation_title: messageData.conversation_title,
+        conversation_preview: messageData.conversation_preview,
+        conversation_tags: messageData.conversation_tags,
+        medicine_name: messageData.medicine_name,
+        generic_name: messageData.generic_name,
+        dosage: messageData.dosage,
+        side_effects: messageData.side_effects,
+        interactions: messageData.interactions,
+        warnings: messageData.warnings,
+        storage: messageData.storage,
+        category: messageData.category,
+        confidence: messageData.confidence,
+        language: messageData.language,
+        allergies: messageData.allergies
       }])
       .select();
 

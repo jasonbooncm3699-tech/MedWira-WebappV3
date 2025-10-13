@@ -177,7 +177,7 @@ function generateConversationTitle(userMessage: any, aiMessage: any): string {
   if (firstSentence.includes('?')) {
     // Remove question words and make it conversational
     const questionWords = ['what', 'how', 'can', 'should', 'is', 'are', 'will', 'would'];
-    const filteredWords = words.filter(word => !questionWords.includes(word.toLowerCase()));
+    const filteredWords = words.filter((word: string) => !questionWords.includes(word.toLowerCase()));
     const title = filteredWords.slice(0, 8).join(' '); // Limit to 8 words
     return title.length > 50 ? title.substring(0, 50) + '...' : title;
   }

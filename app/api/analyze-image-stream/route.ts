@@ -124,8 +124,8 @@ export async function POST(request: NextRequest) {
                   });
                   
                   // Generate conversation metadata for image analysis
-                  const conversationTitle = generateConversationTitle(`Medicine image analysis: ${result.medicineName || 'Unknown medicine'}`, result.rawAnalysis);
-                  const conversationPreview = generateConversationPreview(result.rawAnalysis);
+                  const conversationTitle = generateConversationTitle(`Medicine image analysis: ${result.medicineName || 'Unknown medicine'}`, result.rawAnalysis || '');
+                  const conversationPreview = generateConversationPreview(result.rawAnalysis || '');
                   const conversationTags = generateConversationTags(`Medicine image analysis`, result);
                   
                   // Save AI response with metadata

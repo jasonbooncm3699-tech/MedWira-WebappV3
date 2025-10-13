@@ -28,6 +28,9 @@ export interface ChatMessage {
   language?: string;
   allergies?: string;
   conversation_context?: string;
+  conversation_title?: string;
+  conversation_preview?: string;
+  conversation_tags?: string[];
   created_at?: string;
 }
 
