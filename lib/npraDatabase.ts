@@ -49,6 +49,40 @@ export interface NPRAStats {
   error?: string;
 }
 
+// Helper function to normalize medicine names for better matching
+function normalizeMedicineName(name: string): string[] {
+  if (!name) return [];
+  
+  // Remove trademark symbols and extra characters
+  let normalized = name
+    .replace(/[®©™]/g, '') // Remove trademark symbols
+    .replace(/[^\w\s-]/g, '') // Remove special characters except spaces and hyphens
+    .trim()
+    .toLowerCase();
+  
+  // Generate multiple search variations
+  const variations = [normalized];
+  
+  // If name contains numbers, try without numbers
+  if (/\d/.test(normalized)) {
+    variations.push(normalized.replace(/\d+/g, '').trim());
+  }
+  
+  // If name contains common words, try without them
+  const commonWords = ['tablets', 'tablet', 'capsules', 'capsule', 'mg', 'film', 'coated', 'oral', 'powder', 'syrup', 'drops'];
+  for (const word of commonWords) {
+    if (normalized.includes(word)) {
+      const withoutWord = normalized.replace(new RegExp(`\\b${word}\\b`, 'g'), '').trim();
+      if (withoutWord.length > 2) {
+        variations.push(withoutWord);
+      }
+    }
+  }
+  
+  // Remove duplicates and empty strings
+  return [...new Set(variations)].filter(v => v.length > 1);
+}
+
 /**
  * Searches the Supabase 'public.medicines' table for official product information.
  * Uses 'product_name' and optionally 'reg_no' (registration number) for lookup.
@@ -63,39 +97,47 @@ export async function npraProductLookup(
   console.log(`🔍 NPRA Lookup: Searching for "${productName}"${regNumber ? ` with reg_no: ${regNumber}` : ''}`);
   
   const supabase = getSupabaseClient();
-  let query = supabase
-    .from('medicines') // Targeting the specific table: public.medicines
-    .select('id, reg_no, product, description, status, holder, active_ingredient, generic_name') // Select all relevant columns
-    .ilike('product', `%${productName}%`); // Search the product name column
-
-  if (regNumber) {
-    // If a registration number is provided, search both the product name and the registration number column
-    query = query.or(`reg_no.eq.${regNumber},product.ilike.%${productName}%`);
-  } else {
-    // Apply a simple limit if searching by name only
-    query = query.limit(1);
-  }
-
-  try {
-    const { data, error } = await query;
+  
+  // Normalize the product name for better matching
+  const searchVariations = normalizeMedicineName(productName);
+  console.log(`🔍 NPRA Search variations:`, searchVariations);
+  
+  // Try each variation until we find a match
+  for (const variation of searchVariations) {
+    console.log(`🔍 NPRA Trying variation: "${variation}"`);
     
-    if (error) {
-      console.error('❌ NPRA Supabase Error:', error);
-      return null;
-    }
-    
-    if (data && data.length > 0) {
-      console.log(`✅ NPRA Found: ${data.length} result(s) for "${productName}"`);
-      console.log(`📋 Product: ${data[0].product} | Reg: ${data[0].reg_no} | Status: ${data[0].status}`);
-      return data[0] as NPRAProduct;
+    let query = supabase
+      .from('medicines')
+      .select('id, reg_no, product, description, status, holder, active_ingredient, generic_name')
+      .ilike('product', `%${variation}%`);
+
+    if (regNumber) {
+      query = query.or(`reg_no.eq.${regNumber},product.ilike.%${variation}%`);
     } else {
-      console.log(`⚠️ NPRA Not Found: No results for "${productName}"`);
-      return null;
+      query = query.limit(1);
     }
-  } catch (error) {
-    console.error('❌ NPRA Database Exception:', error);
-    return null;
+
+    try {
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('❌ NPRA Supabase Error:', error);
+        continue; // Try next variation
+      }
+      
+      if (data && data.length > 0) {
+        console.log(`✅ NPRA Found: ${data.length} result(s) for "${variation}"`);
+        console.log(`📋 Product: ${data[0].product} | Reg: ${data[0].reg_no} | Status: ${data[0].status}`);
+        return data[0] as NPRAProduct;
+      }
+    } catch (err) {
+      console.error('❌ NPRA Query Error:', err);
+      continue; // Try next variation
+    }
   }
+  
+  console.log(`⚠️ NPRA Not Found: No results for any variation of "${productName}"`);
+  return null;
 }
 
 /**
