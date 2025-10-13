@@ -557,53 +557,41 @@ export default function Home() {
 
     setChatHistoryLoading(true);
     try {
-      // Try to fetch from new chat_history table first
-      const { supabase } = await import('@/lib/supabase');
-
-      let query = supabase
-        .from('chat_history')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      // Apply search filter if provided
-      if (searchQuery) {
-        query = query.or(`message_text.ilike.%${searchQuery}%,ai_response.ilike.%${searchQuery}%,medicine_name.ilike.%${searchQuery}%`);
+      console.log('🔍 [FRONTEND] Fetching chat history from database API...');
+      
+      // Fetch from new API endpoint
+      const response = await fetch(`/api/chat-history?userId=${user.id}&page=${page}&limit=20`);
+      
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
       }
-
-      // Apply pagination
-      const limit = 20;
-      const offset = (page - 1) * limit;
-      query = query.range(offset, offset + limit - 1);
-
-      const { data: chatData, error: chatError } = await query;
-
-      if (chatError) {
-        console.log('⚠️ Chat history table not available:', chatError);
-        setChatHistory([]);
-        return;
-      }
-
-      if (chatData && chatData.length > 0) {
-        // Group messages by session_id to create conversation thumbnails
-        const conversations = groupMessagesBySession(chatData);
+      
+      const data = await response.json();
+      
+      if (data.conversations && data.conversations.length > 0) {
+        console.log('✅ Chat history loaded from database API:', data.conversations.length, 'conversations');
         
         if (append) {
-          setChatHistory(prev => [...prev, ...conversations]);
+          setChatHistory(prev => [...prev, ...data.conversations]);
         } else {
-          setChatHistory(conversations);
+          setChatHistory(data.conversations);
         }
-
-        setHasMoreChatHistory(chatData.length === limit);
-        console.log(`✅ Chat history loaded: page ${page}, ${conversations.length} conversations`);
+        
+        // Update pagination state
+        setHasMoreChatHistory(page < data.pagination.totalPages);
+        setChatHistoryPage(page);
+        
+        console.log('✅ Chat history loaded: page', page, ',', data.conversations.length, 'conversations');
+        console.log('📊 Pagination info:', data.pagination);
       } else {
-        setHasMoreChatHistory(false);
-        if (page === 1) {
+        console.log('ℹ️ No chat history found in database');
+        if (!append) {
           setChatHistory([]);
         }
+        setHasMoreChatHistory(false);
       }
 
-      // Also load current conversation from localStorage
+      // Also load current conversation from localStorage for immediate display
       const localMessages = chatStorage.loadChatHistory(user.id);
       if (localMessages.length > 0 && page === 1) {
         setMessages(localMessages);
@@ -917,6 +905,12 @@ export default function Home() {
                 setAiStatus('idle');
                 setIsAnalyzing(false);
                 
+                // Refresh chat history to show the new conversation
+                if (user?.id) {
+                  console.log('🔄 Refreshing chat history after new conversation...');
+                  fetchUserChatHistory(1, '', false);
+                }
+                
                 // DIRECT APPROACH: Add AI message with rawAnalysis content directly to chat
                 const aiMessage = {
                   id: (Date.now() + 1).toString(),
@@ -955,6 +949,12 @@ export default function Home() {
                 // The AI message is already saved to localStorage via chatStorage.saveChatHistory()
 
                 console.log(`📊 [Frontend] Analysis complete - AI status forced to disappear`);
+                
+                // Refresh chat history to show the new conversation
+                if (user?.id) {
+                  console.log('🔄 Refreshing chat history after new conversation...');
+                  fetchUserChatHistory(1, '', false);
+                }
 
               } else if (data.type === 'error') {
                 // Handle error
