@@ -123,13 +123,21 @@ export async function POST(request: NextRequest) {
                     conversation_context: `Medicine analysis: ${result.medicineName}`
                   });
                   
-                  // Save AI response
+                  // Generate conversation metadata for image analysis
+                  const conversationTitle = generateConversationTitle(`Medicine image analysis: ${result.medicineName || 'Unknown medicine'}`, result.rawAnalysis);
+                  const conversationPreview = generateConversationPreview(result.rawAnalysis);
+                  const conversationTags = generateConversationTags(`Medicine image analysis`, result);
+                  
+                  // Save AI response with metadata
                   await saveChatMessage({
                     user_id: userId,
                     message_type: 'ai',
                     ai_response: result.rawAnalysis,
                     session_id: sessionId,
                     message_sequence: 2,
+                    conversation_title: conversationTitle,
+                    conversation_preview: conversationPreview,
+                    conversation_tags: conversationTags,
                     medicine_name: result.medicineName,
                     generic_name: result.genericName,
                     dosage: result.dosage,
@@ -217,4 +225,68 @@ export async function POST(request: NextRequest) {
       }
     );
   }
+}
+
+// Helper functions for conversation metadata generation
+function generateConversationTitle(userMessage: string, aiResponse: string): string {
+  const friendlyTitles: { [key: string]: string } = {
+    'medicine.*image|image.*medicine': 'Medicine Image Analysis',
+    'medicine.*analysis|analysis.*medicine': 'Medicine Analysis',
+    'medicine.*identification|identification.*medicine': 'Medicine Identification'
+  };
+  
+  const lowerText = userMessage.toLowerCase();
+  for (const [pattern, friendlyTitle] of Object.entries(friendlyTitles)) {
+    if (new RegExp(pattern).test(lowerText)) {
+      return friendlyTitle;
+    }
+  }
+  
+  // Extract medicine name for title
+  const medicineMatch = userMessage.match(/medicine.*analysis[:\s]*([A-Za-z0-9\s]+)/i);
+  if (medicineMatch) {
+    return `Medicine Analysis: ${medicineMatch[1].trim()}`;
+  }
+  
+  return 'Medicine Image Analysis';
+}
+
+function generateConversationPreview(aiResponse: string): string {
+  if (!aiResponse) return '';
+  
+  const sentences = aiResponse.split('\n').filter((line: string) => line.trim().length > 0);
+  
+  for (const line of sentences) {
+    const trimmedLine = line.trim();
+    
+    if (trimmedLine.startsWith('**') || 
+        trimmedLine.startsWith('#') || 
+        trimmedLine.startsWith('•') ||
+        trimmedLine.startsWith('-') ||
+        trimmedLine.length < 10) {
+      continue;
+    }
+    
+    const firstSentence = trimmedLine.split('.')[0] + '.';
+    if (firstSentence.length > 10) {
+      return firstSentence.length > 100 
+        ? firstSentence.substring(0, 100) + '...'
+        : firstSentence;
+    }
+  }
+  
+  const fallback = aiResponse.substring(0, 100);
+  return fallback.length < aiResponse.length ? fallback + '...' : fallback;
+}
+
+function generateConversationTags(userMessage: string, result: any): string[] {
+  const tags = new Set<string>();
+  
+  tags.add('IMAGE_ANALYSIS');
+  if (result.medicineName) tags.add('MEDICINE');
+  if (result.sideEffects && result.sideEffects.length > 0) tags.add('SIDE_EFFECTS');
+  if (result.interactions && result.interactions.length > 0) tags.add('INTERACTIONS');
+  if (result.warnings && result.warnings.length > 0) tags.add('WARNINGS');
+  
+  return Array.from(tags);
 }

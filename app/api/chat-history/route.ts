@@ -115,16 +115,18 @@ function groupMessagesBySession(messages: any[]): any[] {
   const conversations = Array.from(sessionMap.values())
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
 
-  // Generate conversation titles and thumbnails
+  // Use stored conversation metadata instead of generating on-the-fly
   return conversations.map(conversation => {
-    const firstUserMessage = conversation.messages.find((m: any) => m.message_type === 'user');
     const firstAiMessage = conversation.messages.find((m: any) => m.message_type === 'ai');
     
     return {
       ...conversation,
-      title: generateConversationTitle(firstUserMessage, firstAiMessage),
-      thumbnail: generateConversationThumbnail(firstUserMessage, firstAiMessage),
-      tags: generateConversationTags(conversation.messages)
+      title: firstAiMessage?.conversation_title || 'AI Chat',
+      thumbnail: firstAiMessage?.conversation_preview || '',
+      tags: firstAiMessage?.conversation_tags || ['GENERAL'],
+      // Hide date and tags from UI but keep in database
+      created_at: conversation.created_at, // Keep for sorting
+      updated_at: conversation.updated_at  // Keep for sorting
     };
   });
 }
@@ -135,28 +137,90 @@ function generateConversationTitle(userMessage: any, aiMessage: any): string {
   
   const text = userMessage.message_text;
   
-  // Extract first sentence or first 50 characters
-  const firstSentence = text.split('.')[0];
-  const title = firstSentence.length > 50 
-    ? firstSentence.substring(0, 50) + '...'
-    : firstSentence;
+  // Make titles more conversational and friendly (like ChatGPT/Gemini)
+  // Convert professional questions to friendly, conversational titles
+  
+  // Common medical question patterns and their friendly equivalents
+  const friendlyTitles: { [key: string]: string } = {
+    // Medicine interactions
+    'medicine.*alcohol|alcohol.*medicine': 'Can I drink alcohol with my medicine?',
+    'medicine.*coffee|coffee.*medicine': 'Is it safe to take medicine with coffee?',
+    'paracetamol.*coffee|coffee.*paracetamol': 'Can I take paracetamol with coffee?',
+    'vitamin.*coffee|coffee.*vitamin': 'Will vitamin C work with my coffee?',
     
-  return title || 'AI Chat';
+    // Surgery and medications
+    'medicine.*surgery|surgery.*medicine': 'What medicines should I avoid before surgery?',
+    'before.*surgery|surgery.*before': 'What should I avoid before surgery?',
+    
+    // General medicine questions
+    'side.*effect|effect.*side': 'What are the side effects?',
+    'dosage|dose|how much': 'How much should I take?',
+    'interaction|interact': 'Will this interact with other medicines?',
+    'safe.*take|take.*safe': 'Is it safe to take this?',
+    'when.*take|take.*when': 'When should I take this medicine?',
+    'how.*take|take.*how': 'How should I take this medicine?'
+  };
+  
+  // Check for pattern matches and return friendly titles
+  const lowerText = text.toLowerCase();
+  for (const [pattern, friendlyTitle] of Object.entries(friendlyTitles)) {
+    if (new RegExp(pattern).test(lowerText)) {
+      return friendlyTitle;
+    }
+  }
+  
+  // If no pattern matches, create a friendly title from the first sentence
+  const firstSentence = text.split('.')[0];
+  const words = firstSentence.split(' ');
+  
+  // Convert question to statement for title
+  if (firstSentence.includes('?')) {
+    // Remove question words and make it conversational
+    const questionWords = ['what', 'how', 'can', 'should', 'is', 'are', 'will', 'would'];
+    const filteredWords = words.filter(word => !questionWords.includes(word.toLowerCase()));
+    const title = filteredWords.slice(0, 8).join(' '); // Limit to 8 words
+    return title.length > 50 ? title.substring(0, 50) + '...' : title;
+  }
+  
+  // For statements, use first few words
+  const title = words.slice(0, 6).join(' '); // Limit to 6 words
+  return title.length > 50 ? title.substring(0, 50) + '...' : title;
 }
 
-// Generate conversation thumbnail/preview
+// Generate conversation thumbnail/preview (like Gemini)
 function generateConversationThumbnail(userMessage: any, aiMessage: any): string {
   if (!aiMessage?.ai_response) return '';
   
   const response = aiMessage.ai_response;
   
-  // Extract first meaningful sentence
+  // Extract first meaningful sentence from AI response (like Gemini)
   const sentences = response.split('\n').filter((line: string) => line.trim().length > 0);
-  const firstSentence = sentences[0] || '';
   
-  return firstSentence.length > 100 
-    ? firstSentence.substring(0, 100) + '...'
-    : firstSentence;
+  // Find the first sentence that's not a header or formatting
+  for (const line of sentences) {
+    const trimmedLine = line.trim();
+    
+    // Skip headers and formatting
+    if (trimmedLine.startsWith('**') || 
+        trimmedLine.startsWith('#') || 
+        trimmedLine.startsWith('•') ||
+        trimmedLine.startsWith('-') ||
+        trimmedLine.length < 10) {
+      continue;
+    }
+    
+    // Take the first meaningful sentence
+    const firstSentence = trimmedLine.split('.')[0] + '.';
+    if (firstSentence.length > 10) {
+      return firstSentence.length > 100 
+        ? firstSentence.substring(0, 100) + '...'
+        : firstSentence;
+    }
+  }
+  
+  // Fallback: take first 100 characters
+  const fallback = response.substring(0, 100);
+  return fallback.length < response.length ? fallback + '...' : fallback;
 }
 
 // Generate tags based on conversation content

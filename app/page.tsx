@@ -1305,19 +1305,12 @@ export default function Home() {
                       
                       <div className="chat-item-content">
                         <div className="chat-item-title">
-                          {conversation.medicineName || 'AI Chat'}
+                          {conversation.title || 'AI Chat'}
                         </div>
                         <div className="chat-item-preview">
-                          {conversation.firstUserMessage || 'Conversation with AI Pharmacist'}
+                          {conversation.thumbnail || 'Conversation with AI Pharmacist'}
                         </div>
-                        <div className="chat-item-meta">
-                          <span className="chat-time">{getSmartTimeDisplay(conversation.createdAt)}</span>
-                          <div className="chat-tags">
-                            {getConversationTags(conversation).map((tag, tagIndex) => (
-                              <span key={tagIndex} className="chat-tag">{tag}</span>
-                            ))}
-                          </div>
-                        </div>
+                        {/* Removed date and tags from UI as requested - data still stored in database */}
                       </div>
                     </div>
                   ))

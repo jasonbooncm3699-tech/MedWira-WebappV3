@@ -92,13 +92,36 @@ export async function POST(request: NextRequest) {
         });
 
         console.log('🔍 [DEBUG] About to save AI response to database');
-        // Save AI response with SAME session ID
+        
+        // Generate conversation metadata
+        const conversationTitle = generateConversationTitle(userMessage, result.message || result.pharmacistAdvice || '');
+        const conversationPreview = generateConversationPreview(result.message || result.pharmacistAdvice || '');
+        const conversationTags = generateConversationTags(userMessage, result);
+        
+        // Extract medical data from AI response for text chats
+        const medicalData = extractMedicalDataFromResponse(result);
+        
+        // Save AI response with SAME session ID and metadata
         await saveChatMessage({
           user_id: userId,
           message_text: result.message || result.pharmacistAdvice || 'AI response',
           message_type: 'ai',
           ai_response: result.message || result.pharmacistAdvice || '',
           image_url: '', // CRITICAL: Use empty string for AI responses (text-only)
+          conversation_title: conversationTitle,
+          conversation_preview: conversationPreview,
+          conversation_tags: conversationTags,
+          // Medical data extraction for text chats
+          medicine_name: medicalData.medicineName,
+          generic_name: medicalData.genericName,
+          dosage: medicalData.dosage,
+          side_effects: medicalData.sideEffects,
+          interactions: medicalData.interactions,
+          warnings: medicalData.warnings,
+          storage: medicalData.storage,
+          category: medicalData.category,
+          confidence: medicalData.confidence,
+          allergies: medicalData.allergies,
           conversation_context: JSON.stringify({
             medicineName: result.medicineName,
             messageType: result.messageType,
@@ -231,4 +254,145 @@ async function saveChatMessage(messageData: {
 function generateSessionId(): string {
   // Use built-in crypto.randomUUID() for proper UUID format
   return crypto.randomUUID();
+}
+
+// Generate friendly conversation title
+function generateConversationTitle(userMessage: string, aiResponse: string): string {
+  // Make titles more conversational and friendly (like ChatGPT/Gemini)
+  const friendlyTitles: { [key: string]: string } = {
+    // Medicine interactions
+    'medicine.*alcohol|alcohol.*medicine': 'Can I drink alcohol with my medicine?',
+    'medicine.*coffee|coffee.*medicine': 'Is it safe to take medicine with coffee?',
+    'paracetamol.*coffee|coffee.*paracetamol': 'Can I take paracetamol with coffee?',
+    'vitamin.*coffee|coffee.*vitamin': 'Will vitamin C work with my coffee?',
+    
+    // Surgery and medications
+    'medicine.*surgery|surgery.*medicine': 'What medicines should I avoid before surgery?',
+    'before.*surgery|surgery.*before': 'What should I avoid before surgery?',
+    
+    // General medicine questions
+    'side.*effect|effect.*side': 'What are the side effects?',
+    'dosage|dose|how much': 'How much should I take?',
+    'interaction|interact': 'Will this interact with other medicines?',
+    'safe.*take|take.*safe': 'Is it safe to take this?',
+    'when.*take|take.*when': 'When should I take this medicine?',
+    'how.*take|take.*how': 'How should I take this medicine?'
+  };
+  
+  // Check for pattern matches and return friendly titles
+  const lowerText = userMessage.toLowerCase();
+  for (const [pattern, friendlyTitle] of Object.entries(friendlyTitles)) {
+    if (new RegExp(pattern).test(lowerText)) {
+      return friendlyTitle;
+    }
+  }
+  
+  // If no pattern matches, create a friendly title from the first sentence
+  const firstSentence = userMessage.split('.')[0];
+  const words = firstSentence.split(' ');
+  
+  // Convert question to statement for title
+  if (firstSentence.includes('?')) {
+    const questionWords = ['what', 'how', 'can', 'should', 'is', 'are', 'will', 'would'];
+    const filteredWords = words.filter(word => !questionWords.includes(word.toLowerCase()));
+    const title = filteredWords.slice(0, 8).join(' ');
+    return title.length > 50 ? title.substring(0, 50) + '...' : title;
+  }
+  
+  // For statements, use first few words
+  const title = words.slice(0, 6).join(' ');
+  return title.length > 50 ? title.substring(0, 50) + '...' : title;
+}
+
+// Generate conversation preview (like Gemini)
+function generateConversationPreview(aiResponse: string): string {
+  if (!aiResponse) return '';
+  
+  // Extract first meaningful sentence from AI response
+  const sentences = aiResponse.split('\n').filter((line: string) => line.trim().length > 0);
+  
+  // Find the first sentence that's not a header or formatting
+  for (const line of sentences) {
+    const trimmedLine = line.trim();
+    
+    // Skip headers and formatting
+    if (trimmedLine.startsWith('**') || 
+        trimmedLine.startsWith('#') || 
+        trimmedLine.startsWith('•') ||
+        trimmedLine.startsWith('-') ||
+        trimmedLine.length < 10) {
+      continue;
+    }
+    
+    // Take the first meaningful sentence
+    const firstSentence = trimmedLine.split('.')[0] + '.';
+    if (firstSentence.length > 10) {
+      return firstSentence.length > 100 
+        ? firstSentence.substring(0, 100) + '...'
+        : firstSentence;
+    }
+  }
+  
+  // Fallback: take first 100 characters
+  const fallback = aiResponse.substring(0, 100);
+  return fallback.length < aiResponse.length ? fallback + '...' : fallback;
+}
+
+// Generate conversation tags
+function generateConversationTags(userMessage: string, result: any): string[] {
+  const tags = new Set<string>();
+  
+  const text = (userMessage + ' ' + (result.message || result.pharmacistAdvice || '')).toLowerCase();
+  
+  // Medical topic tags
+  if (text.includes('interaction')) tags.add('INTERACTION');
+  if (text.includes('dosage') || text.includes('dose')) tags.add('DOSAGE');
+  if (text.includes('side effect')) tags.add('SIDE EFFECTS');
+  if (text.includes('allergy')) tags.add('ALLERGY');
+  if (text.includes('surgery')) tags.add('SURGERY');
+  if (text.includes('alcohol')) tags.add('ALCOHOL');
+  if (text.includes('vitamin')) tags.add('VITAMIN');
+  if (text.includes('medicine') || text.includes('medication')) tags.add('MEDICINE');
+  if (text.includes('coffee') || text.includes('caffeine')) tags.add('CAFFEINE');
+  if (text.includes('pregnancy') || text.includes('pregnant')) tags.add('PREGNANCY');
+  if (text.includes('child') || text.includes('children')) tags.add('PEDIATRIC');
+  
+  // Default tag if no specific tags found
+  if (tags.size === 0) tags.add('GENERAL');
+  
+  return Array.from(tags);
+}
+
+// Extract medical data from AI response for text chats
+function extractMedicalDataFromResponse(result: any): any {
+  const response = result.message || result.pharmacistAdvice || '';
+  
+  // Extract medicine name from response
+  const medicineNameMatch = response.match(/(?:medicine|medication|drug|tablet|capsule|pill)\s+(?:name|is|called)?\s*:?\s*([A-Za-z0-9\s]+)/i);
+  const medicineName = medicineNameMatch ? medicineNameMatch[1].trim() : result.medicineName || null;
+  
+  // Extract side effects
+  const sideEffectsMatch = response.match(/side\s+effects?[:\s]*([^.]+)/i);
+  const sideEffects = sideEffectsMatch ? [sideEffectsMatch[1].trim()] : undefined;
+  
+  // Extract interactions
+  const interactionsMatch = response.match(/interactions?[:\s]*([^.]+)/i);
+  const interactions = interactionsMatch ? [interactionsMatch[1].trim()] : undefined;
+  
+  // Extract warnings
+  const warningsMatch = response.match(/warnings?[:\s]*([^.]+)/i);
+  const warnings = warningsMatch ? [warningsMatch[1].trim()] : undefined;
+  
+  return {
+    medicineName,
+    genericName: result.genericName || null,
+    dosage: result.dosage || null,
+    sideEffects,
+    interactions,
+    warnings,
+    storage: result.storage || null,
+    category: result.category || null,
+    confidence: result.confidence || null,
+    allergies: result.allergies || null
+  };
 }
