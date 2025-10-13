@@ -203,10 +203,25 @@ export async function POST(request: NextRequest) {
               sendStatus // Pass the status callback
             );
 
-            // CRITICAL: Save chat history and deduct tokens SYNCHRONOUSLY to ensure it happens
+            // CRITICAL: Deduct token FIRST, then save chat history SYNCHRONOUSLY
             console.log(`🔍 [DEBUG] Checking save conditions - userId: ${userId}, result.success: ${result.success}`);
             if (userId && result.success) {
-              console.log(`🔍 [DEBUG] Conditions met, proceeding with database save`);
+              console.log(`🔍 [DEBUG] Conditions met, proceeding with token deduction and database save`);
+              
+              // Deduct token FIRST to ensure it happens
+              try {
+                const success = await decrementToken(userId);
+                if (success) {
+                  console.log(`✅ Token deducted for user ${userId} - proceeding with chat history save`);
+                } else {
+                  console.log(`⚠️ User ${userId} has no tokens - skipping token deduction and chat history save`);
+                  return; // Exit early if no tokens
+                }
+              } catch (error) {
+                console.error('❌ CRITICAL ERROR deducting token:', error);
+                console.error('❌ Full error details:', JSON.stringify(error, null, 2));
+                // Continue with chat history save even if token deduction fails
+              }
               
               // Save chat history to database SYNCHRONOUSLY
               try {
@@ -272,18 +287,6 @@ export async function POST(request: NextRequest) {
                 console.error('❌ Full error details:', JSON.stringify(error, null, 2));
                 // Don't throw - we still want to return the AI response even if save fails
               }
-
-              // Deduct token
-              try {
-                const success = await decrementToken(userId);
-                if (success) {
-                  console.log(`✅ Token deducted for user ${userId}`);
-                } else {
-                  console.log(`⚠️ User ${userId} has no tokens - skipping token deduction`);
-                }
-              } catch (error) {
-                console.error('Error deducting token:', error);
-              }
             }
 
             // Send final result
@@ -344,25 +347,22 @@ export async function POST(request: NextRequest) {
 
 // Helper functions for conversation metadata generation
 function generateConversationTitle(userMessage: string, aiResponse: string): string {
-  const friendlyTitles: { [key: string]: string } = {
-    'medicine.*image|image.*medicine': 'Medicine Image Analysis',
-    'medicine.*analysis|analysis.*medicine': 'Medicine Analysis',
-    'medicine.*identification|identification.*medicine': 'Medicine Identification'
-  };
-  
-  const lowerText = userMessage.toLowerCase();
-  for (const [pattern, friendlyTitle] of Object.entries(friendlyTitles)) {
-    if (new RegExp(pattern).test(lowerText)) {
-      return friendlyTitle;
-    }
+  // Extract medicine name from AI response for personalized titles
+  const medicineNameMatch = aiResponse.match(/\*\*Medicine\*\*:\s*([A-Za-z0-9\s\-\(\)]+)/i);
+  if (medicineNameMatch) {
+    const medicineName = medicineNameMatch[1].trim();
+    // Clean up the medicine name (remove extra details in parentheses)
+    const cleanName = medicineName.split('(')[0].trim();
+    return `${cleanName} Analysis`;
   }
   
-  // Extract medicine name for title
-  const medicineMatch = userMessage.match(/medicine.*analysis[:\s]*([A-Za-z0-9\s]+)/i);
-  if (medicineMatch) {
-    return `Medicine Analysis: ${medicineMatch[1].trim()}`;
+  // Fallback: Extract from user message if available
+  const userMedicineMatch = userMessage.match(/medicine.*analysis[:\s]*([A-Za-z0-9\s]+)/i);
+  if (userMedicineMatch) {
+    return `${userMedicineMatch[1].trim()} Analysis`;
   }
   
+  // Final fallback: Use generic title
   return 'Medicine Image Analysis';
 }
 
