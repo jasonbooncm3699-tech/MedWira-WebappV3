@@ -117,6 +117,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { imageBase64, userId, language, textQuery, userAllergies } = body;
 
+    // Debug: Log received parameters
+    console.log(`🔍 [API] Received parameters:`, {
+      userId: userId ? 'present' : 'missing',
+      language: language || 'NOT PROVIDED',
+      textQuery: textQuery ? 'present' : 'missing',
+      userAllergies: userAllergies ? 'present' : 'missing',
+      imageSize: imageBase64 ? `${imageBase64.length} chars` : 'missing'
+    });
+
     // Validate required fields
     if (!imageBase64 || !userId) {
       return new Response(

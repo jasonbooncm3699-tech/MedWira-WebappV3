@@ -852,7 +852,7 @@ export default function Home() {
         body: JSON.stringify({
           imageBase64: imageBase64Data,
           userId: userId,
-          language: 'English',
+          language: language, // Use current language state instead of hardcoded 'English'
           textQuery: textQuery,
           userAllergies: allergy
         })
