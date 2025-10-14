@@ -407,7 +407,14 @@ IMAGE: ${extractedMedicineName} (${packagingType})
 ${dbCandidates.length > 0 ? `DATABASE MATCH: ${dbCandidates[0].product} (${dbCandidates[0].active_ingredient})` : 'No database match'}
 
 Provide concise analysis in this format (translate section headers to ${language}):
-${language === 'Malay' ? `
+${language === 'Chinese' ? `
+**药品**: [名称]
+**用途**: [治疗什么]
+**剂量**: [成人/儿童剂量]
+**副作用**: [常见副作用]
+**警告**: [重要安全信息]
+**储存**: [如何储存]
+` : language === 'Malay' ? `
 **Ubat**: [Nama]
 **Tujuan**: [Untuk apa]
 **Dos**: [Dos dewasa/kanak-kanak]
@@ -437,7 +444,10 @@ Keep response under 300 words. Use bullet points (•).`;
 
           // Create timeout controller for Gemini API call
           const controller = new AbortController();
-          const timeoutMs = language === 'English' ? 20000 : 25000; // Shorter timeout to prevent Vercel timeout
+          // More aggressive timeouts based on language complexity
+          const timeoutMs = language === 'English' ? 15000 : 
+                           language === 'Malay' ? 18000 : 
+                           language === 'Chinese' ? 20000 : 15000; // Chinese needs more time but still aggressive
           
           // Set timeout
           const timeoutId = setTimeout(() => {
@@ -602,13 +612,14 @@ Keep response under 300 words. Use bullet points (•).`;
     language: string
   ): string {
     const isMalay = language === 'Malay';
+    const isChinese = language === 'Chinese';
     
-    const packagingLabel = isMalay ? '**Pembungkusan**' : '**Packaging**';
-    const medicineLabel = isMalay ? '**Ubat**' : '**Medicine**';
-    const purposeLabel = isMalay ? '**Tujuan**' : '**Purpose**';
-    const dosageLabel = isMalay ? '**Dos**' : '**Dosage**';
-    const warningLabel = isMalay ? '**Amaran**' : '**Warning**';
-    const disclaimerLabel = isMalay ? '**Penafian**' : '**Disclaimer**';
+    const packagingLabel = isChinese ? '**包装**' : isMalay ? '**Pembungkusan**' : '**Packaging**';
+    const medicineLabel = isChinese ? '**药品**' : isMalay ? '**Ubat**' : '**Medicine**';
+    const purposeLabel = isChinese ? '**用途**' : isMalay ? '**Tujuan**' : '**Purpose**';
+    const dosageLabel = isChinese ? '**剂量**' : isMalay ? '**Dos**' : '**Dosage**';
+    const warningLabel = isChinese ? '**警告**' : isMalay ? '**Amaran**' : '**Warning**';
+    const disclaimerLabel = isChinese ? '**免责声明**' : isMalay ? '**Penafian**' : '**Disclaimer**';
     
     let analysis = `${packagingLabel}: ${packagingType}\n\n`;
     
@@ -618,24 +629,43 @@ Keep response under 300 words. Use bullet points (•).`;
     
     if (dbCandidates.length > 0) {
       const bestMatch = dbCandidates[0];
-      analysis += `${purposeLabel}: ${isMalay ? 'Ubat antibiotik untuk jangkitan bakteria' : 'Antibiotic medicine for bacterial infections'}\n\n`;
-      
-      if (bestMatch.active_ingredient) {
+      if (isChinese) {
+        analysis += `${purposeLabel}: 从图像识别的药品\n\n`;
         analysis += `${dosageLabel}:\n`;
-        analysis += `• ${isMalay ? 'Dewasa' : 'Adults'}: ${isMalay ? 'Seperti yang diarahkan oleh doktor' : 'As directed by doctor'}\n`;
-        analysis += `• ${isMalay ? 'Kanak-kanak' : 'Children'}: ${isMalay ? 'Seperti yang diarahkan oleh doktor' : 'As directed by doctor'}\n\n`;
+        analysis += `• 成人: 按医生指示服用\n`;
+        analysis += `• 儿童: 按医生指示服用\n\n`;
+      } else if (isMalay) {
+        analysis += `${purposeLabel}: Ubat antibiotik untuk jangkitan bakteria\n\n`;
+        analysis += `${dosageLabel}:\n`;
+        analysis += `• Dewasa: Seperti yang diarahkan oleh doktor\n`;
+        analysis += `• Kanak-kanak: Seperti yang diarahkan oleh doktor\n\n`;
+      } else {
+        analysis += `${purposeLabel}: Antibiotic medicine for bacterial infections\n\n`;
+        analysis += `${dosageLabel}:\n`;
+        analysis += `• Adults: As directed by doctor\n`;
+        analysis += `• Children: As directed by doctor\n\n`;
       }
     } else {
-      analysis += `${purposeLabel}: ${isMalay ? 'Ubat yang dikenal pasti dari imej' : 'Medicine identified from image'}\n\n`;
+      analysis += `${purposeLabel}: ${isChinese ? '从图像识别的药品' : isMalay ? 'Ubat yang dikenal pasti dari imej' : 'Medicine identified from image'}\n\n`;
     }
     
     analysis += `${warningLabel}:\n`;
-    analysis += `• ${isMalay ? 'Jangan ambil jika alah kepada sebarang bahan' : 'Do not take if allergic to any ingredients'}\n`;
-    analysis += `• ${isMalay ? 'Berunding dengan doktor sebelum mengambil' : 'Consult doctor before taking'}\n`;
-    analysis += `• ${isMalay ? 'Simpan di tempat kering dan sejuk' : 'Store in dry and cool place'}\n\n`;
+    if (isChinese) {
+      analysis += `• 如有过敏请勿服用\n`;
+      analysis += `• 服用前请咨询医生\n`;
+      analysis += `• 请存放在干燥阴凉处\n\n`;
+    } else if (isMalay) {
+      analysis += `• Jangan ambil jika alah kepada sebarang bahan\n`;
+      analysis += `• Berunding dengan doktor sebelum mengambil\n`;
+      analysis += `• Simpan di tempat kering dan sejuk\n\n`;
+    } else {
+      analysis += `• Do not take if allergic to any ingredients\n`;
+      analysis += `• Consult doctor before taking\n`;
+      analysis += `• Store in dry and cool place\n\n`;
+    }
     
     analysis += `${disclaimerLabel}:\n`;
-    analysis += `${isMalay ? 'Maklumat ini adalah untuk tujuan pendidikan sahaja. Sentiasa berunding dengan profesional penjagaan kesihatan sebelum menggunakan sebarang ubat.' : 'This information is for educational purposes only. Always consult with a healthcare professional before using any medicine.'}`;
+    analysis += `${isChinese ? '此信息仅供教育目的。使用任何药物前请务必咨询医疗专业人士。' : isMalay ? 'Maklumat ini adalah untuk tujuan pendidikan sahaja. Sentiasa berunding dengan profesional penjagaan kesihatan sebelum menggunakan sebarang ubat.' : 'This information is for educational purposes only. Always consult with a healthcare professional before using any medicine.'}`;
     
     return analysis;
   }

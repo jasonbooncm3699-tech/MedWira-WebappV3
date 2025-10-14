@@ -264,8 +264,10 @@ export async function POST(request: NextRequest) {
               sendStatus // Pass the status callback
             );
 
-            // Set timeout based on language complexity - shorter to prevent Vercel timeout
-            const timeoutMs = language === 'English' ? 25000 : 28000; // Shorter timeout to prevent Vercel timeout
+            // Set timeout based on language complexity - more aggressive to prevent Vercel timeout
+            const timeoutMs = language === 'English' ? 20000 : 
+                             language === 'Malay' ? 22000 : 
+                             language === 'Chinese' ? 25000 : 20000; // More aggressive timeouts
             const timeoutPromise = new Promise((_, reject) => 
               setTimeout(() => reject(new Error('Analysis timeout')), timeoutMs)
             );
