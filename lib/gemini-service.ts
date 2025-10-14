@@ -198,12 +198,12 @@ export class GeminiMedicineAnalyzer {
       
       const textExtractionPrompt = `You are a specialized medicine text extraction AI. Follow this EXACT systematic process:
 
-**CRITICAL: Extract text in English for medical accuracy, but respond in ${language} language.**
+**CRITICAL: Extract ALL text in English only. Do NOT translate anything. Return English text only.**
 
 **SYSTEMATIC TEXT EXTRACTION PROCESS:**
 
 STEP 1A: PACKAGING DESCRIPTION
-- Describe the packaging type (blister pack, bottle, box, etc.)
+- Describe the packaging type in English (blister pack, bottle, box, sachet, etc.)
 - Note the overall layout and text arrangement
 - Identify the most prominent visual elements
 
@@ -227,10 +227,10 @@ STEP 1C: PRODUCT NAME IDENTIFICATION
 - Focus on the MOST PROMINENT text for the product name
 - DO NOT use examples from previous analyses or training data
 
-**REQUIRED OUTPUT FORMAT (ALL IN ${language}):**
+**REQUIRED OUTPUT FORMAT (ALL IN ENGLISH):**
 Return ONLY in this exact format:
 
-Packaging Type: [Type of packaging observed]
+Packaging Type: [Type of packaging observed in English]
 Medicine Name: [Extracted medicine name exactly as you see it]
 Registration Number: [MAL/NOT number if visible, or "Not visible"]
 All Visible Text: [List all text found in order of prominence]
