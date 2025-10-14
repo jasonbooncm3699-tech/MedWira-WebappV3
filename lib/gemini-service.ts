@@ -69,6 +69,68 @@ export class GeminiMedicineAnalyzer {
     this.initializeModel();
   }
 
+  // Helper function for localized status messages
+  private getLocalizedStatusMessage(message: string, language: string): string {
+    const statusTranslations: { [key: string]: { [key: string]: string } } = {
+      'Extracting text from image...': {
+        'English': 'Extracting text from image...',
+        'Chinese': '正在从图像中提取文本...',
+        'Malay': 'Mengekstrak teks dari imej...',
+        'Indonesian': 'Mengekstrak teks dari gambar...'
+      },
+      'Searching medicine database...': {
+        'English': 'Searching medicine database...',
+        'Chinese': '正在搜索药品数据库...',
+        'Malay': 'Mencari pangkalan data ubat...',
+        'Indonesian': 'Mencari database obat...'
+      },
+      'Formatting output structure...': {
+        'English': 'Formatting output structure...',
+        'Chinese': '正在格式化输出结构...',
+        'Malay': 'Memformat struktur output...',
+        'Indonesian': 'Memformat struktur output...'
+      },
+      'Applying formatting rules...': {
+        'English': 'Applying formatting rules...',
+        'Chinese': '正在应用格式化规则...',
+        'Malay': 'Mengaplikasikan peraturan pemformatan...',
+        'Indonesian': 'Menerapkan aturan pemformatan...'
+      },
+      'Analyzing active ingredients...': {
+        'English': 'Analyzing active ingredients...',
+        'Chinese': '正在分析活性成分...',
+        'Malay': 'Menganalisis bahan aktif...',
+        'Indonesian': 'Menganalisis bahan aktif...'
+      },
+      'Generating medicine report...': {
+        'English': 'Generating medicine report...',
+        'Chinese': '正在生成药品报告...',
+        'Malay': 'Menjana laporan ubat...',
+        'Indonesian': 'Menghasilkan laporan obat...'
+      },
+      'Finalizing analysis...': {
+        'English': 'Finalizing analysis...',
+        'Chinese': '正在完成分析...',
+        'Malay': 'Menyelesaikan analisis...',
+        'Indonesian': 'Menyelesaikan analisis...'
+      },
+      'Analysis completed successfully': {
+        'English': 'Analysis completed successfully',
+        'Chinese': '分析成功完成',
+        'Malay': 'Analisis selesai dengan jayanya',
+        'Indonesian': 'Analisis berhasil diselesaikan'
+      },
+      'Analysis failed': {
+        'English': 'Analysis failed',
+        'Chinese': '分析失败',
+        'Malay': 'Analisis gagal',
+        'Indonesian': 'Analisis gagal'
+      }
+    };
+
+    return statusTranslations[message]?.[language] || message;
+  }
+
   private async initializeModel() {
     try {
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
@@ -193,17 +255,17 @@ export class GeminiMedicineAnalyzer {
     try {
       // ===== STEP 1: SYSTEMATIC TEXT EXTRACTION PROCESS =====
       console.log(`📊 [${analysisId}] STATUS CALLBACK: Extracting text from image... (callback exists: ${!!statusCallback})`);
-      statusCallback?.('Extracting text from image...');
+      statusCallback?.(this.getLocalizedStatusMessage('Extracting text from image...', language));
       console.log(`🔍 [${analysisId}] ===== STEP 1: SYSTEMATIC TEXT EXTRACTION PROCESS =====`);
       
       const textExtractionPrompt = `You are a specialized medicine text extraction AI. Follow this EXACT systematic process:
 
-**CRITICAL: Extract ALL text in English only. Do NOT translate anything. Return English text only.**
+**CRITICAL: Respond entirely in ${language} language.**
 
 **SYSTEMATIC TEXT EXTRACTION PROCESS:**
 
 STEP 1A: PACKAGING DESCRIPTION
-- Describe the packaging type in English (blister pack, bottle, box, sachet, etc.)
+- Describe the packaging type (blister pack, bottle, box, sachet, etc.)
 - Note the overall layout and text arrangement
 - Identify the most prominent visual elements
 
@@ -227,10 +289,10 @@ STEP 1C: PRODUCT NAME IDENTIFICATION
 - Focus on the MOST PROMINENT text for the product name
 - DO NOT use examples from previous analyses or training data
 
-**REQUIRED OUTPUT FORMAT (ALL IN ENGLISH):**
+**REQUIRED OUTPUT FORMAT (ALL IN ${language}):**
 Return ONLY in this exact format:
 
-Packaging Type: [Type of packaging observed in English]
+Packaging Type: [Type of packaging observed]
 Medicine Name: [Extracted medicine name exactly as you see it]
 Registration Number: [MAL/NOT number if visible, or "Not visible"]
 All Visible Text: [List all text found in order of prominence]
@@ -265,7 +327,7 @@ Do not provide any other information. Only return the above format.`;
       
       // ===== STEP 2: NPRA DATABASE INTEGRATION =====
       console.log(`📊 [${analysisId}] STATUS CALLBACK: Searching medicine database...`);
-      statusCallback?.('Searching medicine database...');
+      statusCallback?.(this.getLocalizedStatusMessage('Searching medicine database...', language));
       console.log(`🔍 [${analysisId}] ===== STEP 2: NPRA DATABASE INTEGRATION =====`);
       
       let dbCandidates: any[] = [];
@@ -288,7 +350,7 @@ Do not provide any other information. Only return the above format.`;
       
       // ===== STEP 3: EXACT OUTPUT FORMAT DEFINITION =====
       console.log(`📊 [${analysisId}] STATUS CALLBACK: Formatting output structure...`);
-      statusCallback?.('Formatting output structure...');
+      statusCallback?.(this.getLocalizedStatusMessage('Formatting output structure...', language));
       console.log(`🔍 [${analysisId}] ===== STEP 3: EXACT OUTPUT FORMAT DEFINITION =====`);
       
       // Define the exact 11-section output format structure
@@ -309,7 +371,7 @@ Do not provide any other information. Only return the above format.`;
       
       // ===== STEP 4: BULLET LIST FORMATTING =====
       console.log(`📊 [${analysisId}] STATUS CALLBACK: Applying formatting rules...`);
-      statusCallback?.('Applying formatting rules...');
+      statusCallback?.(this.getLocalizedStatusMessage('Applying formatting rules...', language));
       console.log(`🔍 [${analysisId}] ===== STEP 4: BULLET LIST FORMATTING =====`);
       
       // Define bullet formatting rules
@@ -326,7 +388,7 @@ Do not provide any other information. Only return the above format.`;
       
       // ===== STEP 5: AI-CENTRIC MEDICINE SELECTION AND ANALYSIS =====
       console.log(`📊 [${analysisId}] STATUS CALLBACK: Analyzing active ingredients...`);
-      statusCallback?.('Analyzing active ingredients...');
+      statusCallback?.(this.getLocalizedStatusMessage('Analyzing active ingredients...', language));
       console.log(`🔍 [${analysisId}] ===== STEP 5: AI-CENTRIC MEDICINE SELECTION AND ANALYSIS =====`);
       
       let comprehensiveAnalysis = '';
@@ -334,7 +396,7 @@ Do not provide any other information. Only return the above format.`;
       // Construct optimized AI prompt with database candidates
       const comprehensivePrompt = `MEDICINE ANALYSIS TASK:
 
-**CRITICAL: Analyze in English for medical accuracy, then translate final output to ${language} language.**
+**CRITICAL: You MUST respond entirely in ${language} language. All text must be in ${language}.**
 
 IMAGE DATA:
 - Name: "${extractedMedicineName}"
@@ -346,7 +408,7 @@ ${dbCandidates.length > 0 ? dbCandidates.map((med, i) => `${i+1}. ${med.product}
 
 TASK: Choose the BEST match and provide analysis.
 
-RESPONSE FORMAT (TRANSLATE TO ${language}):
+RESPONSE FORMAT (ALL IN ${language}):
 **Packaging**: ${packagingType}
 
 **Medicine**: [Selected medicine name]
@@ -375,7 +437,7 @@ Food: [list]
 
 ${userAllergies ? `User allergies: ${userAllergies}` : ''}
 
-REMEMBER: Use bullet points (•) for lists. Add proper spacing between sections. Translate all content to ${language}.`;
+REMEMBER: Use bullet points (•) for lists. Add proper spacing between sections.`;
 
         try {
           // Add timeout handling for comprehensive analysis
@@ -390,7 +452,7 @@ REMEMBER: Use bullet points (•) for lists. Add proper spacing between sections
 
           // Send status update before AI processing
           console.log(`📊 [${analysisId}] STATUS CALLBACK: Generating medicine report...`);
-          statusCallback?.('Generating medicine report...');
+          statusCallback?.(this.getLocalizedStatusMessage('Generating medicine report...', language));
           
           // Log the comprehensive prompt being sent to Gemini
           console.log(`📝 [${analysisId}] ===== SENDING PROMPT TO GEMINI =====`);
@@ -440,7 +502,7 @@ Disclaimer: For informational purposes only. Consult healthcare professional.`;
       
       // ===== STEP 8: RETURN STRUCTURE UPDATE =====
       console.log(`📊 [${analysisId}] STATUS CALLBACK: Finalizing analysis...`);
-      statusCallback?.('Finalizing analysis...');
+      statusCallback?.(this.getLocalizedStatusMessage('Finalizing analysis...', language));
       console.log(`🔍 [${analysisId}] ===== STEP 8: RETURN STRUCTURE UPDATE =====`);
       
       const result: MedicineAnalysisResult = {
@@ -499,7 +561,7 @@ Disclaimer: For informational purposes only. Consult healthcare professional.`;
       
       // ===== FINAL STATUS UPDATE =====
       console.log(`📊 [${analysisId}] STATUS CALLBACK: Analysis completed successfully`);
-      statusCallback?.('Analysis completed successfully');
+      statusCallback?.(this.getLocalizedStatusMessage('Analysis completed successfully', language));
       console.log(`📋 [${analysisId}] Final result structure:`, {
         success: result.success,
         medicineName: result.medicineName,
@@ -522,7 +584,7 @@ Disclaimer: For informational purposes only. Consult healthcare professional.`;
       
       // ===== ERROR STATUS UPDATE =====
       console.log(`📊 [${analysisId}] STATUS CALLBACK: Analysis failed`);
-      statusCallback?.('Analysis failed');
+      statusCallback?.(this.getLocalizedStatusMessage('Analysis failed', language));
       
       return {
         success: false,
