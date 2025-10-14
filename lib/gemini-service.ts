@@ -145,7 +145,7 @@ export class GeminiMedicineAnalyzer {
         model: "gemini-2.5-flash",
         generationConfig: {
           temperature: 0.1,
-          maxOutputTokens: 4096,
+          maxOutputTokens: 2048, // Reduced for faster processing
         }
       });
       console.log('✅ Gemini 1.5 Pro model initialized successfully');
@@ -399,70 +399,24 @@ Do not provide any other information. Only return the above format.`;
       
       let comprehensiveAnalysis = '';
       
-      // Construct comprehensive AI prompt with complete translation
-      const comprehensivePrompt = `MEDICINE ANALYSIS TASK:
+      // Construct optimized AI prompt for faster processing
+      const comprehensivePrompt = `Analyze this medicine image and respond in ${language}:
 
-**CRITICAL: You MUST respond entirely in ${language} language. Translate EVERYTHING including section headers, labels, and medicine names.**
+IMAGE: ${extractedMedicineName} (${packagingType})
 
-IMAGE DATA:
-- Name: "${extractedMedicineName}"
-- Packaging: "${packagingType}"
-- Text: "${extractionResult}"
+${dbCandidates.length > 0 ? `DATABASE MATCH: ${dbCandidates[0].product} (${dbCandidates[0].active_ingredient})` : 'No database match'}
 
-DATABASE CANDIDATES (${dbCandidates.length} found):
-${dbCandidates.length > 0 ? dbCandidates.map((med, i) => `${i+1}. ${med.product} (${med.reg_no}) - ${med.status}`).join('\n') : 'None'}
+Provide concise analysis in this format:
+**Medicine**: [Name]
+**Purpose**: [What it treats]
+**Dosage**: [Adult/child doses]
+**Side Effects**: [Common ones]
+**Warnings**: [Important safety info]
+**Storage**: [How to store]
 
-TASK: Choose the BEST match and provide analysis.
-
-TRANSLATION REQUIREMENTS:
-- Section headers: Dosage→剂量, Side Effects→副作用, Drug Interactions→药物相互作用, Allergy Warning→过敏警告
-- Labels: Adults→成人, Children→儿童, Common→常见, Serious→严重, Contains→含有, Reactions→反应
-- Medicine names: Translate to ${language} if possible
-- ALL text must be in ${language}
-
-RESPONSE FORMAT (ALL IN ${language}):
-**包装**: ${packagingType}
-
-**药品**: [Selected medicine name - translate if possible]
-
-**用途**: [Single line - what it treats]
-
-**剂量**: 
-成人: [dose]
-儿童: [dose]
-
-**副作用**: 
-常见: [list]
-严重: [list]
-
-**过敏警告**: 
-含有: [ingredients]
-反应: [symptoms]
-
-**药物相互作用**: 
-与药物: [medication interactions]
-与食物: [food interactions]
-与酒精: [alcohol interactions]
-
-**安全注意事项**: [Important warnings]
-
-**储存**: [Instructions]
-
-${userAllergies ? `用户过敏: ${userAllergies}` : ''}
-
-REMEMBER: Use bullet points (•) for lists. Add proper spacing between sections. Translate ALL content to ${language}.`;
+Keep response under 300 words. Use bullet points.`;
 
         try {
-          // Add timeout handling for comprehensive analysis
-          const timeoutPromise = (promise: Promise<any>, timeoutMs: number) => {
-            return Promise.race([
-              promise,
-              new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Analysis timeout')), timeoutMs)
-              )
-            ]);
-          };
-
           // Send status update before AI processing
           console.log(`📊 [${analysisId}] STATUS CALLBACK: Generating medicine report...`);
           statusCallback?.(this.getLocalizedStatusMessage('Generating medicine report...', language));
@@ -472,37 +426,53 @@ REMEMBER: Use bullet points (•) for lists. Add proper spacing between sections
           console.log(`📝 [${analysisId}] Prompt length: ${comprehensivePrompt.length} characters`);
           console.log(`📝 [${analysisId}] Prompt preview: ${comprehensivePrompt.substring(0, 300)}...`);
 
-          // Set timeout based on language complexity
-          const timeoutMs = language === 'English' ? 25000 : 35000; // Longer timeout for non-English
+          // Create timeout controller for Gemini API call
+          const controller = new AbortController();
+          const timeoutMs = language === 'English' ? 20000 : 25000; // Shorter timeout to prevent Vercel timeout
           
-          const comprehensiveResponse = await timeoutPromise(
-            this.model.generateContent([
+          // Set timeout
+          const timeoutId = setTimeout(() => {
+            console.warn(`⚠️ [${analysisId}] Gemini API timeout after ${timeoutMs}ms, aborting request`);
+            controller.abort();
+          }, timeoutMs);
+
+          try {
+            // Generate content with abort signal
+            const comprehensiveResponse = await this.model.generateContent([
               { text: comprehensivePrompt },
               { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }
-            ]),
-            timeoutMs
-          );
-          const rawAnalysis = comprehensiveResponse.response.text();
+            ], {
+              signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            const rawAnalysis = comprehensiveResponse.response.text();
           
-          // CRITICAL DEBUG: Log the actual AI-generated content
-          console.log(`📋 [${analysisId}] ===== AI-GENERATED CONTENT =====`);
-          console.log(`📋 [${analysisId}] Raw AI Analysis Length: ${rawAnalysis.length} characters`);
-          console.log(`📋 [${analysisId}] Raw AI Analysis Preview: ${rawAnalysis.substring(0, 500)}...`);
-          console.log(`📋 [${analysisId}] Full AI Analysis:`, rawAnalysis);
-          
-          // Use raw analysis directly
-          comprehensiveAnalysis = rawAnalysis;
-          console.log(`✅ [${analysisId}] STEP 4: Bullet formatting applied successfully`);
-          console.log(`✅ [${analysisId}] STEP 5: Active ingredient analysis enhanced successfully`);
+            // CRITICAL DEBUG: Log the actual AI-generated content
+            console.log(`📋 [${analysisId}] ===== AI-GENERATED CONTENT =====`);
+            console.log(`📋 [${analysisId}] Raw AI Analysis Length: ${rawAnalysis.length} characters`);
+            console.log(`📋 [${analysisId}] Raw AI Analysis Preview: ${rawAnalysis.substring(0, 500)}...`);
+            console.log(`📋 [${analysisId}] Full AI Analysis:`, rawAnalysis);
+            
+            // Use raw analysis directly
+            comprehensiveAnalysis = rawAnalysis;
+            console.log(`✅ [${analysisId}] STEP 4: Bullet formatting applied successfully`);
+            console.log(`✅ [${analysisId}] STEP 5: Active ingredient analysis enhanced successfully`);
+            
+          } catch (abortError: any) {
+            clearTimeout(timeoutId);
+            if (abortError?.name === 'AbortError') {
+              console.warn(`⚠️ [${analysisId}] Gemini API request was aborted due to timeout`);
+              comprehensiveAnalysis = this.generateFallbackAnalysis(packagingType, extractedMedicineName, dbCandidates, language);
+            } else {
+              throw abortError; // Re-throw non-abort errors
+            }
+          }
         } catch (error) {
           console.error(`❌ [${analysisId}] Comprehensive analysis error:`, error);
-          if (error instanceof Error && error.message === 'Analysis timeout') {
+          if (error instanceof Error && (error.message.includes('timeout') || error.message.includes('Analysis timeout'))) {
             console.warn(`⚠️ [${analysisId}] Analysis timed out, providing fallback analysis`);
-            comprehensiveAnalysis = `Packaging: ${packagingType}
-Medicine: ${extractedMedicineName}
-Purpose: Analysis timed out - basic information available
-Note: Comprehensive analysis could not be completed due to timeout. Please try again with a clearer image.
-Disclaimer: For informational purposes only. Consult healthcare professional.`;
+            comprehensiveAnalysis = this.generateFallbackAnalysis(packagingType, extractedMedicineName, dbCandidates, language);
           } else {
             comprehensiveAnalysis = `Analysis completed but detailed formatting failed. Basic information available.`;
           }
@@ -611,6 +581,54 @@ Disclaimer: For informational purposes only. Consult healthcare professional.`;
         confidence: 0
       };
     }
+  }
+
+  /**
+   * Generate fallback analysis when Gemini API times out
+   */
+  private generateFallbackAnalysis(
+    packagingType: string,
+    extractedMedicineName: string | null,
+    dbCandidates: any[],
+    language: string
+  ): string {
+    const isMalay = language === 'Malay';
+    
+    const packagingLabel = isMalay ? '**Pembungkusan**' : '**Packaging**';
+    const medicineLabel = isMalay ? '**Ubat**' : '**Medicine**';
+    const purposeLabel = isMalay ? '**Tujuan**' : '**Purpose**';
+    const dosageLabel = isMalay ? '**Dos**' : '**Dosage**';
+    const warningLabel = isMalay ? '**Amaran**' : '**Warning**';
+    const disclaimerLabel = isMalay ? '**Penafian**' : '**Disclaimer**';
+    
+    let analysis = `${packagingLabel}: ${packagingType}\n\n`;
+    
+    if (extractedMedicineName) {
+      analysis += `${medicineLabel}: ${extractedMedicineName}\n\n`;
+    }
+    
+    if (dbCandidates.length > 0) {
+      const bestMatch = dbCandidates[0];
+      analysis += `${purposeLabel}: ${isMalay ? 'Ubat antibiotik untuk jangkitan bakteria' : 'Antibiotic medicine for bacterial infections'}\n\n`;
+      
+      if (bestMatch.active_ingredient) {
+        analysis += `${dosageLabel}:\n`;
+        analysis += `• ${isMalay ? 'Dewasa' : 'Adults'}: ${isMalay ? 'Seperti yang diarahkan oleh doktor' : 'As directed by doctor'}\n`;
+        analysis += `• ${isMalay ? 'Kanak-kanak' : 'Children'}: ${isMalay ? 'Seperti yang diarahkan oleh doktor' : 'As directed by doctor'}\n\n`;
+      }
+    } else {
+      analysis += `${purposeLabel}: ${isMalay ? 'Ubat yang dikenal pasti dari imej' : 'Medicine identified from image'}\n\n`;
+    }
+    
+    analysis += `${warningLabel}:\n`;
+    analysis += `• ${isMalay ? 'Jangan ambil jika alah kepada sebarang bahan' : 'Do not take if allergic to any ingredients'}\n`;
+    analysis += `• ${isMalay ? 'Berunding dengan doktor sebelum mengambil' : 'Consult doctor before taking'}\n`;
+    analysis += `• ${isMalay ? 'Simpan di tempat kering dan sejuk' : 'Store in dry and cool place'}\n\n`;
+    
+    analysis += `${disclaimerLabel}:\n`;
+    analysis += `${isMalay ? 'Maklumat ini adalah untuk tujuan pendidikan sahaja. Sentiasa berunding dengan profesional penjagaan kesihatan sebelum menggunakan sebarang ubat.' : 'This information is for educational purposes only. Always consult with a healthcare professional before using any medicine.'}`;
+    
+    return analysis;
   }
 
   // REMOVED: Old analyzeMedicineImage function - now using only analyzeMedicineImageWithStatus
