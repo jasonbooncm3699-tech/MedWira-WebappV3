@@ -304,80 +304,35 @@ Do not provide any other information. Only return the above format.`;
       
       let comprehensiveAnalysis = '';
       
-      // Construct enhanced AI prompt with database candidates
-      const comprehensivePrompt = `MEDICINE IDENTIFICATION TASK:
+      // Construct optimized AI prompt with database candidates
+      const comprehensivePrompt = `MEDICINE ANALYSIS:
 
-**IMPORTANT: Respond in ${language} language.**
+**Respond in ${language} language.**
 
-You are analyzing a medicine image. Here's what you extracted:
-- Medicine Name: "${extractedMedicineName}"
-- Packaging Type: "${packagingType}"
-- Registration Number: "${extractedRegNumber || 'Not visible'}"
-- All Visible Text: "${extractionResult}"
+IMAGE DATA:
+- Name: "${extractedMedicineName}"
+- Packaging: "${packagingType}"
+- Text: "${extractionResult}"
 
-DATABASE SEARCH RESULTS (${dbCandidates.length} medicines found):
-${dbCandidates.length > 0 ? dbCandidates.map((med, i) => `
-${i+1}. ${med.product}
-   - Registration: ${med.reg_no}
-   - Status: ${med.status}
-   - Manufacturer: ${med.holder}
-   - Active Ingredients: ${med.active_ingredient}
-   - Description: ${med.description}
-`).join('') : 'No medicines found in database'}
+DATABASE CANDIDATES (${dbCandidates.length} found):
+${dbCandidates.length > 0 ? dbCandidates.map((med, i) => `${i+1}. ${med.product} (${med.reg_no}) - ${med.status}`).join('\n') : 'None'}
 
-YOUR TASK:
-1. Compare the image data with each database entry
-2. Find the BEST MATCH based on:
-   - Medicine name similarity
-   - Dosage strength match
-   - Form factor (tablet/powder/syrup/etc.)
-   - Active ingredient composition
-   - Manufacturer match
-
-3. If you find a good match, use that database information for your analysis
-4. If no good match, analyze from image data only and note "Not found in official database"
-
-CRITICAL: You must choose the MOST ACCURATE match, not the first one listed.
+TASK: Choose the BEST match and provide analysis.
 
 RESPONSE FORMAT:
-**Packaging Detected**: ${packagingType}
-
-**Medicine**: [Selected medicine name from database or image analysis]
-
-**Purpose**: [What this medicine treats - single line]
-
-**Dosage Instructions**:
-• Adults: [Dosage for adults]
-• Children: [Dosage for children] 
-• General: [General instructions]
-
-**Side Effects**:
-• Common: [Most common side effects]
-• Serious: [Serious side effects]
-• Overdose: [Overdose symptoms]
-
-**Allergy Warning**:
-• Contains: [Active ingredients]
-• Reactions: [Possible allergic reactions]
-• Emergency: [What to do if allergic reaction occurs]
-
-**Drug Interactions**:
-• With medications: [Drug interactions]
-• With food: [Food interactions]
-• With alcohol: [Alcohol interactions]
-
-**Safety Notes**:
-• Children/Pregnancy: [Safety information]
-• Elderly/Driving: [Elderly and driving considerations]
-• Pre-existing conditions: [Conditions to consider]
-
-**Storage**: [Storage instructions - single line]
+**Packaging**: ${packagingType}
+**Medicine**: [Selected medicine name]
+**Purpose**: [Single line - what it treats]
+**Dosage**: Adults: [dose] | Children: [dose]
+**Side Effects**: Common: [list] | Serious: [list]
+**Allergy Warning**: Contains: [ingredients] | Reactions: [symptoms]
+**Drug Interactions**: Medications: [list] | Food: [list]
+**Safety Notes**: [Important warnings]
+**Storage**: [Instructions]
 
 ${userAllergies ? `User allergies: ${userAllergies}` : ''}
 
-**Disclaimer**: For informational purposes only. Consult healthcare professional.
-
-IMPORTANT: Use minimal line breaks. Keep sections compact. Use bullet points (•) for lists.`;
+Keep response concise. Use bullet points (•) for lists.`;
 
         try {
           // Add timeout handling for comprehensive analysis
@@ -400,7 +355,10 @@ IMPORTANT: Use minimal line breaks. Keep sections compact. Use bullet points (�
           console.log(`📝 [${analysisId}] Prompt preview: ${comprehensivePrompt.substring(0, 300)}...`);
 
           const comprehensiveResponse = await timeoutPromise(
-            this.model.generateContent(comprehensivePrompt),
+            this.model.generateContent([
+              { text: comprehensivePrompt },
+              { inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }
+            ]),
             25000 // 25 second timeout (5 seconds before Vercel timeout)
           );
           const rawAnalysis = comprehensiveResponse.response.text();

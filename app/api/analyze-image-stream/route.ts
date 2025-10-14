@@ -3,6 +3,10 @@ import { geminiAnalyzer } from '@/lib/gemini-service';
 import { checkTokenAvailability, decrementToken } from '@/lib/npraDatabase';
 import { createClient } from '@supabase/supabase-js';
 
+// Configure timeout for this API route
+export const maxDuration = 30; // 30 seconds max
+export const dynamic = 'force-dynamic';
+
 // Create Supabase client directly in API route to avoid import issues
 function getSupabaseClient() {
   const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -195,13 +199,20 @@ export async function POST(request: NextRequest) {
             // Send initial status - this should match frontend
             sendStatus('Starting analysis...');
 
-            // Use the new method with status callback
-            const result = await geminiAnalyzer.analyzeMedicineImageWithStatus(
+            // Add timeout wrapper for the analysis
+            const analysisPromise = geminiAnalyzer.analyzeMedicineImageWithStatus(
               imageBase64,
               language || 'English',
               userAllergies || '',
               sendStatus // Pass the status callback
             );
+
+            // Set 28-second timeout (2 seconds buffer before Vercel limit)
+            const timeoutPromise = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Analysis timeout')), 28000)
+            );
+
+            const result = await Promise.race([analysisPromise, timeoutPromise]) as any;
 
             // CRITICAL: Deduct token FIRST, then save chat history SYNCHRONOUSLY
             console.log(`🔍 [DEBUG] Checking save conditions - userId: ${userId}, result.success: ${result.success}`);
@@ -314,7 +325,14 @@ export async function POST(request: NextRequest) {
 
           } catch (error) {
             console.error('Analysis error:', error);
-            sendError(error instanceof Error ? error.message : 'Analysis failed');
+            
+            // Handle timeout specifically
+            if (error instanceof Error && error.message === 'Analysis timeout') {
+              console.warn('⚠️ Analysis timed out, sending timeout message');
+              sendError('Analysis timed out. Please try again with a clearer image.');
+            } else {
+              sendError(error instanceof Error ? error.message : 'Analysis failed');
+            }
           }
         };
 
