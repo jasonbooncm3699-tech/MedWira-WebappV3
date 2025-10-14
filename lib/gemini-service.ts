@@ -400,21 +400,30 @@ Do not provide any other information. Only return the above format.`;
       let comprehensiveAnalysis = '';
       
       // Construct optimized AI prompt for faster processing
-      const comprehensivePrompt = `Analyze this medicine image and respond in ${language}:
+      const comprehensivePrompt = `Analyze this medicine image and respond entirely in ${language}. Translate ALL text including section headers.
 
 IMAGE: ${extractedMedicineName} (${packagingType})
 
 ${dbCandidates.length > 0 ? `DATABASE MATCH: ${dbCandidates[0].product} (${dbCandidates[0].active_ingredient})` : 'No database match'}
 
-Provide concise analysis in this format:
+Provide concise analysis in this format (translate section headers to ${language}):
+${language === 'Malay' ? `
+**Ubat**: [Nama]
+**Tujuan**: [Untuk apa]
+**Dos**: [Dos dewasa/kanak-kanak]
+**Kesan Sampingan**: [Yang biasa]
+**Amaran**: [Maklumat keselamatan penting]
+**Penyimpanan**: [Cara simpan]
+` : `
 **Medicine**: [Name]
 **Purpose**: [What it treats]
 **Dosage**: [Adult/child doses]
 **Side Effects**: [Common ones]
 **Warnings**: [Important safety info]
 **Storage**: [How to store]
+`}
 
-Keep response under 300 words. Use bullet points.`;
+Keep response under 300 words. Use bullet points (•).`;
 
         try {
           // Send status update before AI processing
