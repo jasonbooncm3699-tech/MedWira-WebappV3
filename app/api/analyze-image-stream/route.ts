@@ -264,9 +264,10 @@ export async function POST(request: NextRequest) {
               sendStatus // Pass the status callback
             );
 
-            // Set 28-second timeout (2 seconds buffer before Vercel limit)
+            // Set timeout based on language complexity
+            const timeoutMs = language === 'English' ? 28000 : 35000; // Longer timeout for non-English
             const timeoutPromise = new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('Analysis timeout')), 28000)
+              setTimeout(() => reject(new Error('Analysis timeout')), timeoutMs)
             );
 
             const result = await Promise.race([analysisPromise, timeoutPromise]) as any;

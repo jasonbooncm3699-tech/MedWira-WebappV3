@@ -472,12 +472,15 @@ REMEMBER: Use bullet points (•) for lists. Add proper spacing between sections
           console.log(`📝 [${analysisId}] Prompt length: ${comprehensivePrompt.length} characters`);
           console.log(`📝 [${analysisId}] Prompt preview: ${comprehensivePrompt.substring(0, 300)}...`);
 
+          // Set timeout based on language complexity
+          const timeoutMs = language === 'English' ? 25000 : 35000; // Longer timeout for non-English
+          
           const comprehensiveResponse = await timeoutPromise(
             this.model.generateContent([
               { text: comprehensivePrompt },
               { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }
             ]),
-            25000 // 25 second timeout (5 seconds before Vercel timeout)
+            timeoutMs
           );
           const rawAnalysis = comprehensiveResponse.response.text();
           
