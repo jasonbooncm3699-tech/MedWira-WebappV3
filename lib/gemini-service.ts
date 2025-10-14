@@ -198,7 +198,7 @@ export class GeminiMedicineAnalyzer {
       
       const textExtractionPrompt = `You are a specialized medicine text extraction AI. Follow this EXACT systematic process:
 
-**CRITICAL: Respond entirely in ${language} language.**
+**CRITICAL: Extract text in English for medical accuracy, but respond in ${language} language.**
 
 **SYSTEMATIC TEXT EXTRACTION PROCESS:**
 
@@ -334,7 +334,7 @@ Do not provide any other information. Only return the above format.`;
       // Construct optimized AI prompt with database candidates
       const comprehensivePrompt = `MEDICINE ANALYSIS TASK:
 
-**CRITICAL: You MUST respond entirely in ${language} language. All text must be in ${language}.**
+**CRITICAL: Analyze in English for medical accuracy, then translate final output to ${language} language.**
 
 IMAGE DATA:
 - Name: "${extractedMedicineName}"
@@ -346,7 +346,7 @@ ${dbCandidates.length > 0 ? dbCandidates.map((med, i) => `${i+1}. ${med.product}
 
 TASK: Choose the BEST match and provide analysis.
 
-RESPONSE FORMAT (ALL IN ${language}):
+RESPONSE FORMAT (TRANSLATE TO ${language}):
 **Packaging**: ${packagingType}
 
 **Medicine**: [Selected medicine name]
@@ -375,7 +375,7 @@ Food: [list]
 
 ${userAllergies ? `User allergies: ${userAllergies}` : ''}
 
-REMEMBER: Use bullet points (•) for lists. Add proper spacing between sections.`;
+REMEMBER: Use bullet points (•) for lists. Add proper spacing between sections. Translate all content to ${language}.`;
 
         try {
           // Add timeout handling for comprehensive analysis
