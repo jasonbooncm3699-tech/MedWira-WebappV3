@@ -36,10 +36,12 @@ export function getSupabaseClient() {
 export interface NPRAProduct {
   id: string;
   reg_no: string;
-  npra_product: string;
+  product: string; // Fixed: was npra_product
   description?: string;
   status: string;
   holder?: string;
+  active_ingredient?: string;
+  generic_name?: string;
   text?: string;
 }
 
@@ -223,7 +225,7 @@ export async function enhancedNpraLookup(
         .single();
       
       if (!error && regMatch) {
-        console.log(`✅ NPRA Exact Reg Match: ${regMatch.npra_product}`);
+        console.log(`✅ NPRA Exact Reg Match: ${regMatch.product}`);
         return regMatch as NPRAProduct;
       }
     } catch (error) {
