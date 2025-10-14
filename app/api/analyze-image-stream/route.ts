@@ -207,11 +207,31 @@ export async function POST(request: NextRequest) {
       start(controller) {
         const encoder = new TextEncoder();
         
+        // Localized status messages
+        const getLocalizedStatusMessage = (message: string, lang: string) => {
+          const statusTranslations: { [key: string]: { [key: string]: string } } = {
+            'Starting analysis...': {
+              'English': 'Starting analysis...',
+              'Chinese': '正在开始分析...',
+              'Malay': 'Memulakan analisis...',
+              'Indonesian': 'Memulai analisis...'
+            },
+            'Extracting text from image...': {
+              'English': 'Extracting text from image...',
+              'Chinese': '正在从图像中提取文本...',
+              'Malay': 'Mengekstrak teks dari imej...',
+              'Indonesian': 'Mengekstrak teks dari gambar...'
+            }
+          };
+          return statusTranslations[message]?.[lang] || message;
+        };
+
         // Send status updates as AI processing progresses
         const sendStatus = (status: string) => {
           try {
-            console.log(`📊 [SSE] Sending status to frontend: ${status}`);
-            const data = `data: ${JSON.stringify({ type: 'status', status })}\n\n`;
+            const localizedStatus = getLocalizedStatusMessage(status, language || 'English');
+            console.log(`📊 [SSE] Sending status to frontend: ${localizedStatus}`);
+            const data = `data: ${JSON.stringify({ type: 'status', status: localizedStatus })}\n\n`;
             controller.enqueue(encoder.encode(data));
           } catch (error) {
             console.error('Error sending status:', error);
