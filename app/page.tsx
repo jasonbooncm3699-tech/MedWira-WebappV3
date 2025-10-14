@@ -113,6 +113,17 @@ export default function Home() {
     handleTextSubmit(suggestion);
   };
 
+  // Get localized placeholder text
+  const getPlaceholderText = (lang: string) => {
+    const placeholders = {
+      'English': "Ask in English...",
+      'Chinese': "用中文提问...",
+      'Malay': "Tanya dalam Bahasa Melayu...",
+      'Indonesian': "Tanya dalam Bahasa Indonesia..."
+    };
+    return placeholders[lang as keyof typeof placeholders] || placeholders['English'];
+  };
+
   const [showCamera, setShowCamera] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isTablet, setIsTablet] = useState(false);
@@ -803,13 +814,35 @@ export default function Home() {
     console.log(`📊 [Frontend] User authenticated - proceeding with analysis`);
 
     setIsAnalyzing(true);
-    setAiStatus('Initializing AI...');
+    
+    // Get localized AI status message
+    const getAiStatusMessage = (lang: string) => {
+      const messages = {
+        'English': 'Initializing AI...',
+        'Chinese': '正在初始化AI...',
+        'Malay': 'Memulakan AI...',
+        'Indonesian': 'Menginisialisasi AI...'
+      };
+      return messages[lang as keyof typeof messages] || messages['English'];
+    };
+    
+    setAiStatus(getAiStatusMessage(language));
 
-    // Create user message immediately
+    // Create localized user message
+    const getUploadMessage = (lang: string) => {
+      const messages = {
+        'English': "I've uploaded an image of a medicine for identification.",
+        'Chinese': "我已上传药品图片进行识别。",
+        'Malay': "Saya telah memuat naik imej ubat untuk pengenalan.",
+        'Indonesian': "Saya telah mengunggah gambar obat untuk identifikasi."
+      };
+      return messages[lang as keyof typeof messages] || messages['English'];
+    };
+
     const userMessage = {
       id: Date.now().toString(),
       type: 'user' as const,
-      content: "I've uploaded an image of a medicine for identification.",
+      content: getUploadMessage(language),
       timestamp: new Date(),
       image: imageBase64
     };
@@ -1733,7 +1766,7 @@ export default function Home() {
               <div className="text-input-wrapper">
                 <input
                   type="text"
-                  placeholder="Ask in English..."
+                  placeholder={getPlaceholderText(language)}
                   className="text-input"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}

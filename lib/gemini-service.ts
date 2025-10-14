@@ -72,11 +72,17 @@ export class GeminiMedicineAnalyzer {
   // Helper function for localized status messages
   private getLocalizedStatusMessage(message: string, language: string): string {
     const statusTranslations: { [key: string]: { [key: string]: string } } = {
-      'Extracting text from image...': {
-        'English': 'Extracting text from image...',
-        'Chinese': '正在从图像中提取文本...',
-        'Malay': 'Mengekstrak teks dari imej...',
-        'Indonesian': 'Mengekstrak teks dari gambar...'
+      'Starting analysis...': {
+        'English': 'Starting analysis...',
+        'Chinese': '正在开始分析...',
+        'Malay': 'Memulakan analisis...',
+        'Indonesian': 'Memulai analisis...'
+      },
+      'Initializing AI...': {
+        'English': 'Initializing AI...',
+        'Chinese': '正在初始化AI...',
+        'Malay': 'Memulakan AI...',
+        'Indonesian': 'Menginisialisasi AI...'
       },
       'Searching medicine database...': {
         'English': 'Searching medicine database...',
@@ -393,10 +399,10 @@ Do not provide any other information. Only return the above format.`;
       
       let comprehensiveAnalysis = '';
       
-      // Construct optimized AI prompt with database candidates
+      // Construct comprehensive AI prompt with complete translation
       const comprehensivePrompt = `MEDICINE ANALYSIS TASK:
 
-**CRITICAL: You MUST respond entirely in ${language} language. All text must be in ${language}.**
+**CRITICAL: You MUST respond entirely in ${language} language. Translate EVERYTHING including section headers, labels, and medicine names.**
 
 IMAGE DATA:
 - Name: "${extractedMedicineName}"
@@ -408,36 +414,43 @@ ${dbCandidates.length > 0 ? dbCandidates.map((med, i) => `${i+1}. ${med.product}
 
 TASK: Choose the BEST match and provide analysis.
 
+TRANSLATION REQUIREMENTS:
+- Section headers: Dosage→剂量, Side Effects→副作用, Drug Interactions→药物相互作用, Allergy Warning→过敏警告
+- Labels: Adults→成人, Children→儿童, Common→常见, Serious→严重, Contains→含有, Reactions→反应
+- Medicine names: Translate to ${language} if possible
+- ALL text must be in ${language}
+
 RESPONSE FORMAT (ALL IN ${language}):
-**Packaging**: ${packagingType}
+**包装**: ${packagingType}
 
-**Medicine**: [Selected medicine name]
+**药品**: [Selected medicine name - translate if possible]
 
-**Purpose**: [Single line - what it treats]
+**用途**: [Single line - what it treats]
 
-**Dosage**: 
-Adults: [dose]
-Children: [dose]
+**剂量**: 
+成人: [dose]
+儿童: [dose]
 
-**Side Effects**: 
-Common: [list]
-Serious: [list]
+**副作用**: 
+常见: [list]
+严重: [list]
 
-**Allergy Warning**: 
-Contains: [ingredients]
-Reactions: [symptoms]
+**过敏警告**: 
+含有: [ingredients]
+反应: [symptoms]
 
-**Drug Interactions**: 
-Medications: [list]
-Food: [list]
+**药物相互作用**: 
+与药物: [medication interactions]
+与食物: [food interactions]
+与酒精: [alcohol interactions]
 
-**Safety Notes**: [Important warnings]
+**安全注意事项**: [Important warnings]
 
-**Storage**: [Instructions]
+**储存**: [Instructions]
 
-${userAllergies ? `User allergies: ${userAllergies}` : ''}
+${userAllergies ? `用户过敏: ${userAllergies}` : ''}
 
-REMEMBER: Use bullet points (•) for lists. Add proper spacing between sections.`;
+REMEMBER: Use bullet points (•) for lists. Add proper spacing between sections. Translate ALL content to ${language}.`;
 
         try {
           // Add timeout handling for comprehensive analysis
