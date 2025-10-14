@@ -12,7 +12,7 @@
  */
 
 import { DatabaseService } from './supabase';
-import { npraProductLookup } from './npraDatabase';
+import { npraProductLookup, getAllMedicineCandidates } from './npraDatabase';
 
 export interface MedicineAnalysisResult {
   success: boolean;
@@ -241,17 +241,18 @@ Do not provide any other information. Only return the above format.`;
       statusCallback?.('Searching medicine database...');
       console.log(`🔍 [${analysisId}] ===== STEP 2: NPRA DATABASE INTEGRATION =====`);
       
-      let dbResult = null;
+      let dbCandidates: any[] = [];
       if (extractedMedicineName) {
         try {
-          // Use enhanced lookup with registration number if available
-          dbResult = await npraProductLookup(extractedMedicineName, extractedRegNumber);
-          console.log(`📊 [${analysisId}] Database lookup result:`, dbResult ? 'FOUND' : 'NOT FOUND');
-          if (dbResult) {
-            console.log(`📋 [${analysisId}] DB Product: ${(dbResult as any).product}`);
-            console.log(`🧪 [${analysisId}] DB Active Ingredient: ${(dbResult as any).active_ingredient}`);
-            console.log(`🏭 [${analysisId}] DB Manufacturer: ${(dbResult as any).holder}`);
-            console.log(`📜 [${analysisId}] DB Status: ${(dbResult as any).status}`);
+          // Get ALL medicine candidates for AI selection
+          dbCandidates = await getAllMedicineCandidates(extractedMedicineName, extractedRegNumber);
+          console.log(`📊 [${analysisId}] Database lookup result:`, dbCandidates.length > 0 ? `${dbCandidates.length} CANDIDATES FOUND` : 'NO CANDIDATES FOUND');
+          
+          if (dbCandidates.length > 0) {
+            console.log(`📋 [${analysisId}] Database candidates:`);
+            dbCandidates.forEach((candidate, index) => {
+              console.log(`📋 ${index + 1}. ${candidate.product} | Reg: ${candidate.reg_no} | Status: ${candidate.status}`);
+            });
           }
         } catch (error) {
           console.error(`❌ [${analysisId}] Database lookup error:`, error);
@@ -296,30 +297,50 @@ Do not provide any other information. Only return the above format.`;
       
       console.log(`📋 [${analysisId}] Bullet formatting rules defined:`, Object.keys(bulletFormattingRules));
       
-      // ===== STEP 5: ACTIVE INGREDIENT ANALYSIS ENHANCEMENT =====
+      // ===== STEP 5: AI-CENTRIC MEDICINE SELECTION AND ANALYSIS =====
       console.log(`📊 [${analysisId}] STATUS CALLBACK: Analyzing active ingredients...`);
       statusCallback?.('Analyzing active ingredients...');
-      console.log(`🔍 [${analysisId}] ===== STEP 5: ACTIVE INGREDIENT ANALYSIS ENHANCEMENT =====`);
+      console.log(`🔍 [${analysisId}] ===== STEP 5: AI-CENTRIC MEDICINE SELECTION AND ANALYSIS =====`);
       
       let comprehensiveAnalysis = '';
       
-      if (dbResult) {
-        // Enhanced active ingredient analysis
-        const activeIngredientAnalysis = {
-          primaryIngredient: (dbResult as any).active_ingredient,
-          genericName: (dbResult as any).generic_name,
-          manufacturer: (dbResult as any).holder,
-          registrationStatus: (dbResult as any).status,
-          crossReferenceWithUserAllergies: userAllergies ? `User allergies: ${userAllergies}` : 'No user allergies provided'
-        };
-        
-        console.log(`🧪 [${analysisId}] Active ingredient analysis:`, activeIngredientAnalysis);
-        
-        const comprehensivePrompt = `Analyze this medicine and provide COMPACT, well-formatted information starting with Packaging Detected:
+      // Construct enhanced AI prompt with database candidates
+      const comprehensivePrompt = `MEDICINE IDENTIFICATION TASK:
 
-**Packaging Detected**: ${packagingType} containing tablets/capsules. The text "${extractedMedicineName}" is visible, suggesting the brand name. "${(dbResult as any).active_ingredient}" is also visible, indicating the active ingredients.
+You are analyzing a medicine image. Here's what you extracted:
+- Medicine Name: "${extractedMedicineName}"
+- Packaging Type: "${packagingType}"
+- Registration Number: "${extractedRegNumber || 'Not visible'}"
+- All Visible Text: "${extractionResult}"
 
-**Medicine**: ${(dbResult as any).product} (${(dbResult as any).active_ingredient})
+DATABASE SEARCH RESULTS (${dbCandidates.length} medicines found):
+${dbCandidates.length > 0 ? dbCandidates.map((med, i) => `
+${i+1}. ${med.product}
+   - Registration: ${med.reg_no}
+   - Status: ${med.status}
+   - Manufacturer: ${med.holder}
+   - Active Ingredients: ${med.active_ingredient}
+   - Description: ${med.description}
+`).join('') : 'No medicines found in database'}
+
+YOUR TASK:
+1. Compare the image data with each database entry
+2. Find the BEST MATCH based on:
+   - Medicine name similarity
+   - Dosage strength match
+   - Form factor (tablet/powder/syrup/etc.)
+   - Active ingredient composition
+   - Manufacturer match
+
+3. If you find a good match, use that database information for your analysis
+4. If no good match, analyze from image data only and note "Not found in official database"
+
+CRITICAL: You must choose the MOST ACCURATE match, not the first one listed.
+
+RESPONSE FORMAT:
+**Packaging Detected**: ${packagingType}
+
+**Medicine**: [Selected medicine name from database or image analysis]
 
 **Purpose**: [What this medicine treats - single line]
 
@@ -334,7 +355,7 @@ Do not provide any other information. Only return the above format.`;
 • Overdose: [Overdose symptoms]
 
 **Allergy Warning**:
-• Contains: ${(dbResult as any).active_ingredient}
+• Contains: [Active ingredients]
 • Reactions: [Possible allergic reactions]
 • Emergency: [What to do if allergic reaction occurs]
 
@@ -397,7 +418,7 @@ IMPORTANT: Use minimal line breaks. Keep sections compact. Use bullet points (�
           if (error instanceof Error && error.message === 'Analysis timeout') {
             console.warn(`⚠️ [${analysisId}] Analysis timed out, providing fallback analysis`);
             comprehensiveAnalysis = `Packaging: ${packagingType}
-Medicine: ${(dbResult as any).product} (${(dbResult as any).active_ingredient})
+Medicine: ${extractedMedicineName}
 Purpose: Analysis timed out - basic information available
 Note: Comprehensive analysis could not be completed due to timeout. Please try again with a clearer image.
 Disclaimer: For informational purposes only. Consult healthcare professional.`;
@@ -405,22 +426,12 @@ Disclaimer: For informational purposes only. Consult healthcare professional.`;
             comprehensiveAnalysis = `Analysis completed but detailed formatting failed. Basic information available.`;
           }
         }
-      } else {
-        // Fallback analysis without database data
-        comprehensiveAnalysis = `Packaging Detected: ${packagingType}
-Medicine Name: ${extractedMedicineName || 'Medicine identified via image analysis'}
-Purpose: Analysis completed via image recognition
-
-Note: This medicine was not found in the official NPRA database. Please verify the information with a healthcare professional.
-
-Disclaimer: This information is for educational purposes only. Consult a healthcare professional before use.`;
-      }
       
       // ===== STEP 7: PERFORMANCE OPTIMIZATION =====
       const processingTime = Date.now() - startTime;
       console.log(`⚡ [${analysisId}] ===== STEP 7: PERFORMANCE OPTIMIZATION =====`);
       console.log(`⚡ [${analysisId}] Processing time: ${processingTime}ms`);
-      console.log(`⚡ [${analysisId}] Database lookup: ${dbResult ? 'SUCCESS' : 'FAILED'}`);
+      console.log(`⚡ [${analysisId}] Database lookup: ${dbCandidates.length > 0 ? `SUCCESS (${dbCandidates.length} candidates)` : 'NO CANDIDATES FOUND'}`);
       console.log(`⚡ [${analysisId}] Text extraction: SUCCESS`);
       console.log(`⚡ [${analysisId}] Analysis generation: SUCCESS`);
       
@@ -431,22 +442,22 @@ Disclaimer: This information is for educational purposes only. Consult a healthc
       
       const result: MedicineAnalysisResult = {
         success: true,
-        medicineName: dbResult ? (dbResult as any).product : extractedMedicineName || 'Medicine identified',
-        genericName: dbResult ? (dbResult as any).generic_name : 'Analysis completed',
+        medicineName: extractedMedicineName || 'Medicine identified via AI analysis',
+        genericName: 'See detailed analysis below',
         dosage: 'See detailed analysis below',
         sideEffects: ['See detailed analysis'],
         interactions: ['See detailed analysis'],
         warnings: ['See detailed analysis'],
         storage: 'See detailed analysis',
         category: 'Medicine',
-        confidence: dbResult ? 0.95 : 0.75, // Higher confidence with database verification
+        confidence: dbCandidates.length > 0 ? 0.95 : 0.75, // Higher confidence with database candidates
         language,
         // Enhanced fields for 11-section format
         packagingDetected: packagingType,
         purpose: 'See detailed analysis below',
         // Database integration
-        databaseVerified: !!dbResult,
-        activeIngredients: dbResult ? (dbResult as any).active_ingredient : null,
+        databaseVerified: dbCandidates.length > 0,
+        activeIngredients: dbCandidates.length > 0 ? 'See detailed analysis' : undefined,
         // Raw analysis text for UI display
         rawAnalysis: comprehensiveAnalysis,
         dosageInstructions: 'See detailed analysis below',
@@ -480,7 +491,7 @@ Disclaimer: This information is for educational purposes only. Consult a healthc
       
       console.log(`🎉 [${analysisId}] ===== ANALYSIS COMPLETED SUCCESSFULLY =====`);
       console.log(`🎉 [${analysisId}] Total processing time: ${processingTime}ms`);
-      console.log(`🎉 [${analysisId}] Database verified: ${!!dbResult}`);
+      console.log(`🎉 [${analysisId}] Database verified: ${dbCandidates.length > 0}`);
       console.log(`🎉 [${analysisId}] Confidence score: ${result.confidence}`);
       
       // ===== FINAL STATUS UPDATE =====

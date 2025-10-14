@@ -140,6 +140,64 @@ export async function npraProductLookup(
   return null;
 }
 
+// NEW FUNCTION: Get ALL medicine candidates for AI selection
+export async function getAllMedicineCandidates(
+  productName: string, 
+  regNumber?: string | null
+): Promise<NPRAProduct[]> {
+  console.log(`🔍 NPRA Multi-Candidate Lookup: Searching for "${productName}"${regNumber ? ` with reg_no: ${regNumber}` : ''}`);
+  
+  const supabase = getSupabaseClient();
+  const allResults: NPRAProduct[] = [];
+  
+  // Normalize the product name for better matching
+  const searchVariations = normalizeMedicineName(productName);
+  console.log(`🔍 NPRA Search variations:`, searchVariations);
+  
+  // Get results for each variation
+  for (const variation of searchVariations) {
+    console.log(`🔍 NPRA Getting candidates for variation: "${variation}"`);
+    
+    let query = supabase
+      .from('medicines')
+      .select('id, reg_no, product, description, status, holder, active_ingredient, generic_name')
+      .ilike('product', `%${variation}%`);
+
+    if (regNumber) {
+      query = query.or(`reg_no.eq.${regNumber},product.ilike.%${variation}%`);
+    } else {
+      query = query.limit(20); // Get more candidates for AI selection
+    }
+
+    try {
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('❌ NPRA Supabase Error:', error);
+        continue; // Try next variation
+      }
+      
+      if (data && data.length > 0) {
+        console.log(`✅ NPRA Found: ${data.length} candidates for "${variation}"`);
+        allResults.push(...(data as NPRAProduct[]));
+      }
+    } catch (err) {
+      console.error('❌ NPRA Query Error:', err);
+      continue; // Try next variation
+    }
+  }
+  
+  // Remove duplicates based on ID
+  const uniqueResults = [...new Map(allResults.map(item => [item.id, item])).values()];
+  
+  console.log(`📊 NPRA Total unique candidates: ${uniqueResults.length}`);
+  uniqueResults.forEach((result, index) => {
+    console.log(`📋 ${index + 1}. ${result.product} | Reg: ${result.reg_no} | Status: ${result.status}`);
+  });
+  
+  return uniqueResults;
+}
+
 /**
  * Enhanced NPRA lookup with multiple search strategies
  * @param productName - The product name to search for
