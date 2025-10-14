@@ -198,6 +198,8 @@ export class GeminiMedicineAnalyzer {
       
       const textExtractionPrompt = `You are a specialized medicine text extraction AI. Follow this EXACT systematic process:
 
+**CRITICAL: Respond entirely in ${language} language.**
+
 **SYSTEMATIC TEXT EXTRACTION PROCESS:**
 
 STEP 1A: PACKAGING DESCRIPTION
@@ -225,7 +227,7 @@ STEP 1C: PRODUCT NAME IDENTIFICATION
 - Focus on the MOST PROMINENT text for the product name
 - DO NOT use examples from previous analyses or training data
 
-**REQUIRED OUTPUT FORMAT:**
+**REQUIRED OUTPUT FORMAT (ALL IN ${language}):**
 Return ONLY in this exact format:
 
 Packaging Type: [Type of packaging observed]
@@ -330,9 +332,9 @@ Do not provide any other information. Only return the above format.`;
       let comprehensiveAnalysis = '';
       
       // Construct optimized AI prompt with database candidates
-      const comprehensivePrompt = `MEDICINE ANALYSIS:
+      const comprehensivePrompt = `MEDICINE ANALYSIS TASK:
 
-**Respond in ${language} language.**
+**CRITICAL: You MUST respond entirely in ${language} language. All text must be in ${language}.**
 
 IMAGE DATA:
 - Name: "${extractedMedicineName}"
@@ -344,20 +346,36 @@ ${dbCandidates.length > 0 ? dbCandidates.map((med, i) => `${i+1}. ${med.product}
 
 TASK: Choose the BEST match and provide analysis.
 
-RESPONSE FORMAT:
+RESPONSE FORMAT (ALL IN ${language}):
 **Packaging**: ${packagingType}
+
 **Medicine**: [Selected medicine name]
+
 **Purpose**: [Single line - what it treats]
-**Dosage**: Adults: [dose] | Children: [dose]
-**Side Effects**: Common: [list] | Serious: [list]
-**Allergy Warning**: Contains: [ingredients] | Reactions: [symptoms]
-**Drug Interactions**: Medications: [list] | Food: [list]
+
+**Dosage**: 
+Adults: [dose]
+Children: [dose]
+
+**Side Effects**: 
+Common: [list]
+Serious: [list]
+
+**Allergy Warning**: 
+Contains: [ingredients]
+Reactions: [symptoms]
+
+**Drug Interactions**: 
+Medications: [list]
+Food: [list]
+
 **Safety Notes**: [Important warnings]
+
 **Storage**: [Instructions]
 
 ${userAllergies ? `User allergies: ${userAllergies}` : ''}
 
-Keep response concise. Use bullet points (•) for lists.`;
+REMEMBER: Use bullet points (•) for lists. Add proper spacing between sections.`;
 
         try {
           // Add timeout handling for comprehensive analysis
