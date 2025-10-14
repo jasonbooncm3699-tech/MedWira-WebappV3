@@ -160,6 +160,8 @@ export class AIPharmacistService {
     // Create professional pharmacist prompt
     const pharmacistPrompt = `You are a professional AI pharmacist assistant. Your role is to provide accurate, helpful, and safe information about medicines and health.
 
+**IMPORTANT: Respond in ${language} language.**
+
 **YOUR PERSONALITY:**
 - Professional, knowledgeable, and caring
 - Always cautious and safety-focused
@@ -276,6 +278,8 @@ Note: You are a conversational AI pharmacist. Answer general health and medicine
     statusCallback?.('Providing pharmacist consultation...');
 
     const consultationPrompt = `You are a professional AI pharmacist. A user has uploaded a medicine image and asked: "${userMessage}"
+
+**IMPORTANT: Respond in ${language} language.**
 
 **MEDICINE IDENTIFIED FROM IMAGE:**
 Medicine: ${imageAnalysis.medicineName || 'Medicine from image'}

@@ -665,6 +665,24 @@ export default function Home() {
     }, 100);
   }, [messages, scrollToBottom]);
 
+  // Update greeting message when language changes
+  useEffect(() => {
+    if (messages.length > 0 && messages[0].type === 'ai' && messages[0].id === '1') {
+      setMessages(prev => [
+        {
+          ...prev[0],
+          content: getWelcomeMessage(language)
+        },
+        ...prev.slice(1)
+      ]);
+    }
+  }, [language]);
+
+  // Reset prompt suggestions when language changes
+  useEffect(() => {
+    setCurrentPromptIndex(0);
+  }, [language]);
+
   // Medication Stack Management Functions
 
   // Fetch user chat history when user logs in

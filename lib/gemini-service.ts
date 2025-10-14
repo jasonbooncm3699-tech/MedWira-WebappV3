@@ -307,6 +307,8 @@ Do not provide any other information. Only return the above format.`;
       // Construct enhanced AI prompt with database candidates
       const comprehensivePrompt = `MEDICINE IDENTIFICATION TASK:
 
+**IMPORTANT: Respond in ${language} language.**
+
 You are analyzing a medicine image. Here's what you extracted:
 - Medicine Name: "${extractedMedicineName}"
 - Packaging Type: "${packagingType}"

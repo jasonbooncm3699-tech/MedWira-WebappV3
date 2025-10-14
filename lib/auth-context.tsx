@@ -763,7 +763,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       // DEFENSIVE: Prevent processing auth events before initialization is complete
       if (!isInitialized) {
-        console.log('⏳ Skipping auth event - not yet initialized:', event);
+        console.log(`⏳ Auth event '${event}' received during initialization - will be processed after init completes`);
         return;
       }
       
