@@ -149,7 +149,32 @@ export class GeminiMedicineAnalyzer {
     console.log(`🚀 [${analysisId}] ===== STARTING COMPREHENSIVE MEDICINE ANALYSIS =====`);
     console.log(`📊 [${analysisId}] Parameters: language=${language}, allergies=${userAllergies ? 'provided' : 'none'}`);
     console.log(`🕐 [${analysisId}] Start time: ${new Date().toISOString()}`);
-    console.log(`📸 [${analysisId}] Image received: ${imageBase64.length} characters`);
+      // Validate base64 image data before processing
+      if (!imageBase64 || typeof imageBase64 !== 'string') {
+        throw new Error('Invalid image data: base64 string required');
+      }
+
+      // Clean base64 data (remove data URL prefix if present)
+      let cleanBase64 = imageBase64;
+      if (imageBase64.startsWith('data:image/')) {
+        cleanBase64 = imageBase64.split(',')[1];
+      }
+
+      // Validate base64 format
+      if (!cleanBase64 || cleanBase64.length < 100) {
+        throw new Error('Invalid base64 data: too short or empty');
+      }
+
+      // Check if base64 is valid
+      try {
+        const buffer = Buffer.from(cleanBase64, 'base64');
+        if (buffer.length === 0) {
+          throw new Error('Invalid base64 data: empty buffer');
+        }
+        console.log(`✅ [${analysisId}] Base64 validation passed: ${buffer.length} bytes`);
+      } catch (error) {
+        throw new Error(`Invalid base64 data: ${error instanceof Error ? error.message : 'unknown error'}`);
+      }
     
     if (!this.model) {
       console.log(`⚠️ [${analysisId}] Gemini model not initialized - retrying initialization`);
@@ -210,11 +235,11 @@ All Visible Text: [List all text found in order of prominence]
 
 Do not provide any other information. Only return the above format.`;
 
-      const imageData = imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`;
+      const imageData = cleanBase64.startsWith('data:') ? cleanBase64 : `data:image/jpeg;base64,${cleanBase64}`;
       const content = [textExtractionPrompt, {
         inlineData: {
           mimeType: 'image/jpeg',
-          data: imageData.replace(/^data:image\/[a-z]+;base64,/, '')
+          data: cleanBase64
         }
       }];
 
@@ -357,7 +382,7 @@ Keep response concise. Use bullet points (•) for lists.`;
           const comprehensiveResponse = await timeoutPromise(
             this.model.generateContent([
               { text: comprehensivePrompt },
-              { inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }
+              { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }
             ]),
             25000 // 25 second timeout (5 seconds before Vercel timeout)
           );

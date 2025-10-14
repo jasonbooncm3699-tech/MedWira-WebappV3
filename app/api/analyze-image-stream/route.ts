@@ -127,7 +127,35 @@ export async function POST(request: NextRequest) {
             'Content-Type': 'text/plain',
             'Cache-Control': 'no-cache',
             'Connection': 'keep-alive'
-          } 
+          }
+        }
+      );
+    }
+
+    // Validate image data format
+    let cleanImageBase64 = imageBase64;
+    if (imageBase64.startsWith('data:image/')) {
+      cleanImageBase64 = imageBase64.split(',')[1];
+    }
+
+    // Check if base64 is valid
+    try {
+      const buffer = Buffer.from(cleanImageBase64, 'base64');
+      if (buffer.length === 0) {
+        throw new Error('Invalid base64 data: empty buffer');
+      }
+      console.log(`✅ Image validation passed: ${buffer.length} bytes`);
+    } catch (error) {
+      console.error('❌ Invalid base64 image data:', error);
+      return new Response(
+        `data: ${JSON.stringify({ type: 'error', error: 'Invalid image data format' })}\n\n`,
+        { 
+          status: 200, 
+          headers: { 
+            'Content-Type': 'text/plain',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+          }
         }
       );
     }
@@ -201,7 +229,7 @@ export async function POST(request: NextRequest) {
 
             // Add timeout wrapper for the analysis
             const analysisPromise = geminiAnalyzer.analyzeMedicineImageWithStatus(
-              imageBase64,
+              cleanImageBase64,
               language || 'English',
               userAllergies || '',
               sendStatus // Pass the status callback
