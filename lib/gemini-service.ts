@@ -266,7 +266,7 @@ export class GeminiMedicineAnalyzer {
       
       const textExtractionPrompt = `You are a specialized medicine text extraction AI. Follow this EXACT systematic process:
 
-**CRITICAL: Respond entirely in English. This is for a medicine analysis system that will handle translation on the frontend.**
+**CRITICAL: Respond entirely in ${language}. This is for a medicine analysis system that serves users in their native language.**
 
 **SYSTEMATIC TEXT EXTRACTION PROCESS:**
 
@@ -399,34 +399,72 @@ Do not provide any other information. Only return the above format.`;
       
       let comprehensiveAnalysis = '';
       
-      // Construct optimized AI prompt - ALWAYS analyze in English for speed and reliability
-      // Note: language parameter is used for status messages, but AI content is always English
-      const comprehensivePrompt = `Analyze this medicine image and respond entirely in English. This is for a medicine analysis system that will handle translation on the frontend.
+      // Construct optimized AI prompt - Generate content in user's language for proper localization
+      const getLanguageHeaders = (lang: string) => {
+        const headers = {
+          'Chinese': {
+            medicine: '**药品**',
+            purpose: '**用途**',
+            dosage: '**剂量**',
+            sideEffects: '**副作用**',
+            warnings: '**警告**',
+            storage: '**储存**'
+          },
+          'English': {
+            medicine: '**Medicine**',
+            purpose: '**Purpose**',
+            dosage: '**Dosage**',
+            sideEffects: '**Side Effects**',
+            warnings: '**Warnings**',
+            storage: '**Storage**'
+          },
+          'Malay': {
+            medicine: '**Ubat**',
+            purpose: '**Tujuan**',
+            dosage: '**Dos**',
+            sideEffects: '**Kesan Sampingan**',
+            warnings: '**Amaran**',
+            storage: '**Penyimpanan**'
+          },
+          'Indonesian': {
+            medicine: '**Obat**',
+            purpose: '**Tujuan**',
+            dosage: '**Dosis**',
+            sideEffects: '**Efek Samping**',
+            warnings: '**Peringatan**',
+            storage: '**Penyimpanan**'
+          }
+        };
+        return headers[lang as keyof typeof headers] || headers['English'];
+      };
+
+      const langHeaders = getLanguageHeaders(language);
+      const comprehensivePrompt = `Analyze this medicine image and respond entirely in ${language}. This is for a medicine analysis system that serves users in their native language.
 
 IMAGE: ${extractedMedicineName} (${packagingType})
 
 ${dbCandidates.length > 0 ? `DATABASE MATCH: ${dbCandidates[0].product} (${dbCandidates[0].active_ingredient})` : 'No database match'}
 
-Provide concise analysis in this exact format (use English section headers with proper spacing):
-**Medicine**: [Medicine name from packaging]
+Provide concise analysis in this exact format (use ${language} section headers with proper spacing):
+${langHeaders.medicine}: [Medicine name from packaging]
 
 
-**Purpose**: [What it treats]
+${langHeaders.purpose}: [What it treats]
 
 
-**Dosage**: [Adult/child doses]
+${langHeaders.dosage}: [Adult/child doses]
 
 
-**Side Effects**: [Common ones]
+${langHeaders.sideEffects}: [Common ones]
 
 
-**Warnings**: [Important safety info]
+${langHeaders.warnings}: [Important safety info]
 
 
-**Storage**: [How to store]
+${langHeaders.storage}: [How to store]
 
 
-Keep response under 300 words. Use bullet points (•) for lists. Always use English for maximum speed and accuracy. Add double line breaks between sections for better readability.`;
+Keep response under 300 words. Use bullet points (•) for lists. Respond entirely in ${language} for proper user experience. Add double line breaks between sections for better readability.`;
 
         try {
           // Send status update before AI processing
