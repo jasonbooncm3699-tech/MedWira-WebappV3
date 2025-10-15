@@ -38,7 +38,6 @@ async function saveChatMessage(chatData: {
   category?: string;
   confidence?: number;
   language?: string;
-  user_language_preference?: string; // Store user's UI language preference
   allergies?: string;
   conversation_context?: string;
   conversation_title?: string;
@@ -324,7 +323,6 @@ export async function POST(request: NextRequest) {
                   message_sequence: 1,
                   image_url: imageBase64,
                   language: 'English', // Always English in database
-                  user_language_preference: language || 'English', // Store user's UI language preference
                   allergies: userAllergies || null,
                   conversation_context: `Medicine analysis: ${result.medicineName}`,
                   conversation_title: conversationTitle,
@@ -354,7 +352,6 @@ export async function POST(request: NextRequest) {
                   category: result.category,
                   confidence: result.confidence,
                   language: 'English', // Always English in database
-                  user_language_preference: language || 'English', // Store user's UI language preference
                   allergies: userAllergies || null,
                   conversation_context: `Medicine analysis: ${result.medicineName}`
                 });

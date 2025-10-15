@@ -1584,9 +1584,7 @@ body {
   border: none;
   color: #00d4ff; /* Blue color like share button */
   cursor: pointer;
-  padding: 8px;
-  border-radius: 50%; /* Circular button */
-  transition: all 0.2s ease;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1595,14 +1593,10 @@ body {
   top: 50%;
   transform: translateY(-50%);
   z-index: 10;
-  width: 36px;
-  height: 36px;
 }
 
 .send-btn:hover:not(:disabled) {
-  background: rgba(0, 212, 255, 0.1); /* Subtle blue background on hover */
   color: #00d4ff;
-  transform: translateY(-50%) scale(1.05);
 }
 
 .send-btn:disabled {
@@ -1838,10 +1832,7 @@ body {
     right: 8px;
     top: 50%;
     transform: translateY(-50%);
-    width: 32px;
-    height: 32px;
-    padding: 4px;
-    border-radius: 50%;
+    padding: 0;
   }
   
   .install-content {
@@ -1928,10 +1919,7 @@ body {
     right: 6px;
     top: 50%;
     transform: translateY(-50%);
-    width: 28px;
-    height: 28px;
-    padding: 2px;
-    border-radius: 50%;
+    padding: 0;
   }
 }
 

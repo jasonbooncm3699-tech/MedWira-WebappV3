@@ -303,10 +303,143 @@ Medicine Name: [Extracted medicine name exactly as you see it]
 Registration Number: [MAL/NOT number if visible, or "Not visible"]
 All Visible Text: [List all text found in order of prominence]
 
-Do not provide any other information. Only return the above format.`;
+IMPORTANT: Always use these EXACT English labels regardless of the language setting. The labels must be in English for proper parsing.`;
+
+      // Create language-specific extraction prompt with English labels
+      const getLocalizedExtractionPrompt = (lang: string) => {
+        const prompts = {
+          'Chinese': `你是专业的药品文本提取AI。请按照以下EXACT系统性流程操作：
+
+**关键：请完全用中文回应。这是为中文用户提供服务的药品分析系统。**
+
+**系统性文本提取流程：**
+
+步骤1A：包装描述
+- 描述包装类型（泡罩包装、瓶子、盒子、袋装等）
+- 注意整体布局和文字排列
+- 识别最突出的视觉元素
+
+步骤1B：全面文字扫描
+- 从左上角到右下角系统地扫描图像，从左到右
+- 按重要性顺序列出你能看到的每一段文字
+- 包括可能相关的小文字
+- 查找注册号码（MAL/NOT格式）
+
+步骤1C：产品名称识别
+- 查找包装上最大、最突出的文字
+- 这通常是主要的产品/药品名称
+- 验证此文字实际可见且可读
+
+**关键防幻觉规则：**
+- 永远不要使用训练数据中的药品名称
+- 永远不要猜测或假设药品可能是什么
+- 只提取当前图像中实际可见的文字
+- 忽略你对常见药品名称的知识
+- 逐字符阅读你在包装上看到的内容
+- 专注于产品名称的最突出文字
+- 不要使用之前分析或训练数据中的例子
+
+**必需输出格式（始终使用英文标签）：**
+只返回以下确切格式：
+
+Packaging Type: [观察到的包装类型]
+Medicine Name: [你看到的药品名称]
+Registration Number: [如果可见的MAL/NOT号码，或"Not visible"]
+All Visible Text: [按重要性顺序找到的所有文字]
+
+不要提供任何其他信息。只返回上述格式。`,
+
+          'English': textExtractionPrompt,
+          
+          'Malay': `Anda adalah AI pengekstrakan teks ubat yang pakar. Ikuti proses sistematik EXACT ini:
+
+**KRITIKAL: Balas sepenuhnya dalam bahasa Melayu. Ini adalah sistem analisis ubat yang melayani pengguna dalam bahasa ibunda mereka.**
+
+**PROSES PENGEKSTRAKAN TEKS SISTEMATIK:**
+
+LANGKAH 1A: PENERANGAN PEMBUNGKUSAN
+- Terangkan jenis pembungkusan (blister pack, botol, kotak, sachet, dll.)
+- Perhatikan susun atur keseluruhan dan susunan teks
+- Kenal pasti elemen visual yang paling menonjol
+
+LANGKAH 1B: IMBASAN TEKS MENYELURUH
+- Imbas imej secara sistematik dari atas-kiri ke bawah-kanan, kiri ke kanan
+- Senaraikan SETIAP kepingan teks yang anda dapat lihat, mengikut urutan keutamaan
+- Termasuk teks kecil yang mungkin relevan
+- Cari nombor pendaftaran (format MAL/NOT)
+
+LANGKAH 1C: PENGENALAN NAMA PRODUK
+- Cari teks TERBESAR, PALING MENONJOL pada pembungkusan
+- Ini biasanya nama produk/ubat utama
+- Sahkan teks ini sebenarnya kelihatan dan boleh dibaca
+
+**PERATURAN ANTI-HALUINASI KRITIKAL:**
+- JANGAN PERNAH menggunakan nama ubat dari data latihan anda
+- JANGAN PERNAH meneka atau mengandaikan apa ubat itu
+- HANYA ekstrak teks yang sebenarnya kelihatan dalam imej semasa
+- ABAIKAN pengetahuan anda tentang nama ubat biasa
+- BACA KARAKTER DEMI KARAKTER apa yang anda lihat pada pembungkusan
+- Fokus pada teks PALING MENONJOL untuk nama produk
+- JANGAN gunakan contoh dari analisis sebelumnya atau data latihan
+
+**FORMAT OUTPUT YANG DIPERLUKAN (Sentiasa gunakan label Inggeris):**
+Kembalikan HANYA dalam format tepat ini:
+
+Packaging Type: [Jenis pembungkusan yang diperhatikan]
+Medicine Name: [Nama ubat yang diekstrak tepat seperti yang anda lihat]
+Registration Number: [Nombor MAL/NOT jika kelihatan, atau "Not visible"]
+All Visible Text: [Senaraikan semua teks yang ditemui mengikut urutan keutamaan]
+
+Jangan berikan maklumat lain. Hanya kembalikan format di atas.`,
+
+          'Indonesian': `Anda adalah AI ekstraksi teks obat yang ahli. Ikuti proses sistematis EXACT ini:
+
+**KRITIS: Tanggapi sepenuhnya dalam bahasa Indonesia. Ini adalah sistem analisis obat yang melayani pengguna dalam bahasa asli mereka.**
+
+**PROSES EKSTRAKSI TEKS SISTEMATIS:**
+
+LANGKAH 1A: DESKRIPSI KEMASAN
+- Jelaskan jenis kemasan (blister pack, botol, kotak, sachet, dll.)
+- Perhatikan tata letak keseluruhan dan pengaturan teks
+- Identifikasi elemen visual yang paling menonjol
+
+LANGKAH 1B: PEMINDAIAN TEKS MENYELURUH
+- Pindai gambar secara sistematis dari kiri-atas ke kanan-bawah, kiri ke kanan
+- Daftar SETIAP potongan teks yang dapat Anda lihat, dalam urutan kepentingan
+- Sertakan teks kecil yang mungkin relevan
+- Cari nomor registrasi (format MAL/NOT)
+
+LANGKAH 1C: IDENTIFIKASI NAMA PRODUK
+- Cari teks TERBESAR, PALING MENONJOL pada kemasan
+- Ini biasanya nama produk/obat utama
+- Verifikasi teks ini benar-benar terlihat dan dapat dibaca
+
+**ATURAN ANTI-HALUINASI KRITIS:**
+- JANGAN PERNAH menggunakan nama obat dari data pelatihan Anda
+- JANGAN PERNAH menebak atau mengasumsikan obat apa itu
+- HANYA ekstrak teks yang benar-benar terlihat dalam gambar saat ini
+- ABAIKAN pengetahuan Anda tentang nama obat umum
+- BACA KARAKTER DEMI KARAKTER apa yang Anda lihat pada kemasan
+- Fokus pada teks PALING MENONJOL untuk nama produk
+- JANGAN gunakan contoh dari analisis sebelumnya atau data pelatihan
+
+**FORMAT OUTPUT YANG DIPERLUKAN (Selalu gunakan label Inggris):**
+Kembalikan HANYA dalam format tepat ini:
+
+Packaging Type: [Jenis kemasan yang diamati]
+Medicine Name: [Nama obat yang diekstrak persis seperti yang Anda lihat]
+Registration Number: [Nomor MAL/NOT jika terlihat, atau "Not visible"]
+All Visible Text: [Daftar semua teks yang ditemukan dalam urutan kepentingan]
+
+Jangan berikan informasi lain. Hanya kembalikan format di atas.`
+        };
+        return prompts[lang as keyof typeof prompts] || prompts['English'];
+      };
+
+      const localizedExtractionPrompt = getLocalizedExtractionPrompt(language);
 
       const imageData = cleanBase64.startsWith('data:') ? cleanBase64 : `data:image/jpeg;base64,${cleanBase64}`;
-      const content = [textExtractionPrompt, {
+      const content = [localizedExtractionPrompt, {
         inlineData: {
           mimeType: 'image/jpeg',
           data: cleanBase64
@@ -455,50 +588,50 @@ Do not provide any other information. Only return the above format.`;
       };
 
       const langHeaders = getLanguageHeaders(language);
+      const medicineInfo = extractedMedicineName || 'Medicine from image analysis';
       const comprehensivePrompt = `Analyze this medicine image and respond entirely in ${language}. This is for a medicine analysis system that serves users in their native language.
 
-IMAGE: ${extractedMedicineName} (${packagingType})
+IMAGE: ${medicineInfo} (${packagingType})
 
 ${dbCandidates.length > 0 ? `DATABASE MATCH: ${dbCandidates[0].product} (${dbCandidates[0].active_ingredient})` : 'No database match'}
 
-Provide comprehensive analysis in this EXACT 10-section format (use ${language} section headers with proper spacing):
+Provide comprehensive analysis in this EXACT 10-section format (use ${language} section headers):
 
-${langHeaders.packagingDetected}: [Describe packaging type and confirm detection - e.g., "Yes—blister strip/box with [medicine name] label visible. Proceed with identification."]
+${langHeaders.packagingDetected}: Yes—${packagingType} with "${medicineInfo}" label visible. Proceed with identification.
 
+${langHeaders.medicine}: ${medicineInfo} (with active ingredients and strength)
 
-${langHeaders.medicine}: [Medicine name with active ingredients and strength]
+${langHeaders.purpose}: What it treats, who it's for based on packaging
 
+${langHeaders.dosage}: 
+•Adults/Children over 12: [specific dosage instructions]
+•Children 7-12 years: [specific dosage instructions]
+Do not exceed recommended dose; follow packaging instructions.
 
-${langHeaders.purpose}: [What it treats, who it's for based on packaging]
+${langHeaders.sideEffects}: 
+•Common: [common side effects]
+•Rare: [rare side effects]
+•Overdose risk: [overdose warnings]
 
-
-${langHeaders.dosage}: [Detailed dosage instructions for different age groups with warnings]
-
-
-${langHeaders.sideEffects}: [Common, rare effects, and overdose risks]
-
-
-${langHeaders.allergyWarning}: [Allergy information and cross-reactivity warnings]
-
+${langHeaders.allergyWarning}: 
+Contains [active ingredients] and excipients. May cause reactions if allergic. If you entered allergies, warning: Potential trigger—consult a doctor.
 
 ${langHeaders.drugInteractions}: 
-• With other drugs: [Specific drug interactions]
-• With food: [Food interaction information]  
-• With alcohol: [Alcohol interaction warnings]
-
+•With other drugs: [specific drug interactions]
+•With food: [food interaction information]
+•With alcohol: [alcohol interaction warnings]
 
 ${langHeaders.safetyNotes}:
-• For kids: [Children safety information]
-• For pregnant women: [Pregnancy safety category and advice]
-• Other: [Additional safety considerations]
+•For kids: [children safety information]
+•For pregnant women: [pregnancy safety category and advice]
+•Other: [additional safety considerations]
 
+${langHeaders.storage}: 
+[Storage requirements and warnings]
 
-${langHeaders.storage}: [Storage requirements and warnings]
+${langHeaders.disclaimer}: This information is sourced from public websites and packaging details. For informational purposes only. Not medical advice. Consult a doctor or pharmacist before use.
 
-
-${langHeaders.disclaimer}: [Medical disclaimer about information source and consultation advice]
-
-Use bullet points (•) for lists. Include specific details like dosage limits, age restrictions, and safety categories. Respond entirely in ${language} for proper user experience. Add double line breaks between sections for better readability.`;
+CRITICAL: Follow this EXACT format with bullet points (•) and specific details. Respond entirely in ${language}.`;
 
         try {
           // Send status update before AI processing
