@@ -2002,23 +2002,7 @@ select:focus {
   background: #777;
 }
 
-.send-btn {
-  padding: 12px 20px;
-  background: #00d4ff;
-  border: none;
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
-
-.send-btn:hover {
-  background: #00b8e6;
-}
+/* Removed duplicate send-btn styling - using icon-only version above */
 
 .capture-btn:active {
   transform: scale(0.95);

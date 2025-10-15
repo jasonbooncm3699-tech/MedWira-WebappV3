@@ -221,6 +221,36 @@ export async function POST(request: NextRequest) {
               'Chinese': '正在从图像中提取文本...',
               'Malay': 'Mengekstrak teks dari imej...',
               'Indonesian': 'Mengekstrak teks dari gambar...'
+            },
+            'Searching medicine database...': {
+              'English': 'Searching medicine database...',
+              'Chinese': '正在搜索药品数据库...',
+              'Malay': 'Mencari pangkalan data ubat...',
+              'Indonesian': 'Mencari database obat...'
+            },
+            'Formatting output structure...': {
+              'English': 'Formatting output structure...',
+              'Chinese': '正在格式化输出结构...',
+              'Malay': 'Memformat struktur output...',
+              'Indonesian': 'Memformat struktur output...'
+            },
+            'Applying formatting rules...': {
+              'English': 'Applying formatting rules...',
+              'Chinese': '正在应用格式化规则...',
+              'Malay': 'Mengaplikasikan peraturan format...',
+              'Indonesian': 'Menerapkan aturan format...'
+            },
+            'Analyzing active ingredients...': {
+              'English': 'Analyzing active ingredients...',
+              'Chinese': '正在分析活性成分...',
+              'Malay': 'Menganalisis bahan aktif...',
+              'Indonesian': 'Menganalisis bahan aktif...'
+            },
+            'Generating medicine report...': {
+              'English': 'Generating medicine report...',
+              'Chinese': '正在生成药品报告...',
+              'Malay': 'Menjana laporan ubat...',
+              'Indonesian': 'Menghasilkan laporan obat...'
             }
           };
           return statusTranslations[message]?.[lang] || message;
@@ -265,9 +295,9 @@ export async function POST(request: NextRequest) {
             );
 
             // Set timeout based on language complexity - increased to prevent premature timeouts
-            const timeoutMs = language === 'English' ? 30000 : 
-                             language === 'Malay' ? 32000 : 
-                             language === 'Chinese' ? 35000 : 30000; // Increased Chinese timeout to 35s
+            const timeoutMs = language === 'English' ? 40000 : 
+                             language === 'Malay' ? 42000 : 
+                             language === 'Chinese' ? 45000 : 40000; // Increased timeouts significantly
             const timeoutPromise = new Promise((_, reject) => 
               setTimeout(() => reject(new Error('Analysis timeout')), timeoutMs)
             );
@@ -389,7 +419,17 @@ export async function POST(request: NextRequest) {
             // Handle timeout specifically
             if (error instanceof Error && error.message === 'Analysis timeout') {
               console.warn('⚠️ Analysis timed out, sending timeout message');
-              sendError('Analysis timed out. Please try again with a clearer image.');
+              
+              // Localized timeout messages
+              const timeoutMessages: { [key: string]: string } = {
+                'English': 'Analysis timed out. Please try again with a clearer image.',
+                'Chinese': '分析超时。请尝试使用更清晰的图像重试。',
+                'Malay': 'Analisis tamat masa. Sila cuba lagi dengan imej yang lebih jelas.',
+                'Indonesian': 'Analisis berakhir waktu. Silakan coba lagi dengan gambar yang lebih jelas.'
+              };
+              
+              const localizedTimeoutMessage = timeoutMessages[language || 'English'] || timeoutMessages['English'];
+              sendError(localizedTimeoutMessage);
             } else {
               sendError(error instanceof Error ? error.message : 'Analysis failed');
             }
