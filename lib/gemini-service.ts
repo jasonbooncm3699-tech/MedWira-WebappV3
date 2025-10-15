@@ -266,7 +266,7 @@ export class GeminiMedicineAnalyzer {
       
       const textExtractionPrompt = `You are a specialized medicine text extraction AI. Follow this EXACT systematic process:
 
-**CRITICAL: Respond entirely in ${language} language.**
+**CRITICAL: Respond entirely in English. This is for a medicine analysis system that will handle translation on the frontend.**
 
 **SYSTEMATIC TEXT EXTRACTION PROCESS:**
 

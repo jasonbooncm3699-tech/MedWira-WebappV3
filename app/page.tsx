@@ -1788,7 +1788,15 @@ export default function Home() {
 
           {/* AI Thinking Animation for Text Queries */}
           {isAiThinking && (
-            <AIStatusDisplay status="AI Pharmacist is analyzing..." />
+            <AIStatusDisplay status={
+              language === 'English' ? 'AI Pharmacist is analyzing...' :
+              language === 'Chinese' ? 'AI药剂师正在分析...' :
+              language === 'Malay' ? 'AI Farmasi sedang menganalisis...' :
+              language === 'Indonesian' ? 'AI Apoteker sedang menganalisis...' :
+              language === 'Thai' ? 'AI เภสัชกรกำลังวิเคราะห์...' :
+              language === 'Vietnamese' ? 'AI Dược sĩ đang phân tích...' :
+              'AI Pharmacist is analyzing...'
+            } />
           )}
 
           {isAnalyzing && (
