@@ -4,7 +4,7 @@ import { checkTokenAvailability, decrementToken } from '@/lib/npraDatabase';
 import { createClient } from '@supabase/supabase-js';
 
 // Configure timeout for this API route
-export const maxDuration = 30; // 30 seconds max
+export const maxDuration = 45; // Increased to 45 seconds to allow for longer analysis
 export const dynamic = 'force-dynamic';
 
 // Create Supabase client directly in API route to avoid import issues
@@ -265,10 +265,10 @@ export async function POST(request: NextRequest) {
               sendStatus // Pass the status callback
             );
 
-            // Set timeout based on language complexity - more aggressive to prevent Vercel timeout
-            const timeoutMs = language === 'English' ? 20000 : 
-                             language === 'Malay' ? 22000 : 
-                             language === 'Chinese' ? 25000 : 20000; // More aggressive timeouts
+            // Set timeout based on language complexity - increased to prevent premature timeouts
+            const timeoutMs = language === 'English' ? 30000 : 
+                             language === 'Malay' ? 32000 : 
+                             language === 'Chinese' ? 35000 : 30000; // Increased Chinese timeout to 35s
             const timeoutPromise = new Promise((_, reject) => 
               setTimeout(() => reject(new Error('Analysis timeout')), timeoutMs)
             );

@@ -440,10 +440,10 @@ Keep response under 300 words. Use bullet points (•) for lists. Always use Eng
 
           // Create timeout controller for Gemini API call
           const controller = new AbortController();
-          // More aggressive timeouts based on language complexity
-          const timeoutMs = language === 'English' ? 15000 : 
-                           language === 'Malay' ? 18000 : 
-                           language === 'Chinese' ? 20000 : 15000; // Chinese needs more time but still aggressive
+          // Increased timeouts to prevent analysis failures
+          const timeoutMs = language === 'English' ? 25000 : 
+                           language === 'Malay' ? 28000 : 
+                           language === 'Chinese' ? 30000 : 25000; // Increased Chinese timeout to 30s
           
           // Set timeout
           const timeoutId = setTimeout(() => {
