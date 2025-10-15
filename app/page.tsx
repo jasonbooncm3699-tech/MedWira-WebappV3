@@ -522,27 +522,6 @@ export default function Home() {
     const hasConversation = messages.length > 1 || 
       (messages.length === 1 && messages[0].type === 'user');
     
-    // If there's an active conversation, show confirmation dialog
-    if (hasConversation) {
-      const confirmMessage = language === 'English' 
-        ? 'Start a new chat? Your current conversation will be saved.'
-        : language === 'Chinese'
-        ? '开始新对话？您当前的对话将被保存。'
-        : language === 'Malay'
-        ? 'Mulakan perbualan baru? Perbualan semasa anda akan disimpan.'
-        : language === 'Indonesian'
-        ? 'Mulai obrolan baru? Percakapan saat ini akan disimpan.'
-        : language === 'Thai'
-        ? 'เริ่มการสนทนาใหม่? การสนทนาปัจจุบันของคุณจะถูกบันทึก'
-        : language === 'Vietnamese'
-        ? 'Bắt đầu cuộc trò chuyện mới? Cuộc trò chuyện hiện tại sẽ được lưu.'
-        : 'Start a new chat? Your current conversation will be saved.';
-      
-      if (!confirm(confirmMessage)) {
-        return; // User cancelled
-      }
-    }
-    
     // Create fresh welcome message first
     const freshWelcomeMessage = {
       id: '1',
