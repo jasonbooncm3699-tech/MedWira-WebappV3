@@ -518,6 +518,43 @@ export default function Home() {
 
   // Function to start a new chat
   const handleNewChat = () => {
+    // Check if there's an actual conversation to save (more than just the welcome message)
+    const hasConversation = messages.length > 1 || 
+      (messages.length === 1 && messages[0].type === 'user');
+    
+    // If there's an active conversation, show confirmation dialog
+    if (hasConversation) {
+      const confirmMessage = language === 'English' 
+        ? 'Start a new chat? Your current conversation will be saved.'
+        : language === 'Chinese'
+        ? '开始新对话？您当前的对话将被保存。'
+        : language === 'Malay'
+        ? 'Mulakan perbualan baru? Perbualan semasa anda akan disimpan.'
+        : language === 'Indonesian'
+        ? 'Mulai obrolan baru? Percakapan saat ini akan disimpan.'
+        : language === 'Thai'
+        ? 'เริ่มการสนทนาใหม่? การสนทนาปัจจุบันของคุณจะถูกบันทึก'
+        : language === 'Vietnamese'
+        ? 'Bắt đầu cuộc trò chuyện mới? Cuộc trò chuyện hiện tại sẽ được lưu.'
+        : 'Start a new chat? Your current conversation will be saved.';
+      
+      if (!confirm(confirmMessage)) {
+        return; // User cancelled
+      }
+    }
+    
+    // Save current conversation before clearing if there's actual conversation
+    if (hasConversation) {
+      console.log('💾 Saving current conversation before starting new chat...');
+      chatStorage.saveChatHistory(messages, user?.id);
+      
+      // Also refresh chat history for authenticated users
+      if (user?.id) {
+        fetchUserChatHistory(1, '', false);
+      }
+    }
+    
+    // Clear current session and start fresh
     setMessages([
       {
         id: '1',
@@ -527,6 +564,8 @@ export default function Home() {
       }
     ]);
     setSideNavOpen(false); // Close side nav after starting new chat
+    
+    console.log('✅ New chat started successfully');
   };
 
 
