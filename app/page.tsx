@@ -543,27 +543,34 @@ export default function Home() {
       }
     }
     
+    // Create fresh welcome message first
+    const freshWelcomeMessage = {
+      id: '1',
+      type: 'ai' as const,
+      content: getWelcomeMessage(language),
+      timestamp: new Date()
+    };
+    
     // Save current conversation before clearing if there's actual conversation
     if (hasConversation) {
       console.log('💾 Saving current conversation before starting new chat...');
       chatStorage.saveChatHistory(messages, user?.id);
-      
-      // Also refresh chat history for authenticated users
-      if (user?.id) {
-        fetchUserChatHistory(1, '', false);
-      }
     }
     
+    // Clear localStorage for current session to prevent reloading old conversation
+    chatStorage.saveChatHistory([freshWelcomeMessage], user?.id);
+    
     // Clear current session and start fresh
-    setMessages([
-      {
-        id: '1',
-        type: 'ai',
-        content: getWelcomeMessage(language),
-        timestamp: new Date()
-      }
-    ]);
+    setMessages([freshWelcomeMessage]);
     setSideNavOpen(false); // Close side nav after starting new chat
+    
+    // Refresh chat history for authenticated users AFTER we've set the fresh message
+    // Use setTimeout to ensure our setMessages takes effect first
+    if (hasConversation && user?.id) {
+      setTimeout(() => {
+        fetchUserChatHistory(1, '', false);
+      }, 100);
+    }
     
     console.log('✅ New chat started successfully');
   };
