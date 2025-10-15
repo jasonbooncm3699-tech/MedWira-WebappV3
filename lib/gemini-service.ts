@@ -266,7 +266,7 @@ export class GeminiMedicineAnalyzer {
       
       const textExtractionPrompt = `You are a specialized medicine text extraction AI. Follow this EXACT systematic process:
 
-**CRITICAL: Respond entirely in ${language}. This is for a medicine analysis system that serves users in their native language.**
+**CRITICAL: Respond entirely in English. The frontend will handle translation to the user's language.**
 
 **SYSTEMATIC TEXT EXTRACTION PROCESS:**
 
@@ -589,7 +589,7 @@ Jangan berikan informasi lain. Hanya kembalikan format di atas.`
 
       const langHeaders = getLanguageHeaders(language);
       const medicineInfo = extractedMedicineName || 'Medicine from image analysis';
-      const comprehensivePrompt = `Analyze this medicine image and respond entirely in ${language}. This is for a medicine analysis system that serves users in their native language.
+      const comprehensivePrompt = `Analyze this medicine image and respond entirely in English. The frontend will handle translation to the user's language.
 
 IMAGE: ${medicineInfo} (${packagingType})
 
@@ -636,7 +636,7 @@ CRITICAL REQUIREMENTS:
 2. Do NOT stop after drug interactions
 3. ALWAYS include storage and disclaimer sections
 4. Use bullet points (•) for all lists
-5. Respond entirely in ${language}
+5. Respond entirely in English
 6. Your response must end with the disclaimer section`;
 
         try {
