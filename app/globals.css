@@ -553,6 +553,7 @@ body {
   gap: 12px;
   max-width: 80%;
   animation: fadeIn 0.3s ease;
+  min-width: 0; /* Allow flex items to shrink below their content size */
 }
 
 .message.user {
@@ -660,6 +661,8 @@ body {
   flex-direction: column;
   gap: 8px;
   flex: 1;
+  min-width: 0; /* Allow content to shrink and wrap */
+  overflow: hidden; /* Prevent content from overflowing container */
 }
 
 .message-text {
@@ -669,6 +672,11 @@ body {
   font-size: 14px;
   line-height: 1.5;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .message-text h1 { font-size: 18px; }
