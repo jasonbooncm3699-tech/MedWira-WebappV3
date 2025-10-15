@@ -142,13 +142,13 @@ export class GeminiMedicineAnalyzer {
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
       const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY!);
       this.model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-pro",
+        model: "gemini-2.5-pro",
         generationConfig: {
           temperature: 0.1,
           maxOutputTokens: 2048, // Reduced for faster processing
         }
       });
-      console.log('✅ Gemini 1.5 Pro model initialized successfully');
+      console.log('✅ Gemini 2.5 Pro model initialized successfully');
     } catch (error) {
       console.error('❌ Failed to initialize Gemini 1.5 Pro model:', error);
       this.model = null;

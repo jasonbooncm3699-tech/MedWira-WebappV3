@@ -82,7 +82,7 @@ export class AIPharmacistService {
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
       const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY!);
       this.model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-pro",
+        model: "gemini-2.5-pro",
         generationConfig: {
           temperature: 0.3, // More consistent for medical advice
           maxOutputTokens: 4096,
