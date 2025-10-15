@@ -543,13 +543,9 @@ export default function Home() {
     setMessages([freshWelcomeMessage]);
     setSideNavOpen(false); // Close side nav after starting new chat
     
-    // Refresh chat history for authenticated users AFTER we've set the fresh message
-    // Use setTimeout to ensure our setMessages takes effect first
-    if (hasConversation && user?.id) {
-      setTimeout(() => {
-        fetchUserChatHistory(1, '', false);
-      }, 100);
-    }
+    // REMOVED: fetchUserChatHistory call that was overwriting messages after new chat
+    // The fresh welcome message is already set above and saved to localStorage
+    // This prevents the file upload functionality from breaking
     
     console.log('✅ New chat started successfully');
   };
