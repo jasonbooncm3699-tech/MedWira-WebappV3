@@ -1580,11 +1580,11 @@ body {
 }
 
 .send-btn {
-  background: none;
-  border: none;
-  color: #00d4ff; /* Blue color like share button */
+  background: none !important;
+  border: none !important;
+  color: #00d4ff !important; /* Blue color like share button */
   cursor: pointer;
-  padding: 0;
+  padding: 0 !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1593,6 +1593,9 @@ body {
   top: 50%;
   transform: translateY(-50%);
   z-index: 10;
+  width: auto !important;
+  height: auto !important;
+  border-radius: 0 !important;
 }
 
 .send-btn:hover:not(:disabled) {

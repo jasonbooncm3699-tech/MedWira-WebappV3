@@ -595,7 +595,7 @@ IMAGE: ${medicineInfo} (${packagingType})
 
 ${dbCandidates.length > 0 ? `DATABASE MATCH: ${dbCandidates[0].product} (${dbCandidates[0].active_ingredient})` : 'No database match'}
 
-Provide comprehensive analysis in this EXACT 10-section format (use ${language} section headers):
+MANDATORY: You MUST provide ALL 10 sections in this EXACT order. Do NOT skip any section:
 
 ${langHeaders.packagingDetected}: Yes—${packagingType} with "${medicineInfo}" label visible. Proceed with identification.
 
@@ -627,11 +627,17 @@ ${langHeaders.safetyNotes}:
 •Other: [additional safety considerations]
 
 ${langHeaders.storage}: 
-[Storage requirements and warnings]
+Keep in original packaging below 30°C, dry place. Do not use if damaged. Keep out of reach of children.
 
 ${langHeaders.disclaimer}: This information is sourced from public websites and packaging details. For informational purposes only. Not medical advice. Consult a doctor or pharmacist before use.
 
-CRITICAL: Follow this EXACT format with bullet points (•) and specific details. Respond entirely in ${language}.`;
+CRITICAL REQUIREMENTS:
+1. You MUST include ALL 10 sections above
+2. Do NOT stop after drug interactions
+3. ALWAYS include storage and disclaimer sections
+4. Use bullet points (•) for all lists
+5. Respond entirely in ${language}
+6. Your response must end with the disclaimer section`;
 
         try {
           // Send status update before AI processing
