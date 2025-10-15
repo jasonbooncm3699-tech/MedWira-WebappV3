@@ -127,7 +127,13 @@ export default function Home() {
       'English': "Ask in English...",
       'Chinese': "用中文提问...",
       'Malay': "Tanya dalam Bahasa Melayu...",
-      'Indonesian': "Tanya dalam Bahasa Indonesia..."
+      'Indonesian': "Tanya dalam Bahasa Indonesia...",
+      'Thai': "ถามเป็นภาษาไทย...",
+      'Vietnamese': "Hỏi bằng tiếng Việt...",
+      'Tagalog': "Magtanong sa Filipino...",
+      'Burmese': "မြန်မာဘာသာဖြင့်မေးပါ...",
+      'Khmer': "សួរជាភាសាខ្មែរ...",
+      'Lao': "ຖາມເປັນພາສາລາວ..."
     };
     return placeholders[lang as keyof typeof placeholders] || placeholders['English'];
   };
