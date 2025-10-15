@@ -38,6 +38,7 @@ async function saveChatMessage(chatData: {
   category?: string;
   confidence?: number;
   language?: string;
+  user_language_preference?: string; // Store user's UI language preference
   allergies?: string;
   conversation_context?: string;
   conversation_title?: string;
@@ -256,10 +257,10 @@ export async function POST(request: NextRequest) {
             // Send initial status - this should match frontend
             sendStatus('Starting analysis...');
 
-            // Add timeout wrapper for the analysis
+            // Add timeout wrapper for the analysis - ALWAYS use English for speed and reliability
             const analysisPromise = geminiAnalyzer.analyzeMedicineImageWithStatus(
               cleanImageBase64,
-              language || 'English',
+              'English', // Always English - frontend will translate
               userAllergies || '',
               sendStatus // Pass the status callback
             );
@@ -322,7 +323,8 @@ export async function POST(request: NextRequest) {
                   session_id: sessionId,
                   message_sequence: 1,
                   image_url: imageBase64,
-                  language: language || 'English',
+                  language: 'English', // Always English in database
+                  user_language_preference: language || 'English', // Store user's UI language preference
                   allergies: userAllergies || null,
                   conversation_context: `Medicine analysis: ${result.medicineName}`,
                   conversation_title: conversationTitle,
@@ -332,11 +334,11 @@ export async function POST(request: NextRequest) {
                 
                 console.log(`✅ User message saved successfully for user ${userId}, session ${sessionId}`);
                 
-                // Save AI response with metadata
+                // Save AI response with metadata - always English in database
                 await saveChatMessage({
                   user_id: userId,
                   message_type: 'ai',
-                  ai_response: result.rawAnalysis,
+                  ai_response: result.rawAnalysis, // English analysis
                   session_id: sessionId,
                   message_sequence: 2,
                   conversation_title: conversationTitle,
@@ -351,7 +353,8 @@ export async function POST(request: NextRequest) {
                   storage: result.storage,
                   category: result.category,
                   confidence: result.confidence,
-                  language: language || 'English',
+                  language: 'English', // Always English in database
+                  user_language_preference: language || 'English', // Store user's UI language preference
                   allergies: userAllergies || null,
                   conversation_context: `Medicine analysis: ${result.medicineName}`
                 });

@@ -17,6 +17,14 @@ import { DatabaseService } from '@/lib/supabase';
 // Using DatabaseService instead of broken getUserScanHistory import
 import { chatStorage, ChatMessage } from '@/lib/chat-storage';
 import { Share2 } from 'lucide-react';
+import { 
+  translateMedicineAnalysis, 
+  translateUIText, 
+  SUPPORTED_LANGUAGES, 
+  LANGUAGE_CODES,
+  getLanguageCode,
+  getLanguageFromCode 
+} from '@/lib/translation-service';
 
 export default function Home() {
   // Test deployment - simple change
@@ -130,6 +138,30 @@ export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
   const [sideNavOpen, setSideNavOpen] = useState(false);
   const [language, setLanguage] = useState('English');
+
+  // Translation functions
+  const translateMessage = (message: ChatMessage): ChatMessage => {
+    if (language === 'English' || !message.content) {
+      return message;
+    }
+    
+    return {
+      ...message,
+      content: translateMedicineAnalysis(message.content, language)
+    };
+  };
+
+  const handleLanguageChange = (newLanguage: string) => {
+    setLanguage(newLanguage);
+    
+    // Translate all existing messages
+    setMessages(prevMessages => 
+      prevMessages.map(translateMessage)
+    );
+    
+    // Save language preference to localStorage
+    localStorage.setItem('userLanguagePreference', newLanguage);
+  };
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -553,6 +585,22 @@ export default function Home() {
     }
   }, [user, isLoading]); // Removed refreshUserData to prevent race condition
 
+  // Load user language preference from localStorage on mount
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('userLanguagePreference');
+    if (savedLanguage && SUPPORTED_LANGUAGES.includes(savedLanguage)) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
+
+  // Translate messages when language changes
+  useEffect(() => {
+    if (language !== 'English' && messages.length > 0) {
+      setMessages(prevMessages => 
+        prevMessages.map(translateMessage)
+      );
+    }
+  }, [language]);
 
   // Enhanced function to fetch user chat history with pagination and search
   const fetchUserChatHistory = useCallback(async (page: number = 1, searchQuery: string = '', append: boolean = false) => {
@@ -1192,7 +1240,7 @@ export default function Home() {
           <select
             className="language-select"
             value={language}
-            onChange={(e) => setLanguage(e.target.value)}
+            onChange={(e) => handleLanguageChange(e.target.value)}
             style={{
               appearance: 'none',
               background: 'rgba(255, 255, 255, 0.05)',
@@ -1206,16 +1254,11 @@ export default function Home() {
               maxWidth: isMobile ? '45px' : 'auto'
             }}
           >
-            <option value="English">{isMobile ? 'EN' : 'English'}</option>
-            <option value="Chinese">中文</option>
-            <option value="Malay">{isMobile ? 'MY' : 'Malay'}</option>
-            <option value="Indonesian">{isMobile ? 'ID' : 'Indonesian'}</option>
-            <option value="Thai">{isMobile ? 'TH' : 'Thai'}</option>
-            <option value="Vietnamese">{isMobile ? 'VN' : 'Vietnamese'}</option>
-            <option value="Tagalog">{isMobile ? 'TL' : 'Tagalog'}</option>
-            <option value="Burmese">{isMobile ? 'MM' : 'Burmese'}</option>
-            <option value="Khmer">{isMobile ? 'KH' : 'Khmer'}</option>
-            <option value="Lao">{isMobile ? 'LA' : 'Lao'}</option>
+            {SUPPORTED_LANGUAGES.map((lang) => (
+              <option key={lang} value={lang}>
+                {isMobile ? LANGUAGE_CODES[lang as keyof typeof LANGUAGE_CODES] : lang}
+              </option>
+            ))}
             </select>
           </div>
 
