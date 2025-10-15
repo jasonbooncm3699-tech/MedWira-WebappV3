@@ -52,23 +52,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // CRITICAL: Use ref to prevent infinite loops - refs don't trigger re-renders
   const initializationRef = useRef(false);
   
-  // DEBUG: Track component lifecycle and state
-  console.log('🔍 AuthProvider component mounted/re-rendered', {
-    timestamp: new Date().toISOString(),
-    user: user?.id ? 'has user' : 'no user',
-    userId: user?.id || 'null',
-    userEmail: user?.email || 'null',
-    userTokens: user?.tokens || 'null',
-    isLoading,
-    isHydrated,
-    isInitialized,
-    globalInitializationComplete,
-    stackTrace: new Error().stack?.split('\n').slice(1, 4).join('\n')
-  });
+  // REMOVED: Excessive logging that was causing 2000+ console messages
+  // This was logging on every single render, causing performance issues
   
   // CRITICAL: Create Supabase client instance ONCE using useMemo to prevent recreation
   const supabase = useMemo(() => {
-    console.log('🔍 Creating new Supabase client instance');
+    // REMOVED: Excessive logging that was causing performance issues
     return createClient();
   }, []); // Empty dependency array = create only once
 
@@ -678,22 +667,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Handle hydration
   useEffect(() => {
-    console.log('🔍 Hydration useEffect triggered');
+    // REMOVED: Excessive logging that was causing performance issues
     setIsHydrated(true);
   }, []);
 
-  // DEBUG: Track user state changes
-  useEffect(() => {
-    console.log('🔍 USER STATE CHANGED:', {
-      timestamp: new Date().toISOString(),
-      hasUser: !!user,
-      userId: user?.id || 'null',
-      userEmail: user?.email || 'null',
-      userTokens: user?.tokens || 'null',
-      userName: user?.name || 'null',
-      userReferralCode: user?.referral_code || 'null'
-    });
-  }, [user]);
+  // REMOVED: Excessive user state change logging that was causing performance issues
+  // This was logging every time user state changed, contributing to the 2000+ messages
 
   // Auto-refresh user data when component mounts and user is authenticated
   // REMOVED: This was causing race conditions where refreshUserData was called before user state was properly set
@@ -931,7 +910,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // DEFENSIVE: Wrap provider in error boundary to catch React error #18
   try {
-    console.log('🔍 AuthProvider rendering successfully');
+    // REMOVED: Excessive logging that was causing performance issues
     return (
       <AuthContext.Provider value={contextValue}>
         {children}
@@ -939,7 +918,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
   } catch (error) {
     console.error('❌ AuthProvider render error (React error #18):', error);
-    console.log('🔍 AuthProvider falling back to error state');
+    // REMOVED: Excessive logging that was causing performance issues
     // Return minimal provider to prevent complete crash
     return (
       <AuthContext.Provider value={{
