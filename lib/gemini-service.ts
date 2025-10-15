@@ -400,6 +400,7 @@ Do not provide any other information. Only return the above format.`;
       let comprehensiveAnalysis = '';
       
       // Construct optimized AI prompt - ALWAYS analyze in English for speed and reliability
+      // Note: language parameter is used for status messages, but AI content is always English
       const comprehensivePrompt = `Analyze this medicine image and respond entirely in English. This is for a medicine analysis system that will handle translation on the frontend.
 
 IMAGE: ${extractedMedicineName} (${packagingType})
@@ -409,17 +410,23 @@ ${dbCandidates.length > 0 ? `DATABASE MATCH: ${dbCandidates[0].product} (${dbCan
 Provide concise analysis in this exact format (use English section headers with proper spacing):
 **Medicine**: [Medicine name from packaging]
 
+
 **Purpose**: [What it treats]
+
 
 **Dosage**: [Adult/child doses]
 
+
 **Side Effects**: [Common ones]
+
 
 **Warnings**: [Important safety info]
 
+
 **Storage**: [How to store]
 
-Keep response under 300 words. Use bullet points (•) for lists. Always use English for maximum speed and accuracy. Add proper line breaks between sections.`;
+
+Keep response under 300 words. Use bullet points (•) for lists. Always use English for maximum speed and accuracy. Add double line breaks between sections for better readability.`;
 
         try {
           // Send status update before AI processing
@@ -609,25 +616,25 @@ Keep response under 300 words. Use bullet points (•) for lists. Always use Eng
     
     // Start with medicine name if available, otherwise use packaging type
     const medicineName = extractedMedicineName || packagingType;
-    let analysis = `${medicineLabel}: ${medicineName}\n\n`;
+    let analysis = `${medicineLabel}: ${medicineName}\n\n\n`;
     
     if (dbCandidates.length > 0) {
       const bestMatch = dbCandidates[0];
-      analysis += `${purposeLabel}: Medicine identified from image analysis\n\n`;
+      analysis += `${purposeLabel}: Medicine identified from image analysis\n\n\n`;
       analysis += `${dosageLabel}:\n`;
       analysis += `• Adults: As directed by doctor\n`;
-      analysis += `• Children: As directed by doctor\n\n`;
+      analysis += `• Children: As directed by doctor\n\n\n`;
     } else {
-      analysis += `${purposeLabel}: Medicine identified from image\n\n`;
+      analysis += `${purposeLabel}: Medicine identified from image\n\n\n`;
       analysis += `${dosageLabel}:\n`;
       analysis += `• Adults: As directed by doctor\n`;
-      analysis += `• Children: As directed by doctor\n\n`;
+      analysis += `• Children: As directed by doctor\n\n\n`;
     }
     
     analysis += `${warningLabel}:\n`;
     analysis += `• Do not take if allergic to any ingredients\n`;
     analysis += `• Consult doctor before taking\n`;
-    analysis += `• Store in dry and cool place\n\n`;
+    analysis += `• Store in dry and cool place\n\n\n`;
     
     analysis += `${disclaimerLabel}:\n`;
     analysis += `This information is for educational purposes only. Always consult with a healthcare professional before using any medicine.`;

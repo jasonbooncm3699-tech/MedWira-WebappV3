@@ -257,10 +257,10 @@ export async function POST(request: NextRequest) {
             // Send initial status - this should match frontend
             sendStatus('Starting analysis...');
 
-            // Add timeout wrapper for the analysis - ALWAYS use English for speed and reliability
+            // Add timeout wrapper for the analysis - use user's language for status messages, English for AI content
             const analysisPromise = geminiAnalyzer.analyzeMedicineImageWithStatus(
               cleanImageBase64,
-              'English', // Always English - frontend will translate
+              language || 'English', // Use user's language for status messages
               userAllergies || '',
               sendStatus // Pass the status callback
             );
