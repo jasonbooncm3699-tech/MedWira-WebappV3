@@ -1569,8 +1569,10 @@ body {
   border: none;
   color: #ffffff;
   font-size: 14px;
-  padding: 8px 12px;
+  padding: 12px 50px 12px 12px; /* Add right padding to prevent text overlap with send button */
   outline: none;
+  line-height: 1.4;
+  font-family: inherit;
 }
 
 .text-input::placeholder {
@@ -1580,26 +1582,33 @@ body {
 .send-btn {
   background: none;
   border: none;
-  color: #888;
+  color: #00d4ff; /* Blue color like share button */
   cursor: pointer;
   padding: 8px;
-  border-radius: 6px;
+  border-radius: 50%; /* Circular button */
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 10;
+  width: 36px;
+  height: 36px;
 }
 
 .send-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background: rgba(0, 212, 255, 0.1); /* Subtle blue background on hover */
+  color: #00d4ff;
+  transform: translateY(-50%) scale(1.05);
 }
 
 .send-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.3;
   cursor: not-allowed;
+  color: #666;
 }
 
 /* Install banner removed - using native PWA prompt */
@@ -1810,10 +1819,10 @@ body {
   
   .text-input {
     font-size: 15px;
-    padding: 12px 38px 12px 14px;
+    padding: 12px 45px 12px 12px; /* Adjust padding for mobile */
   }
   
-  .upload-btn, .camera-btn, .send-btn {
+  .upload-btn, .camera-btn {
     min-width: 36px;
     height: 36px;
     padding: 6px;
@@ -1821,6 +1830,7 @@ body {
   
   .text-input-wrapper {
     gap: 4px;
+    position: relative; /* Ensure relative positioning for absolute send button */
   }
   
   .send-btn {
@@ -1828,7 +1838,7 @@ body {
     right: 8px;
     top: 50%;
     transform: translateY(-50%);
-    min-width: 32px;
+    width: 32px;
     height: 32px;
     padding: 4px;
     border-radius: 50%;
@@ -1904,10 +1914,10 @@ body {
   
   .text-input {
     font-size: 14px;
-    padding: 10px 12px;
+    padding: 10px 40px 10px 12px; /* Adjust padding for small mobile */
   }
   
-  .upload-btn, .camera-btn, .send-btn {
+  .upload-btn, .camera-btn {
     min-width: 32px;
     height: 32px;
     padding: 4px;
@@ -1918,14 +1928,10 @@ body {
     right: 6px;
     top: 50%;
     transform: translateY(-50%);
-    min-width: 28px;
+    width: 28px;
     height: 28px;
     padding: 2px;
     border-radius: 50%;
-  }
-  
-  .text-input {
-    padding-right: 32px;
   }
 }
 

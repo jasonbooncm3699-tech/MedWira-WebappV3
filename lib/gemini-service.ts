@@ -403,36 +403,52 @@ Do not provide any other information. Only return the above format.`;
       const getLanguageHeaders = (lang: string) => {
         const headers = {
           'Chinese': {
-            medicine: '**药品**',
+            packagingDetected: '**包装检测到**',
+            medicine: '**药品名称**',
             purpose: '**用途**',
             dosage: '**剂量**',
             sideEffects: '**副作用**',
-            warnings: '**警告**',
-            storage: '**储存**'
+            allergyWarning: '**过敏警告**',
+            drugInteractions: '**药物相互作用**',
+            safetyNotes: '**安全注意事项**',
+            storage: '**储存**',
+            disclaimer: '**免责声明**'
           },
           'English': {
-            medicine: '**Medicine**',
+            packagingDetected: '**Packaging Detected**',
+            medicine: '**Medicine Name**',
             purpose: '**Purpose**',
             dosage: '**Dosage**',
             sideEffects: '**Side Effects**',
-            warnings: '**Warnings**',
-            storage: '**Storage**'
+            allergyWarning: '**Allergy Warning**',
+            drugInteractions: '**Drug Interactions**',
+            safetyNotes: '**Safety Notes**',
+            storage: '**Storage**',
+            disclaimer: '**Disclaimer**'
           },
           'Malay': {
-            medicine: '**Ubat**',
+            packagingDetected: '**Pembungkusan Dikesan**',
+            medicine: '**Nama Ubat**',
             purpose: '**Tujuan**',
             dosage: '**Dos**',
             sideEffects: '**Kesan Sampingan**',
-            warnings: '**Amaran**',
-            storage: '**Penyimpanan**'
+            allergyWarning: '**Amaran Alahan**',
+            drugInteractions: '**Interaksi Ubat**',
+            safetyNotes: '**Nota Keselamatan**',
+            storage: '**Penyimpanan**',
+            disclaimer: '**Penafian**'
           },
           'Indonesian': {
-            medicine: '**Obat**',
+            packagingDetected: '**Kemasan Terdeteksi**',
+            medicine: '**Nama Obat**',
             purpose: '**Tujuan**',
             dosage: '**Dosis**',
             sideEffects: '**Efek Samping**',
-            warnings: '**Peringatan**',
-            storage: '**Penyimpanan**'
+            allergyWarning: '**Peringatan Alergi**',
+            drugInteractions: '**Interaksi Obat**',
+            safetyNotes: '**Catatan Keamanan**',
+            storage: '**Penyimpanan**',
+            disclaimer: '**Penyangkalan**'
           }
         };
         return headers[lang as keyof typeof headers] || headers['English'];
@@ -445,26 +461,44 @@ IMAGE: ${extractedMedicineName} (${packagingType})
 
 ${dbCandidates.length > 0 ? `DATABASE MATCH: ${dbCandidates[0].product} (${dbCandidates[0].active_ingredient})` : 'No database match'}
 
-Provide concise analysis in this exact format (use ${language} section headers with proper spacing):
-${langHeaders.medicine}: [Medicine name from packaging]
+Provide comprehensive analysis in this EXACT 10-section format (use ${language} section headers with proper spacing):
+
+${langHeaders.packagingDetected}: [Describe packaging type and confirm detection - e.g., "Yes—blister strip/box with [medicine name] label visible. Proceed with identification."]
 
 
-${langHeaders.purpose}: [What it treats]
+${langHeaders.medicine}: [Medicine name with active ingredients and strength]
 
 
-${langHeaders.dosage}: [Adult/child doses]
+${langHeaders.purpose}: [What it treats, who it's for based on packaging]
 
 
-${langHeaders.sideEffects}: [Common ones]
+${langHeaders.dosage}: [Detailed dosage instructions for different age groups with warnings]
 
 
-${langHeaders.warnings}: [Important safety info]
+${langHeaders.sideEffects}: [Common, rare effects, and overdose risks]
 
 
-${langHeaders.storage}: [How to store]
+${langHeaders.allergyWarning}: [Allergy information and cross-reactivity warnings]
 
 
-Keep response under 300 words. Use bullet points (•) for lists. Respond entirely in ${language} for proper user experience. Add double line breaks between sections for better readability.`;
+${langHeaders.drugInteractions}: 
+• With other drugs: [Specific drug interactions]
+• With food: [Food interaction information]  
+• With alcohol: [Alcohol interaction warnings]
+
+
+${langHeaders.safetyNotes}:
+• For kids: [Children safety information]
+• For pregnant women: [Pregnancy safety category and advice]
+• Other: [Additional safety considerations]
+
+
+${langHeaders.storage}: [Storage requirements and warnings]
+
+
+${langHeaders.disclaimer}: [Medical disclaimer about information source and consultation advice]
+
+Use bullet points (•) for lists. Include specific details like dosage limits, age restrictions, and safety categories. Respond entirely in ${language} for proper user experience. Add double line breaks between sections for better readability.`;
 
         try {
           // Send status update before AI processing
@@ -646,32 +680,52 @@ Keep response under 300 words. Use bullet points (•) for lists. Respond entire
     language: string
   ): string {
     // Always generate fallback in English - frontend will translate
-    const medicineLabel = '**Medicine**';
+    const packagingLabel = '**Packaging Detected**';
+    const medicineLabel = '**Medicine Name**';
     const purposeLabel = '**Purpose**';
     const dosageLabel = '**Dosage**';
-    const warningLabel = '**Warning**';
+    const sideEffectsLabel = '**Side Effects**';
+    const allergyLabel = '**Allergy Warning**';
+    const interactionsLabel = '**Drug Interactions**';
+    const safetyLabel = '**Safety Notes**';
+    const storageLabel = '**Storage**';
     const disclaimerLabel = '**Disclaimer**';
     
-    // Start with medicine name if available, otherwise use packaging type
+    // Start with packaging detection
+    let analysis = `${packagingLabel}: Yes—${packagingType} with medicine label visible. Proceed with identification.\n\n\n`;
+    
+    // Medicine name
     const medicineName = extractedMedicineName || packagingType;
-    let analysis = `${medicineLabel}: ${medicineName}\n\n\n`;
+    analysis += `${medicineLabel}: ${medicineName}\n\n\n`;
     
     if (dbCandidates.length > 0) {
       const bestMatch = dbCandidates[0];
       analysis += `${purposeLabel}: Medicine identified from image analysis\n\n\n`;
-      analysis += `${dosageLabel}:\n`;
-      analysis += `• Adults: As directed by doctor\n`;
-      analysis += `• Children: As directed by doctor\n\n\n`;
     } else {
       analysis += `${purposeLabel}: Medicine identified from image\n\n\n`;
-      analysis += `${dosageLabel}:\n`;
-      analysis += `• Adults: As directed by doctor\n`;
-      analysis += `• Children: As directed by doctor\n\n\n`;
     }
     
-    analysis += `${warningLabel}:\n`;
-    analysis += `• Do not take if allergic to any ingredients\n`;
-    analysis += `• Consult doctor before taking\n`;
+    analysis += `${dosageLabel}:\n`;
+    analysis += `• Adults: As directed by doctor\n`;
+    analysis += `• Children: As directed by doctor\n\n\n`;
+    
+    analysis += `${sideEffectsLabel}:\n`;
+    analysis += `• Consult packaging or doctor for specific side effects\n\n\n`;
+    
+    analysis += `${allergyLabel}:\n`;
+    analysis += `• Do not take if allergic to any ingredients\n\n\n`;
+    
+    analysis += `${interactionsLabel}:\n`;
+    analysis += `• With other drugs: Consult doctor before combining\n`;
+    analysis += `• With food: Can be taken with or without food\n`;
+    analysis += `• With alcohol: Avoid alcohol when taking medicine\n\n\n`;
+    
+    analysis += `${safetyLabel}:\n`;
+    analysis += `• For kids: Consult pediatrician for children\n`;
+    analysis += `• For pregnant women: Consult doctor before use\n`;
+    analysis += `• Other: Consult doctor before taking\n\n\n`;
+    
+    analysis += `${storageLabel}:\n`;
     analysis += `• Store in dry and cool place\n\n\n`;
     
     analysis += `${disclaimerLabel}:\n`;

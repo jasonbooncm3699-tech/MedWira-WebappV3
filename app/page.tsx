@@ -514,13 +514,7 @@ export default function Home() {
     }
   };
 
-  // Handle Enter key press
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleTextSubmit();
-    }
-  };
+  // Handle Enter key press (moved to textarea onKeyDown for better control)
 
   // Function to start a new chat
   const handleNewChat = () => {
@@ -1839,13 +1833,29 @@ export default function Home() {
               </button>
 
               <div className="text-input-wrapper">
-                <input
-                  type="text"
+                <textarea
                   placeholder={getPlaceholderText(language)}
                   className="text-input"
                   value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  onKeyPress={handleKeyPress}
+                  onChange={(e) => {
+                    setInputText(e.target.value);
+                    // Auto-resize textarea
+                    e.target.style.height = 'auto';
+                    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'; // Max 5 lines (24px per line)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleTextSubmit();
+                    }
+                  }}
+                  rows={1}
+                  style={{ 
+                    resize: 'none',
+                    overflow: 'hidden',
+                    minHeight: '44px',
+                    maxHeight: '120px'
+                  }}
                 />
                 <button
                   className="send-btn"
