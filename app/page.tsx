@@ -1029,11 +1029,8 @@ export default function Home() {
                 setAiStatus('idle');
                 setIsAnalyzing(false);
                 
-                // Refresh chat history to show the new conversation
-                if (user?.id) {
-                  console.log('🔄 Refreshing chat history after new conversation...');
-                  fetchUserChatHistory(1, '', false);
-                }
+                // REMOVED: fetchUserChatHistory call that was overwriting the current messages
+                // The AI message will be added directly below and saved to localStorage
                 
                 // DIRECT APPROACH: Add AI message with rawAnalysis content directly to chat
                 const rawContent = data.result.rawAnalysis || 'Medicine analysis completed successfully.';
@@ -1077,11 +1074,8 @@ export default function Home() {
 
                 console.log(`📊 [Frontend] Analysis complete - AI status forced to disappear`);
                 
-                // Refresh chat history to show the new conversation
-                if (user?.id) {
-                  console.log('🔄 Refreshing chat history after new conversation...');
-                  fetchUserChatHistory(1, '', false);
-                }
+                // REMOVED: Another fetchUserChatHistory call that was overwriting messages
+                // The AI message is already added and saved to localStorage above
 
               } else if (data.type === 'error') {
                 // Handle error
