@@ -68,7 +68,6 @@ export const MEDICINE_TRANSLATIONS: TranslationMaps = {
     'nausea': '恶心',
     'headache': '头痛',
     'tablets': '片剂',
-    'Pain relief medication': '止痛药',
     
     // Medicine types
     'Pain relief medication': '止痛药',
@@ -107,7 +106,6 @@ export const MEDICINE_TRANSLATIONS: TranslationMaps = {
     'nausea': 'loya',
     'headache': 'sakit kepala',
     'tablets': 'tablet',
-    'Pain relief medication': 'Ubat penahan sakit',
     
     // Medicine types
     'Pain relief medication': 'Ubat penahan sakit',
@@ -368,8 +366,7 @@ export const UI_TRANSLATIONS: TranslationMaps = {
     'Starting analysis...': '正在开始分析...',
     'Extracting text from image...': '正在从图像中提取文本...',
     'Searching medicine database...': '正在搜索药品数据库...',
-    'Generating medicine report...': '正在生成药品报告...',
-    'Analysis completed successfully': '分析成功完成'
+    'Generating medicine report...': '正在生成药品报告...'
   },
   
   'Malay': {
@@ -380,8 +377,7 @@ export const UI_TRANSLATIONS: TranslationMaps = {
     'Starting analysis...': 'Memulakan analisis...',
     'Extracting text from image...': 'Mengekstrak teks dari imej...',
     'Searching medicine database...': 'Mencari pangkalan data ubat...',
-    'Generating medicine report...': 'Menjana laporan ubat...',
-    'Analysis completed successfully': 'Analisis selesai dengan jayanya'
+    'Generating medicine report...': 'Menjana laporan ubat...'
   },
   
   'Indonesian': {
@@ -392,8 +388,7 @@ export const UI_TRANSLATIONS: TranslationMaps = {
     'Starting analysis...': 'Memulai analisis...',
     'Extracting text from image...': 'Mengekstrak teks dari gambar...',
     'Searching medicine database...': 'Mencari database obat...',
-    'Generating medicine report...': 'Menghasilkan laporan obat...',
-    'Analysis completed successfully': 'Analisis berhasil diselesaikan'
+    'Generating medicine report...': 'Menghasilkan laporan obat...'
   },
   
   'Thai': {
@@ -404,8 +399,7 @@ export const UI_TRANSLATIONS: TranslationMaps = {
     'Starting analysis...': 'เริ่มการวิเคราะห์...',
     'Extracting text from image...': 'ดึงข้อความจากรูปภาพ...',
     'Searching medicine database...': 'ค้นหาฐานข้อมูลยา...',
-    'Generating medicine report...': 'สร้างรายงานยา...',
-    'Analysis completed successfully': 'การวิเคราะห์เสร็จสมบูรณ์'
+    'Generating medicine report...': 'สร้างรายงานยา...'
   },
   
   'Vietnamese': {
@@ -416,8 +410,7 @@ export const UI_TRANSLATIONS: TranslationMaps = {
     'Starting analysis...': 'Bắt đầu phân tích...',
     'Extracting text from image...': 'Trích xuất văn bản từ hình ảnh...',
     'Searching medicine database...': 'Tìm kiếm cơ sở dữ liệu thuốc...',
-    'Generating medicine report...': 'Tạo báo cáo thuốc...',
-    'Analysis completed successfully': 'Phân tích hoàn thành thành công'
+    'Generating medicine report...': 'Tạo báo cáo thuốc...'
   },
   
   'Filipino': {
@@ -428,8 +421,7 @@ export const UI_TRANSLATIONS: TranslationMaps = {
     'Starting analysis...': 'Sinisimulan ang pagsusuri...',
     'Extracting text from image...': 'Kinukuha ang teksto mula sa larawan...',
     'Searching medicine database...': 'Naghahanap sa database ng gamot...',
-    'Generating medicine report...': 'Gumagawa ng ulat ng gamot...',
-    'Analysis completed successfully': 'Matagumpay na natapos ang pagsusuri'
+    'Generating medicine report...': 'Gumagawa ng ulat ng gamot...'
   },
   
   'Myanmar': {
@@ -440,8 +432,7 @@ export const UI_TRANSLATIONS: TranslationMaps = {
     'Starting analysis...': 'ခွဲခြမ်းစိတ်ဖြာမှုစတင်နေပါပြီ...',
     'Extracting text from image...': 'ပုံမှစာသားများကိုထုတ်နေပါပြီ...',
     'Searching medicine database...': 'ဆေးဝါးဒေတာဘေ့စ်ကိုရှာနေပါပြီ...',
-    'Generating medicine report...': 'ဆေးဝါးအစီရင်ခံစာထုတ်နေပါပြီ...',
-    'Analysis completed successfully': 'ခွဲခြမ်းစိတ်ဖြာမှုအောင်မြင်စွာပြီးဆုံးပါပြီ'
+    'Generating medicine report...': 'ဆေးဝါးအစီရင်ခံစာထုတ်နေပါပြီ...'
   },
   
   'Khmer': {
@@ -452,8 +443,7 @@ export const UI_TRANSLATIONS: TranslationMaps = {
     'Starting analysis...': 'ចាប់ផ្តើមការវិភាគ...',
     'Extracting text from image...': 'ស្រង់អត្ថបទពីរូបភាព...',
     'Searching medicine database...': 'ស្វែងរកមូលដ្ឋានទិន្នន័យថ្នាំ...',
-    'Generating medicine report...': 'បង្កើតរបាយការណ៍ថ្នាំ...',
-    'Analysis completed successfully': 'ការវិភាគបានបញ្ចប់ដោយជោគជ័យ'
+    'Generating medicine report...': 'បង្កើតរបាយការណ៍ថ្នាំ...'
   },
   
   'Lao': {
@@ -464,8 +454,7 @@ export const UI_TRANSLATIONS: TranslationMaps = {
     'Starting analysis...': 'ເລີ່ມການວິເຄາະ...',
     'Extracting text from image...': 'ດຶງຂໍ້ຄວາມຈາກຮູບພາບ...',
     'Searching medicine database...': 'ຊອກຫາຖານຂໍ້ມູນຢາ...',
-    'Generating medicine report...': 'ສ້າງລາຍງານຢາ...',
-    'Analysis completed successfully': 'ການວິເຄາະສຳເລັດ'
+    'Generating medicine report...': 'ສ້າງລາຍງານຢາ...'
   }
 };
 
