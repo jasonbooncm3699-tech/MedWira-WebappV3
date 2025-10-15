@@ -64,6 +64,11 @@ export const MEDICINE_TRANSLATIONS: TranslationMaps = {
     'for educational purposes only': '仅供教育目的',
     'always consult': '请务必咨询',
     'healthcare professional': '医疗专业人士',
+    'if allergic': '如有过敏',
+    'nausea': '恶心',
+    'headache': '头痛',
+    'tablets': '片剂',
+    'Pain relief medication': '止痛药',
     
     // Medicine types
     'Pain relief medication': '止痛药',
@@ -98,6 +103,11 @@ export const MEDICINE_TRANSLATIONS: TranslationMaps = {
     'for educational purposes only': 'untuk tujuan pendidikan sahaja',
     'always consult': 'sentiasa berunding',
     'healthcare professional': 'profesional penjagaan kesihatan',
+    'if allergic': 'jika alah',
+    'nausea': 'loya',
+    'headache': 'sakit kepala',
+    'tablets': 'tablet',
+    'Pain relief medication': 'Ubat penahan sakit',
     
     // Medicine types
     'Pain relief medication': 'Ubat penahan sakit',
