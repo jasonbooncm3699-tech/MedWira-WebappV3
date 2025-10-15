@@ -1036,10 +1036,13 @@ export default function Home() {
                 }
                 
                 // DIRECT APPROACH: Add AI message with rawAnalysis content directly to chat
+                const rawContent = data.result.rawAnalysis || 'Medicine analysis completed successfully.';
+                const translatedContent = translateMedicineAnalysis(rawContent, language);
+                
                 const aiMessage = {
                   id: (Date.now() + 1).toString(),
                   type: 'ai' as const,
-                  content: data.result.rawAnalysis || 'Medicine analysis completed successfully.',
+                  content: translatedContent,
                   timestamp: new Date()
                 };
 

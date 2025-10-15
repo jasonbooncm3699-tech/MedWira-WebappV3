@@ -406,15 +406,20 @@ IMAGE: ${extractedMedicineName} (${packagingType})
 
 ${dbCandidates.length > 0 ? `DATABASE MATCH: ${dbCandidates[0].product} (${dbCandidates[0].active_ingredient})` : 'No database match'}
 
-Provide concise analysis in this format (use English section headers):
-**Medicine**: [Name]
+Provide concise analysis in this exact format (use English section headers with proper spacing):
+**Medicine**: [Medicine name from packaging]
+
 **Purpose**: [What it treats]
+
 **Dosage**: [Adult/child doses]
+
 **Side Effects**: [Common ones]
+
 **Warnings**: [Important safety info]
+
 **Storage**: [How to store]
 
-Keep response under 300 words. Use bullet points (•). Always use English for maximum speed and accuracy.`;
+Keep response under 300 words. Use bullet points (•) for lists. Always use English for maximum speed and accuracy. Add proper line breaks between sections.`;
 
         try {
           // Send status update before AI processing
@@ -596,18 +601,15 @@ Keep response under 300 words. Use bullet points (•). Always use English for m
     language: string
   ): string {
     // Always generate fallback in English - frontend will translate
-    const packagingLabel = '**Packaging**';
     const medicineLabel = '**Medicine**';
     const purposeLabel = '**Purpose**';
     const dosageLabel = '**Dosage**';
     const warningLabel = '**Warning**';
     const disclaimerLabel = '**Disclaimer**';
     
-    let analysis = `${packagingLabel}: ${packagingType}\n\n`;
-    
-    if (extractedMedicineName) {
-      analysis += `${medicineLabel}: ${extractedMedicineName}\n\n`;
-    }
+    // Start with medicine name if available, otherwise use packaging type
+    const medicineName = extractedMedicineName || packagingType;
+    let analysis = `${medicineLabel}: ${medicineName}\n\n`;
     
     if (dbCandidates.length > 0) {
       const bestMatch = dbCandidates[0];
@@ -617,6 +619,9 @@ Keep response under 300 words. Use bullet points (•). Always use English for m
       analysis += `• Children: As directed by doctor\n\n`;
     } else {
       analysis += `${purposeLabel}: Medicine identified from image\n\n`;
+      analysis += `${dosageLabel}:\n`;
+      analysis += `• Adults: As directed by doctor\n`;
+      analysis += `• Children: As directed by doctor\n\n`;
     }
     
     analysis += `${warningLabel}:\n`;
