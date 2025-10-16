@@ -96,6 +96,12 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
   }, [socialLoading]);
 
   const handleSocialLogin = async (provider: 'google' | 'facebook') => {
+    // Temporarily disable Facebook login
+    if (provider === 'facebook') {
+      setErrorMessage('Facebook sign up is not available at the moment.');
+      return;
+    }
+
     try {
       // Reset any previous error messages
       setErrorMessage('');

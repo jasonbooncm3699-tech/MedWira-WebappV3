@@ -163,7 +163,7 @@ export default function PrivacyPolicy() {
           AI Processing & Third-Party Services
         </h2>
         <p className="text-[#CBD5E0] mb-4">
-          MedWira AI uses advanced artificial intelligence to provide personalized health assistance. Here's how your data is processed:
+          MedWira AI uses advanced artificial intelligence to provide personalized health assistance. Here&apos;s how your data is processed:
         </p>
         
         <div className="space-y-4">
@@ -175,7 +175,7 @@ export default function PrivacyPolicy() {
             <ul className="space-y-2 text-[#CBD5E0]">
               <li className="flex items-start gap-2">
                 <span className="text-[#4FD1C5] mt-1">•</span>
-                <span><strong className="text-white">Google Gemini AI:</strong> Your health queries and images are processed by Google's advanced AI models to generate personalized health responses</span>
+                <span><strong className="text-white">Google Gemini AI:</strong> Your health queries and images are processed by Google&apos;s advanced AI models to generate personalized health responses</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-[#4FD1C5] mt-1">•</span>
@@ -200,11 +200,11 @@ export default function PrivacyPolicy() {
             <div className="space-y-3">
               <div>
                 <h4 className="text-white font-medium mb-1">Google Gemini AI Platform</h4>
-                <p className="text-[#CBD5E0] text-sm">We use Google's Gemini AI for processing health queries and generating responses. Google's privacy policy applies to data processed by their services.</p>
+                <p className="text-[#CBD5E0] text-sm">We use Google&apos;s Gemini AI for processing health queries and generating responses. Google&apos;s privacy policy applies to data processed by their services.</p>
               </div>
               <div>
                 <h4 className="text-white font-medium mb-1">Data Transmission</h4>
-                <p className="text-[#CBD5E0] text-sm">Your health questions and images are securely transmitted to Google's AI services and processed according to our data processing agreements.</p>
+                <p className="text-[#CBD5E0] text-sm">Your health questions and images are securely transmitted to Google&apos;s AI services and processed according to our data processing agreements.</p>
               </div>
               <div>
                 <h4 className="text-white font-medium mb-1">AI Response Accuracy</h4>
