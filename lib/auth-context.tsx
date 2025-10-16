@@ -192,7 +192,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('❌ Exception fetching user data:', error);
       return null;
     }
-  }, []);
+  }, [supabase]);
 
   const refreshUser = useCallback(async () => {
     

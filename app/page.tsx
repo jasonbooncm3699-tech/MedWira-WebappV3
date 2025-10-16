@@ -146,7 +146,7 @@ export default function Home() {
   const [language, setLanguage] = useState('English');
 
   // Translation functions
-  const translateMessage = (message: ChatMessage): ChatMessage => {
+  const translateMessage = useCallback((message: ChatMessage): ChatMessage => {
     if (language === 'English' || !message.content) {
       return message;
     }
@@ -155,7 +155,7 @@ export default function Home() {
       ...message,
       content: translateMedicineAnalysis(message.content, language)
     };
-  };
+  }, [language]);
 
   const handleLanguageChange = (newLanguage: string) => {
     setLanguage(newLanguage);
@@ -553,6 +553,9 @@ export default function Home() {
 
   // Detect mobile device on initial load
   useEffect(() => {
+    // Only run on client side to prevent hydration mismatches
+    if (typeof window === 'undefined') return;
+    
     const checkDevice = () => {
       const isMobileDevice = window.innerWidth <= 767;
       setIsMobile(isMobileDevice);
@@ -608,9 +611,16 @@ export default function Home() {
 
   // Load user language preference from localStorage on mount
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('userLanguagePreference');
-    if (savedLanguage && SUPPORTED_LANGUAGES.includes(savedLanguage)) {
-      setLanguage(savedLanguage);
+    // Only access localStorage on client side
+    if (typeof window === 'undefined') return;
+    
+    try {
+      const savedLanguage = localStorage.getItem('userLanguagePreference');
+      if (savedLanguage && SUPPORTED_LANGUAGES.includes(savedLanguage)) {
+        setLanguage(savedLanguage);
+      }
+    } catch (error) {
+      console.warn('Failed to access localStorage:', error);
     }
   }, []);
 
@@ -621,7 +631,7 @@ export default function Home() {
         prevMessages.map(translateMessage)
       );
     }
-  }, [language]);
+  }, [language, messages.length, translateMessage]);
 
   // Enhanced function to fetch user chat history with pagination and search
   const fetchUserChatHistory = useCallback(async (page: number = 1, searchQuery: string = '', append: boolean = false) => {
@@ -756,7 +766,7 @@ export default function Home() {
         ...prev.slice(1)
       ]);
     }
-  }, [language]);
+  }, [language, messages]);
 
   // Reset prompt suggestions when language changes
   useEffect(() => {
