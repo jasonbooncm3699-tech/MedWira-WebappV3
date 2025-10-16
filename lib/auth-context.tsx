@@ -22,6 +22,7 @@ interface AuthContextType {
   refreshUser: () => Promise<void>;
   refreshUserData: () => Promise<void>;
   forceFetchUserProfile: (userId: string, userEmail: string, userName: string) => Promise<User | null>;
+  clearAllAuthData: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -364,16 +365,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [fetchUserData, supabase]); // REMOVED user from deps to prevent circular dependency
 
+  // Utility function to clear all authentication data
+  const clearAllAuthData = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      // Clear all localStorage
+      localStorage.clear();
+      
+      // Clear all sessionStorage
+      sessionStorage.clear();
+      
+      // Clear all cookies
+      document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+      });
+      
+      console.log('🧹 Cleared all authentication data');
+    } catch (error) {
+      console.warn('⚠️ Error clearing auth data:', error);
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       console.log('🚪 Logging out...');
-      await supabase.auth.signOut();
+      
+      // Set loading state to prevent UI hanging
+      setIsLoading(true);
+      
+      // Clear user state immediately to prevent hanging
       setUser(null);
+      
+      // Clear all authentication data
+      clearAllAuthData();
+      
+      // Sign out from Supabase with timeout
+      const signOutPromise = supabase.auth.signOut();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Logout timeout')), 5000)
+      );
+      
+      await Promise.race([signOutPromise, timeoutPromise]);
+      
       console.log('✅ Logout successful');
+      
     } catch (error) {
       console.error('❌ Error logging out:', error);
+      
+      // Force clear user state even if Supabase signOut fails
+      setUser(null);
+      
+      // Clear storage anyway
+      clearAllAuthData();
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  }, [supabase, clearAllAuthData]);
 
   const refreshUserData = useCallback(async () => {
     console.log('🔍 [DEBUG] refreshUserData called with user state:', {
@@ -891,6 +939,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser,
     refreshUserData,
     forceFetchUserProfile,
+    clearAllAuthData,
   };
 
   // DEFENSIVE: Wrap provider in error boundary to catch React error #18
@@ -912,7 +961,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading: false,
         refreshUser: async () => {},
         refreshUserData: async () => {},
-        forceFetchUserProfile: async () => null
+        forceFetchUserProfile: async () => null,
+        clearAllAuthData: () => {}
       }}>
         {children}
       </AuthContext.Provider>

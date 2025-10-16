@@ -34,6 +34,7 @@ export async function GET(request: Request) {
     console.log('🔄 Exchanging OAuth code for session...');
     
     // Exchange the temporary code for a permanent session and set the cookie.
+    // Allow multiple device sessions - don't invalidate existing sessions
     const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
     
     if (exchangeError) {

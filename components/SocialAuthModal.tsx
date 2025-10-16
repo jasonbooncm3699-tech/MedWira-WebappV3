@@ -140,6 +140,8 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
             access_type: 'offline',
             prompt: 'consent',
           },
+          // Enable multiple device login - don't invalidate existing sessions
+          skipBrowserRedirect: false,
         },
       });
 
