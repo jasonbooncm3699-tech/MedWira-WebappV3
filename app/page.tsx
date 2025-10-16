@@ -1559,6 +1559,10 @@ export default function Home() {
               <a href="https://medwira.com/terms" target="_blank" rel="noopener noreferrer" className="legal-link">
                 Terms of Service
               </a>
+              <span className="legal-divider">|</span>
+              <a href="https://medwira.com/terms-of-sale" target="_blank" rel="noopener noreferrer" className="legal-link">
+                Terms of Sale
+              </a>
             </div>
 
             <p className="copyright">@ 2025 MedWira.com. AI Powered medicine database</p>
