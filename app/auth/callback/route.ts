@@ -13,17 +13,33 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code');
   const error = requestUrl.searchParams.get('error');
 
+  // Get user agent from headers for mobile debugging
+  const userAgent = request.headers.get('user-agent') || 'Unknown';
+  const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+  const isChrome = /Chrome/i.test(userAgent);
+  const isMobileChrome = isMobile && isChrome;
+
   console.log('🔐 OAuth Callback received:', {
     hasCode: !!code,
     hasError: !!error,
+    isMobile,
+    isChrome,
+    isMobileChrome,
+    userAgent: userAgent.substring(0, 100) + '...',
     timestamp: new Date().toISOString(),
     origin: requestUrl.origin,
-    pathname: requestUrl.pathname
+    pathname: requestUrl.pathname,
+    fullUrl: request.url
   });
 
   // Handle OAuth errors
   if (error) {
-    console.error('❌ OAuth provider error:', error);
+    console.error('❌ OAuth provider error:', {
+      error,
+      isMobileChrome,
+      userAgent: userAgent.substring(0, 100) + '...',
+      timestamp: new Date().toISOString()
+    });
     return NextResponse.redirect(new URL('/?error=auth_failed', request.url));
   }
 
@@ -31,20 +47,32 @@ export async function GET(request: Request) {
     // CRITICAL: This initialization is what enables the server to SET THE SECURE COOKIE.
     const supabase = createRouteHandlerClient({ cookies });
     
-    console.log('🔄 Exchanging OAuth code for session...');
+    console.log('🔄 Exchanging OAuth code for session...', {
+      isMobileChrome,
+      timestamp: new Date().toISOString()
+    });
     
     // Exchange the temporary code for a permanent session and set the cookie.
     // Allow multiple device sessions - don't invalidate existing sessions
     const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
     
     if (exchangeError) {
-      console.error("❌ Supabase code exchange failed:", exchangeError.message);
-      console.error("❌ Exchange error details:", exchangeError);
+      console.error("❌ Supabase code exchange failed:", {
+        error: exchangeError.message,
+        details: exchangeError,
+        isMobileChrome,
+        userAgent: userAgent.substring(0, 100) + '...',
+        timestamp: new Date().toISOString()
+      });
       return NextResponse.redirect(new URL('/?error=exchange_failed', request.url));
     }
 
     if (!data.session) {
-      console.error('❌ No session returned after code exchange');
+      console.error('❌ No session returned after code exchange:', {
+        isMobileChrome,
+        userAgent: userAgent.substring(0, 100) + '...',
+        timestamp: new Date().toISOString()
+      });
       return NextResponse.redirect(new URL('/?error=no_session', request.url));
     }
 
