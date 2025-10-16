@@ -246,7 +246,7 @@ export default function LegalPageLayout({
             <div className="text-center md:text-left">
               <h4 className="text-lg font-semibold text-white mb-2">MedWira</h4>
               <p className="text-[#A0AEC0] text-sm">
-                AI-powered medicine identification for Southeast Asia
+                AI-powered personal health assistant for Southeast Asia
               </p>
             </div>
 

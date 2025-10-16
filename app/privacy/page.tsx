@@ -13,6 +13,7 @@ export default function PrivacyPolicy() {
     { id: 'introduction', title: 'Introduction' },
     { id: 'information-collection', title: 'Information We Collect' },
     { id: 'data-usage', title: 'How We Use Your Information' },
+    { id: 'ai-processing', title: 'AI Processing & Third-Party Services' },
     { id: 'data-security', title: 'Data Storage & Security' },
     { id: 'data-sharing', title: 'Data Sharing & Disclosure' },
     { id: 'user-rights', title: 'Your Rights & Choices' },
@@ -26,7 +27,7 @@ export default function PrivacyPolicy() {
   return (
     <LegalPageLayout
       title="Privacy Policy"
-      lastUpdated="October 1, 2025"
+      lastUpdated="January 15, 2025"
       sections={sections}
       currentPage="privacy"
     >
@@ -37,7 +38,7 @@ export default function PrivacyPolicy() {
           Introduction
         </h2>
         <p className="text-[#CBD5E0] leading-relaxed mb-4">
-          Welcome to <strong className="text-white">MedWira</strong> (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;). We are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our medicine identification and analysis service.
+          Welcome to <strong className="text-white">MedWira</strong> (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;). We are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our AI-powered personal health assistant service that provides fast, trustworthy answers to your health, medication, and wellness questions.
         </p>
         <div className="bg-[#4FD1C5]/10 border-l-4 border-[#4FD1C5] p-4 rounded-r-lg">
           <p className="text-[#4FD1C5] text-sm italic">
@@ -62,11 +63,23 @@ export default function PrivacyPolicy() {
             </li>
             <li className="text-[#CBD5E0] flex items-start gap-2">
               <span className="text-[#4FD1C5] mt-1">•</span>
+              <span><strong className="text-white">Health Consultation Data:</strong> Detailed health questions, symptoms, and wellness concerns you discuss with our AI assistant</span>
+            </li>
+            <li className="text-[#CBD5E0] flex items-start gap-2">
+              <span className="text-[#4FD1C5] mt-1">•</span>
               <span><strong className="text-white">Medicine Images:</strong> Photos you upload for identification and analysis</span>
             </li>
             <li className="text-[#CBD5E0] flex items-start gap-2">
               <span className="text-[#4FD1C5] mt-1">•</span>
-              <span><strong className="text-white">Allergy Information:</strong> Voluntary health data you provide for safety checks</span>
+              <span><strong className="text-white">Medical History:</strong> Health background, allergies, and medical conditions you voluntarily share</span>
+            </li>
+            <li className="text-[#CBD5E0] flex items-start gap-2">
+              <span className="text-[#4FD1C5] mt-1">•</span>
+              <span><strong className="text-white">Chat History:</strong> Complete conversation logs with our AI health assistant for personalized service</span>
+            </li>
+            <li className="text-[#CBD5E0] flex items-start gap-2">
+              <span className="text-[#4FD1C5] mt-1">•</span>
+              <span><strong className="text-white">Language Preferences:</strong> Your selected language for receiving health information and AI responses</span>
             </li>
             <li className="text-[#CBD5E0] flex items-start gap-2">
               <span className="text-[#4FD1C5] mt-1">•</span>
@@ -107,11 +120,12 @@ export default function PrivacyPolicy() {
         <p className="text-[#CBD5E0] mb-4">We use the collected information for the following purposes:</p>
         <div className="grid md:grid-cols-2 gap-4">
           <div className="bg-[#2D3748] p-4 rounded-lg border border-[#4A5568]">
-            <h4 className="text-white font-medium mb-2">Core Services</h4>
+            <h4 className="text-white font-medium mb-2">AI Health Assistant Services</h4>
             <ul className="space-y-1 text-sm text-[#CBD5E0]">
-              <li>• Provide medicine identification</li>
-              <li>• Analyze medicine images with AI</li>
-              <li>• Deliver safety information</li>
+              <li>• Provide personalized health consultations</li>
+              <li>• Analyze medicine images and interactions</li>
+              <li>• Deliver comprehensive health and wellness guidance</li>
+              <li>• Generate AI-powered health recommendations</li>
             </ul>
           </div>
           <div className="bg-[#2D3748] p-4 rounded-lg border border-[#4A5568]">
@@ -123,11 +137,12 @@ export default function PrivacyPolicy() {
             </ul>
           </div>
           <div className="bg-[#2D3748] p-4 rounded-lg border border-[#4A5568]">
-            <h4 className="text-white font-medium mb-2">Improvement</h4>
+            <h4 className="text-white font-medium mb-2">Service Improvement</h4>
             <ul className="space-y-1 text-sm text-[#CBD5E0]">
-              <li>• Personalize your experience</li>
-              <li>• Improve our AI models</li>
-              <li>• Analyze usage patterns</li>
+              <li>• Personalize your health assistant experience</li>
+              <li>• Improve AI accuracy and response quality</li>
+              <li>• Analyze health consultation patterns</li>
+              <li>• Enhance medical knowledge database</li>
             </ul>
           </div>
           <div className="bg-[#2D3748] p-4 rounded-lg border border-[#4A5568]">
@@ -141,14 +156,79 @@ export default function PrivacyPolicy() {
         </div>
       </section>
 
-      {/* Section 4: Data Security */}
+      {/* Section 4: AI Processing & Third-Party Services */}
+      <section id="ai-processing" className="mb-12 scroll-mt-24">
+        <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="w-1 h-8 bg-[#4FD1C5] rounded-full"></span>
+          AI Processing & Third-Party Services
+        </h2>
+        <p className="text-[#CBD5E0] mb-4">
+          MedWira AI uses advanced artificial intelligence to provide personalized health assistance. Here's how your data is processed:
+        </p>
+        
+        <div className="space-y-4">
+          <div className="bg-gradient-to-r from-[#4FD1C5]/10 to-transparent p-6 rounded-lg border border-[#4FD1C5]/30">
+            <h3 className="text-xl font-medium text-[#81E6D9] mb-3 flex items-center gap-2">
+              <span className="text-2xl">🤖</span>
+              AI Health Assistant Processing
+            </h3>
+            <ul className="space-y-2 text-[#CBD5E0]">
+              <li className="flex items-start gap-2">
+                <span className="text-[#4FD1C5] mt-1">•</span>
+                <span><strong className="text-white">Google Gemini AI:</strong> Your health queries and images are processed by Google's advanced AI models to generate personalized health responses</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#4FD1C5] mt-1">•</span>
+                <span><strong className="text-white">Natural Language Processing:</strong> AI analyzes your health questions and symptoms to provide relevant medical information</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#4FD1C5] mt-1">•</span>
+                <span><strong className="text-white">Image Analysis:</strong> Medicine photos are processed using computer vision to identify medications and packaging</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#4FD1C5] mt-1">•</span>
+                <span><strong className="text-white">Personalization:</strong> AI learns from your health history and preferences to provide tailored recommendations</span>
+              </li>
+            </ul>
+          </div>
+
+          <div className="bg-[#2D3748] p-6 rounded-lg border border-[#4A5568]">
+            <h3 className="text-xl font-medium text-[#81E6D9] mb-3 flex items-center gap-2">
+              <span className="text-2xl">🔗</span>
+              Third-Party AI Services
+            </h3>
+            <div className="space-y-3">
+              <div>
+                <h4 className="text-white font-medium mb-1">Google Gemini AI Platform</h4>
+                <p className="text-[#CBD5E0] text-sm">We use Google's Gemini AI for processing health queries and generating responses. Google's privacy policy applies to data processed by their services.</p>
+              </div>
+              <div>
+                <h4 className="text-white font-medium mb-1">Data Transmission</h4>
+                <p className="text-[#CBD5E0] text-sm">Your health questions and images are securely transmitted to Google's AI services and processed according to our data processing agreements.</p>
+              </div>
+              <div>
+                <h4 className="text-white font-medium mb-1">AI Response Accuracy</h4>
+                <p className="text-[#CBD5E0] text-sm">AI-generated health information is for informational purposes only and should not replace professional medical advice.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-yellow-900/20 border border-yellow-500/30 p-4 rounded-lg">
+            <p className="text-yellow-200">
+              <strong>Important:</strong> While we use advanced AI technology, all health information provided by our AI assistant is for educational and informational purposes only. Always consult with qualified healthcare professionals for medical diagnosis, treatment, or advice.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 5: Data Security */}
       <section id="data-security" className="mb-12 scroll-mt-24">
         <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
           <span className="w-1 h-8 bg-[#4FD1C5] rounded-full"></span>
           Data Storage & Security
         </h2>
         <p className="text-[#CBD5E0] mb-4">
-          We implement industry-standard security measures to protect your personal information:
+          We implement enhanced security measures to protect your personal information and sensitive health data:
         </p>
         <div className="bg-gradient-to-r from-[#4FD1C5]/10 to-transparent p-6 rounded-lg border border-[#4FD1C5]/30">
           <ul className="space-y-3">
@@ -174,6 +254,24 @@ export default function PrivacyPolicy() {
               <span className="text-[#4FD1C5] text-2xl">🔄</span>
               <div>
                 <strong className="text-white">Regular Audits:</strong> Security assessments and vulnerability testing
+              </div>
+            </li>
+            <li className="text-[#CBD5E0] flex items-start gap-3">
+              <span className="text-[#4FD1C5] text-2xl">🏥</span>
+              <div>
+                <strong className="text-white">Health Data Encryption:</strong> Special encryption for sensitive health information and AI conversations
+              </div>
+            </li>
+            <li className="text-[#CBD5E0] flex items-start gap-3">
+              <span className="text-[#4FD1C5] text-2xl">👥</span>
+              <div>
+                <strong className="text-white">Access Controls:</strong> Strict access management for health data with audit trails
+              </div>
+            </li>
+            <li className="text-[#CBD5E0] flex items-start gap-3">
+              <span className="text-[#4FD1C5] text-2xl">⏰</span>
+              <div>
+                <strong className="text-white">Data Retention:</strong> Automatic deletion of health conversations after specified periods
               </div>
             </li>
           </ul>
@@ -219,15 +317,17 @@ export default function PrivacyPolicy() {
           <span className="w-1 h-8 bg-[#4FD1C5] rounded-full"></span>
           Your Rights & Choices
         </h2>
-        <p className="text-[#CBD5E0] mb-4">You have the following rights regarding your personal information:</p>
+        <p className="text-[#CBD5E0] mb-4">You have enhanced rights regarding your personal information and health data:</p>
         <div className="grid sm:grid-cols-2 gap-3">
           {[
-            { icon: '👁️', title: 'Access', desc: 'Request a copy of your data' },
-            { icon: '✏️', title: 'Correction', desc: 'Update inaccurate information' },
-            { icon: '🗑️', title: 'Deletion', desc: 'Request account and data removal' },
-            { icon: '📦', title: 'Portability', desc: 'Receive data in portable format' },
-            { icon: '🚫', title: 'Opt-out', desc: 'Unsubscribe from marketing' },
-            { icon: '⏸️', title: 'Withdraw', desc: 'Revoke consent for processing' },
+            { icon: '👁️', title: 'Access', desc: 'Request a copy of your health data and conversations' },
+            { icon: '✏️', title: 'Correction', desc: 'Update inaccurate health information' },
+            { icon: '🗑️', title: 'Deletion', desc: 'Request complete removal of health data' },
+            { icon: '📦', title: 'Portability', desc: 'Export health conversation history' },
+            { icon: '🚫', title: 'Opt-out', desc: 'Disable AI analysis features' },
+            { icon: '⏸️', title: 'Withdraw', desc: 'Revoke consent for health data processing' },
+            { icon: '🏥', title: 'Health Data Control', desc: 'Manage health information sharing preferences' },
+            { icon: '🔒', title: 'Privacy Settings', desc: 'Control data retention and AI personalization' },
           ].map((right, index) => (
             <div key={index} className="bg-[#2D3748] p-4 rounded-lg border border-[#4A5568] hover:border-[#4FD1C5] transition-colors">
               <div className="flex items-start gap-3">

@@ -13,6 +13,7 @@ export default function TermsOfSale() {
     { id: 'packages', title: 'Token Packages & Pricing' },
     { id: 'purchase', title: 'Purchase Process' },
     { id: 'token-usage', title: 'Token Usage & Validity' },
+    { id: 'ai-service-terms', title: 'AI Health Assistant Service Terms' },
     { id: 'refund', title: 'Refund & Cancellation' },
     { id: 'referral', title: 'Referral Program' },
     { id: 'taxes', title: 'Taxes & Fees' },
@@ -27,7 +28,7 @@ export default function TermsOfSale() {
   return (
     <LegalPageLayout
       title="Terms of Sale"
-      lastUpdated="October 1, 2025"
+      lastUpdated="January 15, 2025"
       sections={sections}
       currentPage="terms-of-sale"
     >
@@ -38,7 +39,7 @@ export default function TermsOfSale() {
           Token Packages & Pricing
         </h2>
         <p className="text-[#CBD5E0] mb-6">
-          MedWira offers token-based access to medicine identification services. All prices are in Malaysian Ringgit (RM) and include applicable taxes.
+          MedWira offers token-based access to our AI-powered personal health assistant service that provides fast, trustworthy answers to your health, medication, and wellness questions. All prices are in Malaysian Ringgit (RM) and include applicable taxes.
         </p>
         
         <div className="grid md:grid-cols-3 gap-6">
@@ -59,7 +60,7 @@ export default function TermsOfSale() {
             <ul className="mt-6 space-y-3">
               <li className="text-[#CBD5E0] flex items-center gap-2 text-sm">
                 <span className="text-[#4FD1C5]">✓</span>
-                50 medicine scans
+                50 AI health consultations
               </li>
               <li className="text-[#CBD5E0] flex items-center gap-2 text-sm">
                 <span className="text-[#4FD1C5]">✓</span>
@@ -95,7 +96,7 @@ export default function TermsOfSale() {
             <ul className="mt-6 space-y-3">
               <li className="text-[#CBD5E0] flex items-center gap-2 text-sm">
                 <span className="text-[#4FD1C5]">✓</span>
-                200 medicine scans
+                200 AI health consultations
               </li>
               <li className="text-[#CBD5E0] flex items-center gap-2 text-sm">
                 <span className="text-[#4FD1C5]">✓</span>
@@ -128,7 +129,7 @@ export default function TermsOfSale() {
             <ul className="mt-6 space-y-3">
               <li className="text-[#CBD5E0] flex items-center gap-2 text-sm">
                 <span className="text-[#4FD1C5]">✓</span>
-                500 medicine scans
+                500 AI health consultations
               </li>
               <li className="text-[#CBD5E0] flex items-center gap-2 text-sm">
                 <span className="text-[#4FD1C5]">✓</span>
@@ -217,9 +218,10 @@ export default function TermsOfSale() {
               Usage
             </h4>
             <ul className="space-y-2 text-[#CBD5E0] text-sm">
-              <li>• Each medicine scan = <strong className="text-white">1 token</strong></li>
+              <li>• Each AI health consultation = <strong className="text-white">1 token</strong></li>
               <li>• Tokens <strong className="text-white">never expire</strong> (while account active)</li>
-              <li>• Instant deduction upon scan</li>
+              <li>• Instant deduction upon consultation</li>
+              <li>• Includes medicine analysis, health advice, and wellness guidance</li>
             </ul>
           </div>
           <div className="bg-gradient-to-br from-[#4FD1C5]/10 to-transparent p-5 rounded-lg border border-[#4FD1C5]/30">
@@ -236,7 +238,78 @@ export default function TermsOfSale() {
         </div>
       </section>
 
-      {/* Section 4: Refund Policy - PROMINENT WARNING */}
+      {/* Section 4: AI Health Assistant Service Terms */}
+      <section id="ai-service-terms" className="mb-12 scroll-mt-24">
+        <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="w-1 h-8 bg-[#4FD1C5] rounded-full"></span>
+          AI Health Assistant Service Terms
+        </h2>
+        <p className="text-[#CBD5E0] mb-4">
+          By purchasing tokens, you agree to the following terms regarding our AI health assistant service:
+        </p>
+        
+        <div className="space-y-4">
+          <div className="bg-gradient-to-r from-[#4FD1C5]/10 to-transparent p-6 rounded-lg border border-[#4FD1C5]/30">
+            <h3 className="text-xl font-medium text-[#81E6D9] mb-3 flex items-center gap-2">
+              <span className="text-2xl">🤖</span>
+              AI Service Scope
+            </h3>
+            <ul className="space-y-2 text-[#CBD5E0]">
+              <li className="flex items-start gap-2">
+                <span className="text-[#4FD1C5] mt-1">•</span>
+                <span><strong className="text-white">Health Consultation:</strong> AI-powered health advice and wellness guidance</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#4FD1C5] mt-1">•</span>
+                <span><strong className="text-white">Medicine Analysis:</strong> Drug identification, interactions, and safety information</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#4FD1C5] mt-1">•</span>
+                <span><strong className="text-white">Multi-language Support:</strong> AI responses in 10 Southeast Asian languages</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#4FD1C5] mt-1">•</span>
+                <span><strong className="text-white">Personalized Service:</strong> Tailored health information based on your queries</span>
+              </li>
+            </ul>
+          </div>
+
+          <div className="bg-[#2D3748] p-6 rounded-lg border border-[#4A5568]">
+            <h3 className="text-xl font-medium text-[#81E6D9] mb-3 flex items-center gap-2">
+              <span className="text-2xl">⚠️</span>
+              Important Service Limitations
+            </h3>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <h4 className="text-white font-medium mb-2">AI Limitations</h4>
+                <ul className="space-y-1 text-sm text-[#CBD5E0]">
+                  <li>• AI responses may contain errors</li>
+                  <li>• Not a substitute for medical professionals</li>
+                  <li>• Cannot perform physical examinations</li>
+                  <li>• Information may be outdated</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-white font-medium mb-2">Usage Requirements</h4>
+                <ul className="space-y-1 text-sm text-[#CBD5E0]">
+                  <li>• Must provide accurate health information</li>
+                  <li>• Cannot abuse AI for inappropriate queries</li>
+                  <li>• Responsible for health decisions made</li>
+                  <li>• Must seek professional help when needed</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-yellow-900/20 border border-yellow-500/30 p-4 rounded-lg">
+            <p className="text-yellow-200">
+              <strong>Critical:</strong> Tokens purchased provide access to AI health consultation services. All AI responses are for informational purposes only and should not replace professional medical advice. You are responsible for all health decisions made based on AI responses.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 5: Refund Policy - PROMINENT WARNING */}
       <section id="refund" className="mb-12 scroll-mt-24">
         <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
           <span className="w-1 h-8 bg-yellow-500 rounded-full animate-pulse"></span>
@@ -252,7 +325,7 @@ export default function TermsOfSale() {
                   All token purchases are <span className="text-yellow-300">FINAL and NON-REFUNDABLE</span>
                 </p>
                 <p className="text-yellow-200/80 text-sm mt-2">
-                  Once tokens are added to your account, they cannot be refunded, even if unused.
+                  Once tokens are added to your account, they cannot be refunded, even if unused. This includes tokens used for AI health consultation services.
                 </p>
               </div>
             </div>
@@ -272,7 +345,11 @@ export default function TermsOfSale() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-yellow-400">✓</span>
-                  <span>Service unavailability for extended periods (7+ days)</span>
+                  <span>AI service unavailability for extended periods (7+ days)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-400">✓</span>
+                  <span>AI responses consistently failing to meet quality standards</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-yellow-400">✓</span>
@@ -489,9 +566,16 @@ export default function TermsOfSale() {
             </div>
             <div>
               <div className="text-3xl mb-2">📋</div>
-              <h4 className="text-white font-semibold mb-2">Privacy Policy</h4>
+              <h4 className="text-white font-semibold mb-2">Health Data Privacy</h4>
               <p className="text-[#CBD5E0] text-sm">
-                See our <a href="/privacy" className="text-[#4FD1C5] hover:underline">Privacy Policy</a> for details
+                Health information processed during AI consultations is protected per our <a href="/privacy" className="text-[#4FD1C5] hover:underline">Privacy Policy</a>
+              </p>
+            </div>
+            <div>
+              <div className="text-3xl mb-2">🏥</div>
+              <h4 className="text-white font-semibold mb-2">Data Processing</h4>
+              <p className="text-[#CBD5E0] text-sm">
+                Purchase data and health consultation logs are processed securely for service provision
               </p>
             </div>
           </div>

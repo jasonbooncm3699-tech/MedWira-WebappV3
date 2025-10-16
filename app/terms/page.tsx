@@ -13,6 +13,7 @@ export default function TermsOfService() {
     { id: 'acceptance', title: 'Acceptance of Terms' },
     { id: 'service', title: 'Description of Service' },
     { id: 'medical-disclaimer', title: 'Medical Disclaimer' },
+    { id: 'ai-limitations', title: 'AI Technology & Limitations' },
     { id: 'accounts', title: 'User Accounts & OAuth' },
     { id: 'tokens', title: 'Token System & Usage' },
     { id: 'acceptable-use', title: 'Acceptable Use Policy' },
@@ -28,7 +29,7 @@ export default function TermsOfService() {
   return (
     <LegalPageLayout
       title="Terms of Service"
-      lastUpdated="October 1, 2025"
+      lastUpdated="January 15, 2025"
       sections={sections}
       currentPage="terms"
     >
@@ -50,28 +51,28 @@ export default function TermsOfService() {
           Description of Service
         </h2>
         <p className="text-[#CBD5E0] mb-4">
-          MedWira is an AI-powered medicine identification and analysis platform that provides:
+          MedWira is an AI-powered personal health assistant that provides fast, trustworthy answers to your health, medication, and wellness questions. Our comprehensive platform offers:
         </p>
         <div className="grid md:grid-cols-2 gap-4">
           <div className="bg-gradient-to-br from-[#4FD1C5]/20 to-transparent p-4 rounded-lg border border-[#4FD1C5]/30">
+            <div className="text-3xl mb-2">🤖</div>
+            <h4 className="text-white font-medium mb-1">AI Health Consultation</h4>
+            <p className="text-[#CBD5E0] text-sm">Personalized health guidance and advice</p>
+          </div>
+          <div className="bg-gradient-to-br from-[#4FD1C5]/20 to-transparent p-4 rounded-lg border border-[#4FD1C5]/30">
             <div className="text-3xl mb-2">🔍</div>
-            <h4 className="text-white font-medium mb-1">Medicine Identification</h4>
-            <p className="text-[#CBD5E0] text-sm">Image recognition technology</p>
+            <h4 className="text-white font-medium mb-1">Medicine Analysis</h4>
+            <p className="text-[#CBD5E0] text-sm">Comprehensive drug identification & interactions</p>
           </div>
           <div className="bg-gradient-to-br from-[#4FD1C5]/20 to-transparent p-4 rounded-lg border border-[#4FD1C5]/30">
-            <div className="text-3xl mb-2">📋</div>
-            <h4 className="text-white font-medium mb-1">Drug Information</h4>
-            <p className="text-[#CBD5E0] text-sm">Interactions & safety warnings</p>
-          </div>
-          <div className="bg-gradient-to-br from-[#4FD1C5]/20 to-transparent p-4 rounded-lg border border-[#4FD1C5]/30">
-            <div className="text-3xl mb-2">⚠️</div>
-            <h4 className="text-white font-medium mb-1">Allergy Checking</h4>
-            <p className="text-[#CBD5E0] text-sm">Contraindication alerts</p>
+            <div className="text-3xl mb-2">🏥</div>
+            <h4 className="text-white font-medium mb-1">Health & Wellness</h4>
+            <p className="text-[#CBD5E0] text-sm">Wellness recommendations and health insights</p>
           </div>
           <div className="bg-gradient-to-br from-[#4FD1C5]/20 to-transparent p-4 rounded-lg border border-[#4FD1C5]/30">
             <div className="text-3xl mb-2">🌏</div>
-            <h4 className="text-white font-medium mb-1">Multi-language</h4>
-            <p className="text-[#CBD5E0] text-sm">10 SEA languages supported</p>
+            <h4 className="text-white font-medium mb-1">Multi-language Support</h4>
+            <p className="text-[#CBD5E0] text-sm">AI responses in 10 SEA languages</p>
           </div>
         </div>
       </section>
@@ -86,11 +87,11 @@ export default function TermsOfService() {
           <div className="flex items-start gap-4">
             <div className="text-5xl">⚠️</div>
             <div className="flex-1">
-              <h3 className="text-red-400 font-bold text-xl mb-3">IMPORTANT MEDICAL DISCLAIMER</h3>
+              <h3 className="text-red-400 font-bold text-xl mb-3">IMPORTANT AI HEALTH ASSISTANT DISCLAIMER</h3>
               <ul className="space-y-2 text-[#F7FAFC]">
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-1">•</span>
-                  <span>MedWira is <strong className="text-red-300">NOT</strong> a substitute for professional medical advice, diagnosis, or treatment</span>
+                  <span>MedWira AI is <strong className="text-red-300">NOT</strong> a substitute for professional medical advice, diagnosis, or treatment</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-1">•</span>
@@ -102,15 +103,23 @@ export default function TermsOfService() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-1">•</span>
-                  <span>AI-generated information may contain <strong className="text-red-300">errors or inaccuracies</strong></span>
+                  <span>AI-generated health information may contain <strong className="text-red-300">errors or inaccuracies</strong></span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-1">•</span>
-                  <span>Do <strong className="text-red-300">NOT</strong> rely solely on MedWira for medication decisions</span>
+                  <span>Do <strong className="text-red-300">NOT</strong> rely solely on AI responses for health or medication decisions</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-1">•</span>
-                  <span>Information is for <strong className="text-red-300">educational purposes only</strong></span>
+                  <span>AI health advice is for <strong className="text-red-300">educational and informational purposes only</strong></span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-400 mt-1">•</span>
+                  <span>AI responses are <strong className="text-red-300">NOT</strong> personalized medical recommendations</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-400 mt-1">•</span>
+                  <span>Our AI assistant is <strong className="text-red-300">NOT</strong> a licensed healthcare provider</span>
                 </li>
               </ul>
               <div className="mt-4 p-3 bg-red-950/50 rounded-lg border border-red-500/30">
@@ -123,7 +132,78 @@ export default function TermsOfService() {
         </div>
       </section>
 
-      {/* Section 4: User Accounts */}
+      {/* Section 4: AI Technology & Limitations */}
+      <section id="ai-limitations" className="mb-12 scroll-mt-24">
+        <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="w-1 h-8 bg-[#4FD1C5] rounded-full"></span>
+          AI Technology & Limitations
+        </h2>
+        <p className="text-[#CBD5E0] mb-4">
+          MedWira AI uses advanced artificial intelligence technology. Understanding these limitations is crucial for safe usage:
+        </p>
+        
+        <div className="space-y-4">
+          <div className="bg-gradient-to-r from-[#4FD1C5]/10 to-transparent p-6 rounded-lg border border-[#4FD1C5]/30">
+            <h3 className="text-xl font-medium text-[#81E6D9] mb-3 flex items-center gap-2">
+              <span className="text-2xl">🤖</span>
+              AI Technology Used
+            </h3>
+            <ul className="space-y-2 text-[#CBD5E0]">
+              <li className="flex items-start gap-2">
+                <span className="text-[#4FD1C5] mt-1">•</span>
+                <span><strong className="text-white">Google Gemini AI:</strong> Advanced language model for health consultation and analysis</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#4FD1C5] mt-1">•</span>
+                <span><strong className="text-white">Computer Vision:</strong> Image recognition for medicine identification and packaging analysis</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#4FD1C5] mt-1">•</span>
+                <span><strong className="text-white">Natural Language Processing:</strong> Understanding and responding to health queries in multiple languages</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-[#4FD1C5] mt-1">•</span>
+                <span><strong className="text-white">Machine Learning:</strong> Continuous improvement based on usage patterns and feedback</span>
+              </li>
+            </ul>
+          </div>
+
+          <div className="bg-[#2D3748] p-6 rounded-lg border border-[#4A5568]">
+            <h3 className="text-xl font-medium text-[#81E6D9] mb-3 flex items-center gap-2">
+              <span className="text-2xl">⚠️</span>
+              AI Limitations & Risks
+            </h3>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <h4 className="text-white font-medium mb-2">Accuracy Limitations</h4>
+                <ul className="space-y-1 text-sm text-[#CBD5E0]">
+                  <li>• AI may provide incorrect information</li>
+                  <li>• Responses may not be contextually appropriate</li>
+                  <li>• Medical information may be outdated</li>
+                  <li>• AI cannot perform physical examinations</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-white font-medium mb-2">Usage Risks</h4>
+                <ul className="space-y-1 text-sm text-[#CBD5E0]">
+                  <li>• Over-reliance on AI responses</li>
+                  <li>• Misinterpretation of AI advice</li>
+                  <li>• Delayed professional medical care</li>
+                  <li>• Privacy concerns with health data</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-yellow-900/20 border border-yellow-500/30 p-4 rounded-lg">
+            <p className="text-yellow-200">
+              <strong>Important:</strong> AI technology is continuously evolving. While we strive for accuracy, AI responses should always be verified with qualified healthcare professionals before making any health-related decisions.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 5: User Accounts */}
       <section id="accounts" className="mb-12 scroll-mt-24">
         <h2 className="text-2xl font-semibold text-white mb-4 flex items-center gap-2">
           <span className="w-1 h-8 bg-[#4FD1C5] rounded-full"></span>
@@ -249,9 +329,15 @@ export default function TermsOfService() {
             </p>
           </div>
           <div className="bg-[#2D3748] p-4 rounded-lg border-l-4 border-[#81E6D9]">
-            <h4 className="text-white font-medium mb-2">📸 Your Content</h4>
+            <h4 className="text-white font-medium mb-2">📸 Your Content & Health Data</h4>
             <p className="text-[#CBD5E0] text-sm">
-              You retain ownership of uploaded images. By uploading, you grant us a license to process, analyze, and store images to provide the Service. We may use anonymized data for improvement.
+              You retain ownership of uploaded images and health information. By using our AI health assistant, you grant us a license to process, analyze, and store your health data to provide personalized AI consultation services. We may use anonymized data for AI model improvement.
+            </p>
+          </div>
+          <div className="bg-[#2D3748] p-4 rounded-lg border-l-4 border-[#4FD1C5]">
+            <h4 className="text-white font-medium mb-2">🏥 Health Data Processing</h4>
+            <p className="text-[#CBD5E0] text-sm">
+              Your health conversations, symptoms, and medical information are processed by our AI systems to provide personalized health assistance. This data is stored securely and used solely for service provision and improvement, subject to our Privacy Policy.
             </p>
           </div>
         </div>
@@ -270,15 +356,23 @@ export default function TermsOfService() {
           <ul className="space-y-2 text-yellow-200/90">
             <li className="flex items-start gap-2">
               <span>•</span>
-              <span>MedWira is provided <strong>&quot;AS IS&quot;</strong> without warranties of any kind</span>
+              <span>MedWira AI is provided <strong>&quot;AS IS&quot;</strong> without warranties of any kind</span>
             </li>
             <li className="flex items-start gap-2">
               <span>•</span>
-              <span>We are <strong>NOT liable</strong> for medical decisions made using our Service</span>
+              <span>We are <strong>NOT liable</strong> for medical decisions made using our AI assistant</span>
             </li>
             <li className="flex items-start gap-2">
               <span>•</span>
-              <span>We are <strong>NOT liable</strong> for AI errors, inaccuracies, or omissions</span>
+              <span>We are <strong>NOT liable</strong> for AI-generated health information errors, inaccuracies, or omissions</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span>•</span>
+              <span>We are <strong>NOT liable</strong> for reliance on AI health advice or recommendations</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span>•</span>
+              <span>We are <strong>NOT liable</strong> for health outcomes resulting from AI consultation</span>
             </li>
             <li className="flex items-start gap-2">
               <span>•</span>
