@@ -25,6 +25,7 @@ import {
   getLanguageCode,
   getLanguageFromCode 
 } from '@/lib/translation-service';
+import { MobileCacheManager } from '@/lib/mobile-cache-manager';
 
 export default function Home() {
   // Test deployment - simple change
@@ -145,12 +146,12 @@ export default function Home() {
   const [sideNavOpen, setSideNavOpen] = useState(false);
   const [language, setLanguage] = useState('English');
 
-  // Safe localStorage utility functions
+  // Mobile-optimized localStorage utility functions
   const safeLocalStorage = {
     getItem: (key: string): string | null => {
       try {
         if (typeof window === 'undefined') return null;
-        return localStorage.getItem(key);
+        return MobileCacheManager.getItem(key);
       } catch (error) {
         console.warn(`Failed to read from localStorage (${key}):`, error);
         return null;
@@ -159,8 +160,7 @@ export default function Home() {
     setItem: (key: string, value: string): boolean => {
       try {
         if (typeof window === 'undefined') return false;
-        localStorage.setItem(key, value);
-        return true;
+        return MobileCacheManager.setItem(key, value);
       } catch (error) {
         console.warn(`Failed to write to localStorage (${key}):`, error);
         return false;
@@ -640,16 +640,26 @@ export default function Home() {
     }
   }, [safeLocalStorage]);
 
-  // Clear potentially corrupted localStorage on mobile if needed
+  // Enhanced mobile debugging and cache management
   useEffect(() => {
     if (typeof window !== 'undefined' && isMobile) {
       try {
-        // Check if localStorage is working properly
+        // Enhanced mobile debugging
+        console.log('📱 Mobile device detected - running enhanced checks:');
+        console.log('📱 Mobile debug info:', MobileCacheManager.getMobileDebugInfo());
+        console.log('📱 Cache stats:', MobileCacheManager.getStats());
+        
+        // Check if localStorage is working properly with mobile cache manager
         const testKey = '__medwira_test__';
-        localStorage.setItem(testKey, 'test');
-        localStorage.removeItem(testKey);
+        const success = MobileCacheManager.setItem(testKey, 'test');
+        if (success) {
+          MobileCacheManager.removeItem(testKey);
+          console.log('✅ Mobile cache manager working properly');
+        } else {
+          console.warn('⚠️ Mobile cache manager has issues');
+        }
       } catch (error) {
-        console.warn('localStorage appears to be corrupted or unavailable on mobile:', error);
+        console.warn('⚠️ Mobile debugging failed:', error);
         // Don't crash the app - just log the warning
       }
     }

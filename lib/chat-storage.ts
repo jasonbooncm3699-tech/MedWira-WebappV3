@@ -3,7 +3,10 @@
  * 
  * Provides localStorage-based chat history persistence for better UX
  * Falls back to database-only mode if localStorage is unavailable
+ * Enhanced with mobile-optimized cache management
  */
+
+import { MobileCacheManager } from './mobile-cache-manager';
 
 export interface ChatMessage {
   id: string;
@@ -28,14 +31,17 @@ class ChatStorage {
   private readonly MAX_MESSAGES = 50; // Limit to prevent storage bloat
 
   /**
-   * Check if localStorage is available and enabled
+   * Check if localStorage is available and enabled (mobile-optimized)
    */
   private isLocalStorageAvailable(): boolean {
     try {
       const test = '__localStorage_test__';
-      localStorage.setItem(test, test);
-      localStorage.removeItem(test);
-      return true;
+      const success = MobileCacheManager.setItem(test, test);
+      if (success) {
+        MobileCacheManager.removeItem(test);
+        return true;
+      }
+      return false;
     } catch {
       return false;
     }
@@ -48,7 +54,7 @@ class ChatStorage {
     if (!this.isLocalStorageAvailable()) return false;
     
     // Check user preference (default: enabled)
-    const preference = localStorage.getItem('medwira_chat_storage_enabled');
+    const preference = MobileCacheManager.getItem('medwira_chat_storage_enabled');
     return preference !== 'false';
   }
 
@@ -75,9 +81,14 @@ class ChatStorage {
         version: this.VERSION
       };
 
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(chatData));
-      console.log(`✅ Chat history saved to localStorage (${limitedMessages.length} messages)`);
-      return true;
+      const success = MobileCacheManager.setItem(this.STORAGE_KEY, JSON.stringify(chatData));
+      if (success) {
+        console.log(`✅ Chat history saved to localStorage (${limitedMessages.length} messages) - mobile optimized`);
+        return true;
+      } else {
+        console.warn('⚠️ Failed to save chat history - quota exceeded or storage unavailable');
+        return false;
+      }
     } catch (error) {
       console.error('❌ Error saving chat history to localStorage:', error);
       return false;
@@ -94,7 +105,7 @@ class ChatStorage {
     }
 
     try {
-      const stored = localStorage.getItem(this.STORAGE_KEY);
+      const stored = MobileCacheManager.getItem(this.STORAGE_KEY);
       if (!stored) {
         console.log('📱 No chat history found in localStorage');
         return [];
@@ -146,9 +157,14 @@ class ChatStorage {
     if (!this.isLocalStorageAvailable()) return false;
 
     try {
-      localStorage.removeItem(this.STORAGE_KEY);
-      console.log('✅ Chat history cleared from localStorage');
-      return true;
+      const success = MobileCacheManager.removeItem(this.STORAGE_KEY);
+      if (success) {
+        console.log('✅ Chat history cleared from localStorage (mobile optimized)');
+        return true;
+      } else {
+        console.warn('⚠️ Failed to clear chat history');
+        return false;
+      }
     } catch (error) {
       console.error('❌ Error clearing chat history from localStorage:', error);
       return false;
@@ -174,7 +190,7 @@ class ChatStorage {
 
     if (available && enabled) {
       try {
-        const stored = localStorage.getItem(this.STORAGE_KEY);
+        const stored = MobileCacheManager.getItem(this.STORAGE_KEY);
         if (stored) {
           const chatData: ChatHistoryData = JSON.parse(stored);
           messageCount = chatData.messages?.length || 0;
@@ -201,8 +217,12 @@ class ChatStorage {
   setStorageEnabled(enabled: boolean): void {
     if (!this.isLocalStorageAvailable()) return;
 
-    localStorage.setItem('medwira_chat_storage_enabled', enabled.toString());
-    console.log(`📱 Chat storage ${enabled ? 'enabled' : 'disabled'}`);
+    const success = MobileCacheManager.setItem('medwira_chat_storage_enabled', enabled.toString());
+    if (success) {
+      console.log(`📱 Chat storage ${enabled ? 'enabled' : 'disabled'} (mobile optimized)`);
+    } else {
+      console.warn('⚠️ Failed to save storage preference');
+    }
     
     if (!enabled) {
       this.clearChatHistory();

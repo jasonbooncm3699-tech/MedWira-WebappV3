@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo, ErrorInfo } from 'react';
 import { createClient, getSessionFromCookies } from './supabase-browser';
+import { MobileCacheManager } from './mobile-cache-manager';
 
 interface User {
   id: string;
@@ -207,12 +208,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const sessionData = data?.session;
       const sessionUser = sessionData?.user;
       
-      // Simplified debugging: Supabase SSR handles cookie management automatically
+      // Enhanced mobile debugging: Supabase SSR handles cookie management automatically
       if (typeof window !== 'undefined') {
         try {
           // Debug: List all cookies to see what Supabase SSR has set
           console.log('🔍 All cookies:', document.cookie);
           console.log('🔍 Cookie keys:', document.cookie.split(';').map(c => c.trim().split('=')[0]));
+          
+          // Mobile-specific debugging
+          const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          if (isMobile) {
+            console.log('📱 Mobile device detected - enhanced debugging:');
+            console.log('📱 Mobile debug info:', MobileCacheManager.getMobileDebugInfo());
+            console.log('📱 Cache stats:', MobileCacheManager.getStats());
+          }
         } catch (e) {
           console.log('⚠️ Error reading cookies:', e);
         }
@@ -370,18 +379,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof window === 'undefined') return;
     
     try {
-      // Clear all localStorage
-      localStorage.clear();
-      
-      // Clear all sessionStorage
-      sessionStorage.clear();
+      // Use mobile-optimized cache clearing
+      MobileCacheManager.clearAll();
       
       // Clear all cookies
       document.cookie.split(";").forEach(function(c) { 
         document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
       });
       
-      console.log('🧹 Cleared all authentication data');
+      console.log('🧹 Cleared all authentication data with mobile cache manager');
     } catch (error) {
       console.warn('⚠️ Error clearing auth data:', error);
     }
