@@ -145,6 +145,7 @@ export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
   const [sideNavOpen, setSideNavOpen] = useState(false);
   const [language, setLanguage] = useState('English');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Mobile-optimized localStorage utility functions
   const safeLocalStorage = {
@@ -664,6 +665,23 @@ export default function Home() {
       }
     }
   }, [isMobile]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownOpen && isMobile) {
+        const target = event.target as Element;
+        if (!target.closest('.user-dropdown')) {
+          setDropdownOpen(false);
+        }
+      }
+    };
+
+    if (dropdownOpen && isMobile) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [dropdownOpen, isMobile]);
 
   // Translate messages when language changes
   useEffect(() => {
@@ -1342,8 +1360,11 @@ export default function Home() {
 
           <div className="header-right">
           {user ? (
-            <div className="user-dropdown">
-              <button className="auth-btn user-profile-btn">
+            <div className={`user-dropdown ${dropdownOpen ? 'active' : ''}`}>
+              <button 
+                className="auth-btn user-profile-btn"
+                onClick={() => isMobile && setDropdownOpen(!dropdownOpen)}
+              >
                 <User size={16} />
 {getFirstName(user?.display_name)}
               </button>
@@ -1364,7 +1385,10 @@ export default function Home() {
                   </div>
                 )}
                 <div className="dropdown-divider"></div>
-                <div className="dropdown-item" onClick={logout}>
+                <div className="dropdown-item" onClick={() => {
+                  if (isMobile) setDropdownOpen(false);
+                  logout();
+                }}>
                   <LogOut size={16} />
                   Sign Out
                 </div>

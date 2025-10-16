@@ -221,6 +221,32 @@ body {
   margin: 4px 0;
 }
 
+/* Mobile dropdown optimization */
+@media (max-width: 768px) {
+  .user-dropdown:hover .dropdown-menu {
+    /* Disable hover on mobile - use click instead */
+    opacity: 0;
+    visibility: hidden;
+  }
+  
+  .user-dropdown.active .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  
+  .dropdown-menu {
+    min-width: 160px;
+    right: -5px; /* Better positioning on mobile */
+    padding: 6px 0;
+  }
+  
+  .dropdown-item {
+    padding: 12px 16px; /* Larger touch targets on mobile */
+    font-size: 15px;
+  }
+}
+
 
 /* Side Navigation */
 .side-nav {
