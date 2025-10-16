@@ -85,11 +85,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       try {
         console.log('🔍 Fetching profile data from Supabase for userId:', userId);
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('tokens, referral_code, referred_by, display_name, avatar_url, email, subscription_tier')
-          .eq('id', userId)
-          .single();
+        // Fetch user profile data using API endpoint for consistency
+        const response = await fetch(`/api/user-profile?user_id=${userId}`);
+        
+        if (!response.ok) {
+          throw new Error(`Profile API error: ${response.status} ${response.statusText}`);
+        }
+        
+        const profileData = await response.json();
+        const profileError = null; // API handles errors internally
         
         console.log('🔍 Profile fetch result:', { profileData, profileError });
         
@@ -102,13 +106,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return null;
           }
           
-          // Use profile data directly from Supabase (now includes email from auth.users)
+          // Use profile data from API (includes proper name from auth.users)
           const displayName = profileData.display_name || '';
           const avatarUrl = profileData.avatar_url || '';
           userData = {
             id: userId,
-            email: profileData.email, // Now comes from profiles table (synced from auth.users)
-            name: displayName ? displayName.split(' ')[0] : '',
+            email: profileData.email, // From auth.users via API
+            name: profileData.name, // First name from auth.users via API
             tokens: profileData.tokens || 0,
             subscription_tier: profileData.subscription_tier || 'free',
             referral_code: profileData.referral_code || '',
@@ -118,40 +122,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           };
           console.log('✅ Constructed userData from profile:', userData);
         } else {
-          console.warn('⚠️ Profile fetch error:', profileError);
+          console.warn('⚠️ Profile API returned no data, creating fallback user');
           
-          // If profile doesn't exist, try to create it using the provided email
-          if (profileError?.code === 'PGRST116' && userEmail) { // PGRST116 = not found
-            console.log('🔍 Profile not found, attempting to create one with email:', userEmail);
-            
-            // Create fallback user with provided email
-            userData = { 
-              id: userId, 
-              email: userEmail, 
-              name: 'User', 
-              tokens: 0, 
-              subscription_tier: 'free', 
-              referral_code: '', 
-              referred_by: null, 
-              display_name: '', 
-              avatar_url: '' 
-            };
-            console.log('⚠️ Created fallback userData (profile not found):', userData);
-          } else {
-            // Other error - create fallback user with zero tokens
-            userData = { 
-              id: userId, 
-              email: userEmail || '', 
-              name: 'User', 
-              tokens: 0, 
-              subscription_tier: 'free', 
-              referral_code: '', 
-              referred_by: null, 
-              display_name: '', 
-              avatar_url: '' 
-            };
-            console.log('⚠️ Created fallback userData (other error):', userData);
-          }
+          // Create fallback user with provided email
+          userData = { 
+            id: userId, 
+            email: userEmail || '', 
+            name: 'User', 
+            tokens: 0, 
+            subscription_tier: 'free', 
+            referral_code: '', 
+            referred_by: null, 
+            display_name: '', 
+            avatar_url: '' 
+          };
+          console.log('⚠️ Created fallback userData (API returned no data):', userData);
         }
       } catch (directError) {
         console.error('❌ Direct Supabase fetch error:', directError);

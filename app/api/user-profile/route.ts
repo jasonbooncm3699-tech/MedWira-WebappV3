@@ -56,8 +56,20 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Use anon key (client-side access)
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    // Use service role key for admin access to auth.users table
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseServiceKey) {
+      console.error('❌ CRITICAL: Missing Supabase service role key for admin access');
+      return NextResponse.json(
+        { 
+          error: 'Server configuration error - missing service role key',
+          status: 'CONFIGURATION_ERROR'
+        },
+        { status: 500 }
+      );
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
     // Get profile data with better error handling
     // Note: This will only work if RLS policies allow anon access or if user is authenticated
@@ -115,26 +127,40 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // For now, skip auth user data fetch since we don't have admin access
-    // The profile data already contains display_name and avatar_url if available
-    let authUser = null;
-    let authError = null;
+    // Get user data from auth.users table for name and email
+    const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId);
+    
+    let userName = 'User';
+    let userEmail = '';
+    
+    if (authUser?.user) {
+      // Extract first name from user metadata
+      const fullName = authUser.user.user_metadata?.full_name || 
+                      authUser.user.user_metadata?.name || 
+                      authUser.user.user_metadata?.user_name;
+      
+      if (fullName) {
+        userName = fullName.split(' ')[0]; // Get first name only
+      }
+      
+      userEmail = authUser.user.email || '';
+    }
     
     // Use display_name and avatar_url from profile data
     const displayName = profile.display_name || '';
     const avatarUrl = profile.avatar_url || '';
     
-    // Return combined data
+    // Return combined data with proper name from auth.users
     const userProfile = {
       id: userId,
-      email: '', // Email not available without admin access
-      name: displayName ? displayName.split(' ')[0] : '',
+      email: userEmail,
+      name: userName, // First name from authentication user data
       tokens: profile.tokens,
       referral_code: profile.referral_code,
       referred_by: profile.referred_by,
       display_name: displayName,
       avatar_url: avatarUrl,
-      subscription_tier: 'free'
+      subscription_tier: profile.subscription_tier || 'free'
     };
     
     console.log('✅ User profile data retrieved successfully:', {
