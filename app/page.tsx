@@ -1341,6 +1341,12 @@ export default function Home() {
 
         {/* Side Navigation */}
         <nav className={`side-nav ${sideNavOpen ? 'open' : ''}`}>
+          {/* App Purpose Section - Google OAuth Verification */}
+          <div className="app-purpose-section">
+            <h1 className="app-title">MedWira AI: Your Personal AI Health Assistant</h1>
+            <p className="app-description">Get fast, trustworthy answers to your health, medication, and wellness questions.</p>
+          </div>
+          
           <div className="nav-header">
           <button className="new-chat-btn" onClick={handleNewChat}>
               <Plus size={16} />
