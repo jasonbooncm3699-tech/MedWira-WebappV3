@@ -145,6 +145,29 @@ export default function Home() {
   const [sideNavOpen, setSideNavOpen] = useState(false);
   const [language, setLanguage] = useState('English');
 
+  // Safe localStorage utility functions
+  const safeLocalStorage = {
+    getItem: (key: string): string | null => {
+      try {
+        if (typeof window === 'undefined') return null;
+        return localStorage.getItem(key);
+      } catch (error) {
+        console.warn(`Failed to read from localStorage (${key}):`, error);
+        return null;
+      }
+    },
+    setItem: (key: string, value: string): boolean => {
+      try {
+        if (typeof window === 'undefined') return false;
+        localStorage.setItem(key, value);
+        return true;
+      } catch (error) {
+        console.warn(`Failed to write to localStorage (${key}):`, error);
+        return false;
+      }
+    }
+  };
+
   // Translation functions
   const translateMessage = useCallback((message: ChatMessage): ChatMessage => {
     if (language === 'English' || !message.content) {
@@ -165,8 +188,8 @@ export default function Home() {
       prevMessages.map(translateMessage)
     );
     
-    // Save language preference to localStorage
-    localStorage.setItem('userLanguagePreference', newLanguage);
+    // Save language preference to localStorage with error handling
+    safeLocalStorage.setItem('userLanguagePreference', newLanguage);
   };
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -611,18 +634,26 @@ export default function Home() {
 
   // Load user language preference from localStorage on mount
   useEffect(() => {
-    // Only access localStorage on client side
-    if (typeof window === 'undefined') return;
-    
-    try {
-      const savedLanguage = localStorage.getItem('userLanguagePreference');
-      if (savedLanguage && SUPPORTED_LANGUAGES.includes(savedLanguage)) {
-        setLanguage(savedLanguage);
-      }
-    } catch (error) {
-      console.warn('Failed to access localStorage:', error);
+    const savedLanguage = safeLocalStorage.getItem('userLanguagePreference');
+    if (savedLanguage && SUPPORTED_LANGUAGES.includes(savedLanguage)) {
+      setLanguage(savedLanguage);
     }
-  }, []);
+  }, [safeLocalStorage]);
+
+  // Clear potentially corrupted localStorage on mobile if needed
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isMobile) {
+      try {
+        // Check if localStorage is working properly
+        const testKey = '__medwira_test__';
+        localStorage.setItem(testKey, 'test');
+        localStorage.removeItem(testKey);
+      } catch (error) {
+        console.warn('localStorage appears to be corrupted or unavailable on mobile:', error);
+        // Don't crash the app - just log the warning
+      }
+    }
+  }, [isMobile]);
 
   // Translate messages when language changes
   useEffect(() => {
