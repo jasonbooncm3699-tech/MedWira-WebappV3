@@ -310,7 +310,8 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
             }
             
             // Redirect back to home page
-            window.location.href = '/';
+            // Let the server-side callback handle the redirect
+            // Don't redirect here - the auth callback route will handle it
           }
         } catch (error) {
           console.error('💥 OAuth callback error:', error);
