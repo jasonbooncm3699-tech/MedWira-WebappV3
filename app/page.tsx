@@ -641,30 +641,12 @@ export default function Home() {
     }
   }, [safeLocalStorage]);
 
-  // Enhanced mobile debugging and cache management
-  useEffect(() => {
-    if (typeof window !== 'undefined' && isMobile) {
-      try {
-        // Enhanced mobile debugging
-        console.log('📱 Mobile device detected - running enhanced checks:');
-        console.log('📱 Mobile debug info:', MobileCacheManager.getMobileDebugInfo());
-        console.log('📱 Cache stats:', MobileCacheManager.getStats());
-        
-        // Check if localStorage is working properly with mobile cache manager
-        const testKey = '__medwira_test__';
-        const success = MobileCacheManager.setItem(testKey, 'test');
-        if (success) {
-          MobileCacheManager.removeItem(testKey);
-          console.log('✅ Mobile cache manager working properly');
-        } else {
-          console.warn('⚠️ Mobile cache manager has issues');
-        }
-      } catch (error) {
-        console.warn('⚠️ Mobile debugging failed:', error);
-        // Don't crash the app - just log the warning
-      }
-    }
-  }, [isMobile]);
+       // Simple mobile detection
+       useEffect(() => {
+         if (typeof window !== 'undefined' && isMobile) {
+           console.log('📱 Mobile device detected');
+         }
+       }, [isMobile]);
 
   // Close dropdown when clicking outside
   useEffect(() => {

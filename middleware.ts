@@ -38,12 +38,7 @@ export async function middleware(request: NextRequest) {
           })
           response.cookies.set(cookieOptions)
           
-          console.log('🍪 Middleware cookie set:', name, {
-            sameSite: cookieOptions.sameSite,
-            secure: cookieOptions.secure,
-            httpOnly: cookieOptions.httpOnly,
-            path: cookieOptions.path
-          })
+          console.log('🍪 Middleware cookie set:', name);
         },
         remove(name: string, options: CookieOptions) {
           request.cookies.set({

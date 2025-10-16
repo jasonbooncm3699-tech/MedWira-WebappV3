@@ -34,12 +34,7 @@ export async function createClient() {
             }
             
             cookieStore.set(cookieOptions)
-            console.log('🍪 Server-side HTTP-only cookie set:', name, {
-              sameSite: cookieOptions.sameSite,
-              secure: cookieOptions.secure,
-              httpOnly: cookieOptions.httpOnly,
-              path: cookieOptions.path
-            })
+           console.log('🍪 Server-side HTTP-only cookie set:', name)
           } catch (error) {
             console.warn('⚠️ Failed to set server-side HTTP-only cookie:', name, error)
             // The `set` method was called from a Server Component.

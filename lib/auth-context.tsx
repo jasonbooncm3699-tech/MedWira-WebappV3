@@ -212,15 +212,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== 'undefined') {
         try {
           // Debug: List all cookies to see what Supabase SSR has set
-          console.log('🔍 All cookies:', document.cookie);
-          console.log('🔍 Cookie keys:', document.cookie.split(';').map(c => c.trim().split('=')[0]));
-          
-          // Mobile-specific debugging
+          // Simple mobile detection
           const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
           if (isMobile) {
-            console.log('📱 Mobile device detected - enhanced debugging:');
-            console.log('📱 Mobile debug info:', MobileCacheManager.getMobileDebugInfo());
-            console.log('📱 Cache stats:', MobileCacheManager.getStats());
+            console.log('📱 Mobile device detected');
           }
         } catch (e) {
           console.log('⚠️ Error reading cookies:', e);
