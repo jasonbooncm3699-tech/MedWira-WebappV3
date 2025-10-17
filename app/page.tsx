@@ -203,7 +203,6 @@ export default function Home() {
   const [chatHistoryLoading, setChatHistoryLoading] = useState(false);
   const [chatHistoryPage, setChatHistoryPage] = useState(1);
   const [hasMoreChatHistory, setHasMoreChatHistory] = useState(true);
-  const [chatSearchQuery, setChatSearchQuery] = useState('');
   const [userTokens, setUserTokens] = useState<number>(user?.tokens || 0);
   const [inputText, setInputText] = useState('');
   const [aiStatus, setAiStatus] = useState<string>('idle');
@@ -819,18 +818,18 @@ export default function Home() {
   // Fetch user chat history when user logs in
   useEffect(() => {
     if (user?.id) {
-      fetchUserChatHistory(1, chatSearchQuery, false);
+      fetchUserChatHistory(1, '', false);
     }
-  }, [fetchUserChatHistory, user?.id, chatSearchQuery]);
+  }, [fetchUserChatHistory, user?.id]);
 
   // Load more chat history when scrolling
   const loadMoreChatHistory = useCallback(() => {
     if (!chatHistoryLoading && hasMoreChatHistory && user?.id) {
       const nextPage = chatHistoryPage + 1;
       setChatHistoryPage(nextPage);
-      fetchUserChatHistory(nextPage, chatSearchQuery, true);
+      fetchUserChatHistory(nextPage, '', true);
     }
-  }, [chatHistoryLoading, hasMoreChatHistory, user?.id, chatHistoryPage, chatSearchQuery, fetchUserChatHistory]);
+  }, [chatHistoryLoading, hasMoreChatHistory, user?.id, chatHistoryPage, fetchUserChatHistory]);
 
 
 
@@ -1422,17 +1421,6 @@ export default function Home() {
             <div className="recent-chats">
               <div className="chat-history-header">
                 <h3>Chat History</h3>
-                {user && (
-                  <div className="chat-search">
-                    <input
-                      type="text"
-                      placeholder="Search conversations..."
-                      value={chatSearchQuery}
-                      onChange={(e) => setChatSearchQuery(e.target.value)}
-                      className="chat-search-input"
-                    />
-                  </div>
-                )}
               </div>
               
               <div className="chat-list" onScroll={(e) => {

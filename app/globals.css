@@ -1092,30 +1092,6 @@ body {
   margin-bottom: 16px;
 }
 
-.chat-search {
-  width: 100%;
-}
-
-.chat-search-input {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 8px 12px;
-  color: #ffffff;
-  font-size: 13px;
-  outline: none;
-  transition: all 0.2s ease;
-}
-
-.chat-search-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.chat-search-input:focus {
-  border-color: rgba(0, 212, 255, 0.5);
-  background: rgba(255, 255, 255, 0.08);
-}
 
 /* Enhanced Chat Items */
 .chat-item.enhanced {

@@ -382,7 +382,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
       });
       
-      console.log('🧹 Cleared all authentication data with mobile cache manager');
+      // Clear Supabase-specific authentication data
+      const authKeys = ['sb-', 'supabase.auth.token', 'supabase.auth.refresh_token'];
+      Object.keys(localStorage).forEach(key => {
+        if (authKeys.some(authKey => key.startsWith(authKey))) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      Object.keys(sessionStorage).forEach(key => {
+        if (authKeys.some(authKey => key.startsWith(authKey))) {
+          sessionStorage.removeItem(key);
+        }
+      });
+      
+      console.log('🧹 Cleared all authentication data including Supabase tokens');
     } catch (error) {
       console.warn('⚠️ Error clearing auth data:', error);
     }

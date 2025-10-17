@@ -108,6 +108,38 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
       setSocialLoading(provider);
       authStartTimeRef.current = Date.now();
       
+      // CRITICAL: Clear any existing authentication data to prevent conflicts
+      console.log('🧹 Clearing existing authentication data...');
+      try {
+        // Clear Supabase session
+        await supabase.auth.signOut();
+        
+        // Clear localStorage authentication data
+        const authKeys = ['sb-', 'supabase.auth.token'];
+        Object.keys(localStorage).forEach(key => {
+          if (authKeys.some(authKey => key.startsWith(authKey))) {
+            localStorage.removeItem(key);
+            console.log('🗑️ Removed auth key:', key);
+          }
+        });
+        
+        // Clear sessionStorage authentication data
+        Object.keys(sessionStorage).forEach(key => {
+          if (authKeys.some(authKey => key.startsWith(authKey))) {
+            sessionStorage.removeItem(key);
+            console.log('🗑️ Removed session key:', key);
+          }
+        });
+        
+        console.log('✅ Authentication data cleared');
+        
+        // Small delay to ensure cleanup is complete
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (cleanupError) {
+        console.warn('⚠️ Error during auth cleanup:', cleanupError);
+        // Continue with login even if cleanup fails
+      }
+      
       // Enhanced mobile debugging
       const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       const isChrome = /Chrome/i.test(navigator.userAgent);
