@@ -29,7 +29,7 @@ import { MobileCacheManager } from '@/lib/mobile-cache-manager';
 
 export default function Home() {
   // Test deployment - simple change
-  const { user, logout, isLoading, refreshUser, refreshUserData } = useAuth();
+  const { user, logout, isLoading, refreshUser, refreshUserData, initializeSupabase } = useAuth();
 
   // Helper function to extract first name from display_name
   const getFirstName = (displayName?: string): string => {
@@ -1999,6 +1999,7 @@ export default function Home() {
         onClose={() => setShowAuthModal(false)}
         mode={authMode}
         onModeChange={setAuthMode}
+        onInitializeSupabase={initializeSupabase}
       />
 
       {/* Registration Wall Modal */}

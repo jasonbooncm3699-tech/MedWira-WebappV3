@@ -24,6 +24,7 @@ interface AuthContextType {
   refreshUserData: () => Promise<void>;
   forceFetchUserProfile: (userId: string, userEmail: string, userName: string) => Promise<User | null>;
   clearAllAuthData: () => void;
+  initializeSupabase: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,14 +34,16 @@ let globalInitializationComplete = false;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Start as false since we're not auto-initializing
   const [isHydrated, setIsHydrated] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [supabaseInitialized, setSupabaseInitialized] = useState(false);
   
   // Simplified setUser without excessive logging to prevent console spam
   const debugSetUser = useCallback((newUser: User | null) => {
     setUser(newUser);
   }, []); // Removed dependencies to prevent circular calls
+
   
   // CRITICAL: Use ref to prevent infinite loops - refs don't trigger re-renders
   const initializationRef = useRef(false);
@@ -53,6 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // REMOVED: Excessive logging that was causing performance issues
     return createClient();
   }, []); // Empty dependency array = create only once
+
 
   // SAFETY: Add timeout to prevent infinite loading
   useEffect(() => {
@@ -82,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('📦 Using cached user data for:', userId);
         return cached.data;
       }
-
+      
       // Get profile data directly from Supabase profiles table (now includes email)
       let userData: User | null = null;
       
@@ -170,6 +174,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return null;
     }
   }, [supabase]);
+
+  // Initialize Supabase only when user explicitly interacts (e.g., clicks Sign In)
+  const initializeSupabase = useCallback(async () => {
+    if (supabaseInitialized) {
+      return; // Already initialized
+    }
+
+    console.log('🚀 Initializing Supabase on user interaction...');
+    setSupabaseInitialized(true);
+    setIsLoading(true);
+
+    try {
+      // Check for existing session first
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        console.log('✅ Existing session found, loading user data...');
+        const userData = await fetchUserData(session.user.id, session.user.email);
+        if (userData) {
+          debugSetUser(userData);
+        }
+      }
+      
+      setIsInitialized(true);
+    } catch (error) {
+      console.error('❌ Error initializing Supabase:', error);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [supabaseInitialized, supabase, fetchUserData, debugSetUser]);
 
   const refreshUser = useCallback(async () => {
     
@@ -316,7 +351,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
         return;
       }
-
+      
       // Fetch user data from profiles table (now includes email from auth.users via trigger)
       const userData = await fetchUserData(userId, userEmail);
       if (userData) {
@@ -710,50 +745,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // }, [isHydrated, isLoading]);
 
   useEffect(() => {
-    // Only initialize auth after hydration
+    // Only set up hydration - no automatic Supabase initialization
     if (!isHydrated) {
       return;
     }
     
-    // CRITICAL: Prevent multiple initializations using global variable (persists across remounts)
-    if (globalInitializationComplete) {
-      return;
-    }
-    
-    // CRITICAL: Single auth initialization to prevent race conditions
-      
-      // Set global flag to prevent future initializations
-      globalInitializationComplete = true;
-      initializationRef.current = true;
-      
-      // Single initialization function with minimal delays
-      const initializeAuth = async () => {
-        try {
-        
-        // Brief delay only if URL session detected
+    // Check if user came from OAuth callback and needs immediate initialization
         if (typeof window !== 'undefined') {
           const urlParams = new URLSearchParams(window.location.search);
           if (urlParams.has('code') || urlParams.has('access_token')) {
-            await new Promise(resolve => setTimeout(resolve, 200)); // Reduced from 500ms
-          }
-        }
-        
-        await refreshUser();
-        setIsInitialized(true);
-      } catch (error) {
-        console.error('❌ Error during auth initialization:', error);
-        setIsLoading(false);
-        setIsInitialized(true);
-        setUser(null);
+        console.log('🔄 OAuth callback detected, initializing Supabase...');
+        initializeSupabase();
       }
-    };
-    
-    // Single setTimeout to defer initialization
-    setTimeout(initializeAuth, 50); // Reduced from 0ms to prevent immediate execution
+    }
     
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // DEFENSIVE: Prevent processing auth events before initialization is complete
-      if (!isInitialized) {
+      // DEFENSIVE: Only process auth events after Supabase is initialized
+      if (!supabaseInitialized) {
         return;
       }
       
@@ -903,7 +911,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('🧹 Cleaning up auth listener');
       authListener.subscription.unsubscribe();
     };
-  }, [isHydrated]); // REMOVED ALL dependencies except isHydrated to prevent infinite loop
+  }, [isHydrated, initializeSupabase]); // Added initializeSupabase for OAuth callback handling
 
   // REMOVED: Redundant useEffect that was causing infinite loops
 
@@ -917,6 +925,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUserData,
     forceFetchUserProfile,
     clearAllAuthData,
+    initializeSupabase,
   };
 
   // DEFENSIVE: Wrap provider in error boundary to catch React error #18
@@ -939,7 +948,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refreshUser: async () => {},
         refreshUserData: async () => {},
         forceFetchUserProfile: async () => null,
-        clearAllAuthData: () => {}
+        clearAllAuthData: () => {},
+        initializeSupabase: async () => {}
       }}>
         {children}
       </AuthContext.Provider>

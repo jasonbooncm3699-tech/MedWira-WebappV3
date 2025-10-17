@@ -9,9 +9,10 @@ interface SocialAuthModalProps {
   onClose: () => void;
   mode: 'login' | 'register';
   onModeChange: (mode: 'login' | 'register') => void;
+  onInitializeSupabase?: () => Promise<void>;
 }
 
-export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthModalProps) {
+export default function SocialAuthModal({ isOpen, onClose, mode, onInitializeSupabase }: SocialAuthModalProps) {
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const authTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -103,6 +104,11 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
     }
 
     try {
+      // Initialize Supabase first if not already done
+      if (onInitializeSupabase) {
+        await onInitializeSupabase();
+      }
+      
       // Reset any previous error messages
       setErrorMessage('');
       setSocialLoading(provider);
