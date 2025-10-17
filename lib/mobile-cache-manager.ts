@@ -95,33 +95,4 @@ export class MobileCacheManager {
     }
   }
 
-  /**
-   * Get mobile debug info (simplified)
-   */
-  static getMobileDebugInfo(): { 
-    isMobile: boolean; 
-    userAgent: string; 
-    storageAvailable: boolean;
-  } {
-    try {
-      if (typeof window === 'undefined') {
-        return { isMobile: false, userAgent: 'Server-side', storageAvailable: false };
-      }
-      
-      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const stats = this.getStats();
-      
-      return {
-        isMobile,
-        userAgent: navigator.userAgent,
-        storageAvailable: stats.available
-      };
-    } catch (error) {
-      return { 
-        isMobile: false, 
-        userAgent: 'Error', 
-        storageAvailable: false 
-      };
-    }
-  }
 }

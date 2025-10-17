@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Image from 'next/image';
 import { Bot, User, Send, Upload, Camera, Menu, X, Plus, MessageSquare, Settings, LogOut, LogIn, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
@@ -147,8 +147,8 @@ export default function Home() {
   const [language, setLanguage] = useState('English');
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Mobile-optimized localStorage utility functions
-  const safeLocalStorage = {
+  // Mobile-optimized localStorage utility functions (memoized to prevent re-renders)
+  const safeLocalStorage = useMemo(() => ({
     getItem: (key: string): string | null => {
       try {
         if (typeof window === 'undefined') return null;
@@ -167,7 +167,7 @@ export default function Home() {
         return false;
       }
     }
-  };
+  }), []);
 
   // Translation functions
   const translateMessage = useCallback((message: ChatMessage): ChatMessage => {
@@ -648,7 +648,7 @@ export default function Home() {
         prevMessages.map(translateMessage)
       );
     }
-  }, [language, messages.length, translateMessage]);
+  }, [language, translateMessage]); // Removed messages.length to prevent constant re-renders
 
   // Enhanced function to fetch user chat history with pagination and search
   const fetchUserChatHistory = useCallback(async (page: number = 1, searchQuery: string = '', append: boolean = false) => {
@@ -789,12 +789,8 @@ export default function Home() {
 
   // Medication Stack Management Functions
 
-  // Fetch user chat history when user logs in (only once per user)
-  useEffect(() => {
-    if (user?.id && !chatHistoryLoading) {
-      fetchUserChatHistory(1, '', false);
-    }
-  }, [user?.id]); // Removed fetchUserChatHistory dependency to prevent loops
+  // Lazy load chat history - only when user clicks on chat history section
+  // Removed automatic loading on user login for better performance
 
   // Load more chat history when scrolling
   const loadMoreChatHistory = useCallback(() => {
@@ -1393,7 +1389,12 @@ export default function Home() {
           <div className="nav-content">
             {/* Enhanced Chat History with Search */}
             <div className="recent-chats">
-              <div className="chat-history-header">
+              <div className="chat-history-header" onClick={() => {
+                // Lazy load chat history when user clicks on header
+                if (user?.id && !chatHistoryLoading && chatHistory.length === 0) {
+                  fetchUserChatHistory(1, '', false);
+                }
+              }}>
                 <h3>Chat History</h3>
               </div>
               

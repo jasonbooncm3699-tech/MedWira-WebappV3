@@ -68,9 +68,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isLoading]);
 
 
+  // Simple cache to prevent redundant API calls
+  const userDataCache = useRef<Map<string, { data: User | null; timestamp: number }>>(new Map());
+  const CACHE_DURATION = 30000; // 30 seconds cache
+
   // Fetch user data directly from public.profiles (which now includes email from auth.users)
   const fetchUserData = useCallback(async (userId: string, userEmail?: string): Promise<User | null> => {
     try {
+      // Check cache first
+      const cacheKey = userId;
+      const cached = userDataCache.current.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        console.log('📦 Using cached user data for:', userId);
+        return cached.data;
+      }
+
       // Get profile data directly from Supabase profiles table (now includes email)
       let userData: User | null = null;
       
@@ -144,9 +156,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // CRITICAL: Check if userData is null before accessing properties
       if (!userData) {
         console.error('❌ CRITICAL: userData is null - this should not happen');
+        // Cache null result to prevent repeated failed calls
+        userDataCache.current.set(cacheKey, { data: null, timestamp: Date.now() });
         return null;
       }
       
+      // Cache the successful result
+      userDataCache.current.set(cacheKey, { data: userData, timestamp: Date.now() });
       
       return userData;
     } catch (error) {
