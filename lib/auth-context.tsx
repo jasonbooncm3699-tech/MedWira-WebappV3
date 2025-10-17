@@ -182,7 +182,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     console.log('🚀 Initializing Supabase on user interaction...');
-    setSupabaseInitialized(true);
     setIsLoading(true);
 
     try {
@@ -197,10 +196,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
       
+      // Only mark as initialized after successful completion
+      setSupabaseInitialized(true);
       setIsInitialized(true);
     } catch (error) {
       console.error('❌ Error initializing Supabase:', error);
       setUser(null);
+      // Don't set supabaseInitialized = true on error, so it can retry
     } finally {
       setIsLoading(false);
     }
@@ -751,17 +753,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     
     // Check if user came from OAuth callback and needs immediate initialization
-        if (typeof window !== 'undefined') {
-          const urlParams = new URLSearchParams(window.location.search);
-          if (urlParams.has('code') || urlParams.has('access_token')) {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('code') || urlParams.has('access_token')) {
         console.log('🔄 OAuth callback detected, initializing Supabase...');
         initializeSupabase();
       }
     }
     
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // DEFENSIVE: Only process auth events after Supabase is initialized
-      if (!supabaseInitialized) {
+      // DEFENSIVE: Allow INITIAL_SESSION events even when not manually initialized
+      // This ensures existing sessions are loaded automatically
+      if (!supabaseInitialized && event !== 'INITIAL_SESSION') {
         return;
       }
       
