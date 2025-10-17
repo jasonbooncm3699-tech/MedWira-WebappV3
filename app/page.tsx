@@ -882,31 +882,29 @@ export default function Home() {
     setShowCamera(false);
   };
 
-  // Ensure video element gets the stream when cameraStream changes
+  // Video ref to handle stream setting
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Set video stream when cameraStream changes
   useEffect(() => {
-    if (cameraStream && showCamera) {
-      console.log('🔄 Setting video stream:', cameraStream);
-      // Small delay to ensure video element is rendered
-      setTimeout(() => {
-        const video = document.querySelector('video');
-        if (video) {
-          video.srcObject = cameraStream;
-          video.muted = true; // Required for autoplay
-          video.play().catch(error => {
-            console.error('❌ Video play error:', error);
-          });
-          console.log('✅ Video stream set and play initiated');
-        } else {
-          console.error('❌ Video element not found');
-        }
-      }, 100);
+    if (videoRef.current && cameraStream) {
+      console.log('🔄 Setting video stream via ref:', cameraStream);
+      videoRef.current.srcObject = cameraStream;
+      videoRef.current.muted = true;
+      videoRef.current.play().catch(error => {
+        console.error('❌ Video play error:', error);
+      });
+      console.log('✅ Video stream set and play initiated');
     }
-  }, [cameraStream, showCamera]);
+  }, [cameraStream]);
 
   // Capture photo from camera
   const capturePhoto = () => {
-    const video = document.querySelector('video') as HTMLVideoElement;
-    if (!video) return;
+    const video = videoRef.current;
+    if (!video) {
+      console.error('❌ Video element not available for capture');
+      return;
+    }
 
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
@@ -1992,12 +1990,7 @@ export default function Home() {
               Close
             </button>
             <video
-              ref={(el) => {
-                if (el) {
-                  el.srcObject = cameraStream;
-                  el.play().catch(console.error);
-                }
-              }}
+              ref={videoRef}
               autoPlay
               playsInline
               muted
