@@ -884,15 +884,24 @@ export default function Home() {
 
   // Ensure video element gets the stream when cameraStream changes
   useEffect(() => {
-    const video = document.querySelector('video');
-    if (video && cameraStream) {
+    if (cameraStream && showCamera) {
       console.log('🔄 Setting video stream:', cameraStream);
-      video.srcObject = cameraStream;
-      video.play().catch(error => {
-        console.error('❌ Video play error:', error);
-      });
+      // Small delay to ensure video element is rendered
+      setTimeout(() => {
+        const video = document.querySelector('video');
+        if (video) {
+          video.srcObject = cameraStream;
+          video.muted = true; // Required for autoplay
+          video.play().catch(error => {
+            console.error('❌ Video play error:', error);
+          });
+          console.log('✅ Video stream set and play initiated');
+        } else {
+          console.error('❌ Video element not found');
+        }
+      }, 100);
     }
-  }, [cameraStream]);
+  }, [cameraStream, showCamera]);
 
   // Capture photo from camera
   const capturePhoto = () => {
