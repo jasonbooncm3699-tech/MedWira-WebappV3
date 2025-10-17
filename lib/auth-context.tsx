@@ -37,19 +37,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   
-  // DEBUG: Track setUser calls - REMOVED hydration deferral as it was causing state loss
+  // Simplified setUser without excessive logging to prevent console spam
   const debugSetUser = useCallback((newUser: User | null) => {
-    console.log('🔍 setUser called', {
-      previousUser: user?.id || 'null',
-      newUser: newUser?.id || 'null',
-      isHydrated,
-      stackTrace: new Error().stack?.split('\n').slice(1, 4).join('\n')
-    });
-    
-    // CRITICAL FIX: Execute setUser immediately - hydration deferral was causing state loss
-    console.log('🔍 Executing setUser call immediately');
     setUser(newUser);
-  }, [user, isHydrated]);
+  }, []); // Removed dependencies to prevent circular calls
   
   // CRITICAL: Use ref to prevent infinite loops - refs don't trigger re-renders
   const initializationRef = useRef(false);
@@ -125,19 +116,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('✅ Constructed userData from profile:', userData);
         } else {
           console.warn('⚠️ Profile API returned no data, creating fallback user');
-          
-          // Create fallback user with provided email
-          userData = { 
-            id: userId, 
-            email: userEmail || '', 
-            name: 'User', 
-            tokens: 0, 
-            subscription_tier: 'free', 
-            referral_code: '', 
-            referred_by: null, 
-            display_name: '', 
-            avatar_url: '' 
-          };
+            
+            // Create fallback user with provided email
+            userData = { 
+              id: userId, 
+              email: userEmail || '', 
+              name: 'User', 
+              tokens: 0, 
+              subscription_tier: 'free', 
+              referral_code: '', 
+              referred_by: null, 
+              display_name: '', 
+              avatar_url: '' 
+            };
           console.log('⚠️ Created fallback userData (API returned no data):', userData);
         }
       } catch (directError) {
@@ -731,46 +722,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // }, [isHydrated, isLoading]);
 
   useEffect(() => {
-    console.log('🔍 Auth initialization useEffect triggered');
-    
     // Only initialize auth after hydration
     if (!isHydrated) {
-      console.log('🔍 Skipping auth initialization - not hydrated yet');
       return;
     }
     
     // CRITICAL: Prevent multiple initializations using global variable (persists across remounts)
     if (globalInitializationComplete) {
-      console.log('⚠️ Auth already initialized (global), skipping...');
       return;
     }
     
     // CRITICAL: Single auth initialization to prevent race conditions
-    console.log('🔍 Hydration complete, starting auth initialization...');
-    
-    // Set global flag to prevent future initializations
-    globalInitializationComplete = true;
-    initializationRef.current = true;
-    
-    console.log('🚀 AuthProvider initializing...');
-    
-    // Single initialization function with minimal delays
-    const initializeAuth = async () => {
-      try {
-        console.log('🚀 Starting auth initialization...');
+      
+      // Set global flag to prevent future initializations
+      globalInitializationComplete = true;
+      initializationRef.current = true;
+      
+      // Single initialization function with minimal delays
+      const initializeAuth = async () => {
+        try {
         
         // Brief delay only if URL session detected
         if (typeof window !== 'undefined') {
           const urlParams = new URLSearchParams(window.location.search);
           if (urlParams.has('code') || urlParams.has('access_token')) {
-            console.log('🔗 URL session detected, waiting for processing...');
             await new Promise(resolve => setTimeout(resolve, 200)); // Reduced from 500ms
           }
         }
         
         await refreshUser();
         setIsInitialized(true);
-        console.log('✅ Auth initialization completed');
       } catch (error) {
         console.error('❌ Error during auth initialization:', error);
         setIsLoading(false);
@@ -785,12 +766,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       // DEFENSIVE: Prevent processing auth events before initialization is complete
       if (!isInitialized) {
-        console.log(`⏳ Auth event '${event}' received during initialization - will be processed after init completes`);
         return;
       }
       
       if (event === 'SIGNED_IN') {
-        console.log('🎉 User signed in event detected!');
         setIsLoading(true);
         
         try {

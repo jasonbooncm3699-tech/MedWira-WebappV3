@@ -603,30 +603,13 @@ export default function Home() {
     }
   }, []); // Removed refreshUser dependency to prevent race condition
 
-  // Force UI re-render when user state changes
+  // Update local token state when user changes (minimal logging)
   useEffect(() => {
-    console.log('🔍 MAIN PAGE: User state changed', {
-      timestamp: new Date().toISOString(),
-      hasUser: !!user,
-      userId: user?.id || 'null',
-      userEmail: user?.email || 'null',
-      userTokens: user?.tokens || 'null',
-      userName: user?.name || 'null'
-    });
-
     // Update local token state when user changes
     if (user?.tokens !== undefined) {
       setUserTokens(user.tokens);
     }
-
-    // CRITICAL: If user is authenticated but missing tokens or referral code, refresh data
-    if (user && !isLoading) {
-      if (user.tokens === 0 || !user.referral_code) {
-        // Note: refreshUserData removed to prevent race condition
-        console.log('⚠️ User has low tokens or missing referral code, but skipping refreshUserData to prevent race condition');
-      }
-    }
-  }, [user, isLoading]); // Removed refreshUserData to prevent race condition
+  }, [user?.tokens]); // Only depend on tokens to prevent unnecessary re-renders
 
   // Load user language preference from localStorage on mount
   useEffect(() => {
@@ -636,11 +619,9 @@ export default function Home() {
     }
   }, [safeLocalStorage]);
 
-       // Simple mobile detection
+       // Mobile detection (no logging to prevent console spam)
        useEffect(() => {
-         if (typeof window !== 'undefined' && isMobile) {
-           console.log('📱 Mobile device detected');
-         }
+         // Mobile detection runs silently to prevent console flooding
        }, [isMobile]);
 
   // Close dropdown when clicking outside
@@ -811,12 +792,12 @@ export default function Home() {
 
   // Medication Stack Management Functions
 
-  // Fetch user chat history when user logs in
+  // Fetch user chat history when user logs in (only once per user)
   useEffect(() => {
-    if (user?.id) {
+    if (user?.id && !chatHistoryLoading) {
       fetchUserChatHistory(1, '', false);
     }
-  }, [fetchUserChatHistory, user?.id]);
+  }, [user?.id]); // Removed fetchUserChatHistory dependency to prevent loops
 
   // Load more chat history when scrolling
   const loadMoreChatHistory = useCallback(() => {
@@ -825,7 +806,7 @@ export default function Home() {
       setChatHistoryPage(nextPage);
       fetchUserChatHistory(nextPage, '', true);
     }
-  }, [chatHistoryLoading, hasMoreChatHistory, user?.id, chatHistoryPage, fetchUserChatHistory]);
+  }, [chatHistoryLoading, hasMoreChatHistory, user?.id, chatHistoryPage]); // Removed fetchUserChatHistory dependency
 
 
 
