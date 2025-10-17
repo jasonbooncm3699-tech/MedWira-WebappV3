@@ -597,15 +597,11 @@ export default function Home() {
 
     const params = new URLSearchParams(window.location.search);
     if (params.get('session_refresh') === 'true') {
-
-      // Give auth context time to process the session
-      setTimeout(() => {
-        refreshUser();
-        // Clean up URL parameter
-        window.history.replaceState({}, '', window.location.pathname);
-      }, 1000);
+      // Clean up URL parameter - let auth context handle session naturally
+      window.history.replaceState({}, '', window.location.pathname);
+      console.log('🔗 Session refresh parameter detected and cleaned up');
     }
-  }, [refreshUser]);
+  }, []); // Removed refreshUser dependency to prevent race condition
 
   // Force UI re-render when user state changes
   useEffect(() => {

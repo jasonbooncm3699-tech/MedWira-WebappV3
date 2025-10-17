@@ -367,7 +367,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [fetchUserData, supabase]); // REMOVED user from deps to prevent circular dependency
+  }, [supabase]); // REMOVED fetchUserData and user from deps to prevent circular dependency
 
   // Utility function to clear all authentication data
   const clearAllAuthData = useCallback(() => {
@@ -569,7 +569,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     }
-  }, [fetchUserData]); // REMOVED all user properties from deps to prevent circular dependency
+  }, []); // REMOVED all dependencies to prevent circular dependency and state loops
 
   // CRITICAL: Force fetch user profile data from profiles table
   const forceFetchUserProfile = useCallback(async (userId: string, userEmail: string, userName: string) => {
@@ -655,7 +655,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log('✅ Manual provisioning successful during force fetch:', provisionResult);
             
             // Try to fetch the newly created data
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 300));
             const newUserData = await fetchUserData(userId, userEmail);
             
             if (newUserData) {
@@ -711,7 +711,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(emergencyFallbackUser);
       return emergencyFallbackUser;
     }
-  }, [fetchUserData, supabase]);
+  }, [supabase]); // REMOVED fetchUserData to prevent circular dependency
 
   // Handle hydration
   useEffect(() => {
@@ -745,29 +745,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     
-    // CRITICAL: Add delay after hydration to ensure React is fully settled
-    console.log('🔍 Hydration complete, waiting for React to settle before auth initialization...');
-    setTimeout(() => {
-      console.log('🔍 React settled, proceeding with auth initialization');
-      
-      // Set global flag to prevent future initializations
-      globalInitializationComplete = true;
-      initializationRef.current = true;
-      
-      console.log('🚀 AuthProvider initializing...');
-      
-      // DEFENSIVE: Use setTimeout to prevent React error #18 (hydration mismatch)
-      const initializeAuth = async () => {
+    // CRITICAL: Single auth initialization to prevent race conditions
+    console.log('🔍 Hydration complete, starting auth initialization...');
+    
+    // Set global flag to prevent future initializations
+    globalInitializationComplete = true;
+    initializationRef.current = true;
+    
+    console.log('🚀 AuthProvider initializing...');
+    
+    // Single initialization function with minimal delays
+    const initializeAuth = async () => {
       try {
         console.log('🚀 Starting auth initialization...');
         
-        // First, let Supabase detect any session in the URL
+        // Brief delay only if URL session detected
         if (typeof window !== 'undefined') {
           const urlParams = new URLSearchParams(window.location.search);
           if (urlParams.has('code') || urlParams.has('access_token')) {
             console.log('🔗 URL session detected, waiting for processing...');
-            // Give Supabase time to process the URL session
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 200)); // Reduced from 500ms
           }
         }
         
@@ -778,14 +775,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('❌ Error during auth initialization:', error);
         setIsLoading(false);
         setIsInitialized(true);
-        // Ensure user is set to null on error to prevent stuck state
         setUser(null);
       }
     };
     
-    // Defer initialization to next tick to avoid hydration issues
-    setTimeout(initializeAuth, 0);
-    }, 100); // Close the setTimeout for React settling
+    // Single setTimeout to defer initialization
+    setTimeout(initializeAuth, 50); // Reduced from 0ms to prevent immediate execution
     
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       // DEFENSIVE: Prevent processing auth events before initialization is complete
