@@ -882,6 +882,18 @@ export default function Home() {
     setShowCamera(false);
   };
 
+  // Ensure video element gets the stream when cameraStream changes
+  useEffect(() => {
+    const video = document.querySelector('video');
+    if (video && cameraStream) {
+      console.log('🔄 Setting video stream:', cameraStream);
+      video.srcObject = cameraStream;
+      video.play().catch(error => {
+        console.error('❌ Video play error:', error);
+      });
+    }
+  }, [cameraStream]);
+
   // Capture photo from camera
   const capturePhoto = () => {
     const video = document.querySelector('video') as HTMLVideoElement;
@@ -1972,18 +1984,20 @@ export default function Home() {
             </button>
             <video
               ref={(el) => {
-                if (el && cameraStream) {
+                if (el) {
                   el.srcObject = cameraStream;
+                  el.play().catch(console.error);
                 }
               }}
               autoPlay
-            playsInline
-            style={{
-              width: '100%',
-              height: '100%',
-              transform: isTablet ? 'scaleX(-1)' : 'none' // Fix mirroring on tablets only
-            }}
-          />
+              playsInline
+              muted
+              style={{
+                width: '100%',
+                height: '100%',
+                transform: isTablet ? 'scaleX(-1)' : 'none' // Fix mirroring on tablets only
+              }}
+            />
           <div style={{
             position: 'absolute',
             bottom: '20px',
