@@ -688,10 +688,7 @@ export default function Home() {
         setHasMoreChatHistory(page < data.pagination.totalPages);
         setChatHistoryPage(page);
         
-        console.log('✅ Chat history loaded: page', page, ',', data.conversations.length, 'conversations');
-        console.log('📊 Pagination info:', data.pagination);
       } else {
-        console.log('ℹ️ No chat history found in database');
         if (!append) {
           setChatHistory([]);
         }

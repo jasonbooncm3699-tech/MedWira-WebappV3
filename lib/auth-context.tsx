@@ -71,13 +71,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Fetch user data directly from public.profiles (which now includes email from auth.users)
   const fetchUserData = useCallback(async (userId: string, userEmail?: string): Promise<User | null> => {
     try {
-      console.log('🔍 fetchUserData called with:', { userId, userEmail });
-      
       // Get profile data directly from Supabase profiles table (now includes email)
       let userData: User | null = null;
       
       try {
-        console.log('🔍 Fetching profile data from Supabase for userId:', userId);
         // Fetch user profile data using API endpoint for consistency
         const response = await fetch(`/api/user-profile?user_id=${userId}`);
         
@@ -88,10 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const profileData = await response.json();
         const profileError = null; // API handles errors internally
         
-        console.log('🔍 Profile fetch result:', { profileData, profileError });
-        
         if (profileData && !profileError) {
-          console.log('✅ Profile data found:', profileData);
           
           // Validate that we have the required data
           if (!profileData.email) {
@@ -129,7 +123,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               display_name: '', 
               avatar_url: '' 
             };
-          console.log('⚠️ Created fallback userData (API returned no data):', userData);
         }
       } catch (directError) {
         console.error('❌ Direct Supabase fetch error:', directError);
@@ -146,7 +139,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           display_name: '',
           avatar_url: ''
         };
-        console.log('❌ Created error fallback userData:', userData);
       }
       
       // CRITICAL: Check if userData is null before accessing properties
@@ -155,16 +147,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
       
-      console.log('✅ User data loaded from profiles table:', {
-        tokens: userData.tokens,
-        referral_code: userData.referral_code,
-        display_name: userData.display_name,
-        name: userData.name,
-        avatar_url: userData.avatar_url,
-        email: userData.email
-      });
       
-      console.log('🔍 fetchUserData returning userData:', userData);
       return userData;
     } catch (error) {
       console.error('❌ Exception fetching user data:', error);
@@ -318,22 +301,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      console.log('✅ Valid session found for:', userEmail);
-      
       // Fetch user data from profiles table (now includes email from auth.users via trigger)
       const userData = await fetchUserData(userId, userEmail);
       if (userData) {
-        console.log('✅ User data loaded from database:', {
-          name: userData.name,
-          tokens: userData.tokens,
-          tier: userData.subscription_tier,
-          email: userData.email
-        });
-        console.log('🔍 About to call debugSetUser with userData:', userData);
         debugSetUser(userData);
-        console.log('🔍 debugSetUser call completed');
       } else {
-        console.log('⚠️ No user data in database, creating fallback user with zero tokens');
         // DEFENSIVE: Safe property access for fallback user creation
         // CRITICAL: Set tokens to 0 to prevent stale data issues
         const fallbackUser = {
