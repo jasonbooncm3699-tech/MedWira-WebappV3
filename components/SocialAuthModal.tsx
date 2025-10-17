@@ -15,8 +15,21 @@ interface SocialAuthModalProps {
 export default function SocialAuthModal({ isOpen, onClose, mode, onInitializeSupabase }: SocialAuthModalProps) {
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const authTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const authStartTimeRef = useRef<number | null>(null);
+
+  // Auto-detect referral code from URL parameters when modal opens
+  useEffect(() => {
+    if (isOpen && typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const refCode = urlParams.get('ref');
+      if (refCode) {
+        console.log('🎯 Referral code detected from URL:', refCode);
+        setReferralCode(refCode);
+      }
+    }
+  }, [isOpen]);
 
   // Monitor auth state changes to detect cancellation
   useEffect(() => {
@@ -37,11 +50,37 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onInitializeSup
         }
       }
 
-      // If successfully signed in, close modal
+      // If successfully signed in, process referral code if provided
       if (event === 'SIGNED_IN' && session) {
         console.log('✅ User signed in successfully');
         setSocialLoading(null);
         setErrorMessage('');
+        
+        // Process referral code if provided
+        if (referralCode.trim()) {
+          console.log('🎯 Processing referral code:', referralCode);
+          try {
+            const response = await fetch('/api/process-referral', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                new_user_id: session.user.id,
+                referral_code: referralCode.trim()
+              }),
+            });
+            
+            if (response.ok) {
+              console.log('✅ Referral processed successfully');
+            } else {
+              console.warn('⚠️ Referral processing failed:', response.status);
+            }
+          } catch (error) {
+            console.error('❌ Error processing referral:', error);
+          }
+        }
+        
         onClose();
       }
     });
@@ -405,6 +444,60 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onInitializeSup
           }}>
             <AlertCircle size={18} />
             <span>{errorMessage}</span>
+          </div>
+        )}
+
+        {/* Referral Code Input - Only show during registration */}
+        {mode === 'register' && (
+          <div style={{ 
+            marginBottom: '24px',
+            maxWidth: '400px',
+            margin: '0 auto 24px auto'
+          }}>
+            <label style={{ 
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#ffffff',
+              marginBottom: '8px'
+            }}>
+              Referral Code (Optional)
+            </label>
+            <input
+              type="text"
+              value={referralCode}
+              onChange={(e) => setReferralCode(e.target.value)}
+              placeholder="Enter referral code if you have one"
+              disabled={socialLoading !== null}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '8px',
+                color: '#ffffff',
+                fontSize: '14px',
+                outline: 'none',
+                transition: 'border-color 0.2s ease',
+                opacity: socialLoading !== null ? 0.6 : 1,
+                cursor: socialLoading !== null ? 'not-allowed' : 'text'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#00d4ff';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+              }}
+            />
+            {referralCode && (
+              <p style={{ 
+                fontSize: '12px',
+                color: '#888',
+                margin: '4px 0 0 0'
+              }}>
+                ✅ Referral code will be processed after signup
+              </p>
+            )}
           </div>
         )}
 
