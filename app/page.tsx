@@ -789,8 +789,13 @@ export default function Home() {
 
   // Medication Stack Management Functions
 
-  // Lazy load chat history - only when user clicks on chat history section
-  // Removed automatic loading on user login for better performance
+  // Load chat history when user is authenticated (but lazy load for performance)
+  useEffect(() => {
+    if (user?.id && !chatHistoryLoading && chatHistory.length === 0) {
+      console.log('🔄 User authenticated, loading chat history...');
+      fetchUserChatHistory(1, '', false);
+    }
+  }, [user?.id, chatHistoryLoading, chatHistory.length]);
 
   // Load more chat history when scrolling
   const loadMoreChatHistory = useCallback(() => {
