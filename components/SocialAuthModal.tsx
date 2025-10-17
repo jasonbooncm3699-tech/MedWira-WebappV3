@@ -108,58 +108,10 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
       setSocialLoading(provider);
       authStartTimeRef.current = Date.now();
       
-      // CRITICAL: Clear any existing authentication data to prevent conflicts
-      console.log('🧹 Clearing existing authentication data...');
-      try {
-        // Clear Supabase session
-        await supabase.auth.signOut();
-        
-        // Clear localStorage authentication data
-        const authKeys = ['sb-', 'supabase.auth.token'];
-        Object.keys(localStorage).forEach(key => {
-          if (authKeys.some(authKey => key.startsWith(authKey))) {
-            localStorage.removeItem(key);
-            console.log('🗑️ Removed auth key:', key);
-          }
-        });
-        
-        // Clear sessionStorage authentication data
-        Object.keys(sessionStorage).forEach(key => {
-          if (authKeys.some(authKey => key.startsWith(authKey))) {
-            sessionStorage.removeItem(key);
-            console.log('🗑️ Removed session key:', key);
-          }
-        });
-        
-        console.log('✅ Authentication data cleared');
-        
-        // Small delay to ensure cleanup is complete
-        await new Promise(resolve => setTimeout(resolve, 100));
-      } catch (cleanupError) {
-        console.warn('⚠️ Error during auth cleanup:', cleanupError);
-        // Continue with login even if cleanup fails
-      }
-      
-      // Enhanced mobile debugging
-      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const isChrome = /Chrome/i.test(navigator.userAgent);
-      const isMobileChrome = isMobile && isChrome;
       
       console.log(`🔐 Starting ${provider} OAuth flow...`);
-      console.log(`📱 Device Info:`, {
-        isMobile,
-        isChrome,
-        isMobileChrome,
-        userAgent: navigator.userAgent,
-        screenWidth: window.screen.width,
-        screenHeight: window.screen.height,
-        viewportWidth: window.innerWidth,
-        viewportHeight: window.innerHeight
-      });
       console.log(`🌐 Current origin: ${window.location.origin}`);
       console.log(`🔗 Redirect URL: ${window.location.origin}/auth/callback`);
-      console.log(`🔑 Supabase URL: ${process.env.NEXT_PUBLIC_SUPABASE_URL}`);
-      console.log(`🔑 Supabase Key present: ${!!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`);
 
       // Set a timeout to reset loading state if OAuth takes too long
       // This handles cases where the redirect doesn't happen
@@ -176,7 +128,6 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
       console.log(`🚀 Calling supabase.auth.signInWithOAuth with:`, {
         provider,
         redirectTo: redirectUrl,
-        isMobileChrome,
         timestamp: new Date().toISOString()
       });
       
@@ -191,17 +142,10 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
         },
       });
 
-      console.log(`📡 OAuth response:`, { data, error, isMobileChrome });
+      console.log(`📡 OAuth response:`, { data, error });
 
       if (error) {
         console.error(`❌ ${provider} OAuth error:`, error.message);
-        console.error(`❌ ${provider} OAuth error details:`, {
-          error,
-          isMobileChrome,
-          userAgent: navigator.userAgent,
-          currentUrl: window.location.href,
-          timestamp: new Date().toISOString()
-        });
         setErrorMessage(`${provider} login failed: ${error.message}`);
         setSocialLoading(null);
         authStartTimeRef.current = null;
@@ -215,11 +159,6 @@ export default function SocialAuthModal({ isOpen, onClose, mode }: SocialAuthMod
 
       console.log(`✅ ${provider} OAuth initiated successfully`);
       console.log(`🔄 Expected redirect to: ${data.url || 'OAuth provider'}`);
-      console.log(`📱 Mobile Chrome Debug:`, {
-        isMobileChrome,
-        redirectUrl: data.url,
-        timestamp: new Date().toISOString()
-      });
       
       // CRITICAL: If we get here, the OAuth should redirect
       // If no redirect happens, there might be an issue with the OAuth provider configuration

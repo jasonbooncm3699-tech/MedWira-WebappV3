@@ -17,28 +17,21 @@ export async function middleware(request: NextRequest) {
           return request.cookies.get(name)?.value
         },
         set(name: string, value: string, options: CookieOptions) {
-          // Enhanced cookie configuration for mobile compatibility
-          const cookieOptions = {
+          request.cookies.set({
             name,
             value,
             ...options,
-            // Mobile-friendly cookie settings
-            sameSite: options.sameSite || 'lax' as const,
-            secure: options.secure !== undefined ? options.secure : true,
-            httpOnly: options.httpOnly !== undefined ? options.httpOnly : true,
-            path: options.path || '/',
-            maxAge: options.maxAge || 3600 * 24 * 7, // 7 days default
-          }
-          
-          request.cookies.set(cookieOptions)
+          })
           response = NextResponse.next({
             request: {
               headers: request.headers,
             },
           })
-          response.cookies.set(cookieOptions)
-          
-          console.log('🍪 Middleware cookie set:', name);
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+          })
         },
         remove(name: string, options: CookieOptions) {
           request.cookies.set({

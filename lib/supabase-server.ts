@@ -20,23 +20,12 @@ export async function createClient() {
         },
         set(name: string, value: string, options: CookieOptions) {
           try {
-            // Enhanced cookie configuration for mobile compatibility
-            const cookieOptions = {
+            cookieStore.set({
               name,
               value,
               ...options,
-              // Mobile-friendly cookie settings
-              sameSite: options.sameSite || 'lax' as const,
-              secure: options.secure !== undefined ? options.secure : true,
-              httpOnly: options.httpOnly !== undefined ? options.httpOnly : true,
-              path: options.path || '/',
-              maxAge: options.maxAge || 3600 * 24 * 7, // 7 days default
-            }
-            
-            cookieStore.set(cookieOptions)
-           console.log('🍪 Server-side HTTP-only cookie set:', name)
+            })
           } catch (error) {
-            console.warn('⚠️ Failed to set server-side HTTP-only cookie:', name, error)
             // The `set` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
