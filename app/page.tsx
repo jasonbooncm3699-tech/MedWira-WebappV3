@@ -856,12 +856,6 @@ export default function Home() {
 
   // Capture photo from camera
   const capturePhoto = () => {
-    // Check authentication before proceeding
-    if (!checkAuthentication()) {
-      closeCamera();
-      return;
-    }
-
     const video = document.querySelector('video') as HTMLVideoElement;
     if (!video) return;
 
@@ -882,6 +876,12 @@ export default function Home() {
 
     canvas.toBlob((blob) => {
       if (!blob) return;
+
+      // Check authentication AFTER capturing photo, before analysis
+      if (!checkAuthentication()) {
+        closeCamera();
+        return;
+      }
 
       const reader = new FileReader();
       reader.onload = () => {
