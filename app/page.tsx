@@ -811,17 +811,28 @@ export default function Home() {
 
   const handleCameraCapture = async () => {
     try {
+      console.log('🎥 Camera button clicked');
+      console.log('📍 Location:', { protocol: location.protocol, hostname: location.hostname });
+      console.log('🔧 Navigator support:', { 
+        mediaDevices: !!navigator.mediaDevices, 
+        getUserMedia: !!navigator.mediaDevices?.getUserMedia 
+      });
+
       // Check if getUserMedia is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error('❌ Camera not supported');
         alert('Camera not supported. Please use HTTPS or a modern browser.');
         return;
       }
 
       // Check if we're on HTTPS or localhost
       if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        console.error('❌ HTTPS required');
         alert('Camera requires HTTPS. Please access via https://localhost:3000');
         return;
       }
+
+      console.log('✅ Environment checks passed, requesting camera...');
 
       // Detect if device is tablet (simple detection)
       const isTabletDevice = window.innerWidth >= 768 && window.innerWidth <= 1024;
@@ -831,17 +842,34 @@ export default function Home() {
       const isMobileDevice = window.innerWidth <= 767;
       setIsMobile(isMobileDevice);
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { exact: 'environment' } // Force back camera
-        }
-      });
+      // Try to get back camera first, fallback to any camera if that fails
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { exact: 'environment' } // Force back camera
+          }
+        });
+      } catch (backCameraError) {
+        console.log('Back camera not available, trying any camera...');
+        // Fallback to any available camera
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true
+        });
+      }
 
+      console.log('✅ Camera stream obtained successfully');
       setCameraStream(stream);
       setShowCamera(true);
+      console.log('✅ Camera modal should now be visible');
 
     } catch (error) {
-      console.error('Camera error:', error);
+      console.error('❌ Camera error:', error);
+      console.error('❌ Error details:', {
+        name: (error as Error).name,
+        message: (error as Error).message,
+        stack: (error as Error).stack
+      });
       alert('Camera access failed: ' + (error as Error).message + '\n\nTry:\n1. Allow camera permission\n2. Use HTTPS (https://localhost:3000)\n3. Use a modern browser');
     }
   };
