@@ -215,10 +215,17 @@ export default function Home() {
   const [isAiThinking, setIsAiThinking] = useState(false);
   const chatWindowRef = useRef<HTMLDivElement>(null);
   
-  // Auto-scroll to bottom function
+  // Auto-scroll to bottom function - optimized to prevent performance violations
   const scrollToBottom = useCallback(() => {
     if (chatWindowRef.current) {
-      chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+      // Use requestAnimationFrame to batch DOM operations and prevent forced reflow
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (chatWindowRef.current) {
+            chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+          }
+        });
+      });
     }
   }, []);
 
