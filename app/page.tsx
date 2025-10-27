@@ -146,6 +146,12 @@ export default function Home() {
   const [sideNavOpen, setSideNavOpen] = useState(false);
   const [language, setLanguage] = useState('English');
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  
+  // Photo preview states
+  const [showPhotoPreview, setShowPhotoPreview] = useState(false);
+  const [capturedPhotoData, setCapturedPhotoData] = useState<string | null>(null);
+  const [showChatPhotoPreview, setShowChatPhotoPreview] = useState(false);
+  const [previewPhotoUrl, setPreviewPhotoUrl] = useState<string | null>(null);
 
   // Mobile-optimized localStorage utility functions (memoized to prevent re-renders)
   const safeLocalStorage = useMemo(() => ({
@@ -598,7 +604,7 @@ export default function Home() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('session_refresh') === 'true') {
       // Clean up URL parameter - let auth context handle session naturally
-      window.history.replaceState({}, '', window.location.pathname);
+        window.history.replaceState({}, '', window.location.pathname);
       console.log('🔗 Session refresh parameter detected and cleaned up');
     }
   }, []); // Removed refreshUser dependency to prevent race condition
@@ -846,10 +852,10 @@ export default function Home() {
       let stream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { exact: 'environment' } // Force back camera
-          }
-        });
+        video: {
+          facingMode: { exact: 'environment' } // Force back camera
+        }
+      });
       } catch (backCameraError) {
         console.log('Back camera not available, trying any camera...');
         // Fallback to any available camera
@@ -924,22 +930,57 @@ export default function Home() {
     canvas.toBlob((blob) => {
       if (!blob) return;
 
-      // Check authentication AFTER capturing photo, before analysis
-      if (!checkAuthentication()) {
-        closeCamera();
-        return;
-      }
-
       const reader = new FileReader();
       reader.onload = () => {
-        console.log(`📊 [Frontend] Camera photo loaded`);
+        console.log(`📊 [Frontend] Camera photo captured for preview`);
         const imageBase64 = reader.result as string;
-        closeCamera();
-        // Always use real status updates from AI processing
-        analyzeMedicineImageWithRealStatus(imageBase64);
+        
+        // Show preview instead of immediately analyzing
+        setCapturedPhotoData(imageBase64);
+        setShowPhotoPreview(true);
+        setShowCamera(false); // Hide camera, show preview
       };
       reader.readAsDataURL(blob);
     }, 'image/jpeg', 0.9);
+  };
+
+  // Handle photo preview actions
+  const handleRetakePhoto = () => {
+    setShowPhotoPreview(false);
+    setCapturedPhotoData(null);
+    setShowCamera(true); // Go back to camera
+  };
+
+  const handleSendPhotoToAI = () => {
+    if (!capturedPhotoData) return;
+    
+    // Check authentication before sending to AI
+    if (!checkAuthentication()) {
+      setShowPhotoPreview(false);
+      setCapturedPhotoData(null);
+      return;
+    }
+    
+    setShowPhotoPreview(false);
+    setCapturedPhotoData(null);
+    analyzeMedicineImageWithRealStatus(capturedPhotoData);
+  };
+
+  const handleCancelPhoto = () => {
+    setShowPhotoPreview(false);
+    setCapturedPhotoData(null);
+    // Camera is already closed from capturePhoto
+  };
+
+  // Handle chat photo preview
+  const handleChatPhotoClick = (photoUrl: string) => {
+    setPreviewPhotoUrl(photoUrl);
+    setShowChatPhotoPreview(true);
+  };
+
+  const closeChatPhotoPreview = () => {
+    setShowChatPhotoPreview(false);
+    setPreviewPhotoUrl(null);
   };
 
   // SSE-based AI Image Analysis with Real-Time Status Display
@@ -1096,6 +1137,37 @@ export default function Home() {
                 console.log(`📊 [Frontend] FORCING AI status to disappear after receiving complete data`);
                 setAiStatus('idle');
                 setIsAnalyzing(false);
+                
+                // Check if result is a failure (e.g., not a medicine image)
+                if (data.result.success === false && data.result.error) {
+                  // Handle error result
+                  const errorMessage = {
+                    id: (Date.now() + 1).toString(),
+                    type: 'ai' as const,
+                    content: data.result.error,
+                    timestamp: new Date()
+                  };
+
+                  console.log(`📊 [Frontend] Adding error message:`, {
+                    messageId: errorMessage.id,
+                    content: errorMessage.content
+                  });
+
+                  setMessages(prev => {
+                    const updatedMessages = [...prev, errorMessage];
+                    // Save to localStorage immediately
+                    chatStorage.saveChatHistory(updatedMessages, user?.id);
+                    return updatedMessages;
+                  });
+
+                  // Auto-scroll to show the error message
+                  setTimeout(() => {
+                    scrollToBottom();
+                  }, 100);
+
+                  console.log(`📊 [Frontend] Error message displayed - AI status forced to disappear`);
+                  return; // Exit early - don't process as success
+                }
                 
                 // REMOVED: fetchUserChatHistory call that was overwriting the current messages
                 // The AI message will be added directly below and saved to localStorage
@@ -1760,7 +1832,14 @@ export default function Home() {
                 <div className="message-content">
                   {message.image && (
                     <div className="message-image">
-                      <Image src={message.image} alt="Uploaded medicine" width={200} height={200} />
+                      <Image 
+                        src={message.image} 
+                        alt="Uploaded medicine" 
+                        width={200} 
+                        height={200}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => message.image && handleChatPhotoClick(message.image)}
+                      />
                     </div>
                   )}
 
@@ -1992,14 +2071,14 @@ export default function Home() {
             <video
               ref={videoRef}
               autoPlay
-              playsInline
+            playsInline
               muted
-              style={{
-                width: '100%',
-                height: '100%',
-                transform: isTablet ? 'scaleX(-1)' : 'none' // Fix mirroring on tablets only
-              }}
-            />
+            style={{
+              width: '100%',
+              height: '100%',
+              transform: isTablet ? 'scaleX(-1)' : 'none' // Fix mirroring on tablets only
+            }}
+          />
           <div style={{
             position: 'absolute',
             bottom: '20px',
@@ -2039,6 +2118,138 @@ export default function Home() {
               Tap to capture medicine photo
             </p>
           </div>
+          </div>
+        )}
+
+      {/* Photo Preview Modal */}
+      {showPhotoPreview && capturedPhotoData && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'black',
+          zIndex: 1000,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <button
+            onClick={handleCancelPhoto}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              zIndex: 1001,
+              background: 'red',
+              color: 'white',
+              border: 'none',
+              padding: '10px',
+              borderRadius: '8px'
+            }}
+          >
+            Close
+          </button>
+          
+          <img
+            src={capturedPhotoData}
+            alt="Captured photo preview"
+            style={{
+              maxWidth: '90%',
+              maxHeight: '70%',
+              objectFit: 'contain',
+              borderRadius: '8px'
+            }}
+          />
+          
+          <div style={{
+            position: 'absolute',
+            bottom: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            gap: '15px',
+            alignItems: 'center'
+          }}>
+            <button
+              onClick={handleRetakePhoto}
+              style={{
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                color: 'white',
+                padding: '12px 20px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}
+            >
+              Retake
+            </button>
+            <button
+              onClick={handleSendPhotoToAI}
+              style={{
+                background: '#00d4ff',
+                border: 'none',
+                color: 'white',
+                padding: '12px 20px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                boxShadow: '0 4px 12px rgba(0, 212, 255, 0.3)'
+              }}
+            >
+              Send to AI
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Photo Preview Modal */}
+      {showChatPhotoPreview && previewPhotoUrl && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(0, 0, 0, 0.9)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <button
+            onClick={closeChatPhotoPreview}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              zIndex: 1001,
+              background: 'red',
+              color: 'white',
+              border: 'none',
+              padding: '10px',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            Close
+          </button>
+          
+          <img
+            src={previewPhotoUrl}
+            alt="Photo preview"
+            style={{
+              maxWidth: '90%',
+              maxHeight: '90%',
+              objectFit: 'contain',
+              borderRadius: '8px'
+            }}
+          />
           </div>
         )}
 

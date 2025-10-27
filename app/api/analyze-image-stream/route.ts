@@ -304,6 +304,29 @@ export async function POST(request: NextRequest) {
 
             const result = await Promise.race([analysisPromise, timeoutPromise]) as any;
 
+            // Check if the result is a failure (e.g., not a medicine image) - don't deduct tokens
+            if (!result.success && result.error) {
+              console.log(`❌ [DEBUG] Analysis failed: ${result.error} - NOT deducting tokens for user ${userId}`);
+              
+              // Send error result to frontend
+              const errorData = `data: ${JSON.stringify({ 
+                type: 'complete', 
+                result: {
+                  success: false,
+                  error: result.error,
+                  language: result.language
+                }
+              })}\n\n`;
+              controller.enqueue(encoder.encode(errorData));
+              
+              setTimeout(() => {
+                controller.close();
+                console.log(`📊 [SSE] Stream closed - validation failed`);
+              }, 100);
+              
+              return; // Exit early - don't process further
+            }
+
             // CRITICAL: Deduct token FIRST, then save chat history SYNCHRONOUSLY
             console.log(`🔍 [DEBUG] Checking save conditions - userId: ${userId}, result.success: ${result.success}`);
             if (userId && result.success) {
