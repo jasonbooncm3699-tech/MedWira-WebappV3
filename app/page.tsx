@@ -547,9 +547,12 @@ export default function Home() {
 
   // Function to start a new chat
   const handleNewChat = () => {
+    console.log('🔍 [DEBUG-NEWCHAT] Starting new chat. Current message count:', messages.length);
     // Check if there's an actual conversation to save (more than just the welcome message)
     const hasConversation = messages.length > 1 || 
       (messages.length === 1 && messages[0].type === 'user');
+    
+    console.log('🔍 [DEBUG-NEWCHAT] Has conversation:', hasConversation);
     
     // Create fresh welcome message first
     const freshWelcomeMessage = {
@@ -561,14 +564,16 @@ export default function Home() {
     
     // Save current conversation before clearing if there's actual conversation
     if (hasConversation) {
-      console.log('💾 Saving current conversation before starting new chat...');
+      console.log('🔍 [DEBUG-NEWCHAT] Saving current conversation before starting new chat...');
       chatStorage.saveChatHistory(messages, user?.id);
     }
     
     // Clear localStorage for current session to prevent reloading old conversation
+    console.log('🔍 [DEBUG-NEWCHAT] Saving fresh welcome message to localStorage');
     chatStorage.saveChatHistory([freshWelcomeMessage], user?.id);
     
     // Clear current session and start fresh
+    console.log('🔍 [DEBUG-NEWCHAT] Setting fresh welcome message as initial state');
     setMessages([freshWelcomeMessage]);
     setSideNavOpen(false); // Close side nav after starting new chat
     
@@ -576,24 +581,29 @@ export default function Home() {
     // The fresh welcome message is already set above and saved to localStorage
     // This prevents the file upload functionality from breaking
     
-    console.log('✅ New chat started successfully');
+    console.log('🔍 [DEBUG-NEWCHAT] ✅ New chat started successfully');
   };
 
 
   // Detect mobile device on initial load
   useEffect(() => {
+    console.log('🔍 [DEBUG-MOBILE] Starting mobile detection effect');
     // Only run on client side to prevent hydration mismatches
     if (typeof window === 'undefined') return;
     
     const checkDevice = () => {
       const isMobileDevice = window.innerWidth <= 767;
+      console.log('🔍 [DEBUG-MOBILE] Device check:', { isMobileDevice, width: window.innerWidth });
       setIsMobile(isMobileDevice);
     };
 
     checkDevice();
     window.addEventListener('resize', checkDevice);
 
-    return () => window.removeEventListener('resize', checkDevice);
+    return () => {
+      console.log('🔍 [DEBUG-MOBILE] Cleanup: removing resize listener');
+      window.removeEventListener('resize', checkDevice);
+    };
   }, []);
 
   // Handle session refresh from OAuth callback
@@ -649,7 +659,9 @@ export default function Home() {
 
   // Translate messages when language changes
   useEffect(() => {
+    console.log('🔍 [DEBUG-LANGUAGE] Language changed to:', language);
     if (language !== 'English' && messages.length > 0) {
+      console.log('🔍 [DEBUG-LANGUAGE] Translating', messages.length, 'messages');
       setMessages(prevMessages => 
         prevMessages.map(translateMessage)
       );
@@ -761,8 +773,10 @@ export default function Home() {
 
   // Load chat history on initial page load (before user authentication)
   useEffect(() => {
+    console.log('🔍 [DEBUG-LOCALSTORAGE] Loading messages from localStorage on initial load');
     // Load from localStorage immediately for instant display
     const localMessages = chatStorage.loadChatHistory();
+    console.log('🔍 [DEBUG-LOCALSTORAGE] Found', localMessages.length, 'messages in localStorage');
     if (localMessages.length > 0) {
       setMessages(localMessages);
     }
@@ -770,6 +784,7 @@ export default function Home() {
 
   // Auto-scroll when messages change
   useEffect(() => {
+    console.log('🔍 [DEBUG-SCROLL] Messages changed, auto-scrolling. Message count:', messages.length);
     setTimeout(() => {
       scrollToBottom();
     }, 100);
@@ -797,8 +812,14 @@ export default function Home() {
 
   // Load chat history when user is authenticated (but lazy load for performance)
   useEffect(() => {
+    console.log('🔍 [DEBUG-CHATHISTORY] Checking if should load chat history:', {
+      hasUserId: !!user?.id,
+      userId: user?.id,
+      isLoading: chatHistoryLoading,
+      currentCount: chatHistory.length
+    });
     if (user?.id && !chatHistoryLoading && chatHistory.length === 0) {
-      console.log('🔄 User authenticated, loading chat history...');
+      console.log('🔍 [DEBUG-CHATHISTORY] User authenticated, loading chat history...');
       fetchUserChatHistory(1, '', false);
     }
   }, [user?.id, chatHistoryLoading, chatHistory.length]);

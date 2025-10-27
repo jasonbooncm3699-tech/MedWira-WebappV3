@@ -761,14 +761,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // CRITICAL FIX: Separate effect for auth listener to prevent re-creating it on every initializeSupabase change
   useEffect(() => {
+    console.log('🔍 [DEBUG-AUTH] Setting up auth listener effect. isHydrated:', isHydrated, 'supabaseInitialized:', supabaseInitialized);
+    
     // Only set up hydration - no automatic Supabase initialization
     if (!isHydrated) {
+      console.log('🔍 [DEBUG-AUTH] Skipping - not hydrated yet');
       return;
     }
     
     console.log('🎧 Setting up auth state change listener...');
     
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔍 [DEBUG-AUTH] Auth state change event:', event, 'hasSession:', !!session);
       // DEFENSIVE: Allow INITIAL_SESSION events even when not manually initialized
       // This ensures existing sessions are loaded automatically
       if (!supabaseInitialized && event !== 'INITIAL_SESSION') {
@@ -918,21 +922,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     
     return () => {
-      console.log('🧹 Cleaning up auth listener');
+      console.log('🔍 [DEBUG-AUTH] 🧹 Cleaning up auth listener. isHydrated:', isHydrated, 'supabaseInitialized:', supabaseInitialized);
       authListener.subscription.unsubscribe();
     };
   }, [isHydrated, supabaseInitialized]); // CRITICAL FIX: Only depend on hydration state, not initializeSupabase function
 
   // Separate effect for OAuth callback handling
   useEffect(() => {
+    console.log('🔍 [DEBUG-OAUTH] OAuth callback effect running. isHydrated:', isHydrated);
     if (!isHydrated) {
+      console.log('🔍 [DEBUG-OAUTH] Skipping - not hydrated yet');
       return;
     }
     
     // Check if user came from OAuth callback and needs immediate initialization
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.has('code') || urlParams.has('access_token')) {
+      const hasCode = urlParams.has('code') || urlParams.has('access_token');
+      console.log('🔍 [DEBUG-OAUTH] Checking for OAuth callback:', { hasCode });
+      if (hasCode) {
         console.log('🔄 OAuth callback detected, initializing Supabase...');
         initializeSupabase();
       }
