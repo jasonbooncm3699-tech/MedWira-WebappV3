@@ -25,6 +25,14 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // CRITICAL FIX: Cache images and static assets, skip API calls
+  if (event.request.url.includes('/api/') || 
+      event.request.url.includes('/auth/') ||
+      event.request.destination === 'document') {
+    // Skip caching for API calls and auth - use network only
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -32,8 +40,11 @@ self.addEventListener('fetch', (event) => {
           return response;
         }
         return fetch(event.request);
-      }
-    )
+      })
+      .catch(() => {
+        // If fetch fails and no cache, let browser handle it
+        return fetch(event.request);
+      })
   );
 });
 

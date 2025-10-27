@@ -46,6 +46,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Preconnect to Google Fonts for faster font loading */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#00A3B5" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -96,9 +100,12 @@ export default function RootLayout({
                   navigator.serviceWorker.register('/sw.js')
                     .then(function(registration) {
                       console.log('SW registered: ', registration);
+                      
+                      // Wait for service worker to be ready
+                      return registration.update();
                     })
                     .catch(function(registrationError) {
-                      console.log('SW registration failed: ', registrationError);
+                      console.warn('SW registration failed:', registrationError);
                     });
                 });
               }
