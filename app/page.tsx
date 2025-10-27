@@ -787,7 +787,7 @@ export default function Home() {
         ...prev.slice(1)
       ]);
     }
-  }, [language, messages]);
+  }, [language]); // CRITICAL FIX: Removed 'messages' dependency to prevent infinite loop
 
   // Reset prompt suggestions when language changes
   useEffect(() => {
