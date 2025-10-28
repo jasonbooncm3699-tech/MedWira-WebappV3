@@ -73,11 +73,17 @@ export async function GET(request: Request) {
       // Check for referral code in URL parameters
       const referralCode = requestUrl.searchParams.get('ref');
       
+      // Extract avatar URL from Google OAuth metadata
+      const avatarUrl = user.user_metadata?.avatar_url || 
+                       user.user_metadata?.picture || 
+                       '';
+      
       console.log('💾 Creating user profile directly:', {
         userId: user.id,
         email: user.email,
         name: userName,
-        referralCode: referralCode || 'none'
+        referralCode: referralCode || 'none',
+        avatarUrl
       });
 
       // Generate a simple referral code
@@ -93,6 +99,7 @@ export async function GET(request: Request) {
           referred_by: referralCode || null,
           email: user.email,
           display_name: userName,
+          avatar_url: avatarUrl,
           subscription_tier: 'free',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -104,6 +111,7 @@ export async function GET(request: Request) {
 
       if (provisionError) {
         console.error('❌ User provisioning failed:', provisionError);
+        return NextResponse.redirect(new URL('/?error=profile_creation_failed', request.url));
       } else {
         console.log('✅ User provisioned successfully:', provisionResult);
       }

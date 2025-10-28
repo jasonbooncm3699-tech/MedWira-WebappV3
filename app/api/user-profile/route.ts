@@ -155,12 +155,12 @@ export async function GET(request: NextRequest) {
       id: userId,
       email: userEmail,
       name: userName, // First name from authentication user data
-      tokens: profile.tokens,
+      tokens: profile.token_count,
       referral_code: profile.referral_code,
       referred_by: profile.referred_by,
       display_name: displayName,
       avatar_url: avatarUrl,
-      subscription_tier: profile.subscription_tier || 'free'
+      subscription_tier: 'free'
     };
     
     console.log('✅ User profile data retrieved successfully:', {
