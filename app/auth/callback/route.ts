@@ -55,6 +55,9 @@ export async function GET(request: Request) {
     });
 
     // Create or update user record in database
+    // Note: The supabase client created with createRouteHandlerClient({ cookies })
+    // automatically uses the session from cookies set by exchangeCodeForSession
+    // This session context is used for RLS checks (auth.uid() = id)
     const userName = 
       user.user_metadata?.full_name || 
       user.user_metadata?.name || 

@@ -168,11 +168,17 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onInitializeSup
       }, 60000); // 60 second timeout
 
       // Configure redirect URL for OAuth
-      const redirectUrl = `${window.location.origin}/auth/callback`;
+      // Include referral code in callback URL if provided
+      let redirectUrl = `${window.location.origin}/auth/callback`;
+      if (referralCode.trim()) {
+        redirectUrl += `?ref=${encodeURIComponent(referralCode.trim())}`;
+        console.log('🎯 Adding referral code to callback URL:', referralCode.trim());
+      }
       
       console.log(`🚀 Calling supabase.auth.signInWithOAuth with:`, {
         provider,
         redirectTo: redirectUrl,
+        referralCode: referralCode.trim() || 'none',
         timestamp: new Date().toISOString()
       });
       
@@ -332,25 +338,9 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onInitializeSup
           if (data.session?.user) {
             console.log('✅ OAuth authentication successful for:', data.session.user.email);
             
-            // Create user record if this is a new user
-            if (data.session.user.user_metadata?.full_name || data.session.user.user_metadata?.name) {
-              try {
-                const userName = data.session.user.user_metadata?.full_name || data.session.user.user_metadata?.name || 'User';
-                await supabase.from('profiles').upsert({
-                  id: data.session.user.id,
-                  email: data.session.user.email,
-                  display_name: userName,
-                  tokens: 30,
-                  subscription_tier: 'free',
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString(),
-                  last_login: new Date().toISOString(),
-                });
-                console.log('✅ User record created/updated');
-              } catch (dbError) {
-                console.warn('⚠️ Failed to create user record:', dbError);
-              }
-            }
+            // Profile creation is handled by server-side callback route
+            // Don't create profile here - let the callback route handle it with proper RLS
+            // This prevents duplicate creation and RLS permission issues
             
             // Redirect back to home page
             // Let the server-side callback handle the redirect
