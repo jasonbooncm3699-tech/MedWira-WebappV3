@@ -1,6 +1,5 @@
 // CANONICAL CODE FOR app/auth/callback/route.ts
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
@@ -90,120 +89,79 @@ export async function GET(request: Request) {
       // Generate a simple referral code
       const simpleReferralCode = generateRandomCode();
       
-      // CRITICAL: Use service role client to bypass RLS policies during user creation
-      // Without service role key, RLS will block the insert causing "permission denied"
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-      
-      if (!supabaseUrl || !supabaseServiceKey) {
-        console.error('❌ CRITICAL: Missing Supabase service role key!', {
-          hasUrl: !!supabaseUrl,
-          hasServiceKey: !!supabaseServiceKey
-        });
-        // Still try to continue - user is authenticated even if profile creation fails
-        // Profile might be created by database trigger
-      }
-      
-      // Create admin client with service role to bypass RLS
-      const adminSupabase = (supabaseUrl && supabaseServiceKey) 
-        ? createClient(supabaseUrl, supabaseServiceKey, {
-            auth: {
-              autoRefreshToken: false,
-              persistSession: false
-            }
-          })
-        : null;
-      
-      if (!adminSupabase) {
-        console.error('❌ CRITICAL: Cannot create admin client - service role key missing!');
-        // Continue without profile creation - user is authenticated
-        // Database trigger might handle profile creation
-      } else {
-        console.log('🔑 Using service role client to bypass RLS for profile creation');
-      }
-
-      // Only proceed with profile creation if we have admin client
-      if (adminSupabase) {
-        // Look up referrer ID using admin client if referral code provided
-        let referrerId = null;
-        if (referralCode) {
-          console.log('🔍 Looking up referrer ID for code:', referralCode);
-          // Explicitly use public schema
-          const { data: referrer, error: referrerError } = await adminSupabase
-            .from('profiles')
-            .select('id')
-            .eq('referral_code', referralCode)
-            .single();
-          
-          if (!referrerError && referrer) {
-            referrerId = referrer.id;
-            console.log('✅ Found referrer ID:', referrerId);
-          } else {
-            console.warn('⚠️ Referrer not found for code:', referralCode, referrerError?.message);
-          }
-        }
-        
-        // Note: Let database handle created_at/updated_at via defaults/triggers
-        const upsertData: any = {
-          id: user.id,
-          tokens: 30,
-          referral_code: simpleReferralCode,
-          referred_by: referrerId, // Store user ID (UUID), not referral code string
-          email: user.email,
-          display_name: userName,
-          avatar_url: avatarUrl || null,
-          subscription_tier: 'free',
-        };
-
-        console.log('💾 Upserting user profile with data:', {
-          id: upsertData.id,
-          email: upsertData.email,
-          tokens: upsertData.tokens,
-          referral_code: upsertData.referral_code,
-          referred_by: upsertData.referred_by,
-          hasReferrer: !!referrerId,
-          usingServiceRole: !!adminSupabase,
-          serviceKeyPresent: !!supabaseServiceKey
-        });
-
-        // CRITICAL: Use service role client to bypass RLS on public.profiles
-        // This MUST use the admin client created with service role key
-        const { data: provisionResult, error: provisionError } = await adminSupabase
+      // Look up the referrer's user ID if referral code is provided
+      // FIX: referred_by column expects UUID, not referral code string
+      let referrerId = null;
+      if (referralCode) {
+        console.log('🔍 Looking up referrer ID for code:', referralCode);
+        const { data: referrer, error: referrerError } = await supabase
           .from('profiles')
-          .upsert(upsertData, {
-            onConflict: 'id',
-            ignoreDuplicates: false
-          })
-          .select();
-
-        if (provisionError) {
-          console.error('❌ User provisioning failed:', {
-            error: provisionError,
-            code: provisionError.code,
-            message: provisionError.message,
-            details: provisionError.details,
-            hint: provisionError.hint,
-            userId: user.id,
-            email: user.email,
-            referrerId: referrerId,
-            upsertData: upsertData
-          });
-          
-          // Return detailed error for debugging
-          return NextResponse.redirect(
-            new URL(`/?error=profile_creation_failed&details=${encodeURIComponent(provisionError.message)}`, request.url)
-          );
+          .select('id')
+          .eq('referral_code', referralCode)
+          .single();
+        
+        if (!referrerError && referrer) {
+          referrerId = referrer.id;
+          console.log('✅ Found referrer ID:', referrerId);
         } else {
-          console.log('✅ User provisioned successfully:', {
-            userId: user.id,
-            email: user.email,
-            tokens: provisionResult?.[0]?.tokens,
-            referral_code: provisionResult?.[0]?.referral_code
-          });
+          console.warn('⚠️ Referrer not found for code:', referralCode);
         }
+      }
+      
+      // Direct insert/update into profiles table
+      // Note: Let database handle created_at/updated_at via defaults/triggers
+      const upsertData: any = {
+        id: user.id,
+        tokens: 30,
+        referral_code: simpleReferralCode,
+        referred_by: referrerId, // Store user ID (UUID), not referral code string
+        email: user.email,
+        display_name: userName,
+        avatar_url: avatarUrl || null,
+        subscription_tier: 'free',
+      };
+
+      console.log('💾 Upserting user profile with data:', {
+        id: upsertData.id,
+        email: upsertData.email,
+        tokens: upsertData.tokens,
+        referral_code: upsertData.referral_code,
+        referred_by: upsertData.referred_by,
+        hasReferrer: !!referrerId
+      });
+
+      const { data: provisionResult, error: provisionError } = await supabase
+        .from('profiles')
+        .upsert(upsertData, {
+          onConflict: 'id',
+          ignoreDuplicates: false
+        })
+        .select();
+
+      if (provisionError) {
+        console.error('❌ User provisioning failed:', {
+          error: provisionError,
+          code: provisionError.code,
+          message: provisionError.message,
+          details: provisionError.details,
+          hint: provisionError.hint,
+          userId: user.id,
+          email: user.email,
+          referrerId: referrerId,
+          upsertData: upsertData
+        });
+        
+        // Return detailed error for debugging
+        return NextResponse.redirect(
+          new URL(`/?error=profile_creation_failed&details=${encodeURIComponent(provisionError.message)}`, request.url)
+        );
       } else {
-        console.warn('⚠️ Skipping profile creation - service role key not available. User authenticated but profile may not exist.');
-        // Don't fail the flow - user is authenticated, profile might be created by trigger
+        console.log('✅ User provisioned successfully:', {
+          userId: user.id,
+          email: user.email,
+          tokens: provisionResult?.[0]?.tokens,
+          referral_code: provisionResult?.[0]?.referral_code
+        });
       }
     } catch (dbError: any) {
       console.error('❌ CRITICAL: Unexpected database error:', {
