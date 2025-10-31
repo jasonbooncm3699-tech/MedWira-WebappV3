@@ -155,7 +155,7 @@ export async function GET(request: NextRequest) {
       id: userId,
       email: userEmail,
       name: userName, // First name from authentication user data
-      tokens: profile.token_count,
+      tokens: profile.tokens,
       referral_code: profile.referral_code,
       referred_by: profile.referred_by,
       display_name: displayName,
