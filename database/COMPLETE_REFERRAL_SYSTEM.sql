@@ -54,7 +54,7 @@ BEGIN
     END IF;
     
     -- Find the referrer by their referral code
-    SELECT id, token_count INTO referrer_user_id, referrer_tokens_before
+    SELECT id, tokens INTO referrer_user_id, referrer_tokens_before
     FROM public.profiles 
     WHERE referral_code = referral_code_param;
     
@@ -82,15 +82,15 @@ BEGIN
     UPDATE public.profiles 
     SET 
         referral_count = referral_count + 1,
-        token_count = token_count + reward_tokens,
+        tokens = tokens + reward_tokens,
         updated_at = NOW()
     WHERE id = referrer_user_id
-    RETURNING token_count INTO referrer_tokens_after;
+    RETURNING tokens INTO referrer_tokens_after;
     
-    -- Update new user's referred_by field
+    -- Update new user's referred_by field (store the referrer's user ID, not the referral code)
     UPDATE public.profiles 
     SET 
-        referred_by = referral_code_param,
+        referred_by = referrer_user_id,
         updated_at = NOW()
     WHERE id = new_user_id;
     
