@@ -1,5 +1,6 @@
 // CANONICAL CODE FOR app/auth/callback/route.ts
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createClient as createSupabaseAdminClient, SupabaseClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
@@ -30,6 +31,21 @@ export async function GET(request: Request) {
   if (code) {
     // CRITICAL: This initialization is what enables the server to SET THE SECURE COOKIE.
     const supabase = createRouteHandlerClient({ cookies });
+
+    // Use service role client when we need to bypass RLS for referral lookups
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    let supabaseAdmin: SupabaseClient | null = null;
+
+    if (supabaseUrl && supabaseServiceRoleKey) {
+      supabaseAdmin = createSupabaseAdminClient(supabaseUrl, supabaseServiceRoleKey, {
+        auth: {
+          persistSession: false
+        }
+      });
+    } else {
+      console.warn('⚠️ Service role key missing - referral lookup will rely on RLS policies');
+    }
     
     console.log('🔄 Exchanging OAuth code for session...');
     
@@ -97,17 +113,64 @@ export async function GET(request: Request) {
       let referrerId = null;
       if (referralCode) {
         console.log('🔍 Looking up referrer ID for code:', referralCode);
-        const { data: referrer, error: referrerError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('referral_code', referralCode)
-          .single();
-        
-        if (!referrerError && referrer) {
-          referrerId = referrer.id;
-          console.log('✅ Found referrer ID:', referrerId);
+
+        if (!supabaseAdmin) {
+          console.warn('⚠️ Supabase service role client unavailable. Skipping referral reward.');
         } else {
-          console.warn('⚠️ Referrer not found for code:', referralCode);
+          const { data: referrer, error: referrerError } = await supabaseAdmin
+            .from('profiles')
+            .select('id, tokens, referral_count')
+            .eq('referral_code', referralCode)
+            .maybeSingle();
+
+          if (referrerError) {
+            console.warn('⚠️ Referrer lookup failed:', referralCode, {
+              error: referrerError?.message,
+              code: referrerError?.code
+            });
+          } else if (!referrer) {
+            console.warn('⚠️ Referrer not found for code:', referralCode);
+          } else if (referrer.id === user.id) {
+            console.warn('⚠️ Self-referral detected. Ignoring.');
+          } else {
+            referrerId = referrer.id;
+
+            const updatedTokenBalance = (referrer.tokens ?? 0) + 30;
+            const updatedReferralCount = (referrer.referral_count ?? 0) + 1;
+
+            const { error: rewardError } = await supabaseAdmin
+              .from('profiles')
+              .update({
+                tokens: updatedTokenBalance,
+                referral_count: updatedReferralCount,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', referrer.id);
+
+            if (rewardError) {
+              console.error('❌ Failed to award referral tokens:', rewardError);
+              referrerId = null;
+            } else {
+              console.log('🎉 Referral reward applied:', {
+                referrerId: referrer.id,
+                tokensBefore: referrer.tokens ?? 0,
+                tokensAfter: updatedTokenBalance,
+                referralCountAfter: updatedReferralCount
+              });
+
+              const { error: referredByUpdateError } = await supabaseAdmin
+                .from('profiles')
+                .update({
+                  referred_by: referrer.id,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', user.id);
+
+              if (referredByUpdateError) {
+                console.error('❌ Failed to set referred_by on new user:', referredByUpdateError);
+              }
+            }
+          }
         }
       }
       
