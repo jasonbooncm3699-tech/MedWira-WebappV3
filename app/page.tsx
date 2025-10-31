@@ -32,10 +32,15 @@ export default function Home() {
   const { user, logout, isLoading, refreshUser, refreshUserData, initializeSupabase } = useAuth();
 
   // Helper function to extract first name from display_name
-  const getFirstName = (displayName?: string): string => {
-    if (!displayName) return 'User';
-    const firstWord = displayName.trim().split(' ')[0];
-    return firstWord || 'User';
+  const getFirstName = (
+    displayName?: string,
+    fallbackName?: string,
+    fallbackEmail?: string
+  ): string => {
+    const source = displayName || fallbackName || (fallbackEmail ? fallbackEmail.split('@')[0] : '');
+    if (!source) return 'User';
+    const firstWord = source.trim().split(' ')[0];
+    return firstWord || source || 'User';
   };
 
   // WhatsApp sharing function
@@ -653,14 +658,18 @@ export default function Home() {
     }
   }, [dropdownOpen, isMobile]);
 
+  const previousLanguageRef = useRef(language);
+
   // Translate messages when language changes
   useEffect(() => {
-    if (language !== 'English' && messages.length > 0) {
-      setMessages(prevMessages => 
-        prevMessages.map(translateMessage)
-      );
+    const languageChanged = previousLanguageRef.current !== language;
+    if (languageChanged && language !== 'English' && messages.length > 0) {
+      setMessages(prevMessages => prevMessages.map(translateMessage));
     }
-  }, [language, translateMessage]); // Removed messages.length to prevent constant re-renders
+    if (languageChanged) {
+      previousLanguageRef.current = language;
+    }
+  }, [language, messages, translateMessage]);
 
   // Enhanced function to fetch user chat history with pagination and search
   const fetchUserChatHistory = useCallback(async (page: number = 1, searchQuery: string = '', append: boolean = false) => {
@@ -784,8 +793,11 @@ export default function Home() {
   }, [messages, scrollToBottom]);
 
   // Update greeting message when language changes
+  const previousLanguageGreetingRef = useRef(language);
+
   useEffect(() => {
-    if (messages.length > 0 && messages[0].type === 'ai' && messages[0].id === '1') {
+    const languageChanged = previousLanguageGreetingRef.current !== language;
+    if (languageChanged && messages.length > 0 && messages[0].type === 'ai' && messages[0].id === '1') {
       setMessages(prev => [
         {
           ...prev[0],
@@ -794,7 +806,10 @@ export default function Home() {
         ...prev.slice(1)
       ]);
     }
-  }, [language]); // CRITICAL FIX: Removed 'messages' dependency to prevent infinite loop
+    if (languageChanged) {
+      previousLanguageGreetingRef.current = language;
+    }
+  }, [language, messages]);
 
   // Reset prompt suggestions when language changes
   useEffect(() => {
@@ -809,7 +824,7 @@ export default function Home() {
     if (user?.id && !chatHistoryLoading && chatHistory.length === 0) {
       fetchUserChatHistory(1, '', false);
     }
-  }, [user?.id, chatHistoryLoading, chatHistory.length]);
+  }, [user?.id, chatHistoryLoading, chatHistory.length, fetchUserChatHistory]);
 
   // Load more chat history when scrolling
   const loadMoreChatHistory = useCallback(() => {
@@ -1633,7 +1648,7 @@ export default function Home() {
                 )}
               </div>
               <div className="user-details">
-                <span className="username">{user ? getFirstName(user?.display_name) : 'Guest'}</span>
+            <span className="username">{user ? getFirstName(user?.display_name, user?.name, user?.email) : 'Guest'}</span>
                 <span className="tokens">{user ? `${user?.tokens || 0} tokens` : '0 tokens'}</span>
                 {user && (
                   <span className="tier">{user?.subscription_tier || 'free'}</span>

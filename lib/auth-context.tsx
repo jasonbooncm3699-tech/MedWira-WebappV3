@@ -374,10 +374,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         // DEFENSIVE: Safe property access for fallback user creation
         // CRITICAL: Set tokens to 0 to prevent stale data issues
+        const metadata = sessionUser?.user_metadata || {};
+        const derivedName = metadata.full_name || metadata.name || metadata.user_name || (userEmail ? userEmail.split('@')[0] : 'User');
         const fallbackUser = {
           id: userId,
           email: userEmail,
-          name: 'User',
+          name: derivedName,
           tokens: 0, // NO TOKENS when API fails - prevents stale data
           subscription_tier: 'free',
           referral_code: '', // NO REFERRAL CODE when API fails
@@ -809,10 +811,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('✅ Valid SIGNED_IN session for:', userEmail);
           
           // CRITICAL: Use force fetch to ensure we get user profile data with tokens and referral code
-          const userName = 'User';
+          const metadata = session.user.user_metadata || {};
+          const fallbackName = metadata.full_name || metadata.name || metadata.user_name || session.user.email?.split('@')[0] || 'User';
           
           console.log('🚀 Force fetching user profile data after sign-in...');
-          const userProfileData = await forceFetchUserProfile(userId, userEmail, userName);
+          const userProfileData = await forceFetchUserProfile(userId, userEmail, fallbackName);
           
           if (userProfileData) {
             console.log('✅ User profile data loaded after sign-in:', {
@@ -882,10 +885,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 console.log('✅ User data loaded from INITIAL_SESSION');
               } else {
                 console.log('⚠️ No user data found in INITIAL_SESSION, creating fallback');
+                const metadata = sessionUser?.user_metadata || {};
+                const derivedName = metadata.full_name || metadata.name || metadata.user_name || (userEmail ? userEmail.split('@')[0] : 'User');
                 const fallbackUser = {
                   id: userId,
                   email: userEmail,
-                  name: 'User',
+                  name: derivedName,
                   tokens: 0,
                   subscription_tier: 'free',
                   referral_code: '',

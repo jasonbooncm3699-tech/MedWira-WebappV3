@@ -147,7 +147,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Use display_name and avatar_url from profile data
-    const displayName = profile.display_name || '';
+    const displayName = profile.display_name || userName || userEmail.split('@')[0] || '';
     const avatarUrl = profile.avatar_url || '';
     
     // Return combined data with proper name from auth.users
@@ -160,7 +160,7 @@ export async function GET(request: NextRequest) {
       referred_by: profile.referred_by,
       display_name: displayName,
       avatar_url: avatarUrl,
-      subscription_tier: 'free'
+      subscription_tier: profile.subscription_tier || 'free'
     };
     
     console.log('✅ User profile data retrieved successfully:', {
