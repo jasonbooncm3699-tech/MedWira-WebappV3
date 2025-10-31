@@ -212,6 +212,11 @@ export default function Home() {
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [chatHistoryLoading, setChatHistoryLoading] = useState(false);
+  const [chatHistoryLoaded, setChatHistoryLoaded] = useState(false);
+  useEffect(() => {
+    setChatHistoryLoaded(false);
+  }, [user?.id]);
+
   const [chatHistoryPage, setChatHistoryPage] = useState(1);
   const [hasMoreChatHistory, setHasMoreChatHistory] = useState(true);
   const [userTokens, setUserTokens] = useState<number>(user?.tokens || 0);
@@ -727,6 +732,7 @@ export default function Home() {
       setChatHistory([]);
     } finally {
       setChatHistoryLoading(false);
+      setChatHistoryLoaded(true);
     }
   }, [user?.id]);
 
@@ -820,11 +826,10 @@ export default function Home() {
 
   // Load chat history when user is authenticated (but lazy load for performance)
   useEffect(() => {
-    // REMOVED: Excessive debug logging that was causing performance issues
-    if (user?.id && !chatHistoryLoading && chatHistory.length === 0) {
+    if (user?.id && !chatHistoryLoading && !chatHistoryLoaded) {
       fetchUserChatHistory(1, '', false);
     }
-  }, [user?.id, chatHistoryLoading, chatHistory.length, fetchUserChatHistory]);
+  }, [user?.id, chatHistoryLoading, chatHistoryLoaded, fetchUserChatHistory]);
 
   // Load more chat history when scrolling
   const loadMoreChatHistory = useCallback(() => {
