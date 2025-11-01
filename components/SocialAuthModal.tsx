@@ -554,8 +554,10 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onInitializeSup
         {/* Referral Code Input */}
         <div style={{ 
           maxWidth: '400px',
-          margin: '0 auto 0 auto',
-          padding: '0 16px'
+          width: '100%',
+          margin: '0 auto',
+          display: 'flex',
+          flexDirection: 'column'
         }}>
           <label style={{ 
             display: 'block',
