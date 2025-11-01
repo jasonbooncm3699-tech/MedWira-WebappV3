@@ -100,9 +100,12 @@ export default function RootLayout({
                   navigator.serviceWorker.register('/sw.js')
                     .then(function(registration) {
                       console.log('SW registered: ', registration);
-                      
-                      // Wait for service worker to be ready
-                      return registration.update();
+
+                      if (typeof registration.update === 'function') {
+                        registration.update().catch(function(updateError) {
+                          console.warn('SW update failed:', updateError);
+                        });
+                      }
                     })
                     .catch(function(registrationError) {
                       console.warn('SW registration failed:', registrationError);
