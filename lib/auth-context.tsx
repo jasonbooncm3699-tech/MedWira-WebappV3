@@ -923,6 +923,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [isHydrated, supabaseInitialized]); // CRITICAL FIX: Only depend on hydration state, not initializeSupabase function
 
+  // Automatically initialize Supabase client on hydration to restore persisted sessions
+  useEffect(() => {
+    if (!isHydrated) {
+      return;
+    }
+
+    if (!supabaseInitialized) {
+      initializeSupabase();
+    }
+  }, [isHydrated, supabaseInitialized, initializeSupabase]);
+
   // Separate effect for OAuth callback handling
   useEffect(() => {
     if (!isHydrated) {
