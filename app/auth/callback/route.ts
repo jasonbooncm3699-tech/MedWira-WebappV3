@@ -196,7 +196,14 @@ export async function GET(request: Request) {
         hasReferrer: !!referrerId
       });
 
-      const { data: provisionResult, error: provisionError } = await supabase
+      const profileClient = supabaseAdmin ?? supabase;
+
+      if (!profileClient) {
+        console.error('❌ No Supabase client available for profile provisioning');
+        return NextResponse.redirect(new URL('/?error=profile_client_unavailable', request.url));
+      }
+
+      const { data: provisionResult, error: provisionError } = await profileClient
         .from('profiles')
         .upsert(upsertData, {
           onConflict: 'id',

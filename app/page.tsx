@@ -123,8 +123,10 @@ export default function Home() {
   // Handle prompt suggestion click
   const handlePromptSuggestion = (suggestion: string) => {
     setInputText(suggestion);
-    // Auto-submit the suggestion
-    handleTextSubmit(suggestion);
+
+    // Focus the textarea so the user can edit or press send manually
+    const textarea = document.querySelector<HTMLTextAreaElement>('textarea.text-input');
+    textarea?.focus();
   };
 
   // Get localized placeholder text

@@ -224,7 +224,10 @@ export class GeminiMedicineAnalyzer {
 
       // Clean base64 data (remove data URL prefix if present)
       let cleanBase64 = imageBase64;
-      if (imageBase64.startsWith('data:image/')) {
+      let mimeType = 'image/jpeg';
+      const dataUrlMatch = imageBase64.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,/i);
+      if (dataUrlMatch) {
+        mimeType = dataUrlMatch[1];
         cleanBase64 = imageBase64.split(',')[1];
       }
 
@@ -233,15 +236,81 @@ export class GeminiMedicineAnalyzer {
         throw new Error('Invalid base64 data: too short or empty');
       }
 
-      // Check if base64 is valid
+      // Check if base64 is valid and capture buffer for mime detection
+      let decodedBuffer: Buffer;
       try {
-        const buffer = Buffer.from(cleanBase64, 'base64');
-        if (buffer.length === 0) {
+        decodedBuffer = Buffer.from(cleanBase64, 'base64');
+        if (decodedBuffer.length === 0) {
           throw new Error('Invalid base64 data: empty buffer');
         }
-        console.log(`✅ [${analysisId}] Base64 validation passed: ${buffer.length} bytes`);
+        console.log(`✅ [${analysisId}] Base64 validation passed: ${decodedBuffer.length} bytes`);
       } catch (error) {
         throw new Error(`Invalid base64 data: ${error instanceof Error ? error.message : 'unknown error'}`);
+      }
+
+      // Infer mime type when data URL is not present
+      if (!dataUrlMatch) {
+        const signature = decodedBuffer.slice(0, 4).toString('hex');
+        if (signature.startsWith('89504e47')) {
+          mimeType = 'image/png';
+        } else if (signature.startsWith('ffd8ff')) {
+          mimeType = 'image/jpeg';
+        } else if (signature.startsWith('47494638')) {
+          mimeType = 'image/gif';
+        }
+      }
+
+      // STEP: Medicine Image Validation
+      statusCallback?.('Validating if image contains medicine...');
+      console.log(`🔍 [${analysisId}] Validating if image contains medicine-related content`);
+      
+      const medicineValidationPrompt = `You are a medical image classifier. Analyze this image and determine if it contains medicine-related content.
+
+Look for:
+- Medicine packaging (boxes, bottles, blister packs)
+- Pills, tablets, capsules
+- Medicine labels with drug names
+- Prescription bottles
+- Medical packaging with pharmaceutical information
+
+Respond with ONLY one of these options:
+- "MEDICINE_DETECTED" if the image contains medicine-related content
+- "NOT_MEDICINE" if the image does not contain medicine-related content
+
+Do not provide any other text or explanation.`;
+
+      try {
+        const validationResult = await this.model.generateContent([
+          medicineValidationPrompt,
+          {
+            inlineData: {
+              mimeType,
+              data: cleanBase64
+            }
+          }
+        ]);
+
+        const validationResponse = validationResult.response.text().trim();
+        console.log(`🔍 [${analysisId}] Medicine validation response: "${validationResponse}"`);
+
+        if (validationResponse === 'NOT_MEDICINE') {
+          console.log(`❌ [${analysisId}] Image does not contain medicine content - stopping analysis`);
+          return {
+            success: false,
+            error: '❌ This doesn\'t appear to be a medicine-related image. Please upload a photo of medicine packaging, tablets, or bottles.',
+            language
+          };
+        }
+
+        if (validationResponse !== 'MEDICINE_DETECTED') {
+          console.log(`⚠️ [${analysisId}] Unexpected validation response: "${validationResponse}" - proceeding with analysis`);
+        } else {
+          console.log(`✅ [${analysisId}] Medicine content detected - proceeding with analysis`);
+        }
+      } catch (validationError) {
+        console.error(`❌ [${analysisId}] Medicine validation failed:`, validationError);
+        // Continue with analysis if validation fails
+        console.log(`⚠️ [${analysisId}] Continuing with analysis despite validation failure`);
       }
     
     if (!this.model) {
