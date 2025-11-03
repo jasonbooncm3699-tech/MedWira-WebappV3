@@ -879,12 +879,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (userId && typeof userId === 'string' && 
                 userEmail && typeof userEmail === 'string' && 
                 userEmail.includes('@')) {
-              const userData = await fetchUserData(userId, userEmail);
+              // Retry fetching user data with a small delay to handle trigger timing
+              let userData = await fetchUserData(userId, userEmail);
+              
+              // If profile not found immediately, retry once after 500ms (trigger might still be processing)
+              if (!userData) {
+                console.log('⚠️ Profile not found immediately, retrying after delay...');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                userData = await fetchUserData(userId, userEmail);
+              }
+              
               if (userData) {
                 setUser(userData);
                 console.log('✅ User data loaded from INITIAL_SESSION');
               } else {
-                console.log('⚠️ No user data found in INITIAL_SESSION, creating fallback');
+                console.log('⚠️ No user data found in INITIAL_SESSION after retry, creating fallback');
                 const metadata = sessionUser?.user_metadata || {};
                 const derivedName = metadata.full_name || metadata.name || metadata.user_name || (userEmail ? userEmail.split('@')[0] : 'User');
                 const fallbackUser = {
