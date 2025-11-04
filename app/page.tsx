@@ -422,14 +422,8 @@ export default function Home() {
     }
   }, []);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      type: 'ai',
-      content: getWelcomeMessage('English'),
-      timestamp: new Date()
-    }
-  ]);
+  // Initialize messages with empty array - will be set after language loads
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   // Helper function for smart time display
   const getSmartTimeDisplay = (dateString: string): string => {
@@ -862,6 +856,14 @@ export default function Home() {
       if (localMessages.length > 0) {
         console.log('✅ Chat history loaded from localStorage (guest):', localMessages.length, 'messages');
         setMessages(localMessages);
+      } else {
+        // No chat history - show welcome message in selected language
+        setMessages([{
+          id: '1',
+          type: 'ai',
+          content: getWelcomeMessage(language),
+          timestamp: new Date()
+        }]);
       }
       return;
     }
@@ -903,6 +905,14 @@ export default function Home() {
       const localMessages = chatStorage.loadChatHistory(user.id);
       if (localMessages.length > 0 && page === 1) {
         setMessages(localMessages);
+      } else if (page === 1 && localMessages.length === 0) {
+        // No chat history - show welcome message in selected language
+        setMessages([{
+          id: '1',
+          type: 'ai',
+          content: getWelcomeMessage(language),
+          timestamp: new Date()
+        }]);
       }
 
     } catch (error) {
@@ -1875,7 +1885,7 @@ export default function Home() {
                   setMessages([{
                     id: '1',
                     type: 'ai',
-                    content: getWelcomeMessage('English'),
+                    content: getWelcomeMessage(language),
                     timestamp: new Date()
                   }]);
                 }}
