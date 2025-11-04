@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { geminiAnalyzer } from '@/lib/gemini-service';
 import { DatabaseService } from '@/lib/supabase';
 import { checkTokenAvailability, decrementToken, saveChatMessage } from '@/lib/npraDatabase';
+import { HealthProfileService } from '@/lib/health-profile-service';
+import { supabase } from '@/lib/supabase';
 
 // Increase Vercel timeout to 120 seconds for comprehensive analysis
 export const maxDuration = 120;
@@ -126,6 +128,15 @@ export async function POST(request: NextRequest) {
         // Don't fail the request if saving history fails
       }
 
+      // Phase 1 Enhancement: Extract keywords from image analysis and save to health profile
+      // Extract in background (non-blocking)
+      if (result.medicineName || result.genericName) {
+        extractKeywordsFromImageAnalysis(userId, result).catch(error => {
+          console.error('❌ Error extracting keywords from image analysis:', error);
+          // Don't block response if extraction fails
+        });
+      }
+
       // Deduct token (separate from scan history)
       try {
         const success = await decrementToken(userId);
@@ -142,6 +153,30 @@ export async function POST(request: NextRequest) {
 
     // Return the result in the format expected by the frontend
     if (result.success) {
+      // Phase 1 Enhancement: Check if medicine should be suggested for medication stack
+      let suggestMedicationStack = false;
+      let medicineDetails = null;
+      
+      if (userId && result.medicineName) {
+        try {
+          // Check if medicine is already in user's medication stack
+          const isInStack = await checkIfInMedicationStack(userId, result.medicineName);
+          
+          if (!isInStack) {
+            suggestMedicationStack = true;
+            medicineDetails = {
+              name: result.medicineName,
+              genericName: result.genericName || null,
+              dosage: result.dosage || null,
+              activeIngredients: result.activeIngredients || null
+            };
+          }
+        } catch (error) {
+          console.warn('⚠️ Error checking medication stack (non-critical):', error);
+          // Continue without suggestion if check fails
+        }
+      }
+
       return NextResponse.json({
         status: 'SUCCESS',
         data: {
@@ -165,7 +200,10 @@ export async function POST(request: NextRequest) {
           allergy_warning: result.allergyWarning,
           drug_interactions: result.drugInteractions,
           safety_notes: result.safetyNotes,
-          disclaimer: result.disclaimer
+          disclaimer: result.disclaimer,
+          // Phase 1 Enhancement: Medication stack suggestion
+          suggest_medication_stack: suggestMedicationStack,
+          medicine_details: medicineDetails
         },
         tokensRemaining: undefined // Will be set by frontend if needed
       });
@@ -188,6 +226,96 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
+  }
+}
+
+// ============================================================================
+// Phase 1 Enhancement: Extract keywords from image analysis
+// ============================================================================
+
+/**
+ * Extract keywords from image analysis result and save to health profile
+ * Runs in background (non-blocking)
+ */
+async function extractKeywordsFromImageAnalysis(
+  userId: string,
+  analysisResult: {
+    medicineName?: string;
+    genericName?: string;
+    activeIngredients?: string;
+    rawAnalysis?: string;
+  }
+): Promise<void> {
+  try {
+    console.log('🔍 [Phase 1 Enhancement] Extracting keywords from image analysis...');
+
+    // Build keywords object from analysis result
+    const medications: string[] = [];
+    if (analysisResult.medicineName) {
+      medications.push(analysisResult.medicineName.toLowerCase());
+    }
+    if (analysisResult.genericName) {
+      medications.push(analysisResult.genericName.toLowerCase());
+    }
+
+    // Extract additional keywords from raw analysis if available
+    // This could include conditions, symptoms mentioned in the analysis
+    if (analysisResult.rawAnalysis) {
+      // Use Gemini to extract keywords from analysis text
+      // For now, just save medications - can enhance later to extract more
+      const keywords = {
+        medications: medications,
+        symptoms: [],
+        conditions: [],
+        triggers: [],
+        keywords: []
+      };
+
+      // Only save if we have medications
+      if (medications.length > 0) {
+        const success = await HealthProfileService.updateHealthKeywords(userId, keywords);
+        
+        if (success) {
+          console.log('✅ [Phase 1 Enhancement] Keywords extracted and saved from image analysis:', {
+            medications: medications.length
+          });
+        } else {
+          console.error('❌ [Phase 1 Enhancement] Failed to save keywords from image analysis');
+        }
+      } else {
+        console.log('ℹ️ [Phase 1 Enhancement] No medications extracted from image analysis');
+      }
+    }
+  } catch (error) {
+    console.error('❌ [Phase 1 Enhancement] Error extracting keywords from image analysis:', error);
+  }
+}
+
+/**
+ * Check if medicine is already in user's medication stack
+ */
+async function checkIfInMedicationStack(
+  userId: string,
+  medicineName: string
+): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from('user_medication_stack')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .ilike('medicine_name', `%${medicineName}%`)
+      .limit(1);
+
+    if (error) {
+      console.warn('⚠️ Error checking medication stack:', error);
+      return false; // Assume not in stack if check fails
+    }
+
+    return (data && data.length > 0);
+  } catch (error) {
+    console.warn('⚠️ Exception checking medication stack:', error);
+    return false; // Assume not in stack if check fails
   }
 }
 

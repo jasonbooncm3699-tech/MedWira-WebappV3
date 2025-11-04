@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { aiPharmacist } from '@/lib/ai-pharmacist-service';
 import { checkTokenAvailability, decrementToken } from '@/lib/npraDatabase';
 import { chatHistoryManager } from '@/lib/chat-history-manager';
+import { 
+  extractHealthKeywords, 
+  HealthProfileService 
+} from '@/lib/health-profile-service';
 
 // Increase Vercel timeout for comprehensive analysis
 export const maxDuration = 30;
@@ -53,12 +57,14 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Call AI Pharmacist service
+    // Call AI Pharmacist service (Phase 1.4: Now includes userId for health profile)
     const result = await aiPharmacist.handleConversation(
       userMessage,
       imageBase64,
       userContext,
-      language
+      language,
+      undefined, // statusCallback (not used in API route)
+      userId // Phase 1.4: Pass userId for health profile loading
     );
 
     // CRITICAL: Save chat history and deduct tokens asynchronously to avoid blocking AI response
@@ -147,6 +153,13 @@ export async function POST(request: NextRequest) {
         console.error('❌ CRITICAL ERROR saving conversation to chat history:', error);
         // Don't throw - we still want to return the AI response even if save fails
       }
+
+      // Phase 1.4: Extract health keywords in background (non-blocking)
+      // Don't await - let it run in background while returning response
+      extractKeywordsInBackground(userId, userMessage).catch(error => {
+        console.error('❌ Error extracting keywords in background:', error);
+        // Don't block response if extraction fails
+      });
 
       // Deduct token after successful analysis
       try {
@@ -399,6 +412,45 @@ function generateConversationTags(userMessage: string, result: any): string[] {
   if (tags.size === 0) tags.add('GENERAL');
   
   return Array.from(tags);
+}
+
+// Phase 1.4: Background keyword extraction (non-blocking)
+async function extractKeywordsInBackground(userId: string, userMessage: string): Promise<void> {
+  try {
+    console.log('🔍 [Phase 1.4] Extracting health keywords in background...');
+    
+    // Extract keywords using Gemini
+    const keywords = await extractHealthKeywords(userMessage);
+    
+    // Check if any keywords were extracted
+    const hasKeywords = 
+      (keywords.symptoms && keywords.symptoms.length > 0) ||
+      (keywords.conditions && keywords.conditions.length > 0) ||
+      (keywords.medications && keywords.medications.length > 0) ||
+      (keywords.triggers && keywords.triggers.length > 0) ||
+      (keywords.keywords && keywords.keywords.length > 0);
+    
+    if (hasKeywords) {
+      // Update health profile with extracted keywords
+      const success = await HealthProfileService.updateHealthKeywords(userId, keywords);
+      
+      if (success) {
+        console.log('✅ [Phase 1.4] Health keywords extracted and saved:', {
+          symptoms: keywords.symptoms?.length || 0,
+          conditions: keywords.conditions?.length || 0,
+          medications: keywords.medications?.length || 0,
+          triggers: keywords.triggers?.length || 0
+        });
+      } else {
+        console.error('❌ [Phase 1.4] Failed to save health keywords');
+      }
+    } else {
+      console.log('ℹ️ [Phase 1.4] No health keywords extracted from message');
+    }
+  } catch (error) {
+    console.error('❌ [Phase 1.4] Error in background keyword extraction:', error);
+    // Don't throw - this is background processing
+  }
 }
 
 // Extract medical data from AI response for text chats
