@@ -85,6 +85,18 @@ export interface HealthKeywords {
 }
 
 // ============================================================================
+// Phase 2.1: Pattern Detection
+// ============================================================================
+
+export interface PatternCandidate {
+  symptom: string;
+  trigger: string;
+  confidence: number; // 0-1
+  detectedAt: string;
+  message: string; // Original message for context
+}
+
+// ============================================================================
 // Health Profile Service
 // ============================================================================
 
@@ -489,9 +501,15 @@ export class HealthProfileService {
  */
 export async function extractHealthKeywords(
   message: string,
-  language: string = 'English'
+  language: string = 'English',
+  statusCallback?: (status: string) => void
 ): Promise<HealthKeywords> {
   try {
+    // Phase 2 Enhancement: Status tracking
+    if (statusCallback) {
+      statusCallback('Extracting health information...');
+    }
+    
     // Check for explicit symptom logging
     const isExplicitLogging = detectSymptomLogging(message);
     
@@ -645,5 +663,139 @@ export function extractSymptomsFromLogging(message: string): string[] {
   }
 
   return [];
+}
+
+/**
+ * Phase 2.1: Detect symptom-trigger patterns from message
+ * Uses Gemini to intelligently detect patterns like "gastric pain after spicy food"
+ * 
+ * @param message - User message to analyze
+ * @param extractedKeywords - Already extracted keywords (optional, will extract if not provided)
+ * @param language - Language of the message (default: 'English')
+ * @returns PatternCandidate if pattern detected, null otherwise
+ */
+export async function detectPatterns(
+  message: string,
+  extractedKeywords?: HealthKeywords,
+  language: string = 'English',
+  statusCallback?: (status: string) => void
+): Promise<PatternCandidate | null> {
+  try {
+    console.log('🔍 [Phase 2.1] Detecting patterns in message...');
+    
+    // Phase 2 Enhancement: Status tracking
+    if (statusCallback) {
+      statusCallback('Detecting health patterns...');
+    }
+
+    // If keywords not provided, extract them first
+    let keywords = extractedKeywords;
+    if (!keywords) {
+      keywords = await extractHealthKeywords(message, language, statusCallback);
+    }
+
+    // Check if we have both symptom and trigger
+    const hasSymptom = keywords.symptoms && keywords.symptoms.length > 0;
+    const hasTrigger = keywords.triggers && keywords.triggers.length > 0;
+
+    // Quick check: If no symptom or trigger, no pattern possible
+    if (!hasSymptom || !hasTrigger) {
+      console.log('ℹ️ [Phase 2.1] No pattern detected: missing symptom or trigger');
+      return null;
+    }
+
+    // Use Gemini to detect pattern relationship
+    // This ensures we detect actual cause-effect relationships, not just co-occurrence
+    const { GoogleGenerativeAI } = await import('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY!);
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-pro',
+      generationConfig: {
+        temperature: 0.1, // Low temperature for accurate detection
+        maxOutputTokens: 512,
+      },
+    });
+
+    // Create pattern detection prompt
+    const patternPrompt = `Analyze this message and detect if there's a symptom-trigger pattern.
+    
+Message: "${message}"
+
+Symptoms found: ${keywords.symptoms?.join(', ') || 'none'}
+Triggers found: ${keywords.triggers?.join(', ') || 'none'}
+
+Detect if there's a clear relationship where a trigger causes a symptom.
+Examples:
+- "gastric pain after eating spicy food" → symptom: "gastric pain", trigger: "spicy food"
+- "headache when I drink coffee" → symptom: "headache", trigger: "coffee"
+- "stomach ache after late meals" → symptom: "stomach ache", trigger: "late meals"
+
+Return ONLY a valid JSON object:
+{
+  "pattern_detected": true/false,
+  "symptom": "symptom text" or null,
+  "trigger": "trigger text" or null,
+  "confidence": 0.0-1.0,
+  "reason": "brief explanation"
+}
+
+Rules:
+1. Only return pattern_detected: true if there's a clear cause-effect relationship
+2. If symptom and trigger are mentioned but not related, return pattern_detected: false
+3. Confidence should reflect how clear the relationship is (1.0 = very clear, 0.5 = somewhat clear)
+4. Return ONLY valid JSON, no other text
+
+Return JSON:`;
+
+    // Call Gemini API
+    const result = await model.generateContent(patternPrompt);
+    const responseText = result.response.text();
+
+    // Parse JSON response
+    let jsonText = responseText.trim();
+    jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    
+    const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      jsonText = jsonMatch[0];
+    }
+
+    let detected: any;
+    try {
+      detected = JSON.parse(jsonText);
+    } catch (parseError) {
+      console.error('❌ [Phase 2.1] Error parsing pattern detection response:', parseError);
+      return null;
+    }
+
+    // Check if pattern was detected
+    if (!detected.pattern_detected || !detected.symptom || !detected.trigger) {
+      console.log('ℹ️ [Phase 2.1] No pattern detected by Gemini');
+      return null;
+    }
+
+    // Validate confidence
+    const confidence = Math.max(0, Math.min(1, detected.confidence || 0.5));
+
+    // Create pattern candidate
+    const pattern: PatternCandidate = {
+      symptom: detected.symptom.toLowerCase().trim(),
+      trigger: detected.trigger.toLowerCase().trim(),
+      confidence: confidence,
+      detectedAt: new Date().toISOString(),
+      message: message
+    };
+
+    console.log('✅ [Phase 2.1] Pattern detected:', {
+      symptom: pattern.symptom,
+      trigger: pattern.trigger,
+      confidence: pattern.confidence
+    });
+
+    return pattern;
+  } catch (error) {
+    console.error('❌ [Phase 2.1] Error detecting patterns:', error);
+    return null;
+  }
 }
 

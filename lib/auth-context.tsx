@@ -186,7 +186,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Always remove from fetching set
       fetchingUserData.current.delete(userId);
     }
-  }, [supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // supabase is stable reference, no need to include
 
   // Initialize Supabase only when user explicitly interacts (e.g., clicks Sign In)
   const initializeSupabase = useCallback(async () => {
@@ -398,7 +399,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [supabase]); // REMOVED fetchUserData and user from deps to prevent circular dependency
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // REMOVED fetchUserData and user from deps to prevent circular dependency
 
   // Utility function to clear all authentication data
   const clearAllAuthData = useCallback(() => {
@@ -598,6 +600,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // REMOVED all dependencies to prevent circular dependency and state loops
 
   // CRITICAL: Force fetch user profile data from profiles table
@@ -740,7 +743,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(emergencyFallbackUser);
       return emergencyFallbackUser;
     }
-  }, [supabase]); // REMOVED fetchUserData to prevent circular dependency
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // REMOVED fetchUserData to prevent circular dependency
 
   // Handle hydration
   useEffect(() => {
@@ -930,6 +934,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       authListener.subscription.unsubscribe();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHydrated, supabaseInitialized]); // CRITICAL FIX: Only depend on hydration state, not initializeSupabase function
 
   // Automatically initialize Supabase client on hydration to restore persisted sessions

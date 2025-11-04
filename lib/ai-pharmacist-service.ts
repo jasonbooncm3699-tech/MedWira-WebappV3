@@ -17,6 +17,7 @@ import { DatabaseService } from './supabase';
 import { npraProductLookup } from './npraDatabase';
 import { HealthProfileService } from './health-profile-service';
 import { supabase } from './supabase';
+import { AIProcessingStage, getStatusMessage } from './ai-status-types';
 
 export interface PharmacistAnalysisResult {
   success: boolean;
@@ -164,11 +165,21 @@ export class AIPharmacistService {
     // Phase 1.4: Load user health profile
     let healthProfile = null;
     // Phase 1.4 Enhancement: Load current medications from medication_stack
-    let currentMedicationsFromStack = [];
+    let currentMedicationsFromStack: Array<{
+      name: string;
+      genericName: string;
+      activeIngredients: string;
+      frequency: string;
+      dosage: string;
+    }> = [];
     
     if (userId) {
       try {
-        statusCallback?.('Loading your health profile...');
+        // Phase 2 Enhancement: Realistic status tracking
+        if (statusCallback) {
+          const statusMsg = getStatusMessage(AIProcessingStage.LOADING_PROFILE, language);
+          statusCallback(statusMsg || AIProcessingStage.LOADING_PROFILE);
+        }
         healthProfile = await HealthProfileService.loadUserHealthProfile(userId);
         
         // Initialize profile if doesn't exist
@@ -178,6 +189,10 @@ export class AIPharmacistService {
         
         // Load current medications from user_medication_stack (Phase 1.4 Enhancement)
         try {
+          if (statusCallback) {
+            const statusMsg = getStatusMessage(AIProcessingStage.LOADING_MEDICATIONS, language);
+            statusCallback(statusMsg || AIProcessingStage.LOADING_MEDICATIONS);
+          }
           const { data: medications, error: medError } = await supabase
             .from('user_medication_stack')
             .select('medicine_name, generic_name, active_ingredients, frequency, dosage')
@@ -185,7 +200,13 @@ export class AIPharmacistService {
             .eq('is_active', true);
           
           if (!medError && medications) {
-            currentMedicationsFromStack = medications.map(m => ({
+            currentMedicationsFromStack = medications.map((m): {
+              name: string;
+              genericName: string;
+              activeIngredients: string;
+              frequency: string;
+              dosage: string;
+            } => ({
               name: m.medicine_name || '',
               genericName: m.generic_name || '',
               activeIngredients: m.active_ingredients || '',
@@ -201,13 +222,28 @@ export class AIPharmacistService {
           console.warn('⚠️ Exception loading medication stack (non-critical):', medError);
           // Continue without medication stack (graceful fallback)
         }
+        
+        // Check health history if profile exists
+        if (healthProfile && (
+          (healthProfile.symptoms && healthProfile.symptoms.length > 0) || 
+          (healthProfile.patterns && healthProfile.patterns.length > 0)
+        )) {
+          if (statusCallback) {
+            const statusMsg = getStatusMessage(AIProcessingStage.CHECKING_HISTORY, language);
+            statusCallback(statusMsg || AIProcessingStage.CHECKING_HISTORY);
+          }
+        }
       } catch (error) {
         console.error('❌ Error loading health profile:', error);
         // Continue without profile (graceful fallback)
       }
     }
 
-    statusCallback?.('Analyzing your question...');
+    // Phase 2 Enhancement: Realistic status tracking
+    if (statusCallback) {
+      const statusMsg = getStatusMessage(AIProcessingStage.ANALYZING_QUESTION, language);
+      statusCallback(statusMsg || AIProcessingStage.ANALYZING_QUESTION);
+    }
 
     // Format health profile for AI context
     const healthProfileContext = healthProfile 
@@ -255,9 +291,10 @@ Medical conditions: ${userContext.medicalConditions?.join(', ') || 'None specifi
 
 **SPECIFIC INSTRUCTIONS:**
 1. Reference user's health history when relevant (e.g., "I remember you mentioned gastric pain before...")
-2. Use patterns to provide context-aware advice
+2. Use patterns to provide context-aware advice (e.g., "I remember you mentioned gastric pain after spicy food before...")
 3. Personalize recommendations based on known conditions and triggers
 4. Cross-reference current question with previous symptoms/patterns
+5. If user mentions a symptom and trigger together, naturally reference saved patterns in your response
 
 **USER QUESTION:** "${userMessage}"
 
@@ -294,8 +331,20 @@ This information is for educational purposes only. Always consult with your heal
 Note: You are a conversational AI pharmacist. Answer general health and medicine questions directly. Database lookup is optional and only when you identify a specific medicine name.`;
 
     try {
+      // Phase 2 Enhancement: Realistic status tracking
+      if (statusCallback) {
+        const statusMsg = getStatusMessage(AIProcessingStage.GENERATING_RESPONSE, language);
+        statusCallback(statusMsg || AIProcessingStage.GENERATING_RESPONSE);
+      }
+      
       const response = await this.model.generateContent(pharmacistPrompt);
       const aiResponse = response.response.text();
+      
+      // Phase 2 Enhancement: Finalizing status
+      if (statusCallback) {
+        const statusMsg = getStatusMessage(AIProcessingStage.FINALIZING, language);
+        statusCallback(statusMsg || AIProcessingStage.FINALIZING);
+      }
 
       // Extract medicine name from user message for database lookup
       const medicineName = this.extractMedicineName(userMessage);

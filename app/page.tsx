@@ -11,6 +11,7 @@ import StructuredMedicineReply from '@/components/StructuredMedicineReply';
 import ReferralCodeDisplay from '@/components/ReferralCodeDisplay';
 import CompactReferralButton from '@/components/CompactReferralButton';
 import AIStatusDisplay from '@/components/AIStatusDisplay';
+import { AIProcessingStage, getStatusMessage } from '@/lib/ai-status-types';
 import { getInitials, generateAvatarColor } from '@/lib/avatar-utils';
 import { MessageFormatter } from '@/lib/message-formatter';
 import { DatabaseService } from '@/lib/supabase';
@@ -223,7 +224,7 @@ export default function Home() {
   const [hasMoreChatHistory, setHasMoreChatHistory] = useState(true);
   const [userTokens, setUserTokens] = useState<number>(user?.tokens || 0);
   const [inputText, setInputText] = useState('');
-  const [aiStatus, setAiStatus] = useState<string>('idle');
+  const [aiStatus, setAiStatus] = useState<string>(AIProcessingStage.IDLE);
   const [isAiThinking, setIsAiThinking] = useState(false);
   const chatWindowRef = useRef<HTMLDivElement>(null);
   
@@ -840,7 +841,7 @@ export default function Home() {
       setChatHistoryPage(nextPage);
       fetchUserChatHistory(nextPage, '', true);
     }
-  }, [chatHistoryLoading, hasMoreChatHistory, user?.id, chatHistoryPage]); // Removed fetchUserChatHistory dependency
+  }, [chatHistoryLoading, hasMoreChatHistory, user?.id, chatHistoryPage, fetchUserChatHistory]);
 
 
 
@@ -1027,18 +1028,9 @@ export default function Home() {
 
     setIsAnalyzing(true);
     
-    // Get localized AI status message
-    const getAiStatusMessage = (lang: string) => {
-      const messages = {
-        'English': 'Initializing AI...',
-        'Chinese': '正在初始化AI...',
-        'Malay': 'Memulakan AI...',
-        'Indonesian': 'Menginisialisasi AI...'
-      };
-      return messages[lang as keyof typeof messages] || messages['English'];
-    };
-    
-    setAiStatus(getAiStatusMessage(language));
+    // Phase 2 Enhancement: Realistic status tracking
+    // Set initial status - will be updated by actual processing stages
+    setAiStatus(AIProcessingStage.LOADING_PROFILE); // Start with loading profile stage
 
     // Create localized user message
     const getUploadMessage = (lang: string) => {
@@ -1076,7 +1068,7 @@ export default function Home() {
     if (!userId) {
       console.log(`📊 [Frontend] No user ID - authentication failed`);
       setIsAnalyzing(false);
-      setAiStatus('idle');
+      setAiStatus(AIProcessingStage.IDLE);
       // Add a chat message here: "Authentication required. Please log in to use AI analysis."
       const errorMessage = {
         id: (Date.now() + 1).toString(),
@@ -1127,7 +1119,7 @@ export default function Home() {
           if (isAnalyzing && aiStatus !== 'idle') {
             console.warn(`📊 [Frontend] Stream ended but analysis still in progress. Status: ${aiStatus}`);
             console.error(`📊 [Frontend] Analysis incomplete - backend stream ended prematurely`);
-            setAiStatus('idle');
+            setAiStatus(AIProcessingStage.IDLE);
             setIsAnalyzing(false);
           }
           break;
@@ -1152,7 +1144,7 @@ export default function Home() {
                   // Don't reset status here - let the output render first
                 } else if (data.status === 'Analysis failed') {
                   console.log(`📊 [Frontend] Analysis failed - resetting status`);
-                  setAiStatus('idle');
+                  setAiStatus(AIProcessingStage.IDLE);
                   setIsAnalyzing(false);
                 }
               } else if (data.type === 'complete' && data.result) {
@@ -1165,7 +1157,7 @@ export default function Home() {
                 
                 // CRITICAL FIX: Force AI status to disappear immediately after receiving complete data
                 console.log(`📊 [Frontend] FORCING AI status to disappear after receiving complete data`);
-                setAiStatus('idle');
+                setAiStatus(AIProcessingStage.IDLE);
                 setIsAnalyzing(false);
                 
                 // Check if result is a failure (e.g., not a medicine image)
@@ -1249,7 +1241,7 @@ export default function Home() {
 
               } else if (data.type === 'error') {
                 // Handle error
-                setAiStatus('idle');
+                setAiStatus(AIProcessingStage.IDLE);
                 setIsAnalyzing(false);
 
                 const errorMessage = {
@@ -1280,7 +1272,7 @@ export default function Home() {
         message: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : 'No stack'
       });
-      setAiStatus('idle');
+      setAiStatus(AIProcessingStage.IDLE);
       setIsAnalyzing(false);
 
       const errorMsg = {
@@ -1992,7 +1984,10 @@ export default function Home() {
           )}
 
           {isAnalyzing && (
-            <AIStatusDisplay key={`${isAnalyzing}-${aiStatus}`} status={aiStatus} />
+            <AIStatusDisplay 
+              key={`${isAnalyzing}-${aiStatus}`} 
+              status={aiStatus}
+            />
           )}
           </div>
 

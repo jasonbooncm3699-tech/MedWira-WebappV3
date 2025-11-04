@@ -92,7 +92,7 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onInitializeSup
         clearTimeout(authTimeoutRef.current);
       }
     };
-  }, [socialLoading, onClose]);
+  }, [socialLoading, onClose, referralCode]);
 
   // Reset state when modal closes
   useEffect(() => {

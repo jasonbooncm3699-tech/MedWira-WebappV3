@@ -4,7 +4,9 @@ import { checkTokenAvailability, decrementToken } from '@/lib/npraDatabase';
 import { chatHistoryManager } from '@/lib/chat-history-manager';
 import { 
   extractHealthKeywords, 
-  HealthProfileService 
+  HealthProfileService,
+  detectPatterns,
+  PatternCandidate
 } from '@/lib/health-profile-service';
 
 // Increase Vercel timeout for comprehensive analysis
@@ -57,13 +59,22 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
+    // Phase 2 Enhancement: Realistic status tracking
+    // Create status callback that will be passed to frontend via WebSocket/SSE (future)
+    // For now, we'll track stages internally but status display is handled by frontend
+    const statusCallback = (stage: string) => {
+      // Log status for debugging
+      console.log(`📊 [AI Status] ${stage}`);
+      // Future: Could send via WebSocket/SSE for real-time updates
+    };
+
     // Call AI Pharmacist service (Phase 1.4: Now includes userId for health profile)
     const result = await aiPharmacist.handleConversation(
       userMessage,
       imageBase64,
       userContext,
       language,
-      undefined, // statusCallback (not used in API route)
+      statusCallback, // Phase 2: Pass status callback for realistic tracking
       userId // Phase 1.4: Pass userId for health profile loading
     );
 
@@ -155,9 +166,10 @@ export async function POST(request: NextRequest) {
       }
 
       // Phase 1.4: Extract health keywords in background (non-blocking)
+      // Phase 2.1: Also detect patterns in background
       // Don't await - let it run in background while returning response
-      extractKeywordsInBackground(userId, userMessage).catch(error => {
-        console.error('❌ Error extracting keywords in background:', error);
+      extractKeywordsAndDetectPatterns(userId, userMessage, language).catch(error => {
+        console.error('❌ Error extracting keywords/detecting patterns in background:', error);
         // Don't block response if extraction fails
       });
 
@@ -175,11 +187,57 @@ export async function POST(request: NextRequest) {
     // Return the result
     if (result.success) {
       // Note: Chat history saving is now handled synchronously above to ensure it actually happens
+      
+      // Phase 2.1: Detect patterns synchronously for permission prompt
+      // We do this synchronously so we can include pattern in response
+      let detectedPattern: PatternCandidate | null = null;
+      if (userId && userMessage) {
+        try {
+          // Extract keywords first (needed for pattern detection)
+          // Phase 2 Enhancement: Status tracking for keyword extraction
+          const keywordStatusCallback = (status: string) => {
+            console.log(`📊 [Keyword Extraction Status] ${status}`);
+          };
+          const keywords = await extractHealthKeywords(userMessage, language, keywordStatusCallback);
+          
+          // Detect pattern if we have symptoms and triggers
+          if (keywords.symptoms && keywords.symptoms.length > 0 && 
+              keywords.triggers && keywords.triggers.length > 0) {
+            // Phase 2 Enhancement: Status tracking for pattern detection
+            // Create status callback for pattern detection
+            const patternStatusCallback = (status: string) => {
+              // Log pattern detection status
+              console.log(`📊 [Pattern Detection Status] ${status}`);
+              // Note: Could pass to frontend if needed
+            };
+            detectedPattern = await detectPatterns(userMessage, keywords, language, patternStatusCallback);
+          }
+        } catch (error) {
+          console.warn('⚠️ Error detecting patterns (non-critical):', error);
+          // Continue without pattern detection if it fails
+        }
+      }
+
+      // Phase 2.2: Append permission prompt to AI response if pattern detected
+      let finalMessage = result.message;
+      if (detectedPattern && detectedPattern.confidence > 0.5) {
+        // Format permission prompt based on language
+        const permissionPrompt = formatPermissionPrompt(
+          detectedPattern.symptom,
+          detectedPattern.trigger,
+          language
+        );
+        
+        // Append to main message (after the answer)
+        finalMessage = `${result.message}\n\n${permissionPrompt}`;
+        
+        console.log('✅ [Phase 2.2] Permission prompt added to response');
+      }
 
       return NextResponse.json({
         status: 'SUCCESS',
         data: {
-          message: result.message,
+          message: finalMessage, // Use message with permission prompt if pattern detected
           messageType: result.messageType,
           medicineName: result.medicineName,
           genericName: result.genericName,
@@ -195,7 +253,13 @@ export async function POST(request: NextRequest) {
           confidence: result.confidence,
           databaseVerified: result.databaseVerified,
           disclaimer: result.disclaimer,
-          rawAnalysis: result.rawAnalysis
+          rawAnalysis: result.rawAnalysis,
+          // Phase 2.1 & 2.2: Include detected pattern for permission prompt
+          detectedPattern: detectedPattern && detectedPattern.confidence > 0.5 ? {
+            symptom: detectedPattern.symptom,
+            trigger: detectedPattern.trigger,
+            confidence: detectedPattern.confidence
+          } : null
         },
         language: result.language
       });
@@ -414,13 +478,18 @@ function generateConversationTags(userMessage: string, result: any): string[] {
   return Array.from(tags);
 }
 
-// Phase 1.4: Background keyword extraction (non-blocking)
-async function extractKeywordsInBackground(userId: string, userMessage: string): Promise<void> {
+// Phase 1.4 & 2.1: Background keyword extraction and pattern detection (non-blocking)
+async function extractKeywordsAndDetectPatterns(
+  userId: string, 
+  userMessage: string,
+  language: string = 'English'
+): Promise<void> {
   try {
-    console.log('🔍 [Phase 1.4] Extracting health keywords in background...');
+    console.log('🔍 [Phase 1.4 & 2.1] Extracting keywords and detecting patterns in background...');
     
     // Extract keywords using Gemini
-    const keywords = await extractHealthKeywords(userMessage);
+    // Note: Status tracking for keyword extraction (background, non-blocking)
+    const keywords = await extractHealthKeywords(userMessage, language);
     
     // Check if any keywords were extracted
     const hasKeywords = 
@@ -444,13 +513,61 @@ async function extractKeywordsInBackground(userId: string, userMessage: string):
       } else {
         console.error('❌ [Phase 1.4] Failed to save health keywords');
       }
+      
+      // Phase 2.1: Detect patterns (background, won't block response)
+      // Note: Pattern detection already done synchronously above for permission prompt
+      // This is just for logging/verification
+      try {
+        if (keywords.symptoms && keywords.symptoms.length > 0 && 
+            keywords.triggers && keywords.triggers.length > 0) {
+          const pattern = await detectPatterns(userMessage, keywords, language);
+          if (pattern) {
+            console.log('✅ [Phase 2.1] Pattern detected in background:', {
+              symptom: pattern.symptom,
+              trigger: pattern.trigger,
+              confidence: pattern.confidence
+            });
+          }
+        }
+      } catch (patternError) {
+        console.warn('⚠️ [Phase 2.1] Error detecting patterns in background (non-critical):', patternError);
+      }
     } else {
       console.log('ℹ️ [Phase 1.4] No health keywords extracted from message');
     }
   } catch (error) {
-    console.error('❌ [Phase 1.4] Error in background keyword extraction:', error);
+    console.error('❌ [Phase 1.4 & 2.1] Error in background keyword extraction/pattern detection:', error);
     // Don't throw - this is background processing
   }
+}
+
+// Phase 2.2: Format permission prompt based on language
+function formatPermissionPrompt(symptom: string, trigger: string, language: string): string {
+  const prompts: { [key: string]: string } = {
+    'English': `─────────────────────────────────
+💡 I noticed this pattern: **${symptom}** after **${trigger}**. 
+Would you like me to remember this connection so I can provide more personalized advice in the future?
+
+[Yes, remember] [No thanks] [Maybe later]`,
+    'Chinese': `─────────────────────────────────
+💡 我注意到这个模式：**${symptom}** 在 **${trigger}** 之后。
+您希望我记住这个关联，以便将来提供更个性化的建议吗？
+
+[是的，记住] [不用了] [稍后再说]`,
+    'Malay': `─────────────────────────────────
+💡 Saya perasan corak ini: **${symptom}** selepas **${trigger}**.
+Adakah anda mahu saya ingat perkaitan ini untuk memberikan nasihat yang lebih peribadi pada masa hadapan?
+
+[Ya, ingat] [Tidak terima kasih] [Mungkin kemudian]`,
+    'Indonesian': `─────────────────────────────────
+💡 Saya melihat pola ini: **${symptom}** setelah **${trigger}**.
+Apakah Anda ingin saya mengingat koneksi ini agar saya dapat memberikan saran yang lebih personal di masa depan?
+
+[Ya, ingat] [Tidak terima kasih] [Mungkin nanti]`
+  };
+
+  // Default to English if language not found
+  return prompts[language] || prompts['English'];
 }
 
 // Extract medical data from AI response for text chats
