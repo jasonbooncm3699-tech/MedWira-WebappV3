@@ -64,9 +64,19 @@ export class GeminiMedicineAnalyzer {
   private model: any;
 
   constructor() {
-    console.log('✅ GeminiMedicineAnalyzer: Gemini 1.5 Pro service initialized');
-    // Initialize Gemini 1.5 Pro model
-    this.initializeModel();
+    console.log('✅ GeminiMedicineAnalyzer: Gemini service created (lazy initialization)');
+    // Don't initialize model on construction - initialize on first use instead
+  }
+
+  /**
+   * Lazy initialization: Only initialize model when actually needed
+   * This prevents unnecessary initialization on page load
+   */
+  private async ensureModelInitialized(): Promise<void> {
+    if (this.model) {
+      return; // Already initialized
+    }
+    await this.initializeModel();
   }
 
   // Helper function for localized status messages
@@ -160,6 +170,8 @@ export class GeminiMedicineAnalyzer {
    * Validates if the uploaded image contains medicine packaging
    */
   async validateMedicineImage(imageBase64: string): Promise<{ isValid: boolean; confidence: number }> {
+    // Lazy initialization: Only initialize model when actually needed
+    await this.ensureModelInitialized();
     if (!this.model) {
       console.log('⚠️ Gemini model not initialized - returning default response');
       return { isValid: true, confidence: 0.5 };
@@ -314,10 +326,11 @@ Do not provide any other text or explanation.`;
       }
     
     if (!this.model) {
-      console.log(`⚠️ [${analysisId}] Gemini model not initialized - retrying initialization`);
-      await this.initializeModel();
+      console.log(`⚠️ [${analysisId}] Gemini model not initialized - initializing now`);
+      await this.ensureModelInitialized();
+    }
       
-      if (!this.model) {
+    if (!this.model) {
         console.error(`❌ [${analysisId}] Gemini model initialization failed after retry`);
         return {
           success: false,

@@ -74,14 +74,38 @@ export interface UserMedicationContext {
  */
 export class AIPharmacistService {
   private model: any;
+  private modelInitialized: boolean = false;
+  private initializationPromise: Promise<void> | null = null;
 
   constructor() {
-    console.log('✅ AIPharmacistService: Professional AI pharmacist initialized');
-    this.initializeModel();
+    console.log('✅ AIPharmacistService: Professional AI pharmacist service created (lazy initialization)');
+    // Don't initialize model on construction - initialize on first use instead
   }
 
-  private async initializeModel() {
+  /**
+   * Lazy initialization: Only initialize model when actually needed
+   * This prevents unnecessary initialization on page load
+   */
+  private async ensureModelInitialized(): Promise<void> {
+    // If already initialized, return immediately
+    if (this.modelInitialized && this.model) {
+      return;
+    }
+
+    // If initialization is in progress, wait for it
+    if (this.initializationPromise) {
+      return this.initializationPromise;
+    }
+
+    // Start initialization
+    this.initializationPromise = this.initializeModel();
+    await this.initializationPromise;
+    this.initializationPromise = null;
+  }
+
+  private async initializeModel(): Promise<void> {
     try {
+      console.log('🔄 Initializing AI Pharmacist model (on first use)...');
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
       const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY!);
       this.model = genAI.getGenerativeModel({ 
@@ -91,10 +115,13 @@ export class AIPharmacistService {
           maxOutputTokens: 4096,
         }
       });
+      this.modelInitialized = true;
       console.log('✅ AI Pharmacist model initialized successfully');
     } catch (error) {
       console.error('❌ Failed to initialize AI Pharmacist model:', error);
       this.model = null;
+      this.modelInitialized = false;
+      throw error;
     }
   }
 
@@ -117,9 +144,9 @@ export class AIPharmacistService {
     console.log(`📊 [${analysisId}] Has image: ${!!imageBase64}`);
     console.log(`📊 [${analysisId}] User context:`, userContext);
 
+    // Lazy initialization: Only initialize model when actually needed
+    await this.ensureModelInitialized();
     if (!this.model) {
-      await this.initializeModel();
-      if (!this.model) {
         return {
           success: false,
           message: 'AI Pharmacist service temporarily unavailable. Please try again later.',

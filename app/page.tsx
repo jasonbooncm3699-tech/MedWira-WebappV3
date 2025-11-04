@@ -785,13 +785,14 @@ export default function Home() {
     }
   }, [user?.tokens]); // Only depend on tokens to prevent unnecessary re-renders
 
-  // Load user language preference from localStorage on mount
+  // Load user language preference from localStorage on mount (only once)
   useEffect(() => {
     const savedLanguage = safeLocalStorage.getItem('userLanguagePreference');
     if (savedLanguage && SUPPORTED_LANGUAGES.includes(savedLanguage)) {
       setLanguage(savedLanguage);
     }
-  }, [safeLocalStorage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount - safeLocalStorage is stable and doesn't need to be in dependencies
 
        // Mobile detection (no logging to prevent console spam)
        useEffect(() => {
