@@ -46,7 +46,7 @@ export default function ReferralCodeDisplay({
 
   const handleShareReferral = async () => {
     const shareUrl = `${window.location.origin}?ref=${referralCode}`;
-    const shareText = `Hey! Check out MedWira for instant medicine photo scanning. Sign up using my referral link and get your first 30 scans free! ${shareUrl}`;
+    const shareText = `Hey! Check out MedWira AI - your personal health assistant that answers medicine questions instantly. Free to start, no credit card needed! ${shareUrl}`;
 
     if (navigator.share) {
       try {
@@ -72,21 +72,23 @@ export default function ReferralCodeDisplay({
 
   const handleWhatsAppShare = () => {
     const shareUrl = `${window.location.origin}?ref=${referralCode}`;
-    const shareText = `🔬 *MedWira AI - Instant Medicine Scanner* 🔬
+    const shareText = `💊 MedWira AI - Smart Health Assistant 💊
 
-Hey! I found this amazing AI-powered medicine scanner that can instantly identify any medicine just by taking a photo!
+Hey! Found this AI that answers all your medicine questions instantly - like having a pharmacist in your pocket!
 
-✨ *What you get:*
-• 30 FREE scans when you sign up
-• Instant medicine identification
-• Detailed drug information & interactions
-• Support for multiple languages
+What you get:
+• Ask any health question (text or photo)
+• Get instant, personalized advice
+• Track your health patterns
+• Multi-language support
+• Free to start
+• No credit card needed
 
-📱 *Sign up now:* ${shareUrl}
+Sign up: ${shareUrl}
 
-Use my referral code: *${referralCode}*
+My code: ${referralCode}
 
-Perfect for healthcare professionals, students, and anyone who needs quick medicine information! 🏥💊`;
+Try it - it's super helpful! 💊`;
     
     // Encode the message for URL
     const encodedMessage = encodeURIComponent(shareText);
