@@ -31,6 +31,11 @@ import { MobileCacheManager } from '@/lib/mobile-cache-manager';
 export default function Home() {
   // Test deployment - simple change
   const { user, logout, isLoading, refreshUser, refreshUserData, initializeSupabase } = useAuth();
+  
+  // Phase 2: Personalized prompt suggestions state
+  const [personalizedPrompts, setPersonalizedPrompts] = useState<string[]>([]);
+  const [promptsLoading, setPromptsLoading] = useState(false);
+  const [usePersonalizedPrompts, setUsePersonalizedPrompts] = useState(false);
 
   // Helper function to extract first name from display_name
   const getFirstName = (
@@ -88,37 +93,187 @@ export default function Home() {
     return lang;
   };
 
-  // Get rotating prompt suggestions
-  const getPromptSuggestions = (): string[] => {
+  // Phase 1: Educational Prompts - Comprehensive list for all languages
+  // These are informative, safety-focused prompts for new users
+  const getEducationalPrompts = (lang: string): string[] => {
     const suggestions: { [key: string]: string[] } = {
       'English': [
-        'Can I take paracetamol with coffee?',
-        'What happens if I take medicine after drinking alcohol?',
-        'Can I eat durian with my medicine?',
-        'What medicine should I avoid before surgery?'
+        'Why shouldn\'t I take Vitamin C with coffee?',
+        'Can I take paracetamol with alcohol?',
+        'What happens if I mix antibiotics with dairy products?',
+        'Is it safe to take supplements with prescription medicine?',
+        'Can I take medicine on an empty stomach?',
+        'What foods should I avoid with certain medicines?',
+        'Can I take painkillers with gastric problems?',
+        'What should I avoid while taking antibiotics?',
+        'Is it safe to take multiple painkillers together?',
+        'How long should I wait after drinking before taking medicine?'
       ],
       'Chinese': [
-        '我可以和咖啡一起服用扑热息痛吗？',
-        '喝酒后服药会怎样？',
-        '我可以和榴莲一起吃药吗？',
-        '手术前应该避免什么药物？'
+        '为什么我不应该将维生素C和咖啡一起服用？',
+        '我可以将扑热息痛和酒精一起服用吗？',
+        '如果我混合抗生素和乳制品会发生什么？',
+        '将补充剂与处方药一起服用安全吗？',
+        '我可以空腹服药吗？',
+        '我应该避免哪些食物与某些药物一起服用？',
+        '我可以将止痛药与胃病一起服用吗？',
+        '服用抗生素时我应该避免什么？',
+        '同时服用多种止痛药安全吗？',
+        '喝酒后我应该等多久才能服药？'
       ],
       'Malay': [
-        'Bolehkah saya ambil paracetamol dengan kopi?',
-        'Apa yang berlaku jika saya ambil ubat selepas minum alkohol?',
-        'Bolehkah saya makan durian dengan ubat saya?',
-        'Ubat apa yang patut saya elakkan sebelum pembedahan?'
+        'Kenapa saya tidak sepatutnya mengambil Vitamin C dengan kopi?',
+        'Bolehkah saya mengambil paracetamol dengan alkohol?',
+        'Apa yang akan berlaku jika saya campurkan antibiotik dengan produk tenusu?',
+        'Adakah selamat untuk mengambil makanan tambahan dengan ubat preskripsi?',
+        'Bolehkah saya mengambil ubat semasa perut kosong?',
+        'Makanan apa yang patut saya elakkan dengan ubat tertentu?',
+        'Bolehkah saya mengambil ubat penahan sakit dengan masalah gastrik?',
+        'Apa yang patut saya elakkan semasa mengambil antibiotik?',
+        'Adakah selamat untuk mengambil beberapa ubat penahan sakit bersama?',
+        'Berapa lama saya patut tunggu selepas minum sebelum mengambil ubat?'
       ],
       'Indonesian': [
-        'Bisakah saya minum parasetamol dengan kopi?',
-        'Apa yang terjadi jika saya minum obat setelah minum alkohol?',
-        'Bisakah saya makan durian dengan obat saya?',
-        'Obat apa yang harus saya hindari sebelum operasi?'
+        'Mengapa saya tidak boleh minum Vitamin C dengan kopi?',
+        'Bisakah saya minum parasetamol dengan alkohol?',
+        'Apa yang akan terjadi jika saya mencampur antibiotik dengan produk susu?',
+        'Apakah aman untuk minum suplemen dengan obat resep?',
+        'Bisakah saya minum obat saat perut kosong?',
+        'Makanan apa yang harus saya hindari dengan obat tertentu?',
+        'Bisakah saya minum obat pereda nyeri dengan masalah lambung?',
+        'Apa yang harus saya hindari saat minum antibiotik?',
+        'Apakah aman untuk minum beberapa obat pereda nyeri bersama?',
+        'Berapa lama saya harus menunggu setelah minum sebelum minum obat?'
+      ],
+      'Thai': [
+        'ทำไมฉันไม่ควรทานวิตามินซีกับกาแฟ?',
+        'ฉันสามารถกินพาราเซตามอลกับแอลกอฮอล์ได้ไหม?',
+        'จะเกิดอะไรขึ้นถ้าฉันผสมยาปฏิชีวนะกับผลิตภัณฑ์นม?',
+        'ปลอดภัยไหมที่จะทานอาหารเสริมกับยาที่แพทย์สั่ง?',
+        'ฉันสามารถกินยาขณะท้องว่างได้ไหม?',
+        'อาหารอะไรที่ฉันควรหลีกเลี่ยงกับยาบางชนิด?',
+        'ฉันสามารถกินยาแก้ปวดกับปัญหาเกี่ยวกับกระเพาะอาหารได้ไหม?',
+        'ฉันควรหลีกเลี่ยงอะไรขณะทานยาปฏิชีวนะ?',
+        'ปลอดภัยไหมที่จะกินยาแก้ปวดหลายตัวพร้อมกัน?',
+        'ฉันควรรอเท่าไหร่หลังดื่มแอลกอฮอล์ก่อนกินยา?'
+      ],
+      'Vietnamese': [
+        'Tại sao tôi không nên uống Vitamin C với cà phê?',
+        'Tôi có thể uống paracetamol với rượu không?',
+        'Điều gì sẽ xảy ra nếu tôi trộn thuốc kháng sinh với sản phẩm sữa?',
+        'Có an toàn để uống thực phẩm chức năng với thuốc kê đơn không?',
+        'Tôi có thể uống thuốc khi bụng đói không?',
+        'Tôi nên tránh những thực phẩm nào với một số loại thuốc?',
+        'Tôi có thể uống thuốc giảm đau với vấn đề dạ dày không?',
+        'Tôi nên tránh gì khi uống thuốc kháng sinh?',
+        'Có an toàn để uống nhiều thuốc giảm đau cùng lúc không?',
+        'Tôi nên đợi bao lâu sau khi uống rượu trước khi uống thuốc?'
+      ],
+      'Tagalog': [
+        'Bakit hindi ako dapat uminom ng Vitamin C kasama ng kape?',
+        'Puwede ba akong uminom ng paracetamol kasama ng alak?',
+        'Ano ang mangyayari kung haluin ko ang antibiotic sa mga produktong gawa sa gatas?',
+        'Ligtas ba na uminom ng supplements kasama ng prescription medicine?',
+        'Puwede ba akong uminom ng gamot kapag walang laman ang tiyan?',
+        'Anong mga pagkain ang dapat kong iwasan kasama ng ilang gamot?',
+        'Puwede ba akong uminom ng painkillers kapag may problema sa tiyan?',
+        'Ano ang dapat kong iwasan habang umiinom ng antibiotic?',
+        'Ligtas ba na uminom ng maraming painkillers nang sabay?',
+        'Gaano katagal ako dapat maghintay pagkatapos uminom bago uminom ng gamot?'
+      ],
+      'Burmese': [
+        'ဘာကြောင့် ဗီတာမင် C ကို ကော်ဖီနဲ့ မသောက်သင့်တာလဲ?',
+        'ပါရာဆီတမောကို အရက်နဲ့ သောက်လို့ရပါသလား?',
+        'ပဋိဇီဝဆေးတွေကို နို့ထွက်ပစ္စည်းတွေနဲ့ ရောလိုက်ရင် ဘာဖြစ်မလဲ?',
+        'ဆရာဝန်ညွှန်ကြားထားတဲ့ ဆေးတွေနဲ့ အားဆေးတွေ သောက်လို့ ဘင်းပါသလား?',
+        'ဗိုက်ဆာတဲ့အချိန်မှာ ဆေးသောက်လို့ရပါသလား?',
+        'ဆေးတချို့နဲ့ ဘယ်အစားအစာတွေကို ရှောင်ကြဉ်သင့်လဲ?',
+        'ဗိုက်နာတာရှိရင် အနာပျောက်ဆေးတွေ သောက်လို့ရပါသလား?',
+        'ပဋိဇီဝဆေးတွေ သောက်နေတဲ့အချိန်မှာ ဘာတွေ ရှောင်ကြဉ်သင့်လဲ?',
+        'အနာပျောက်ဆေးတွေ အများကြီး တစ်ခါတည်း သောက်လို့ ဘင်းပါသလား?',
+        'အရက်သောက်ပြီးနောက် ဆေးသောက်ခင် ဘယ်လောက်ကြာကြာ စောင့်သင့်လဲ?'
+      ],
+      'Khmer': [
+        'ហេតុអ្វីបានជាខ្ញុំមិនគួរទទួលទានវីតាមីន C ជាមួយកាហ្វេ?',
+        'តើខ្ញុំអាចផឹក paracetamol ជាមួយអាល់កុលបានទេ?',
+        'តើអ្វីនឹងកើតឡើងប្រសិនបើខ្ញុំលាយអង់ទីប៊ីយ៉ូទិកជាមួយផលិតផលទឹកដោះគោ?',
+        'តើវាមានសុវត្ថិភាពក្នុងការទទួលទានអាហារបំប៉នជាមួយថ្នាំដែលវេជ្ជបញ្ជាទេ?',
+        'តើខ្ញុំអាចផឹកថ្នាំនៅពេលពោះទទេបានទេ?',
+        'តើខ្ញុំគួរជៀសវាងអាហារអ្វីខ្លះជាមួយថ្នាំមួយចំនួន?',
+        'តើខ្ញុំអាចផឹកថ្នាំបំបាត់ការឈឺចាប់ជាមួយបញ្ហាពោះវៀនបានទេ?',
+        'តើខ្ញុំគួរជៀសវាងអ្វីនៅពេលផឹកអង់ទីប៊ីយ៉ូទិក?',
+        'តើវាមានសុវត្ថិភាពក្នុងការផឹកថ្នាំបំបាត់ការឈឺចាប់ច្រើនក្នុងពេលតែមួយទេ?',
+        'តើខ្ញុំគួររង់ចាំប៉ុន្មានពេលក្រោយពីផឹកអាល់កុលមុនពេលផឹកថ្នាំ?'
+      ],
+      'Lao': [
+        'ເປັນຫຍັງຂ້ອຍບໍ່ຄວນກິນວິຕາມິນ C ກັບກາເຟ?',
+        'ຂ້ອຍສາມາດກິນ paracetamol ກັບເຫຼົ້າໄດ້ບໍ?',
+        'ຈະເກີດຫຍັງຂຶ້ນຖ້າຂ້ອຍປະສົມຢາຕ້ານເຊື້ອກັບຜະລິດຕະພັນນົມ?',
+        'ມັນປອດໄພບໍ່ທີ່ຈະກິນອາຫານເສີມກັບຢາທີ່ແພດສັ່ງ?',
+        'ຂ້ອຍສາມາດກິນຢາເວລາທ້ອງວ່າງໄດ້ບໍ?',
+        'ຂ້ອຍຄວນຫຼີກລ້ຽງອາຫານໃດໆກັບຢາບາງຢ່າງ?',
+        'ຂ້ອຍສາມາດກິນຢາແກ້ປວດກັບບັນຫາກະເພາະອາຫານໄດ້ບໍ?',
+        'ຂ້ອຍຄວນຫຼີກລ້ຽງຫຍັງໃນຂະນະກິນຢາຕ້ານເຊື້ອ?',
+        'ມັນປອດໄພບໍ່ທີ່ຈະກິນຢາແກ້ປວດຫຼາຍຢ່າງໃນເວລາດຽວກັນ?',
+        'ຂ້ອຍຄວນລໍຖ້າດົນເທົ່າໃດຫຼັງຈາກດື່ມເຫຼົ້າກ່ອນກິນຢາ?'
       ]
     };
     
-    const langSuggestions = suggestions[language] || suggestions['English'];
-    return langSuggestions.slice(currentPromptIndex, currentPromptIndex + 1); // Show only 1 suggestion
+    return suggestions[lang] || suggestions['English'];
+  };
+
+  // Phase 2: Load personalized prompts when user is logged in and language changes
+  useEffect(() => {
+    if (user?.id && language) {
+      loadPersonalizedPrompts(user.id, language);
+    } else {
+      // No user or no language → Use educational prompts
+      setPersonalizedPrompts([]);
+      setUsePersonalizedPrompts(false);
+    }
+  }, [user?.id, language]);
+
+  // Load personalized prompts from API
+  const loadPersonalizedPrompts = async (userId: string, lang: string) => {
+    setPromptsLoading(true);
+    try {
+      const response = await fetch(
+        `/api/prompt-suggestions?userId=${userId}&language=${lang}&limit=10`
+      );
+      const result = await response.json();
+      
+      if (result.status === 'SUCCESS' && result.data.personalized && result.data.prompts.length > 0) {
+        // User has personalized prompts
+        setPersonalizedPrompts(result.data.prompts);
+        setUsePersonalizedPrompts(true);
+        console.log(`✅ [Prompt Suggestions] Loaded ${result.data.prompts.length} personalized prompts`);
+      } else {
+        // No personalized prompts → Use educational prompts
+        setPersonalizedPrompts([]);
+        setUsePersonalizedPrompts(false);
+        console.log('ℹ️ [Prompt Suggestions] Using educational prompts (no personalized data available)');
+      }
+    } catch (error) {
+      console.error('❌ [Prompt Suggestions] Error loading personalized prompts:', error);
+      // Fallback to educational prompts on error
+      setPersonalizedPrompts([]);
+      setUsePersonalizedPrompts(false);
+    } finally {
+      setPromptsLoading(false);
+    }
+  };
+
+  // Get rotating prompt suggestions
+  // Phase 2: Uses personalized prompts if available, otherwise educational prompts
+  const getPromptSuggestions = (): string[] => {
+    if (usePersonalizedPrompts && personalizedPrompts.length > 0) {
+      // Use personalized prompts
+      return personalizedPrompts.slice(currentPromptIndex, currentPromptIndex + 1);
+    } else {
+      // Use educational prompts (Phase 1 fallback)
+      const educationalPrompts = getEducationalPrompts(language);
+      return educationalPrompts.slice(currentPromptIndex, currentPromptIndex + 1);
+    }
   };
 
   // Handle prompt suggestion click
@@ -298,43 +453,23 @@ export default function Home() {
   };
 
   // Rotate prompt suggestions
+  // Phase 2: Rotates through personalized prompts if available, otherwise educational prompts
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentPromptIndex((prev) => {
-        const suggestions: { [key: string]: string[] } = {
-          'English': [
-            'Can I take paracetamol with coffee?',
-            'What happens if I take medicine after drinking alcohol?',
-            'Can I eat durian with my medicine?',
-            'What medicine should I avoid before surgery?'
-          ],
-          'Chinese': [
-            '我可以和咖啡一起服用扑热息痛吗？',
-            '喝酒后吃药会怎样？',
-            '我可以和榴莲一起吃药吗？',
-            '手术前应该避免什么药物？'
-          ],
-          'Malay': [
-            'Bolehkah saya ambil paracetamol dengan kopi?',
-            'Apa yang berlaku jika saya ambil ubat selepas minum arak?',
-            'Bolehkah saya makan durian dengan ubat saya?',
-            'Ubat apa yang patut saya elakkan sebelum pembedahan?'
-          ],
-          'Indonesian': [
-            'Bisakah saya minum paracetamol dengan kopi?',
-            'Apa yang terjadi jika saya minum obat setelah minum alkohol?',
-            'Bisakah saya makan durian dengan obat saya?',
-            'Obat apa yang harus saya hindari sebelum operasi?'
-          ]
-        };
-        const langSuggestions = suggestions[language] || suggestions['English'];
-        const maxIndex = langSuggestions.length - 1;
+        let prompts: string[];
+        if (usePersonalizedPrompts && personalizedPrompts.length > 0) {
+          prompts = personalizedPrompts;
+        } else {
+          prompts = getEducationalPrompts(language);
+        }
+        const maxIndex = prompts.length - 1;
         return prev >= maxIndex ? 0 : prev + 1;
       });
     }, 5000); // Rotate every 5 seconds
 
     return () => clearInterval(interval);
-  }, [language]);
+  }, [language, usePersonalizedPrompts, personalizedPrompts]);
 
   // Function to check authentication and tokens before allowing actions
   const checkAuthentication = (): boolean => {
