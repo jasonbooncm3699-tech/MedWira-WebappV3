@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { aiPharmacist } from '@/lib/ai-pharmacist-service';
 import { checkTokenAvailability, decrementToken } from '@/lib/npraDatabase';
 import { chatHistoryManager } from '@/lib/chat-history-manager';
+import { checkRateLimit } from '@/lib/rate-limiter';
 import { 
   extractHealthKeywords, 
   HealthProfileService,
@@ -39,6 +40,16 @@ export async function POST(request: NextRequest) {
         error: 'Missing required fields: userMessage, userId',
         language
       }, { status: 400 });
+    }
+
+    // Check rate limit (prevent excessive API calls)
+    if (!checkRateLimit(userId, 10)) {
+      return NextResponse.json({
+        status: 'ERROR',
+        error: 'Too many requests. Please wait a moment before trying again.',
+        errorCode: 'RATE_LIMIT_EXCEEDED',
+        language
+      }, { status: 429 });
     }
 
     // Check user token balance
@@ -265,21 +276,53 @@ export async function POST(request: NextRequest) {
         language: result.language
       });
     } else {
+      // Handle specific error types with appropriate status codes
+      const errorCode = (result as any).error;
+      let statusCode = 500;
+      let errorMessage = result.error || result.message || 'AI Pharmacist consultation failed';
+      
+      // Return 503 Service Unavailable for quota errors (better than 500)
+      if (errorCode === 'QUOTA_EXCEEDED') {
+        statusCode = 503; // Service Unavailable
+        errorMessage = result.message || 'AI service is temporarily unavailable due to high demand. Please try again in a few minutes.';
+      } else if (errorCode === 'AUTH_ERROR') {
+        statusCode = 503; // Service Unavailable (don't expose auth issues to users)
+        errorMessage = 'AI service configuration error. Please contact support if this issue persists.';
+      }
+      
       return NextResponse.json({
         status: 'ERROR',
-        error: result.error || 'AI Pharmacist consultation failed',
+        error: errorMessage,
+        errorCode: errorCode || 'UNKNOWN_ERROR',
         language: result.language
-      }, { status: 500 });
+      }, { status: statusCode });
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('AI Pharmacist API Error:', error);
+    
+    // Handle specific error types
+    let statusCode = 500;
+    let errorMessage = 'Internal server error. Please try again.';
+    let errorCode = 'UNKNOWN_ERROR';
+    
+    // Check for quota errors in catch block
+    if (error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota')) {
+      statusCode = 503; // Service Unavailable
+      errorMessage = 'AI service is temporarily unavailable due to high demand. Please try again in a few minutes.';
+      errorCode = 'QUOTA_EXCEEDED';
+    } else if (error?.status === 401 || error?.status === 403 || error?.message?.includes('API key')) {
+      statusCode = 503; // Service Unavailable
+      errorMessage = 'AI service configuration error. Please contact support if this issue persists.';
+      errorCode = 'AUTH_ERROR';
+    }
     
     return NextResponse.json({
       status: 'ERROR',
-      error: 'Internal server error. Please try again.',
+      error: errorMessage,
+      errorCode,
       language: 'English'
-    }, { status: 500 });
+    }, { status: statusCode });
   }
 }
 

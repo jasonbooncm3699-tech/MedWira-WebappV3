@@ -32,7 +32,7 @@ export interface PharmacistAnalysisResult {
   storage?: string;
   category?: string;
   confidence?: number;
-  error?: string;
+  error?: string | 'QUOTA_EXCEEDED' | 'AUTH_ERROR' | 'UNKNOWN_ERROR' | 'RATE_LIMIT_EXCEEDED';
   language?: string;
   // Enhanced fields for pharmacist responses
   pharmacistAdvice?: string;
@@ -375,13 +375,40 @@ Note: You are a conversational AI pharmacist. Answer general health and medicine
         confidence: dbResult ? 0.95 : 0.85
       };
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Text-only query error:', error);
+      
+      // Handle Gemini API quota/rate limit errors specifically
+      if (error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota')) {
+        console.error('❌ Gemini API quota exceeded:', error);
+        return {
+          success: false,
+          message: `I'm currently experiencing high demand and cannot process your request right now. Please try again in a few minutes. If the issue persists, our API quota may be temporarily exceeded.`,
+          messageType: 'text' as const,
+          language,
+          error: 'QUOTA_EXCEEDED'
+        };
+      }
+      
+      // Handle API authentication errors
+      if (error?.status === 401 || error?.status === 403 || error?.message?.includes('API key')) {
+        console.error('❌ Gemini API authentication error:', error);
+        return {
+          success: false,
+          message: `AI service configuration error. Please contact support if this issue persists.`,
+          messageType: 'text' as const,
+          language,
+          error: 'AUTH_ERROR'
+        };
+      }
+      
+      // Generic error handling
       return {
         success: false,
-        message: 'I apologize, but I encountered an error while processing your question. Please try again.',
+        message: 'I apologize, but I encountered an error while processing your question. Please try again or consult with a healthcare professional.',
         messageType: 'text' as const,
-        language
+        language,
+        error: 'UNKNOWN_ERROR'
       };
     }
   }
@@ -448,13 +475,27 @@ Format your response professionally and include appropriate disclaimers.`;
         followUpQuestions: this.generateFollowUpQuestions(userMessage, imageAnalysis.medicineName)
       };
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Image consultation error:', error);
+      
+      // Handle Gemini API quota/rate limit errors
+      if (error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota')) {
+        console.error('❌ Gemini API quota exceeded in image consultation:', error);
+        return {
+          ...imageAnalysis,
+          pharmacistAdvice: `I can see the medicine in your image, but I'm currently experiencing high demand and cannot provide detailed consultation right now. Please try again in a few minutes.`,
+          message: `I can see the medicine in your image, but I'm currently experiencing high demand and cannot provide detailed consultation right now. Please try again in a few minutes.`,
+          messageType: 'image',
+          error: 'QUOTA_EXCEEDED'
+        };
+      }
+      
       return {
         ...imageAnalysis,
         pharmacistAdvice: 'I can see the medicine in your image, but I encountered an error providing detailed consultation. Please consult with your healthcare provider.',
         message: 'I can see the medicine in your image, but I encountered an error providing detailed consultation. Please consult with your healthcare provider.',
-        messageType: 'image'
+        messageType: 'image',
+        error: 'UNKNOWN_ERROR'
       };
     }
   }
@@ -562,13 +603,39 @@ Format as a professional, friendly pharmacist consultation.`;
         disclaimer: 'This information is for educational purposes only. Always consult with your healthcare provider or pharmacist for personalized medical advice.'
       };
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Image analysis error:', error);
+      
+      // Handle Gemini API quota/rate limit errors
+      if (error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota')) {
+        console.error('❌ Gemini API quota exceeded in image analysis:', error);
+        return {
+          success: false,
+          message: `I'm currently experiencing high demand and cannot analyze your medicine image right now. Please try again in a few minutes. If the issue persists, our API quota may be temporarily exceeded.`,
+          messageType: 'text' as const,
+          language,
+          error: 'QUOTA_EXCEEDED'
+        };
+      }
+      
+      // Handle API authentication errors
+      if (error?.status === 401 || error?.status === 403 || error?.message?.includes('API key')) {
+        console.error('❌ Gemini API authentication error in image analysis:', error);
+        return {
+          success: false,
+          message: `AI service configuration error. Please contact support if this issue persists.`,
+          messageType: 'text' as const,
+          language,
+          error: 'AUTH_ERROR'
+        };
+      }
+      
       return {
         success: false,
         message: 'I apologize, but I encountered an error analyzing the medicine image. Please try again or consult with your healthcare provider.',
         messageType: 'text' as const,
-        language
+        language,
+        error: 'UNKNOWN_ERROR'
       };
     }
   }
