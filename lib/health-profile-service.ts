@@ -567,9 +567,48 @@ ${isExplicitLogging ? 'Note: User is explicitly logging symptoms. Extract all sy
 
 Return JSON:`;
 
-    // Call Gemini API
-    const result = await model.generateContent(extractionPrompt);
-    const responseText = result.response.text();
+    // Call Gemini API with timeout protection
+    let responseText = '';
+    try {
+      // Add timeout protection (5 seconds max for keyword extraction)
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Keyword extraction timeout')), 5000)
+      );
+      
+      const result = await Promise.race([
+        model.generateContent(extractionPrompt),
+        timeoutPromise
+      ]) as any;
+      
+      responseText = result.response?.text() || '';
+    } catch (error: any) {
+      // Handle timeout or API errors gracefully
+      if (error.message?.includes('timeout')) {
+        console.warn('⚠️ Keyword extraction timed out after 5 seconds');
+      } else {
+        console.warn('⚠️ Error calling Gemini for keyword extraction:', error.message);
+      }
+      // Return empty keywords on error
+      return {
+        symptoms: [],
+        conditions: [],
+        medications: [],
+        triggers: [],
+        keywords: []
+      };
+    }
+
+    // Check if response is empty
+    if (!responseText || responseText.trim().length === 0) {
+      console.warn('⚠️ Gemini returned empty response for keyword extraction');
+      return {
+        symptoms: [],
+        conditions: [],
+        medications: [],
+        triggers: [],
+        keywords: []
+      };
+    }
 
     // Parse JSON response
     // Try to extract JSON from response (might have markdown code blocks)
@@ -582,6 +621,16 @@ Return JSON:`;
     const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       jsonText = jsonMatch[0];
+    } else {
+      // No JSON found in response
+      console.warn('⚠️ No JSON object found in Gemini response for keyword extraction');
+      return {
+        symptoms: [],
+        conditions: [],
+        medications: [],
+        triggers: [],
+        keywords: []
+      };
     }
 
     // Parse JSON
@@ -590,7 +639,7 @@ Return JSON:`;
       extracted = JSON.parse(jsonText);
     } catch (parseError) {
       console.error('❌ Error parsing Gemini response:', parseError);
-      console.error('Response text:', responseText);
+      console.error('Response text:', responseText.substring(0, 200)); // Log first 200 chars only
       // Return empty keywords if parsing fails
       return {
         symptoms: [],

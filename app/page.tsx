@@ -549,12 +549,12 @@ export default function Home() {
         setMessages(prev => [...prev, errorMessage]);
       }
     } catch (error) {
-      console.error('Error analyzing medicine:', error);
+      console.error('Error processing question:', error);
       setIsAiThinking(false);
       const errorMessage = {
         id: (Date.now() + 1).toString(),
         type: 'ai' as const,
-        content: 'Sorry, I encountered an error while analyzing your medicine. Please try again.',
+        content: 'Sorry, I encountered an error while processing your question. Please try again.',
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);

@@ -12,9 +12,13 @@ import {
 } from '@/lib/health-profile-service';
 
 // Increase Vercel timeout for comprehensive analysis
-export const maxDuration = 30;
+// Increased to 60 seconds to allow time for AI response + background operations
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
+  // Track request start time for timeout protection
+  const requestStartTime = Date.now();
+  
   try {
     const body = await request.json();
     const { 
@@ -179,11 +183,21 @@ export async function POST(request: NextRequest) {
 
       // Phase 1.4: Extract health keywords in background (non-blocking)
       // Phase 2.1: Also detect patterns in background
-      // Don't await - let it run in background while returning response
-      extractKeywordsAndDetectPatterns(userId, userMessage, language).catch(error => {
-        console.error('❌ Error extracting keywords/detecting patterns in background:', error);
-        // Don't block response if extraction fails
-      });
+      // Only run background operations if we have enough time remaining (20+ seconds)
+      // This prevents timeout issues - Vercel counts all promises against timeout
+      const elapsedTime = Date.now() - requestStartTime;
+      const timeRemaining = 60000 - elapsedTime; // 60 second timeout
+      
+      if (timeRemaining > 20000) {
+        // We have more than 20 seconds remaining, safe to run background operations
+        extractKeywordsAndDetectPatterns(userId, userMessage, language).catch(error => {
+          console.error('❌ Error extracting keywords/detecting patterns in background:', error);
+          // Don't block response if extraction fails
+        });
+      } else {
+        console.log(`⚠️ Skipping background operations - only ${Math.round(timeRemaining / 1000)}s remaining`);
+        // Background operations will be skipped to prevent timeout
+      }
 
       // Deduct token after successful analysis
       try {

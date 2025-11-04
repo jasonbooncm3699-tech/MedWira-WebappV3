@@ -180,47 +180,47 @@ export class AIPharmacistService {
           const statusMsg = getStatusMessage(AIProcessingStage.LOADING_PROFILE, language);
           statusCallback(statusMsg || AIProcessingStage.LOADING_PROFILE);
         }
-        healthProfile = await HealthProfileService.loadUserHealthProfile(userId);
         
-        // Initialize profile if doesn't exist
+        // Load health profile and medications in parallel for better performance
+        const [healthProfileResult, medicationsResult] = await Promise.all([
+          HealthProfileService.loadUserHealthProfile(userId),
+          supabase
+            .from('user_medication_stack')
+            .select('medicine_name, generic_name, active_ingredients, frequency, dosage')
+            .eq('user_id', userId)
+            .eq('is_active', true)
+        ]);
+        
+        // Process health profile
+        healthProfile = healthProfileResult;
         if (!healthProfile) {
           healthProfile = await HealthProfileService.initializeHealthProfile(userId);
         }
         
-        // Load current medications from user_medication_stack (Phase 1.4 Enhancement)
-        try {
-          if (statusCallback) {
-            const statusMsg = getStatusMessage(AIProcessingStage.LOADING_MEDICATIONS, language);
-            statusCallback(statusMsg || AIProcessingStage.LOADING_MEDICATIONS);
-          }
-          const { data: medications, error: medError } = await supabase
-            .from('user_medication_stack')
-            .select('medicine_name, generic_name, active_ingredients, frequency, dosage')
-            .eq('user_id', userId)
-            .eq('is_active', true);
+        // Process medications
+        if (statusCallback) {
+          const statusMsg = getStatusMessage(AIProcessingStage.LOADING_MEDICATIONS, language);
+          statusCallback(statusMsg || AIProcessingStage.LOADING_MEDICATIONS);
+        }
+        
+        if (!medicationsResult.error && medicationsResult.data) {
+          currentMedicationsFromStack = medicationsResult.data.map((m): {
+            name: string;
+            genericName: string;
+            activeIngredients: string;
+            frequency: string;
+            dosage: string;
+          } => ({
+            name: m.medicine_name || '',
+            genericName: m.generic_name || '',
+            activeIngredients: m.active_ingredients || '',
+            frequency: m.frequency || '',
+            dosage: m.dosage || ''
+          }));
           
-          if (!medError && medications) {
-            currentMedicationsFromStack = medications.map((m): {
-              name: string;
-              genericName: string;
-              activeIngredients: string;
-              frequency: string;
-              dosage: string;
-            } => ({
-              name: m.medicine_name || '',
-              genericName: m.generic_name || '',
-              activeIngredients: m.active_ingredients || '',
-              frequency: m.frequency || '',
-              dosage: m.dosage || ''
-            }));
-            
-            console.log(`✅ Loaded ${currentMedicationsFromStack.length} active medications from medication_stack`);
-          } else if (medError) {
-            console.warn('⚠️ Error loading medication stack (non-critical):', medError);
-          }
-        } catch (medError) {
-          console.warn('⚠️ Exception loading medication stack (non-critical):', medError);
-          // Continue without medication stack (graceful fallback)
+          console.log(`✅ Loaded ${currentMedicationsFromStack.length} active medications from medication_stack`);
+        } else if (medicationsResult.error) {
+          console.warn('⚠️ Error loading medication stack (non-critical):', medicationsResult.error);
         }
         
         // Check health history if profile exists
