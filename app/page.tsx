@@ -616,11 +616,25 @@ export default function Home() {
   }, []);
 
   // Handle session refresh from OAuth callback
+  // Also save referral code to localStorage if present in URL (for later use when signup modal opens)
   useEffect(() => {
     // Only run on client side after hydration
     if (typeof window === 'undefined') return;
 
     const params = new URLSearchParams(window.location.search);
+    
+    // Save referral code to localStorage if present (so it persists even if URL is cleaned)
+    // This ensures the referral code is available when user opens signup modal later
+    const refCode = params.get('ref');
+    if (refCode) {
+      try {
+        safeLocalStorage.setItem('pending_referral_code', refCode);
+        console.log('🎯 Referral code saved to localStorage on page load:', refCode);
+      } catch (error) {
+        console.warn('⚠️ Failed to save referral code to localStorage:', error);
+      }
+    }
+    
     if (params.get('session_refresh') === 'true') {
       // Clean up URL parameter - let auth context handle session naturally
         window.history.replaceState({}, '', window.location.pathname);
@@ -1447,11 +1461,10 @@ export default function Home() {
           </div>
 
           <div className="logo">
-            <Image
+            <img
               src="/medwira-logo-001.svg"
               alt="MedWira"
               className="header-logo"
-              priority
             />
           </div>
 

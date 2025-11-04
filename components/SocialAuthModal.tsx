@@ -20,12 +20,35 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onInitializeSup
   const authStartTimeRef = useRef<number | null>(null);
 
   // Auto-detect referral code from URL parameters when modal opens
+  // Also check localStorage in case URL was cleaned up
   useEffect(() => {
     if (isOpen && typeof window !== 'undefined') {
+      // First, check URL parameters (current page)
       const urlParams = new URLSearchParams(window.location.search);
-      const refCode = urlParams.get('ref');
+      let refCode = urlParams.get('ref');
+      
+      // If not in URL, check localStorage (saved from when user first landed)
+      if (!refCode) {
+        try {
+          refCode = localStorage.getItem('pending_referral_code');
+          if (refCode) {
+            console.log('🎯 Referral code restored from localStorage:', refCode);
+          }
+        } catch (error) {
+          console.warn('⚠️ Failed to read referral code from localStorage:', error);
+        }
+      } else {
+        // Save to localStorage so it persists even if URL is cleaned
+        try {
+          localStorage.setItem('pending_referral_code', refCode);
+          console.log('🎯 Referral code saved to localStorage:', refCode);
+        } catch (error) {
+          console.warn('⚠️ Failed to save referral code to localStorage:', error);
+        }
+      }
+      
       if (refCode) {
-        console.log('🎯 Referral code detected from URL:', refCode);
+        console.log('🎯 Referral code detected:', refCode);
         setReferralCode(refCode);
       }
     }
@@ -73,6 +96,13 @@ export default function SocialAuthModal({ isOpen, onClose, mode, onInitializeSup
             
             if (response.ok) {
               console.log('✅ Referral processed successfully');
+              // Clear referral code from localStorage after successful signup
+              try {
+                localStorage.removeItem('pending_referral_code');
+                console.log('🧹 Referral code cleared from localStorage after signup');
+              } catch (error) {
+                console.warn('⚠️ Failed to clear referral code from localStorage:', error);
+              }
             } else {
               console.warn('⚠️ Referral processing failed:', response.status);
             }
