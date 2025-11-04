@@ -36,6 +36,9 @@ export default function Home() {
   const [personalizedPrompts, setPersonalizedPrompts] = useState<string[]>([]);
   const [promptsLoading, setPromptsLoading] = useState(false);
   const [usePersonalizedPrompts, setUsePersonalizedPrompts] = useState(false);
+  
+  // Language state (declared early to avoid "used before declaration" errors)
+  const [language, setLanguage] = useState('English');
 
   // Helper function to extract first name from display_name
   const getFirstName = (
@@ -307,7 +310,6 @@ export default function Home() {
   const [isTablet, setIsTablet] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [sideNavOpen, setSideNavOpen] = useState(false);
-  const [language, setLanguage] = useState('English');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   
   // Photo preview states
