@@ -325,19 +325,19 @@ Do not provide any other text or explanation.`;
         console.log(`⚠️ [${analysisId}] Continuing with analysis despite validation failure`);
       }
     
+    // Lazy initialization: Ensure model is initialized before analysis
     if (!this.model) {
       console.log(`⚠️ [${analysisId}] Gemini model not initialized - initializing now`);
       await this.ensureModelInitialized();
     }
       
     if (!this.model) {
-        console.error(`❌ [${analysisId}] Gemini model initialization failed after retry`);
-        return {
-          success: false,
-          error: 'Gemini 1.5 Pro service temporarily unavailable. Please try again later.',
-          language
-        };
-      }
+      console.error(`❌ [${analysisId}] Gemini model initialization failed after retry`);
+      return {
+        success: false,
+        error: 'Gemini 1.5 Pro service temporarily unavailable. Please try again later.',
+        language
+      };
     }
 
     try {
