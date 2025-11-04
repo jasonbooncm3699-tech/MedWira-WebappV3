@@ -147,13 +147,12 @@ export class AIPharmacistService {
     // Lazy initialization: Only initialize model when actually needed
     await this.ensureModelInitialized();
     if (!this.model) {
-        return {
-          success: false,
-          message: 'AI Pharmacist service temporarily unavailable. Please try again later.',
-          messageType: 'text' as const,
-          language
-        };
-      }
+      return {
+        success: false,
+        message: 'AI Pharmacist service temporarily unavailable. Please try again later.',
+        messageType: 'text' as const,
+        language
+      };
     }
 
     try {
