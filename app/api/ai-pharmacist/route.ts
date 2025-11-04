@@ -6,7 +6,8 @@ import {
   extractHealthKeywords, 
   HealthProfileService,
   detectPatterns,
-  PatternCandidate
+  PatternCandidate,
+  extractPersonalDetails // Phase 3.1: Personal details extraction
 } from '@/lib/health-profile-service';
 
 // Increase Vercel timeout for comprehensive analysis
@@ -478,18 +479,52 @@ function generateConversationTags(userMessage: string, result: any): string[] {
   return Array.from(tags);
 }
 
-// Phase 1.4 & 2.1: Background keyword extraction and pattern detection (non-blocking)
+// Phase 1.4 & 2.1 & 3.1: Background keyword extraction, pattern detection, and personal details extraction (non-blocking)
 async function extractKeywordsAndDetectPatterns(
   userId: string, 
   userMessage: string,
   language: string = 'English'
 ): Promise<void> {
   try {
-    console.log('🔍 [Phase 1.4 & 2.1] Extracting keywords and detecting patterns in background...');
+    console.log('🔍 [Phase 1.4 & 2.1 & 3.1] Extracting keywords, detecting patterns, and extracting personal details in background...');
     
     // Extract keywords using Gemini
     // Note: Status tracking for keyword extraction (background, non-blocking)
     const keywords = await extractHealthKeywords(userMessage, language);
+    
+    // Phase 3.1: Extract personal details
+    const personalDetails = await extractPersonalDetails(userMessage, language);
+    
+    // Check if personal details were extracted
+    const hasPersonalDetails = 
+      (personalDetails.age !== null && personalDetails.age !== undefined) ||
+      personalDetails.sex !== null ||
+      (personalDetails.known_conditions && personalDetails.known_conditions.length > 0) ||
+      personalDetails.past_medical_history !== null ||
+      personalDetails.family_history !== null;
+    
+    // Save personal details if any were extracted
+    if (hasPersonalDetails) {
+      const success = await HealthProfileService.updatePersonalDetails(userId, {
+        age: personalDetails.age !== null && personalDetails.age !== undefined ? personalDetails.age : undefined,
+        sex: personalDetails.sex || undefined,
+        known_conditions: personalDetails.known_conditions || undefined,
+        past_history: personalDetails.past_medical_history || undefined,
+        family_history: personalDetails.family_history || undefined
+      });
+      
+      if (success) {
+        console.log('✅ [Phase 3.1] Personal details extracted and saved:', {
+          age: personalDetails.age || 'none',
+          sex: personalDetails.sex || 'none',
+          known_conditions: personalDetails.known_conditions?.length || 0,
+          past_history: personalDetails.past_medical_history ? 'yes' : 'no',
+          family_history: personalDetails.family_history ? 'yes' : 'no'
+        });
+      } else {
+        console.error('❌ [Phase 3.1] Failed to save personal details');
+      }
+    }
     
     // Check if any keywords were extracted
     const hasKeywords = 
@@ -536,7 +571,7 @@ async function extractKeywordsAndDetectPatterns(
       console.log('ℹ️ [Phase 1.4] No health keywords extracted from message');
     }
   } catch (error) {
-    console.error('❌ [Phase 1.4 & 2.1] Error in background keyword extraction/pattern detection:', error);
+    console.error('❌ [Phase 1.4 & 2.1 & 3.1] Error in background extraction:', error);
     // Don't throw - this is background processing
   }
 }

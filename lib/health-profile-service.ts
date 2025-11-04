@@ -84,6 +84,15 @@ export interface HealthKeywords {
   triggers?: string[];
 }
 
+// Phase 3: Personal Details Interface
+export interface PersonalDetails {
+  age?: number | null;
+  sex?: string | null; // 'male', 'female', 'other'
+  known_conditions?: string[] | null;
+  past_medical_history?: string | null;
+  family_history?: string | null;
+}
+
 // ============================================================================
 // Phase 2.1: Pattern Detection
 // ============================================================================
@@ -465,6 +474,12 @@ export class HealthProfileService {
     if (profile.known_conditions && profile.known_conditions.length > 0) {
       parts.push(`Known Conditions: ${profile.known_conditions.join(', ')}`);
     }
+    if (profile.past_medical_history) {
+      parts.push(`Past Medical History: ${profile.past_medical_history}`);
+    }
+    if (profile.family_history) {
+      parts.push(`Family History: ${profile.family_history}`);
+    }
 
     // Health keywords
     if (profile.symptoms && profile.symptoms.length > 0) {
@@ -666,6 +681,168 @@ export function extractSymptomsFromLogging(message: string): string[] {
 }
 
 /**
+ * Phase 3.1: Extract personal details from user message using Gemini AI
+ * Detects: age, sex, known conditions, past medical history, family history
+ * 
+ * @param message - User message to analyze
+ * @param language - Language of the message (default: 'English')
+ * @returns PersonalDetails object with extracted information
+ */
+export async function extractPersonalDetails(
+  message: string,
+  language: string = 'English'
+): Promise<PersonalDetails> {
+  try {
+    console.log('🔍 [Phase 3.1] Extracting personal details from message...');
+    
+    // Initialize Gemini model
+    const { GoogleGenerativeAI } = await import('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY!);
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-pro',
+      generationConfig: {
+        temperature: 0.1, // Low temperature for accurate extraction
+        maxOutputTokens: 1024,
+      },
+    });
+
+    // Create extraction prompt
+    const extractionPrompt = `Extract personal health details from the following message.
+    
+Message: "${message}"
+
+Extract and return ONLY a valid JSON object with the following structure:
+{
+  "age": 35 or null,
+  "sex": "male" or "female" or "other" or null,
+  "known_conditions": ["high blood pressure", "diabetes", "gout"],
+  "past_medical_history": "free text description" or null,
+  "family_history": "free text description" or null
+}
+
+Rules:
+1. Extract age only if explicitly mentioned (e.g., "I'm 35", "35 years old", "age 35")
+2. Extract sex only if explicitly mentioned (e.g., "I'm male", "female", "I'm a man")
+3. Extract known conditions mentioned (e.g., "I have high blood pressure", "diabetes", "high BP", "gout")
+   - Normalize: "high BP" = "high blood pressure", "high blood sugar" = "diabetes"
+   - Normalize: "gastric" = "gastric issues", "stomach problems" = "gastric issues"
+4. Extract past medical history if mentioned (e.g., "I had surgery", "past medical history", "previous condition")
+5. Extract family history if mentioned (e.g., "my father has", "family history", "runs in my family")
+6. Return null for fields not found
+7. Return empty arrays for known_conditions if none found
+8. Return ONLY valid JSON, no other text
+
+Examples:
+- "I'm 35 years old and have high blood pressure" → {"age": 35, "sex": null, "known_conditions": ["high blood pressure"], ...}
+- "I'm a male with diabetes" → {"age": null, "sex": "male", "known_conditions": ["diabetes"], ...}
+- "My father has diabetes and I'm 40" → {"age": 40, "sex": null, "known_conditions": [], "family_history": "father has diabetes", ...}
+
+Return JSON:`;
+
+    // Call Gemini API
+    const result = await model.generateContent(extractionPrompt);
+    const responseText = result.response.text();
+
+    // Parse JSON response
+    let jsonText = responseText.trim();
+    
+    // Remove markdown code blocks if present
+    jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    
+    // Try to find JSON object in response
+    const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      jsonText = jsonMatch[0];
+    }
+
+    // Parse JSON
+    let extracted: PersonalDetails;
+    try {
+      extracted = JSON.parse(jsonText);
+    } catch (parseError) {
+      console.error('❌ [Phase 3.1] Error parsing personal details response:', parseError);
+      console.error('Response text:', responseText);
+      // Return empty details if parsing fails
+      return {
+        age: null,
+        sex: null,
+        known_conditions: null,
+        past_medical_history: null,
+        family_history: null
+      };
+    }
+
+    // Normalize and clean extracted details
+    const normalizeConditions = (conditions: string[] | undefined): string[] | null => {
+      if (!conditions || !Array.isArray(conditions)) return null;
+      
+      const normalized = conditions
+        .map(condition => {
+          // Normalize condition names using database function logic
+          const lower = condition.trim().toLowerCase();
+          
+          // Map common variations to standard names
+          if (lower === 'high bp' || lower === 'hypertension') return 'high blood pressure';
+          if (lower === 'high blood sugar' || lower === 'diabetes mellitus') return 'diabetes';
+          if (lower === 'high uric acid') return 'gout';
+          if (lower === 'gastric' || lower === 'stomach problems') return 'gastric issues';
+          
+          return condition.trim().toLowerCase();
+        })
+        .filter(condition => condition && condition.length > 0)
+        .filter((condition, index, self) => self.indexOf(condition) === index); // Deduplicate
+      
+      return normalized.length > 0 ? normalized : null;
+    };
+
+    // Normalize sex value
+    const normalizeSex = (sex: string | undefined | null): string | null => {
+      if (!sex || sex === null) return null;
+      const lower = sex.trim().toLowerCase();
+      if (lower === 'male' || lower === 'man' || lower === 'm') return 'male';
+      if (lower === 'female' || lower === 'woman' || lower === 'f') return 'female';
+      if (lower === 'other') return 'other';
+      return null;
+    };
+
+    // Validate and normalize age
+    const normalizeAge = (age: number | string | undefined | null): number | null => {
+      if (age === null || age === undefined) return null;
+      const ageNum = typeof age === 'string' ? parseInt(age, 10) : age;
+      if (isNaN(ageNum) || ageNum < 0 || ageNum > 150) return null;
+      return ageNum;
+    };
+
+    // Normalize text fields
+    const normalizeText = (text: string | null | undefined): string | null => {
+      if (!text || text === null) return null;
+      const trimmed = text.trim();
+      return trimmed.length > 0 ? trimmed : null;
+    };
+
+    const normalizedConditions = normalizeConditions(extracted.known_conditions ?? undefined);
+
+    return {
+      age: normalizeAge(extracted.age ?? null),
+      sex: normalizeSex(extracted.sex ?? null),
+      known_conditions: normalizedConditions !== null ? normalizedConditions : null,
+      past_medical_history: normalizeText(extracted.past_medical_history ?? null),
+      family_history: normalizeText(extracted.family_history ?? null)
+    };
+  } catch (error) {
+    console.error('❌ [Phase 3.1] Error extracting personal details:', error);
+    // Return empty details on error
+    return {
+      age: null,
+      sex: null,
+      known_conditions: null,
+      past_medical_history: null,
+      family_history: null
+    };
+  }
+}
+
+/**
  * Phase 2.1: Detect symptom-trigger patterns from message
  * Uses Gemini to intelligently detect patterns like "gastric pain after spicy food"
  * 
@@ -798,4 +975,5 @@ Return JSON:`;
     return null;
   }
 }
+
 
