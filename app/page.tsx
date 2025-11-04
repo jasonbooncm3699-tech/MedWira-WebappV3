@@ -40,6 +40,17 @@ export default function Home() {
   // Language state (declared early to avoid "used before declaration" errors)
   const [language, setLanguage] = useState('English');
 
+  // Helper function to normalize language names for prompt lookup
+  // Maps official language names to prompt keys
+  // MUST be defined before all functions that use it
+  const normalizeLanguageForPrompts = (lang: string): string => {
+    const languageMap: { [key: string]: string } = {
+      'Filipino': 'Tagalog',  // SUPPORTED_LANGUAGES uses 'Filipino', prompts use 'Tagalog'
+      'Myanmar': 'Burmese',   // SUPPORTED_LANGUAGES uses 'Myanmar', prompts use 'Burmese'
+    };
+    return languageMap[lang] || lang;
+  };
+
   // Helper function to extract first name from display_name
   const getFirstName = (
     displayName?: string,
@@ -104,16 +115,6 @@ export default function Home() {
 
   // Phase 1: Educational Prompts - Comprehensive list for all languages
   // These are informative, safety-focused prompts for new users
-  // Helper function to normalize language names for prompt lookup
-  // Maps official language names to prompt keys
-  const normalizeLanguageForPrompts = (lang: string): string => {
-    const languageMap: { [key: string]: string } = {
-      'Filipino': 'Tagalog',  // SUPPORTED_LANGUAGES uses 'Filipino', prompts use 'Tagalog'
-      'Myanmar': 'Burmese',   // SUPPORTED_LANGUAGES uses 'Myanmar', prompts use 'Burmese'
-    };
-    return languageMap[lang] || lang;
-  };
-
   const getEducationalPrompts = (lang: string): string[] => {
     // Normalize language name for prompt lookup
     const normalizedLang = normalizeLanguageForPrompts(lang);
