@@ -805,10 +805,26 @@ export default function Home() {
   }, [user?.tokens]); // Only depend on tokens to prevent unnecessary re-renders
 
   // Load user language preference from localStorage on mount (only once)
+  // Initialize welcome message in correct language if no messages exist
   useEffect(() => {
     const savedLanguage = safeLocalStorage.getItem('userLanguagePreference');
+    const initialLanguage = savedLanguage && SUPPORTED_LANGUAGES.includes(savedLanguage) 
+      ? savedLanguage 
+      : 'English';
+    
     if (savedLanguage && SUPPORTED_LANGUAGES.includes(savedLanguage)) {
       setLanguage(savedLanguage);
+    }
+    
+    // Initialize welcome message in correct language if no messages exist yet
+    // This ensures welcome message matches selected language on first load
+    if (messages.length === 0) {
+      setMessages([{
+        id: '1',
+        type: 'ai',
+        content: getWelcomeMessage(initialLanguage),
+        timestamp: new Date()
+      }]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount - safeLocalStorage is stable and doesn't need to be in dependencies
