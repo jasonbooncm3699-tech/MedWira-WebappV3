@@ -61,6 +61,9 @@ export default function Home() {
 
   // Get welcome message in user's language
   const getWelcomeMessage = (lang: string): string => {
+    // Normalize language name for message lookup
+    const normalizedLang = normalizeLanguageForPrompts(lang);
+    
     const messages: { [key: string]: string } = {
       'English': 'Hi👋, how can i help you today?',
       'Chinese': '你好👋，今天我能为您做什么？',
@@ -73,11 +76,14 @@ export default function Home() {
       'Khmer': 'សួស្តី👋 ថ្ងៃនេះ ខ្ញុំអាចជួយអ្នកបានយ៉ាងណា?',
       'Lao': 'ສະບາຍດີ👋 ມື້ນີ້ ຂ້ອຍສາມາດຊ່ວຍເຈົ້າໄດ້ແນວໃດ?'
     };
-    return messages[lang] || messages['English'];
+    return messages[normalizedLang] || messages['English'];
   };
 
   // Get language display text based on device type
   const getLanguageDisplayText = (lang: string): string => {
+    // Normalize language name for abbreviation lookup
+    const normalizedLang = normalizeLanguageForPrompts(lang);
+    
     if (isMobile) {
     const abbreviations: { [key: string]: string } = {
       'English': 'EN',
@@ -91,14 +97,27 @@ export default function Home() {
       'Khmer': 'KH',
       'Lao': 'LA'
     };
-      return abbreviations[lang] || 'EN';
+      return abbreviations[normalizedLang] || 'EN';
     }
     return lang;
   };
 
   // Phase 1: Educational Prompts - Comprehensive list for all languages
   // These are informative, safety-focused prompts for new users
+  // Helper function to normalize language names for prompt lookup
+  // Maps official language names to prompt keys
+  const normalizeLanguageForPrompts = (lang: string): string => {
+    const languageMap: { [key: string]: string } = {
+      'Filipino': 'Tagalog',  // SUPPORTED_LANGUAGES uses 'Filipino', prompts use 'Tagalog'
+      'Myanmar': 'Burmese',   // SUPPORTED_LANGUAGES uses 'Myanmar', prompts use 'Burmese'
+    };
+    return languageMap[lang] || lang;
+  };
+
   const getEducationalPrompts = (lang: string): string[] => {
+    // Normalize language name for prompt lookup
+    const normalizedLang = normalizeLanguageForPrompts(lang);
+    
     const suggestions: { [key: string]: string[] } = {
       'English': [
         'Why shouldn\'t I take Vitamin C with coffee?',
@@ -222,7 +241,7 @@ export default function Home() {
       ]
     };
     
-    return suggestions[lang] || suggestions['English'];
+    return suggestions[normalizedLang] || suggestions['English'];
   };
 
   // Phase 2: Load personalized prompts when user is logged in and language changes
@@ -290,6 +309,9 @@ export default function Home() {
 
   // Get localized placeholder text
   const getPlaceholderText = (lang: string) => {
+    // Normalize language name for placeholder lookup
+    const normalizedLang = normalizeLanguageForPrompts(lang);
+    
     const placeholders = {
       'English': "Ask in English...",
       'Chinese': "用中文提问...",
@@ -302,7 +324,7 @@ export default function Home() {
       'Khmer': "សួរជាភាសាខ្មែរ...",
       'Lao': "ຖາມເປັນພາສາລາວ..."
     };
-    return placeholders[lang as keyof typeof placeholders] || placeholders['English'];
+    return placeholders[normalizedLang as keyof typeof placeholders] || placeholders['English'];
   };
 
   const [showCamera, setShowCamera] = useState(false);
@@ -1446,6 +1468,9 @@ export default function Home() {
 
   // Get upload message in user's language
   const getUploadMessage = (lang: string): string => {
+    // Normalize language name for message lookup
+    const normalizedLang = normalizeLanguageForPrompts(lang);
+    
     const messages: { [key: string]: string } = {
       'English': 'I&apos;ve uploaded an image of a medicine for identification.',
       'Chinese': '我已上传药品图片进行识别。',
@@ -1458,7 +1483,7 @@ export default function Home() {
       'Khmer': 'ខ្ញុំបានផ្ទុករូបភាពថ្នាំឡើងសម្រាប់ការកំណត់អត្តសញ្ញាណ។',
       'Lao': 'ຂ້ອຍໄດ້ອັບໂລດຮູບພາບຢາເພື່ອການກວດສອບແລະກຳນົດຕົວຕົນ.'
     };
-    return messages[lang] || messages['English'];
+    return messages[normalizedLang] || messages['English'];
   };
 
   // Handle file upload
