@@ -2506,7 +2506,9 @@ export default function Home() {
                 fontSize: '16px',
                 marginBottom: '16px'
               }}>
-                <strong style={{color: '#00d4ff'}}>Free 30 tokens, No credit card</strong>
+                <strong style={{color: '#00d4ff'}}>Free to start</strong>
+                <br />
+                <strong style={{color: '#00d4ff'}}>No credit card needed</strong>
               </p>
 
               <div style={{
