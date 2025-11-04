@@ -143,7 +143,7 @@ export async function generatePersonalizedPrompts(
     // 4. Load recent chat history (last 10 conversations)
     let recentChats: any[] = [];
     try {
-      recentChats = await chatHistoryManager.getUserChatHistory(userId, { limit: 10 });
+      recentChats = await chatHistoryManager.getUserChatHistory(userId, 1, 10);
     } catch (error) {
       console.warn('⚠️ [Prompt Suggestions] Error loading chat history:', error);
     }
