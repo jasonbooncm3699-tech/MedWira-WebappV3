@@ -119,7 +119,7 @@ export async function GET(request: Request) {
         } else {
           const { data: referrer, error: referrerError } = await supabaseAdmin
             .from('profiles')
-            .select('id, tokens, referral_count')
+            .select('id, tokens')
             .eq('referral_code', referralCode)
             .maybeSingle();
 
@@ -136,13 +136,12 @@ export async function GET(request: Request) {
             referrerId = referrer.id;
 
             const updatedTokenBalance = (referrer.tokens ?? 0) + 30;
-            const updatedReferralCount = (referrer.referral_count ?? 0) + 1;
 
+            // Award tokens to referrer (no referral_count column needed - we can calculate it from referred_by)
             const { error: rewardError } = await supabaseAdmin
               .from('profiles')
               .update({
                 tokens: updatedTokenBalance,
-                referral_count: updatedReferralCount,
                 updated_at: new Date().toISOString()
               })
               .eq('id', referrer.id);
@@ -154,8 +153,7 @@ export async function GET(request: Request) {
               console.log('🎉 Referral reward applied:', {
                 referrerId: referrer.id,
                 tokensBefore: referrer.tokens ?? 0,
-                tokensAfter: updatedTokenBalance,
-                referralCountAfter: updatedReferralCount
+                tokensAfter: updatedTokenBalance
               });
 
               const { error: referredByUpdateError } = await supabaseAdmin

@@ -14,7 +14,7 @@ Your MedWira AI is now properly configured for Netlify deployment with API route
 
 2. **Add the following environment variable:**
    ```
-   NEXT_PUBLIC_GEMINI_API_KEY = AIzaSyCXaybvzVzzGkGdPCaetRmCZIosG2zDIus
+   NEXT_PUBLIC_GEMINI_API_KEY = <your-gemini-api-key>
    ```
 
 3. **Optional additional variables:**
