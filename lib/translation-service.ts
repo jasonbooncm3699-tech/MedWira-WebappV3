@@ -366,7 +366,9 @@ export const UI_TRANSLATIONS: TranslationMaps = {
     'Starting analysis...': '正在开始分析...',
     'Extracting text from image...': '正在从图像中提取文本...',
     'Searching medicine database...': '正在搜索药品数据库...',
-    'Generating medicine report...': '正在生成药品报告...'
+    'Generating medicine report...': '正在生成药品报告...',
+    'Image attached': '已附加图片',
+    'Remove image': '移除图片'
   },
   
   'Malay': {
@@ -377,7 +379,9 @@ export const UI_TRANSLATIONS: TranslationMaps = {
     'Starting analysis...': 'Memulakan analisis...',
     'Extracting text from image...': 'Mengekstrak teks dari imej...',
     'Searching medicine database...': 'Mencari pangkalan data ubat...',
-    'Generating medicine report...': 'Menjana laporan ubat...'
+    'Generating medicine report...': 'Menjana laporan ubat...',
+    'Image attached': 'Imej telah dilampirkan',
+    'Remove image': 'Buang imej'
   },
   
   'Indonesian': {
@@ -388,7 +392,9 @@ export const UI_TRANSLATIONS: TranslationMaps = {
     'Starting analysis...': 'Memulai analisis...',
     'Extracting text from image...': 'Mengekstrak teks dari gambar...',
     'Searching medicine database...': 'Mencari database obat...',
-    'Generating medicine report...': 'Menghasilkan laporan obat...'
+    'Generating medicine report...': 'Menghasilkan laporan obat...',
+    'Image attached': 'Gambar telah dilampirkan',
+    'Remove image': 'Hapus gambar'
   },
   
   'Thai': {
@@ -399,7 +405,9 @@ export const UI_TRANSLATIONS: TranslationMaps = {
     'Starting analysis...': 'เริ่มการวิเคราะห์...',
     'Extracting text from image...': 'ดึงข้อความจากรูปภาพ...',
     'Searching medicine database...': 'ค้นหาฐานข้อมูลยา...',
-    'Generating medicine report...': 'สร้างรายงานยา...'
+    'Generating medicine report...': 'สร้างรายงานยา...',
+    'Image attached': 'แนบรูปภาพแล้ว',
+    'Remove image': 'ลบรูปภาพ'
   },
   
   'Vietnamese': {
@@ -410,7 +418,9 @@ export const UI_TRANSLATIONS: TranslationMaps = {
     'Starting analysis...': 'Bắt đầu phân tích...',
     'Extracting text from image...': 'Trích xuất văn bản từ hình ảnh...',
     'Searching medicine database...': 'Tìm kiếm cơ sở dữ liệu thuốc...',
-    'Generating medicine report...': 'Tạo báo cáo thuốc...'
+    'Generating medicine report...': 'Tạo báo cáo thuốc...',
+    'Image attached': 'Đã đính kèm hình ảnh',
+    'Remove image': 'Xóa hình ảnh'
   },
   
   'Filipino': {
@@ -421,7 +431,9 @@ export const UI_TRANSLATIONS: TranslationMaps = {
     'Starting analysis...': 'Sinisimulan ang pagsusuri...',
     'Extracting text from image...': 'Kinukuha ang teksto mula sa larawan...',
     'Searching medicine database...': 'Naghahanap sa database ng gamot...',
-    'Generating medicine report...': 'Gumagawa ng ulat ng gamot...'
+    'Generating medicine report...': 'Gumagawa ng ulat ng gamot...',
+    'Image attached': 'Nailakip na ang larawan',
+    'Remove image': 'Alisin ang larawan'
   },
   
   'Myanmar': {
@@ -432,7 +444,9 @@ export const UI_TRANSLATIONS: TranslationMaps = {
     'Starting analysis...': 'ခွဲခြမ်းစိတ်ဖြာမှုစတင်နေပါပြီ...',
     'Extracting text from image...': 'ပုံမှစာသားများကိုထုတ်နေပါပြီ...',
     'Searching medicine database...': 'ဆေးဝါးဒေတာဘေ့စ်ကိုရှာနေပါပြီ...',
-    'Generating medicine report...': 'ဆေးဝါးအစီရင်ခံစာထုတ်နေပါပြီ...'
+    'Generating medicine report...': 'ဆေးဝါးအစီရင်ခံစာထုတ်နေပါပြီ...',
+    'Image attached': 'ပုံတင်ပြီးပါပြီ',
+    'Remove image': 'ပုံကိုဖယ်ရှားပါ'
   },
   
   'Khmer': {
@@ -443,7 +457,9 @@ export const UI_TRANSLATIONS: TranslationMaps = {
     'Starting analysis...': 'ចាប់ផ្តើមការវិភាគ...',
     'Extracting text from image...': 'ស្រង់អត្ថបទពីរូបភាព...',
     'Searching medicine database...': 'ស្វែងរកមូលដ្ឋានទិន្នន័យថ្នាំ...',
-    'Generating medicine report...': 'បង្កើតរបាយការណ៍ថ្នាំ...'
+    'Generating medicine report...': 'បង្កើតរបាយការណ៍ថ្នាំ...',
+    'Image attached': 'បានភ្ជាប់រូបភាពរួចហើយ',
+    'Remove image': 'យករូបភាពចេញ'
   },
   
   'Lao': {
@@ -454,7 +470,9 @@ export const UI_TRANSLATIONS: TranslationMaps = {
     'Starting analysis...': 'ເລີ່ມການວິເຄາະ...',
     'Extracting text from image...': 'ດຶງຂໍ້ຄວາມຈາກຮູບພາບ...',
     'Searching medicine database...': 'ຊອກຫາຖານຂໍ້ມູນຢາ...',
-    'Generating medicine report...': 'ສ້າງລາຍງານຢາ...'
+    'Generating medicine report...': 'ສ້າງລາຍງານຢາ...',
+    'Image attached': 'ແນບຮູບແລ້ວ',
+    'Remove image': 'ລຶບຮູບ'
   }
 };
 

@@ -28,6 +28,216 @@ import {
 } from '@/lib/translation-service';
 import { MobileCacheManager } from '@/lib/mobile-cache-manager';
 
+const LANGUAGE_NORMALIZATION_MAP: { [key: string]: string } = {
+  Filipino: 'Tagalog',
+  Myanmar: 'Burmese'
+};
+
+const normalizeLanguageForPrompts = (lang: string): string => {
+  return LANGUAGE_NORMALIZATION_MAP[lang] || lang;
+};
+
+const getPhotoPromptTemplates = (lang: string): string[] => {
+  const normalizedLang = normalizeLanguageForPrompts(lang);
+  const prompts: { [key: string]: string[] } = {
+    'English': [
+      "I've uploaded a photo of a medicine. Please identify it and explain how to use it safely.",
+      "I've uploaded a meal photo. Can you check if it's safe based on my allergies and health profile?",
+      "I've uploaded a photo of a skin issue. Please suggest what it might be and what I should do next.",
+      "Here's an image I've shared. Please describe what you notice and any important details."
+    ],
+    'Chinese': [
+      '我上传了一张药品照片。请帮我识别并说明如何安全使用。',
+      '我上传了一张餐饮照片。请根据我的过敏和健康状况判断是否安全。',
+      '我上传了一个皮肤问题的照片。请帮我判断可能的原因并建议下一步。',
+      '我共享了一张图片。请描述你看到的内容以及需要注意的重点。'
+    ],
+    'Malay': [
+      'Saya telah memuat naik foto ubat. Tolong kenal pasti dan jelaskan cara penggunaan yang selamat.',
+      'Saya telah memuat naik foto makanan. Boleh semak sama ada ia selamat berdasarkan alahan dan keadaan kesihatan saya?',
+      'Saya telah memuat naik foto masalah kulit. Tolong cadangkan punca yang mungkin dan langkah seterusnya.',
+      'Berikut adalah imej yang saya kongsi. Tolong jelaskan apa yang anda lihat dan perkara penting lain.'
+    ],
+    'Indonesian': [
+      'Saya mengunggah foto obat. Tolong identifikasi dan jelaskan cara pemakaian yang aman.',
+      'Saya mengunggah foto makanan. Bisa cek apakah aman berdasarkan alergi dan kondisi kesehatan saya?',
+      'Saya mengunggah foto masalah kulit. Tolong jelaskan kemungkinan penyebab dan langkah selanjutnya.',
+      'Ini gambar yang saya bagikan. Tolong jelaskan apa yang Anda lihat dan hal penting lainnya.'
+    ],
+    'Thai': [
+      'ฉันอัปโหลดภาพยามา กรุณาช่วยระบุและแนะนำวิธีใช้ที่ปลอดภัยให้หน่อย',
+      'ฉันอัปโหลดภาพอาหาร กรุณาช่วยตรวจสอบว่าเหมาะสมกับอาการแพ้และสุขภาพของฉันไหม',
+      'ฉันอัปโหลดภาพปัญหาผิว กรุณาช่วยบอกสาเหตุที่เป็นไปได้และควรทำอย่างไรต่อ',
+      'นี่คือภาพที่ฉันแชร์ กรุณาช่วยบรรยายสิ่งที่เห็นและสิ่งสำคัญที่ควรรู้'
+    ],
+    'Vietnamese': [
+      'Tôi đã tải lên ảnh thuốc. Vui lòng xác định và hướng dẫn cách sử dụng an toàn.',
+      'Tôi đã tải lên ảnh bữa ăn. Xin kiểm tra xem có an toàn với dị ứng và tình trạng sức khỏe của tôi không.',
+      'Tôi đã tải lên ảnh vấn đề da. Vui lòng gợi ý nguyên nhân có thể và bước tiếp theo nên làm.',
+      'Đây là hình ảnh tôi chia sẻ. Vui lòng mô tả những gì bạn thấy và những điểm quan trọng.'
+    ],
+    'Tagalog': [
+      'Nag-upload ako ng larawan ng gamot. Pakilala ito at ipaliwanag kung paano ligtas gamitin.',
+      'Nag-upload ako ng larawan ng pagkain. Paki-check kung ligtas ito batay sa aking allergy at kalusugan.',
+      'Nag-upload ako ng larawan ng problema sa balat. Pakisabi kung ano ang maaaring sanhi at ano ang dapat gawin.',
+      'Narito ang larawan na ibinahagi ko. Pakilarawan ang iyong nakikita at mga mahahalagang detalye.'
+    ],
+    'Burmese': [
+      'ဆေးဝါးပုံတစ်ပုံတင်လိုက်ပါတယ်။ လုံခြုံစွာအသုံးပြုနည်းကိုရှင်းပြပေးပါ။',
+      'အစားအစာပုံတစ်ပုံတင်လိုက်ပါတယ်။ ကျွန်တော့်အလားတူအရေပြားရောဂါနှင့် ကျန်းမာရေးအခြေအနေများအတွက်လုံခြုံသလားစစ်ဆေးပေးပါ။',
+      'အရေပြားပြဿနာပုံတစ်ပုံတင်လိုက်ပါတယ်။ ဖြစ်နိုင်ချေရှိသောအကြောင်းရင်းနှင့် နောက်တစ်ဆင့်လုပ်ဆောင်ရမည့်အရာများကို အကြံပြုပါ။',
+      'ဤပုံကိုမျှဝေထားသည်။ သင်မြင်သောအရာနှင့် အရေးကြီးသောအချက်များကို ဖော်ပြပေးပါ။'
+    ],
+    'Khmer': [
+      'ខ្ញុំបានផ្ទុករូបថតថ្នាំ។ សូមកំណត់អត្តសញ្ញាណ និងពន្យល់ពីវិធីប្រើប្រាស់ឱ្យមានសុវត្ថិភាព។',
+      'ខ្ញុំបានផ្ទុករូបថតម្ហូបអាហារ។ សូមពិនិត្យថាវាសុវត្ថិភាពទាក់ទងនឹងអាឡែស៊ី និងសុខភាពរបស់ខ្ញុំឬអត់។',
+      'ខ្ញុំបានផ្ទុករូបថតបញ្ហាស្បែក។ សូមណែនាំអំពីមូលហេតុដែលអាចកើតមាន និងអ្វីដែលគួរធ្វើបន្ទាប់។',
+      'នេះជារូបភាពដែលខ្ញុំបានចែករំលែក។ សូមពិពណ៌នាអំពីអ្វីដែលអ្នកឃើញ និងព័ត៌មានសំខាន់ៗផ្សេងទៀត។'
+    ],
+    'Lao': [
+      'ຂ້ອຍໄດ້ອັບໂຫຼດຮູບຢາມາ. ກະລຸນາຊ່ວຍລະບຸແລະແນະນຳວິທີໃຊ້ໃຫ້ປອດໄພ.',
+      'ຂ້ອຍໄດ້ອັບໂຫຼດຮູບອາຫານ. ຊ່ວຍກວດເບິ່ງວ່າມັນປອດໄພຕໍ່ອາການແພ້ແລະສຸຂະພາບຂອງຂ້ອຍບໍ່.',
+      'ຂ້ອຍໄດ້ອັບໂຫຼດຮູບປັນຫາຜິວໜັງ. ກະລຸນາບອກສາເຫດທີ່ເປັນໄປໄດ້ແລະຂັ້ນຕອນຕໍ່ໄປ.',
+      'ນີ້ແມ່ນຮູບພາບທີ່ຂ້ອຍແບ່ງປັນ. ກະລຸນາອະທິບາຍສິ່ງທີ່ເຫັນແລະຈຸດສຳຄັນທີ່ຄວນຮູ້.'
+    ]
+  };
+
+  return prompts[normalizedLang] || prompts['English'];
+};
+
+const getDefaultPhotoPrompt = (lang: string): string => {
+  const templates = getPhotoPromptTemplates(lang);
+  return templates[0] || "I've uploaded an image. Please analyze it for me.";
+};
+
+const getEducationalPrompts = (lang: string): string[] => {
+  const normalizedLang = normalizeLanguageForPrompts(lang);
+  
+  const suggestions: { [key: string]: string[] } = {
+    'English': [
+      'Why shouldn\'t I take Vitamin C with coffee?',
+      'Can I take paracetamol with alcohol?',
+      'What happens if I mix antibiotics with dairy products?',
+      'Is it safe to take supplements with prescription medicine?',
+      'Can I take medicine on an empty stomach?',
+      'What foods should I avoid with certain medicines?',
+      'Can I take painkillers with gastric problems?',
+      'What should I avoid while taking antibiotics?',
+      'Is it safe to take multiple painkillers together?',
+      'How long should I wait after drinking before taking medicine?'
+    ],
+    'Chinese': [
+      '为什么我不应该将维生素C和咖啡一起服用？',
+      '我可以将扑热息痛和酒精一起服用吗？',
+      '如果我混合抗生素和乳制品会发生什么？',
+      '将补充剂与处方药一起服用安全吗？',
+      '我可以空腹服药吗？',
+      '我应该避免哪些食物与某些药物一起服用？',
+      '我可以将止痛药与胃病一起服用吗？',
+      '服用抗生素时我应该避免什么？',
+      '同时服用多种止痛药安全吗？',
+      '喝酒后我应该等多久才能服药？'
+    ],
+    'Malay': [
+      'Kenapa saya tidak sepatutnya mengambil Vitamin C dengan kopi?',
+      'Bolehkah saya mengambil paracetamol dengan alkohol?',
+      'Apa yang akan berlaku jika saya campurkan antibiotik dengan produk tenusu?',
+      'Adakah selamat untuk mengambil makanan tambahan dengan ubat preskripsi?',
+      'Bolehkah saya mengambil ubat semasa perut kosong?',
+      'Makanan apa yang patut saya elakkan dengan ubat tertentu?',
+      'Bolehkah saya mengambil ubat penahan sakit dengan masalah gastrik?',
+      'Apa yang patut saya elakkan semasa mengambil antibiotik?',
+      'Adakah selamat untuk mengambil beberapa ubat penahan sakit bersama?',
+      'Berapa lama saya patut tunggu selepas minum sebelum mengambil ubat?'
+    ],
+    'Indonesian': [
+      'Mengapa saya tidak boleh minum Vitamin C dengan kopi?',
+      'Bisakah saya minum parasetamol dengan alkohol?',
+      'Apa yang akan terjadi jika saya mencampur antibiotik dengan produk susu?',
+      'Apakah aman untuk minum suplemen dengan obat resep?',
+      'Bisakah saya minum obat saat perut kosong?',
+      'Makanan apa yang harus saya hindari dengan obat tertentu?',
+      'Bisakah saya minum obat pereda nyeri dengan masalah lambung?',
+      'Apa yang harus saya hindari saat minum antibiotik?',
+      'Apakah aman untuk minum beberapa obat pereda nyeri bersama?',
+      'Berapa lama saya harus menunggu setelah minum sebelum minum obat?'
+    ],
+    'Thai': [
+      'ทำไมฉันไม่ควรทานวิตามินซีกับกาแฟ?',
+      'ฉันสามารถกินพาราเซตามอลกับแอลกอฮอล์ได้ไหม?',
+      'จะเกิดอะไรขึ้นถ้าฉันผสมยาปฏิชีวนะกับผลิตภัณฑ์นม?',
+      'ปลอดภัยไหมที่จะทานอาหารเสริมกับยาที่แพทย์สั่ง?',
+      'ฉันสามารถกินยาขณะท้องว่างได้ไหม?',
+      'อาหารอะไรที่ฉันควรหลีกเลี่ยงกับยาบางชนิด?',
+      'ฉันสามารถกินยาแก้ปวดกับปัญหาเกี่ยวกับกระเพาะอาหารได้ไหม?',
+      'ฉันควรหลีกเลี่ยงอะไรขณะทานยาปฏิชีวนะ?',
+      'ปลอดภัยไหมที่จะกินยาแก้ปวดหลายตัวพร้อมกัน?',
+      'ฉันควรรอเท่าไหร่หลังดื่มแอลกอฮอล์ก่อนกินยา?'
+    ],
+    'Vietnamese': [
+      'Tại sao tôi không nên uống Vitamin C với cà phê?',
+      'Tôi có thể uống paracetamol với rượu không?',
+      'Điều gì sẽ xảy ra nếu tôi trộn thuốc kháng sinh với sản phẩm sữa?',
+      'Có an toàn để uống thực phẩm chức năng với thuốc kê đơn không?',
+      'Tôi có thể uống thuốc khi bụng đói không?',
+      'Tôi nên tránh những thực phẩm nào với một số loại thuốc?',
+      'Tôi có thể uống thuốc giảm đau với vấn đề dạ dày không?',
+      'Tôi nên tránh gì khi uống thuốc kháng sinh?',
+      'Có an toàn để uống nhiều thuốc giảm đau cùng lúc không?',
+      'Tôi nên đợi bao lâu sau khi uống rượu trước khi uống thuốc?'
+    ],
+    'Tagalog': [
+      'Bakit hindi ako dapat uminom ng Vitamin C kasama ng kape?',
+      'Puwede ba akong uminom ng paracetamol kasama ng alak?',
+      'Ano ang mangyayari kung haluin ko ang antibiotic sa mga produktong gawa sa gatas?',
+      'Ligtas bang uminom ng mga supplements at gamot na reseta?',
+      'Puwede ba akong uminom ng gamot nang walang laman ang tiyan?',
+      'Anong mga pagkain ang dapat kong iwasan sa ilang gamot?',
+      'Puwede ba akong uminom ng painkillers kahit may problema sa sikmura?',
+      'Ano ang dapat kong iwasan habang umiinom ng antibiotics?',
+      'Ligtas bang uminom ng maraming painkillers nang sabay-sabay?',
+      'Gaano katagal dapat akong maghintay pagkatapos uminom bago uminom ng gamot?'
+    ],
+    'Burmese': [
+      'ဘာကြောင့် ဗီတာမင် C ကို ကော်ဖီနဲ့ မတယ်လီရသလဲ။',
+      'Paracetamol နဲ့ အရက်တစ်ပြိုင်နက် သောက်လို့ရမလား။',
+      'Antibiotic ကို နို့ထွက်ပစ္စည်းတွေနဲ့ ဖလှယ်ရင် ဘာဖြစ်မလဲ။',
+      'အသုံးပြုမည့် ဆေးဝါးတွေနဲ့ အာဟာရဖြည့်တိုးဆေးတွေအတူ သောက်လို့ လုံခြုံသလား။',
+      'ဆေးဝါးတွေကို ဗိုက်အလွတ်နဲ့ သောက်လို့ရမလား။',
+      'ဆေးအချို့နဲ့အတူ ရှောင်ရမည့် အစားအစာများက ဘာတွေလဲ။',
+      'အစာအိမ်ပြဿနာ ရှိလျှင် နာကျင်နာကျင်သောက်လို့ရမလား။',
+      'Antibiotic သောက်နေစဉ် ဘာတွေကို ရှောင်သင့်သလဲ။',
+      'Painkiller အစုံတစ်ပြိုင်နက် သောက်လို့ရမလား။',
+      'အရက်သောက်ပြီး ဘယ်လောက်စောင့်မှ ဆေး သောက်သင့်လဲ။'
+    ],
+    'Khmer': [
+      'ហេតុអ្វីខ្ញុំមិនគួរទទួលយកវីតាមីន C ជាមួយកាហ្វេ?',
+      'តើខ្ញុំអាចទទួលយក paracetamol ជាមួយស្រាទេ?',
+      'អ្វីនឹងកើតឡើង ប្រសិនបើខ្ញុំលាយថ្នាំអង់ទីប្យូទិកជាមួយផលិតផលទឹកដោះគោ?',
+      'តើមានសុវត្ថិភាពទេ ប្រសិនបើញុំស្លាបព្រិលអាហារបន្ថែមជាមួយថ្នាំដែលគេកំណត់?',
+      'តើខ្ញុំអាចញុំថ្នាំដោយពោះទទេបានទេ?',
+      'តើអាហារៈអ្វីខ្លះដែលខ្ញុំគួរជៀសវាងជាមួយថ្នាំខ្លះ?',
+      'តើខ្ញុំអាចទទួលយកថ្នាំបំបាត់ឈឺដោយមានបញ្ហាក្រពះបានទេ?',
+      'តើខ្ញុំគួរជៀសវាងអ្វីខ្លះក្រោមពេលទទួលថ្នាំអង់ទីប្យូទិក?',
+      'តើមានសុវត្ថិភាពទេក្នុងការទទួលយកថ្នាំបំបាត់ឈឺច្រើនពេលតែមួយ?',
+      'តើខ្ញុំត្រូវរង់ចាំប៉ុន្មានម៉ោងបន្ទាប់ពីផឹកស្រាមុនពេលទទួលថ្នាំ?'
+    ],
+    'Lao': [
+      'ເປັນຫຍັງຂ້ອຍບໍ່ຄວນກິນວິຕາມິນ C ກັບກາເຟ?',
+      'ຂ້ອຍສາມາດກິນ paracetamol ກັບເຫຼົ້າໄດ້ບໍ?',
+      'ຈະເກີດຫຍັງຂຶ້ນຖ້າຂ້ອຍປົນຢາຕ້ານເຊື້ອກັບຜະລິດຕະພັນນົມ?',
+      'ມັນປອດໄພບໍໃນການກິນອາຫານເສີມກັບຢາທີ່ແພດສັ່ງ?',
+      'ຂ້ອຍສາມາດກິນຢາເມື່ອທ້ອງເປົ່າໄດ້ບໍ?',
+      'ອາຫານຫຍັງທີ່ຂ້ອຍຄວນຫຼີກລ້ຽງກັບຢາບາງຊະນິດ?',
+      'ຂ້ອຍສາມາດກິນຢາບັນເທົາປວດຄວບຄູ່ກັບປັນຫາກະເພາະໄດ້ບໍ?',
+      'ຂ້ອຍຄວນຫຼີກລ້ຽງຫຍັງເມື່ອກິນຢາຕ້ານເຊື້ອ?',
+      'ມັນປອດໄພບໍໃນການກິນຢາບັນເທົາປວດຫຼາຍຊະນິດພ້ອມກັນ?',
+      'ຂ້ອຍຄວນລໍຖ້າດົນເທົ່າໃດຫຼັງຈາກດື່ມເຫຼົ້າກ່ອນກິນຢາ?'
+    ]
+  };
+  return suggestions[normalizedLang] || suggestions['English'];
+};
+
 export default function Home() {
   // Test deployment - simple change
   const { user, logout, isLoading, refreshUser, refreshUserData, initializeSupabase } = useAuth();
@@ -39,17 +249,6 @@ export default function Home() {
   
   // Language state (declared early to avoid "used before declaration" errors)
   const [language, setLanguage] = useState('English');
-
-  // Helper function to normalize language names for prompt lookup
-  // Maps official language names to prompt keys
-  // MUST be defined before all functions that use it
-  const normalizeLanguageForPrompts = (lang: string): string => {
-    const languageMap: { [key: string]: string } = {
-      'Filipino': 'Tagalog',  // SUPPORTED_LANGUAGES uses 'Filipino', prompts use 'Tagalog'
-      'Myanmar': 'Burmese',   // SUPPORTED_LANGUAGES uses 'Myanmar', prompts use 'Burmese'
-    };
-    return languageMap[lang] || lang;
-  };
 
   // Helper function to extract first name from display_name
   const getFirstName = (
@@ -113,227 +312,34 @@ export default function Home() {
     return lang;
   };
 
-  // Phase 1: Educational Prompts - Comprehensive list for all languages
-  // These are informative, safety-focused prompts for new users
-  const getEducationalPrompts = (lang: string): string[] => {
-    // Normalize language name for prompt lookup
-    const normalizedLang = normalizeLanguageForPrompts(lang);
-    
-    const suggestions: { [key: string]: string[] } = {
-      'English': [
-        'Why shouldn\'t I take Vitamin C with coffee?',
-        'Can I take paracetamol with alcohol?',
-        'What happens if I mix antibiotics with dairy products?',
-        'Is it safe to take supplements with prescription medicine?',
-        'Can I take medicine on an empty stomach?',
-        'What foods should I avoid with certain medicines?',
-        'Can I take painkillers with gastric problems?',
-        'What should I avoid while taking antibiotics?',
-        'Is it safe to take multiple painkillers together?',
-        'How long should I wait after drinking before taking medicine?'
-      ],
-      'Chinese': [
-        '为什么我不应该将维生素C和咖啡一起服用？',
-        '我可以将扑热息痛和酒精一起服用吗？',
-        '如果我混合抗生素和乳制品会发生什么？',
-        '将补充剂与处方药一起服用安全吗？',
-        '我可以空腹服药吗？',
-        '我应该避免哪些食物与某些药物一起服用？',
-        '我可以将止痛药与胃病一起服用吗？',
-        '服用抗生素时我应该避免什么？',
-        '同时服用多种止痛药安全吗？',
-        '喝酒后我应该等多久才能服药？'
-      ],
-      'Malay': [
-        'Kenapa saya tidak sepatutnya mengambil Vitamin C dengan kopi?',
-        'Bolehkah saya mengambil paracetamol dengan alkohol?',
-        'Apa yang akan berlaku jika saya campurkan antibiotik dengan produk tenusu?',
-        'Adakah selamat untuk mengambil makanan tambahan dengan ubat preskripsi?',
-        'Bolehkah saya mengambil ubat semasa perut kosong?',
-        'Makanan apa yang patut saya elakkan dengan ubat tertentu?',
-        'Bolehkah saya mengambil ubat penahan sakit dengan masalah gastrik?',
-        'Apa yang patut saya elakkan semasa mengambil antibiotik?',
-        'Adakah selamat untuk mengambil beberapa ubat penahan sakit bersama?',
-        'Berapa lama saya patut tunggu selepas minum sebelum mengambil ubat?'
-      ],
-      'Indonesian': [
-        'Mengapa saya tidak boleh minum Vitamin C dengan kopi?',
-        'Bisakah saya minum parasetamol dengan alkohol?',
-        'Apa yang akan terjadi jika saya mencampur antibiotik dengan produk susu?',
-        'Apakah aman untuk minum suplemen dengan obat resep?',
-        'Bisakah saya minum obat saat perut kosong?',
-        'Makanan apa yang harus saya hindari dengan obat tertentu?',
-        'Bisakah saya minum obat pereda nyeri dengan masalah lambung?',
-        'Apa yang harus saya hindari saat minum antibiotik?',
-        'Apakah aman untuk minum beberapa obat pereda nyeri bersama?',
-        'Berapa lama saya harus menunggu setelah minum sebelum minum obat?'
-      ],
-      'Thai': [
-        'ทำไมฉันไม่ควรทานวิตามินซีกับกาแฟ?',
-        'ฉันสามารถกินพาราเซตามอลกับแอลกอฮอล์ได้ไหม?',
-        'จะเกิดอะไรขึ้นถ้าฉันผสมยาปฏิชีวนะกับผลิตภัณฑ์นม?',
-        'ปลอดภัยไหมที่จะทานอาหารเสริมกับยาที่แพทย์สั่ง?',
-        'ฉันสามารถกินยาขณะท้องว่างได้ไหม?',
-        'อาหารอะไรที่ฉันควรหลีกเลี่ยงกับยาบางชนิด?',
-        'ฉันสามารถกินยาแก้ปวดกับปัญหาเกี่ยวกับกระเพาะอาหารได้ไหม?',
-        'ฉันควรหลีกเลี่ยงอะไรขณะทานยาปฏิชีวนะ?',
-        'ปลอดภัยไหมที่จะกินยาแก้ปวดหลายตัวพร้อมกัน?',
-        'ฉันควรรอเท่าไหร่หลังดื่มแอลกอฮอล์ก่อนกินยา?'
-      ],
-      'Vietnamese': [
-        'Tại sao tôi không nên uống Vitamin C với cà phê?',
-        'Tôi có thể uống paracetamol với rượu không?',
-        'Điều gì sẽ xảy ra nếu tôi trộn thuốc kháng sinh với sản phẩm sữa?',
-        'Có an toàn để uống thực phẩm chức năng với thuốc kê đơn không?',
-        'Tôi có thể uống thuốc khi bụng đói không?',
-        'Tôi nên tránh những thực phẩm nào với một số loại thuốc?',
-        'Tôi có thể uống thuốc giảm đau với vấn đề dạ dày không?',
-        'Tôi nên tránh gì khi uống thuốc kháng sinh?',
-        'Có an toàn để uống nhiều thuốc giảm đau cùng lúc không?',
-        'Tôi nên đợi bao lâu sau khi uống rượu trước khi uống thuốc?'
-      ],
-      'Tagalog': [
-        'Bakit hindi ako dapat uminom ng Vitamin C kasama ng kape?',
-        'Puwede ba akong uminom ng paracetamol kasama ng alak?',
-        'Ano ang mangyayari kung haluin ko ang antibiotic sa mga produktong gawa sa gatas?',
-        'Ligtas ba na uminom ng supplements kasama ng prescription medicine?',
-        'Puwede ba akong uminom ng gamot kapag walang laman ang tiyan?',
-        'Anong mga pagkain ang dapat kong iwasan kasama ng ilang gamot?',
-        'Puwede ba akong uminom ng painkillers kapag may problema sa tiyan?',
-        'Ano ang dapat kong iwasan habang umiinom ng antibiotic?',
-        'Ligtas ba na uminom ng maraming painkillers nang sabay?',
-        'Gaano katagal ako dapat maghintay pagkatapos uminom bago uminom ng gamot?'
-      ],
-      'Burmese': [
-        'ဘာကြောင့် ဗီတာမင် C ကို ကော်ဖီနဲ့ မသောက်သင့်တာလဲ?',
-        'ပါရာဆီတမောကို အရက်နဲ့ သောက်လို့ရပါသလား?',
-        'ပဋိဇီဝဆေးတွေကို နို့ထွက်ပစ္စည်းတွေနဲ့ ရောလိုက်ရင် ဘာဖြစ်မလဲ?',
-        'ဆရာဝန်ညွှန်ကြားထားတဲ့ ဆေးတွေနဲ့ အားဆေးတွေ သောက်လို့ ဘင်းပါသလား?',
-        'ဗိုက်ဆာတဲ့အချိန်မှာ ဆေးသောက်လို့ရပါသလား?',
-        'ဆေးတချို့နဲ့ ဘယ်အစားအစာတွေကို ရှောင်ကြဉ်သင့်လဲ?',
-        'ဗိုက်နာတာရှိရင် အနာပျောက်ဆေးတွေ သောက်လို့ရပါသလား?',
-        'ပဋိဇီဝဆေးတွေ သောက်နေတဲ့အချိန်မှာ ဘာတွေ ရှောင်ကြဉ်သင့်လဲ?',
-        'အနာပျောက်ဆေးတွေ အများကြီး တစ်ခါတည်း သောက်လို့ ဘင်းပါသလား?',
-        'အရက်သောက်ပြီးနောက် ဆေးသောက်ခင် ဘယ်လောက်ကြာကြာ စောင့်သင့်လဲ?'
-      ],
-      'Khmer': [
-        'ហេតុអ្វីបានជាខ្ញុំមិនគួរទទួលទានវីតាមីន C ជាមួយកាហ្វេ?',
-        'តើខ្ញុំអាចផឹក paracetamol ជាមួយអាល់កុលបានទេ?',
-        'តើអ្វីនឹងកើតឡើងប្រសិនបើខ្ញុំលាយអង់ទីប៊ីយ៉ូទិកជាមួយផលិតផលទឹកដោះគោ?',
-        'តើវាមានសុវត្ថិភាពក្នុងការទទួលទានអាហារបំប៉នជាមួយថ្នាំដែលវេជ្ជបញ្ជាទេ?',
-        'តើខ្ញុំអាចផឹកថ្នាំនៅពេលពោះទទេបានទេ?',
-        'តើខ្ញុំគួរជៀសវាងអាហារអ្វីខ្លះជាមួយថ្នាំមួយចំនួន?',
-        'តើខ្ញុំអាចផឹកថ្នាំបំបាត់ការឈឺចាប់ជាមួយបញ្ហាពោះវៀនបានទេ?',
-        'តើខ្ញុំគួរជៀសវាងអ្វីនៅពេលផឹកអង់ទីប៊ីយ៉ូទិក?',
-        'តើវាមានសុវត្ថិភាពក្នុងការផឹកថ្នាំបំបាត់ការឈឺចាប់ច្រើនក្នុងពេលតែមួយទេ?',
-        'តើខ្ញុំគួររង់ចាំប៉ុន្មានពេលក្រោយពីផឹកអាល់កុលមុនពេលផឹកថ្នាំ?'
-      ],
-      'Lao': [
-        'ເປັນຫຍັງຂ້ອຍບໍ່ຄວນກິນວິຕາມິນ C ກັບກາເຟ?',
-        'ຂ້ອຍສາມາດກິນ paracetamol ກັບເຫຼົ້າໄດ້ບໍ?',
-        'ຈະເກີດຫຍັງຂຶ້ນຖ້າຂ້ອຍປະສົມຢາຕ້ານເຊື້ອກັບຜະລິດຕະພັນນົມ?',
-        'ມັນປອດໄພບໍ່ທີ່ຈະກິນອາຫານເສີມກັບຢາທີ່ແພດສັ່ງ?',
-        'ຂ້ອຍສາມາດກິນຢາເວລາທ້ອງວ່າງໄດ້ບໍ?',
-        'ຂ້ອຍຄວນຫຼີກລ້ຽງອາຫານໃດໆກັບຢາບາງຢ່າງ?',
-        'ຂ້ອຍສາມາດກິນຢາແກ້ປວດກັບບັນຫາກະເພາະອາຫານໄດ້ບໍ?',
-        'ຂ້ອຍຄວນຫຼີກລ້ຽງຫຍັງໃນຂະນະກິນຢາຕ້ານເຊື້ອ?',
-        'ມັນປອດໄພບໍ່ທີ່ຈະກິນຢາແກ້ປວດຫຼາຍຢ່າງໃນເວລາດຽວກັນ?',
-        'ຂ້ອຍຄວນລໍຖ້າດົນເທົ່າໃດຫຼັງຈາກດື່ມເຫຼົ້າກ່ອນກິນຢາ?'
-      ]
-    };
-    
-    return suggestions[normalizedLang] || suggestions['English'];
-  };
-
-  // Phase 2: Load personalized prompts when user is logged in and language changes
-  useEffect(() => {
-    if (user?.id && language) {
-      loadPersonalizedPrompts(user.id, language);
-    } else {
-      // No user or no language → Use educational prompts
-      setPersonalizedPrompts([]);
-      setUsePersonalizedPrompts(false);
-    }
-  }, [user?.id, language]);
-
-  // Load personalized prompts from API
-  const loadPersonalizedPrompts = async (userId: string, lang: string) => {
-    setPromptsLoading(true);
-    try {
-      const response = await fetch(
-        `/api/prompt-suggestions?userId=${userId}&language=${lang}&limit=10`
-      );
-      const result = await response.json();
-      
-      if (result.status === 'SUCCESS' && result.data.personalized && result.data.prompts.length > 0) {
-        // User has personalized prompts
-        setPersonalizedPrompts(result.data.prompts);
-        setUsePersonalizedPrompts(true);
-        console.log(`✅ [Prompt Suggestions] Loaded ${result.data.prompts.length} personalized prompts`);
-      } else {
-        // No personalized prompts → Use educational prompts
-        setPersonalizedPrompts([]);
-        setUsePersonalizedPrompts(false);
-        console.log('ℹ️ [Prompt Suggestions] Using educational prompts (no personalized data available)');
-      }
-    } catch (error) {
-      console.error('❌ [Prompt Suggestions] Error loading personalized prompts:', error);
-      // Fallback to educational prompts on error
-      setPersonalizedPrompts([]);
-      setUsePersonalizedPrompts(false);
-    } finally {
-      setPromptsLoading(false);
-    }
-  };
-
-  // Get rotating prompt suggestions
-  // Phase 2: Uses personalized prompts if available, otherwise educational prompts
-  const getPromptSuggestions = (): string[] => {
-    if (usePersonalizedPrompts && personalizedPrompts.length > 0) {
-      // Use personalized prompts
-      return personalizedPrompts.slice(currentPromptIndex, currentPromptIndex + 1);
-    } else {
-      // Use educational prompts (Phase 1 fallback)
-      const educationalPrompts = getEducationalPrompts(language);
-      return educationalPrompts.slice(currentPromptIndex, currentPromptIndex + 1);
-    }
-  };
-
-  // Handle prompt suggestion click
-  const handlePromptSuggestion = (suggestion: string) => {
-    setInputText(suggestion);
-
-    // Focus the textarea so the user can edit or press send manually
-    const textarea = document.querySelector<HTMLTextAreaElement>('textarea.text-input');
-    textarea?.focus();
-  };
-
-  // Get localized placeholder text
-  const getPlaceholderText = (lang: string) => {
-    // Normalize language name for placeholder lookup
-    const normalizedLang = normalizeLanguageForPrompts(lang);
-    
-    const placeholders = {
-      'English': "Ask in English...",
-      'Chinese': "用中文提问...",
-      'Malay': "Tanya dalam Bahasa Melayu...",
-      'Indonesian': "Tanya dalam Bahasa Indonesia...",
-      'Thai': "ถามเป็นภาษาไทย...",
-      'Vietnamese': "Hỏi bằng tiếng Việt...",
-      'Tagalog': "Magtanong sa Filipino...",
-      'Burmese': "မြန်မာဘာသာဖြင့်မေးပါ...",
-      'Khmer': "សួរជាភាសាខ្មែរ...",
-      'Lao': "ຖາມເປັນພາສາລາວ..."
-    };
-    return placeholders[normalizedLang as keyof typeof placeholders] || placeholders['English'];
-  };
-
-  const [showCamera, setShowCamera] = useState(false);
+const [showCamera, setShowCamera] = useState(false);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isTablet, setIsTablet] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [sideNavOpen, setSideNavOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [attachedImage, setAttachedImage] = useState<string | null>(null);
+
+  const activePrompts: string[] = attachedImage
+    ? getPhotoPromptTemplates(language)
+    : (usePersonalizedPrompts && personalizedPrompts.length > 0
+        ? personalizedPrompts
+        : getEducationalPrompts(language));
+
+  const getPromptSuggestions = (): string[] => {
+    if (activePrompts.length === 0) {
+      return [];
+    }
+    const index = Math.min(currentPromptIndex, activePrompts.length - 1);
+    return [activePrompts[index]];
+  };
+
+  const handlePromptSuggestion = (suggestion: string) => {
+    setInputText(suggestion);
+
+    const textarea = document.querySelector<HTMLTextAreaElement>('textarea.text-input');
+    textarea?.focus();
+  };
   
   // Photo preview states
   const [showPhotoPreview, setShowPhotoPreview] = useState(false);
@@ -471,24 +477,30 @@ export default function Home() {
     return tags.length > 0 ? tags : ['General'];
   };
 
-  // Rotate prompt suggestions
-  // Phase 2: Rotates through personalized prompts if available, otherwise educational prompts
+  // Rotate prompt suggestions based on active list
   useEffect(() => {
+    if (activePrompts.length <= 1) {
+      setCurrentPromptIndex(0);
+      return;
+    }
+
     const interval = setInterval(() => {
       setCurrentPromptIndex((prev) => {
-        let prompts: string[];
-        if (usePersonalizedPrompts && personalizedPrompts.length > 0) {
-          prompts = personalizedPrompts;
-        } else {
-          prompts = getEducationalPrompts(language);
+        if (activePrompts.length === 0) {
+          return 0;
         }
-        const maxIndex = prompts.length - 1;
-        return prev >= maxIndex ? 0 : prev + 1;
+        const nextIndex = prev + 1;
+        return nextIndex >= activePrompts.length ? 0 : nextIndex;
       });
     }, 5000); // Rotate every 5 seconds
 
     return () => clearInterval(interval);
-  }, [language, usePersonalizedPrompts, personalizedPrompts]);
+  }, [activePrompts]);
+
+  // Reset rotation index when language or prompt source changes
+  useEffect(() => {
+    setCurrentPromptIndex(0);
+  }, [activePrompts]);
 
   // Function to check authentication and tokens before allowing actions
   const checkAuthentication = (): boolean => {
@@ -520,8 +532,15 @@ export default function Home() {
 
   // Handle text input submission - AI Pharmacist
   const handleTextSubmit = async (textInput?: string) => {
-    const userMessage = (textInput || inputText).trim();
-    if (!userMessage) return;
+    const rawInput = (textInput || inputText).trim();
+    const imageToSend = attachedImage;
+    let userMessage = rawInput;
+
+    if (!userMessage && !imageToSend) return;
+
+    if (imageToSend && !userMessage) {
+      userMessage = getDefaultPhotoPrompt(language);
+    }
 
     // Check basic authentication (user exists) but NOT tokens yet
     if (!user) {
@@ -539,13 +558,22 @@ export default function Home() {
       id: Date.now().toString(),
       type: 'user' as const,
       content: userMessage,
-      timestamp: new Date()
+      timestamp: new Date(),
+      image: imageToSend || undefined
     };
+
+    setMessages(prev => [...prev, newUserMessage]);
+
+    if (imageToSend) {
+      setAttachedImage(null);
+      setIsAiThinking(true);
+      setCurrentPromptIndex(0);
+      await analyzeMedicineImageWithRealStatus(imageToSend, userMessage);
+      return;
+    }
 
     // Show AI thinking animation
     setIsAiThinking(true);
-
-    setMessages(prev => [...prev, newUserMessage]);
     setIsAnalyzing(true);
 
     const userId = user?.id ?? '';
@@ -1186,16 +1214,24 @@ export default function Home() {
   const handleSendPhotoToAI = () => {
     if (!capturedPhotoData) return;
     
-    // Check authentication before sending to AI
+    // Check authentication before attaching
     if (!checkAuthentication()) {
       setShowPhotoPreview(false);
       setCapturedPhotoData(null);
       return;
     }
     
+    setAttachedImage(capturedPhotoData);
+    setCurrentPromptIndex(0);
     setShowPhotoPreview(false);
     setCapturedPhotoData(null);
-    analyzeMedicineImageWithRealStatus(capturedPhotoData);
+  };
+
+  const handleRemoveAttachedImage = () => {
+    setAttachedImage(null);
+    setCurrentPromptIndex(0);
+    const textarea = document.querySelector<HTMLTextAreaElement>('textarea.text-input');
+    textarea?.focus();
   };
 
   const handleCancelPhoto = () => {
@@ -1216,7 +1252,7 @@ export default function Home() {
   };
 
   // SSE-based AI Image Analysis with Real-Time Status Display
-  const analyzeMedicineImageWithRealStatus = async (imageBase64: string) => {
+  const analyzeMedicineImageWithRealStatus = async (imageBase64: string, userText?: string) => {
         console.log(`📊 [Frontend] Starting image analysis`);
     
     // Check basic authentication (user exists) but NOT tokens yet
@@ -1233,36 +1269,12 @@ export default function Home() {
     // Set initial status - will be updated by actual processing stages
     setAiStatus(AIProcessingStage.LOADING_PROFILE); // Start with loading profile stage
 
-    // Create localized user message
-    const getUploadMessage = (lang: string) => {
-      const messages = {
-        'English': "I've uploaded an image of a medicine for identification.",
-        'Chinese': "我已上传药品图片进行识别。",
-        'Malay': "Saya telah memuat naik imej ubat untuk pengenalan.",
-        'Indonesian': "Saya telah mengunggah gambar obat untuk identifikasi."
-      };
-      return messages[lang as keyof typeof messages] || messages['English'];
-    };
-
-    const userMessage = {
-      id: Date.now().toString(),
-      type: 'user' as const,
-      content: getUploadMessage(language),
-      timestamp: new Date(),
-      image: imageBase64
-    };
-
-    setMessages(prev => {
-      const updatedMessages = [...prev, userMessage];
-      // Save to localStorage immediately
-      chatStorage.saveChatHistory(updatedMessages, user?.id);
-      return updatedMessages;
-    });
-
     // FORCE DEFENSIVE PAYLOAD CREATION - Use ?? to force non-undefined, valid JSON types
     const userId = user?.id ?? '';
     const imageBase64Data = imageBase64 ?? null;
-    const textQuery = "Please analyze this medicine image and provide detailed information.";
+    const textQuery = (userText && userText.trim().length > 0)
+      ? userText
+      : getDefaultPhotoPrompt(language);
 
     // CRITICAL VALIDATION: Keep this check and add a user-facing error message
     console.log(`📊 [Frontend] User ID validation:`, { userId, userIdLength: userId.length });
@@ -1347,6 +1359,7 @@ export default function Home() {
                   console.log(`📊 [Frontend] Analysis failed - resetting status`);
                   setAiStatus(AIProcessingStage.IDLE);
                   setIsAnalyzing(false);
+                  setIsAiThinking(false);
                 }
               } else if (data.type === 'complete' && data.result) {
                 // Handle the result
@@ -1360,6 +1373,7 @@ export default function Home() {
                 console.log(`📊 [Frontend] FORCING AI status to disappear after receiving complete data`);
                 setAiStatus(AIProcessingStage.IDLE);
                 setIsAnalyzing(false);
+                setIsAiThinking(false);
                 
                 // Check if result is a failure (e.g., not a medicine image)
                 if (data.result.success === false && data.result.error) {
@@ -1475,6 +1489,7 @@ export default function Home() {
       });
       setAiStatus(AIProcessingStage.IDLE);
       setIsAnalyzing(false);
+      setIsAiThinking(false);
 
       const errorMsg = {
         id: (Date.now() + 1).toString(),
@@ -1490,29 +1505,7 @@ export default function Home() {
         return updatedMessages;
       });
     }
-  };
-
-
-  // Get upload message in user's language
-  const getUploadMessage = (lang: string): string => {
-    // Normalize language name for message lookup
-    const normalizedLang = normalizeLanguageForPrompts(lang);
-    
-    const messages: { [key: string]: string } = {
-      'English': 'I&apos;ve uploaded an image of a medicine for identification.',
-      'Chinese': '我已上传药品图片进行识别。',
-      'Malay': 'Saya telah memuat naik gambar ubat untuk pengenalan.',
-      'Indonesian': 'Saya telah mengunggah gambar obat untuk identifikasi.',
-      'Thai': 'ฉันได้อัปโหลดรูปภาพยาสำหรับการระบุตัวตน',
-      'Vietnamese': 'Tôi đã tải lên hình ảnh thuốc để nhận dạng.',
-      'Tagalog': 'Nai-upload ko na ang larawan ng gamot para sa pagkilala.',
-      'Burmese': 'ဆေးဝါးများကို ခွဲခြားသိမြင်ရန် ပုံတစ်ပုံကို တင်ပို့ပြီးပါပြီ။',
-      'Khmer': 'ខ្ញុំបានផ្ទុករូបភាពថ្នាំឡើងសម្រាប់ការកំណត់អត្តសញ្ញាណ។',
-      'Lao': 'ຂ້ອຍໄດ້ອັບໂລດຮູບພາບຢາເພື່ອການກວດສອບແລະກຳນົດຕົວຕົນ.'
-    };
-    return messages[normalizedLang] || messages['English'];
-  };
-
+};
   // Handle file upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
       console.log(`📊 [Frontend] File upload triggered`);
@@ -1548,10 +1541,17 @@ export default function Home() {
     reader.onload = () => {
       console.log(`📊 [Frontend] FileReader loaded`);
       const imageBase64 = reader.result as string;
-      // Always use real status updates from AI processing
-      analyzeMedicineImageWithRealStatus(imageBase64);
+      setAttachedImage(imageBase64);
+      setCurrentPromptIndex(0);
+      // Reset prompt input height when new suggestion is applied later
+      const textarea = document.querySelector<HTMLTextAreaElement>('textarea.text-input');
+      if (textarea) {
+        textarea.style.height = 'auto';
+      }
     };
     reader.readAsDataURL(file);
+    // Reset file input so the same file can be re-selected if needed
+    e.target.value = '';
   };
 
   // CRITICAL FIX: Implement strict rendering gate to prevent React error #418 (hydration mismatch)
@@ -2195,6 +2195,54 @@ export default function Home() {
           </div>
 
           <div className="input-container">
+            {attachedImage && (
+              <div
+                className="attached-image-preview"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  marginBottom: '12px',
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}
+              >
+                <Image
+                  src={attachedImage}
+                  alt="Attached preview"
+                  width={64}
+                  height={64}
+                  style={{
+                    borderRadius: '8px',
+                    objectFit: 'cover'
+                  }}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                  <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.8)' }}>
+                    {translateUIText('Image attached', language)}
+                  </span>
+                  <button
+                    onClick={handleRemoveAttachedImage}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#00d4ff',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      padding: 0
+                    }}
+                  >
+                    <X size={14} />
+                    {translateUIText('Remove image', language)}
+                  </button>
+                </div>
+              </div>
+            )}
             {/* Rotating Prompt Suggestions - Replaces Allergy Input */}
             <div className="allergy-input-wrapper">
               <div className="prompt-suggestion-container">
@@ -2260,7 +2308,7 @@ export default function Home() {
                 <button
                   className="send-btn"
                   onClick={() => handleTextSubmit()}
-                  disabled={!inputText.trim() || isAnalyzing}
+                  disabled={(!inputText.trim() && !attachedImage) || isAnalyzing}
                 >
                   <Send size={18} />
                 </button>
@@ -2430,7 +2478,7 @@ export default function Home() {
                 boxShadow: '0 4px 12px rgba(0, 212, 255, 0.3)'
               }}
             >
-              Send to AI
+              Attach Photo
             </button>
           </div>
         </div>
