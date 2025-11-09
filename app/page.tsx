@@ -238,6 +238,23 @@ const getEducationalPrompts = (lang: string): string[] => {
   return suggestions[normalizedLang] || suggestions['English'];
 };
 
+const getPlaceholderText = (lang: string): string => {
+  const normalizedLang = normalizeLanguageForPrompts(lang);
+  const placeholders: { [key: string]: string } = {
+    English: 'Ask MedWira anything about your health, medicine, or wellness...',
+    Chinese: '向 MedWira 询问任何健康、药物或保健问题...',
+    Malay: 'Tanya MedWira apa sahaja tentang kesihatan, ubat atau kesejahteraan anda...',
+    Indonesian: 'Tanyakan apa saja kepada MedWira tentang kesehatan, obat, atau kebugaran Anda...',
+    Thai: 'ถาม MedWira ได้ทุกเรื่องเกี่ยวกับสุขภาพ ยา หรือการดูแลสุขภาพของคุณ...',
+    Vietnamese: 'Hỏi MedWira bất cứ điều gì về sức khỏe, thuốc men hoặc chăm sóc sức khỏe...',
+    Tagalog: 'Magtanong sa MedWira tungkol sa iyong kalusugan, gamot, o wellness...',
+    Burmese: 'ကျန်းမာရေး၊ ဆေးဝါး၊ ဗလဝန်ဆောင်မှုများအကြောင်း MedWira ကိုမေးပါ...',
+    Khmer: 'សួរ MedWira អំពីសុខភាព ថ្នាំ ឬសុខុមាលភាពរបស់អ្នក...',
+    Lao: 'ຖາມ MedWira ເກືອບທຸກຢ່າງເກືອບກ່ຽວກັບສຸຂະພາບ ຢາ ຫຼືການດູແລສຸຂະພາບຂອງເຈົ້າ...'
+  };
+  return placeholders[normalizedLang] || placeholders['English'];
+};
+
 export default function Home() {
   // Test deployment - simple change
   const { user, logout, isLoading, refreshUser, refreshUserData, initializeSupabase } = useAuth();
@@ -822,7 +839,7 @@ const [showCamera, setShowCamera] = useState(false);
         window.history.replaceState({}, '', window.location.pathname);
       console.log('🔗 Session refresh parameter detected and cleaned up');
     }
-  }, []); // Removed refreshUser dependency to prevent race condition
+  }, [safeLocalStorage]); // Removed refreshUser dependency to prevent race condition
 
   // Update local token state when user changes (minimal logging)
   useEffect(() => {
@@ -844,18 +861,18 @@ const [showCamera, setShowCamera] = useState(false);
       setLanguage(savedLanguage);
     }
     
-    // Initialize welcome message in correct language if no messages exist yet
-    // This ensures welcome message matches selected language on first load
-    if (messages.length === 0) {
-      setMessages([{
+    setMessages(prevMessages => {
+      if (prevMessages.length > 0) {
+        return prevMessages;
+      }
+      return [{
         id: '1',
-        type: 'ai',
+        type: 'ai' as const,
         content: getWelcomeMessage(initialLanguage),
         timestamp: new Date()
-      }]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount - safeLocalStorage is stable and doesn't need to be in dependencies
+      }];
+    });
+  }, [safeLocalStorage]);
 
        // Mobile detection (no logging to prevent console spam)
        useEffect(() => {
@@ -966,7 +983,7 @@ const [showCamera, setShowCamera] = useState(false);
       setChatHistoryLoading(false);
       setChatHistoryLoaded(true);
     }
-  }, [user?.id]);
+  }, [user?.id, language]);
 
   // Helper function to group messages by session into conversation thumbnails
   const groupMessagesBySession = (messages: any[]) => {
@@ -1651,10 +1668,13 @@ const [showCamera, setShowCamera] = useState(false);
           </div>
 
           <div className="logo">
-            <img
+            <Image
               src="/medwira-logo-001.svg"
               alt="MedWira"
               className="header-logo"
+              width={140}
+              height={36}
+              priority
             />
           </div>
 
@@ -1782,7 +1802,14 @@ const [showCamera, setShowCamera] = useState(false);
                     >
                       <div className="chat-item-icon">
                         {conversation.imageUrl ? (
-                          <img src={conversation.imageUrl} alt="Medicine" className="chat-medicine-thumbnail" />
+                          <Image
+                            src={conversation.imageUrl}
+                            alt="Medicine"
+                            className="chat-medicine-thumbnail"
+                            width={40}
+                            height={40}
+                            unoptimized
+                          />
                         ) : (
                           <div className="chat-icon-placeholder">
                             {conversation.medicineName ? '💊' : '💬'}
@@ -2429,16 +2456,27 @@ const [showCamera, setShowCamera] = useState(false);
             Close
           </button>
           
-          <img
-            src={capturedPhotoData}
-            alt="Captured photo preview"
+          <div
             style={{
-              maxWidth: '90%',
+              position: 'relative',
+              width: '90%',
+              maxWidth: '600px',
+              height: '70vh',
               maxHeight: '70%',
-              objectFit: 'contain',
-              borderRadius: '8px'
+              borderRadius: '8px',
+              overflow: 'hidden'
             }}
-          />
+          >
+            <Image
+              src={capturedPhotoData}
+              alt="Captured photo preview"
+              fill
+              unoptimized
+              style={{
+                objectFit: 'contain'
+              }}
+            />
+          </div>
           
           <div style={{
             position: 'absolute',
@@ -2516,16 +2554,27 @@ const [showCamera, setShowCamera] = useState(false);
             Close
           </button>
           
-          <img
-            src={previewPhotoUrl}
-            alt="Photo preview"
+          <div
             style={{
-              maxWidth: '90%',
+              position: 'relative',
+              width: '90%',
+              maxWidth: '700px',
+              height: '90vh',
               maxHeight: '90%',
-              objectFit: 'contain',
-              borderRadius: '8px'
+              borderRadius: '8px',
+              overflow: 'hidden'
             }}
-          />
+          >
+            <Image
+              src={previewPhotoUrl}
+              alt="Photo preview"
+              fill
+              unoptimized
+              style={{
+                objectFit: 'contain'
+              }}
+            />
+          </div>
           </div>
         )}
 

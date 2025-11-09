@@ -186,7 +186,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Always remove from fetching set
       fetchingUserData.current.delete(userId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // supabase is stable reference, no need to include
 
   // Initialize Supabase only when user explicitly interacts (e.g., clicks Sign In)
