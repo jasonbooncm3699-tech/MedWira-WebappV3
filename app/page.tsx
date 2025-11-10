@@ -1071,6 +1071,46 @@ const [showCamera, setShowCamera] = useState(false);
     setCurrentPromptIndex(0);
   }, [language]);
 
+  const activeStatusMessage = useMemo(() => {
+    if (isAnalyzing) {
+      if (aiStatus && aiStatus !== AIProcessingStage.IDLE) {
+        return aiStatus;
+      }
+      return language === 'Chinese'
+        ? 'AI药剂师正在分析...'
+        : language === 'Malay'
+          ? 'AI Farmasi sedang menganalisis...'
+          : language === 'Indonesian'
+            ? 'AI Apoteker sedang menganalisis...'
+            : language === 'Thai'
+              ? 'AI เภสัชกรกำลังวิเคราะห์...'
+              : language === 'Vietnamese'
+                ? 'AI Dược sĩ đang phân tích...'
+                : 'AI Pharmacist is analyzing...';
+    }
+
+    if (isAiThinking) {
+      switch (language) {
+        case 'Chinese':
+          return 'AI药剂师正在分析...';
+        case 'Malay':
+          return 'AI Farmasi sedang menganalisis...';
+        case 'Indonesian':
+          return 'AI Apoteker sedang menganalisis...';
+        case 'Thai':
+          return 'AI เภสัชกรกำลังวิเคราะห์...';
+        case 'Vietnamese':
+          return 'AI Dược sĩ đang phân tích...';
+        default:
+          return 'AI Pharmacist is analyzing...';
+      }
+    }
+
+    return '';
+  }, [aiStatus, isAnalyzing, isAiThinking, language]);
+
+  const isStatusVisible = activeStatusMessage.length > 0;
+
   // Medication Stack Management Functions
 
   // Load chat history when user is authenticated (but lazy load for performance)
@@ -2200,23 +2240,10 @@ const [showCamera, setShowCamera] = useState(false);
               </div>
             ))}
 
-          {/* AI Thinking Animation for Text Queries */}
-          {isAiThinking && (
-            <AIStatusDisplay status={
-              language === 'English' ? 'AI Pharmacist is analyzing...' :
-              language === 'Chinese' ? 'AI药剂师正在分析...' :
-              language === 'Malay' ? 'AI Farmasi sedang menganalisis...' :
-              language === 'Indonesian' ? 'AI Apoteker sedang menganalisis...' :
-              language === 'Thai' ? 'AI เภสัชกรกำลังวิเคราะห์...' :
-              language === 'Vietnamese' ? 'AI Dược sĩ đang phân tích...' :
-              'AI Pharmacist is analyzing...'
-            } />
-          )}
-
-          {isAnalyzing && (
+          {isStatusVisible && (
             <AIStatusDisplay 
-              key={`${isAnalyzing}-${aiStatus}`} 
-              status={aiStatus}
+              key={activeStatusMessage}
+              status={activeStatusMessage}
             />
           )}
           </div>
