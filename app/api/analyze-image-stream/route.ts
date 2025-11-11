@@ -115,7 +115,7 @@ async function saveChatMessage(chatData: {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { imageBase64, userId, language, textQuery, userAllergies } = body;
+    const { imageBase64, userId, language, textQuery, userAllergies, sessionId: clientSessionId } = body;
 
     // Debug: Log received parameters
     console.log(`🔍 [API] Received parameters:`, {
@@ -333,7 +333,7 @@ export async function POST(request: NextRequest) {
               console.log(`🔍 [DEBUG] Conditions met, proceeding with token deduction and database save`);
               
               // Deduct token FIRST to ensure it happens
-              try {
+            try {
                 console.log(`🔍 [DEBUG] Attempting to deduct token for user ${userId}`);
                 const success = await decrementToken(userId);
                 if (success) {
@@ -351,15 +351,45 @@ export async function POST(request: NextRequest) {
               
               // Save chat history to database SYNCHRONOUSLY
               try {
-                // Generate session ID for this conversation
-                const sessionId = crypto.randomUUID();
+                // Use provided session ID for continuity, or generate if missing
+                const sessionId = (typeof clientSessionId === 'string' && clientSessionId.trim().length > 0)
+                  ? clientSessionId
+                  : crypto.randomUUID();
+
+                let existingMessages: any[] = [];
+                try {
+                  const supabaseClient = getSupabaseClient();
+                  const { data: sessionData, error: sessionError } = await supabaseClient
+                    .from('chat_history')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .eq('session_id', sessionId)
+                    .order('message_sequence', { ascending: true });
+                  if (sessionError) {
+                    console.warn('⚠️ Failed to load existing session messages (non-critical):', sessionError);
+                  } else if (sessionData) {
+                    existingMessages = sessionData;
+                  }
+                } catch (historyError) {
+                  console.warn('⚠️ Unable to load existing session history:', historyError);
+                }
+
+                const userMessageSequence = existingMessages.length + 1;
+                const aiMessageSequence = userMessageSequence + 1;
+                const existingConversation = existingMessages[0];
+                const existingTags = Array.isArray(existingConversation?.conversation_tags)
+                  ? existingConversation?.conversation_tags ?? []
+                  : [];
                 
                 console.log(`🔍 Attempting to save chat history for user ${userId}, session ${sessionId}`);
                 
                 // Generate conversation metadata for image analysis (generate once for the conversation)
-                const conversationTitle = generateConversationTitle(`Medicine image analysis: ${result.medicineName || 'Unknown medicine'}`, result.rawAnalysis || '');
+                const conversationTitle = existingConversation?.conversation_title
+                  ? existingConversation.conversation_title
+                  : generateConversationTitle(`Medicine image analysis: ${result.medicineName || 'Unknown medicine'}`, result.rawAnalysis || '');
                 const conversationPreview = generateConversationPreview(result.rawAnalysis || '');
-                const conversationTags = generateConversationTags(`Medicine image analysis`, result);
+                const newTags = generateConversationTags(`Medicine image analysis`, result);
+                const conversationTags = Array.from(new Set([...(existingTags || []), ...newTags]));
                 
                 console.log(`🔍 Generated conversation metadata:`, {
                   title: conversationTitle,
@@ -373,7 +403,7 @@ export async function POST(request: NextRequest) {
                   message_type: 'user',
                   message_text: 'Uploaded medicine image for analysis',
                   session_id: sessionId,
-                  message_sequence: 1,
+                  message_sequence: userMessageSequence,
                   image_url: imageBase64,
                   language: 'English', // Always English in database
                   allergies: userAllergies || null,
@@ -391,7 +421,7 @@ export async function POST(request: NextRequest) {
                   message_type: 'ai',
                   ai_response: result.rawAnalysis, // English analysis
                   session_id: sessionId,
-                  message_sequence: 2,
+                  message_sequence: aiMessageSequence,
                   conversation_title: conversationTitle,
                   conversation_preview: conversationPreview,
                   conversation_tags: conversationTags,
@@ -426,7 +456,10 @@ export async function POST(request: NextRequest) {
             });
             const finalData = `data: ${JSON.stringify({ 
               type: 'complete', 
-              result 
+              result: {
+                ...result,
+                sessionId
+              } 
             })}\n\n`;
             controller.enqueue(encoder.encode(finalData));
             

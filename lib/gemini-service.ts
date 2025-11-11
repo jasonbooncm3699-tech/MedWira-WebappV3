@@ -62,21 +62,54 @@ export interface NPRAMedicineData {
  */
 export class GeminiMedicineAnalyzer {
   private model: any;
+  private modelInitialized: boolean = false;
+  private initializationPromise: Promise<void> | null = null;
 
   constructor() {
     console.log('✅ GeminiMedicineAnalyzer: Gemini service created (lazy initialization)');
-    // Don't initialize model on construction - initialize on first use instead
+    // Warm the model in the background so the first request is faster, but don't block constructor.
+    this.initializationPromise = this.initializeModel().catch(error => {
+      console.error('❌ Gemini model warm-up failed:', error);
+      this.model = null;
+      this.modelInitialized = false;
+    }).finally(() => {
+      this.initializationPromise = null;
+    });
+  }
+
+  private getTimeoutForLanguage(language: string): number {
+    switch (language) {
+      case 'Chinese':
+        return 30000;
+      case 'Malay':
+        return 28000;
+      case 'Indonesian':
+        return 28000;
+      default:
+        return 25000;
+    }
   }
 
   /**
    * Lazy initialization: Only initialize model when actually needed
-   * This prevents unnecessary initialization on page load
+   * Ensures we never call generateContent before the model is ready.
    */
   private async ensureModelInitialized(): Promise<void> {
-    if (this.model) {
+    if (this.modelInitialized && this.model) {
       return; // Already initialized
     }
-    await this.initializeModel();
+
+    if (this.initializationPromise) {
+      await this.initializationPromise;
+      return;
+    }
+
+    this.initializationPromise = this.initializeModel();
+    try {
+      await this.initializationPromise;
+    } finally {
+      this.initializationPromise = null;
+    }
   }
 
   // Helper function for localized status messages
@@ -159,9 +192,11 @@ export class GeminiMedicineAnalyzer {
         }
       });
       console.log('✅ Gemini 2.5 Pro model initialized successfully');
+      this.modelInitialized = true;
     } catch (error) {
       console.error('❌ Failed to initialize Gemini 1.5 Pro model:', error);
       this.model = null;
+      this.modelInitialized = false;
     }
   }
 
@@ -229,6 +264,17 @@ export class GeminiMedicineAnalyzer {
     console.log(`🚀 [${analysisId}] ===== STARTING COMPREHENSIVE MEDICINE ANALYSIS =====`);
     console.log(`📊 [${analysisId}] Parameters: language=${language}, allergies=${userAllergies ? 'provided' : 'none'}`);
     console.log(`🕐 [${analysisId}] Start time: ${new Date().toISOString()}`);
+
+    // Ensure model is initialized before any Gemini calls (including validation)
+    await this.ensureModelInitialized();
+    if (!this.model) {
+      console.error(`❌ [${analysisId}] Gemini model initialization failed before analysis`);
+      return {
+        success: false,
+        error: 'Gemini 1.5 Pro service temporarily unavailable. Please try again later.',
+        language
+      };
+    }
       // Validate base64 image data before processing
       if (!imageBase64 || typeof imageBase64 !== 'string') {
         throw new Error('Invalid image data: base64 string required');
@@ -324,21 +370,6 @@ Do not provide any other text or explanation.`;
         // Continue with analysis if validation fails
         console.log(`⚠️ [${analysisId}] Continuing with analysis despite validation failure`);
       }
-    
-    // Lazy initialization: Ensure model is initialized before analysis
-    if (!this.model) {
-      console.log(`⚠️ [${analysisId}] Gemini model not initialized - initializing now`);
-      await this.ensureModelInitialized();
-    }
-      
-    if (!this.model) {
-      console.error(`❌ [${analysisId}] Gemini model initialization failed after retry`);
-      return {
-        success: false,
-        error: 'Gemini 1.5 Pro service temporarily unavailable. Please try again later.',
-        language
-      };
-    }
 
     try {
       // ===== STEP 1: SYSTEMATIC TEXT EXTRACTION PROCESS =====
@@ -733,10 +764,7 @@ CRITICAL REQUIREMENTS:
 
           // Create timeout controller for Gemini API call
           const controller = new AbortController();
-          // Increased timeouts to prevent analysis failures
-          const timeoutMs = language === 'English' ? 25000 : 
-                           language === 'Malay' ? 28000 : 
-                           language === 'Chinese' ? 30000 : 25000; // Increased Chinese timeout to 30s
+          const timeoutMs = this.getTimeoutForLanguage(language);
           
           // Set timeout
           const timeoutId = setTimeout(() => {
@@ -762,8 +790,47 @@ CRITICAL REQUIREMENTS:
             console.log(`📋 [${analysisId}] Raw AI Analysis Preview: ${rawAnalysis.substring(0, 500)}...`);
             console.log(`📋 [${analysisId}] Full AI Analysis:`, rawAnalysis);
             
-            // Use raw analysis directly
-            comprehensiveAnalysis = rawAnalysis;
+            // Validate completeness of mandatory sections
+            const requiredSections = [
+              langHeaders.packagingDetected,
+              langHeaders.medicine,
+              langHeaders.purpose,
+              langHeaders.dosage,
+              langHeaders.sideEffects,
+              langHeaders.allergyWarning,
+              langHeaders.drugInteractions,
+              langHeaders.safetyNotes,
+              langHeaders.storage,
+              langHeaders.disclaimer
+            ];
+
+            let finalAnalysis = rawAnalysis;
+            let missingSections = requiredSections.filter(header => !rawAnalysis.includes(header));
+
+            if (missingSections.length > 0) {
+              console.warn(`⚠️ [${analysisId}] Missing sections detected (${missingSections.join(', ')}). Regenerating with stricter instructions.`);
+              try {
+                const regenerated = await this.regenerateAnalysisWithReminder({
+                  analysisId,
+                  cleanBase64,
+                  language,
+                  langHeaders,
+                  missingSections,
+                  existingPrompt: comprehensivePrompt
+                });
+                finalAnalysis = regenerated;
+                missingSections = requiredSections.filter(header => !finalAnalysis.includes(header));
+              } catch (regenError) {
+                console.error(`❌ [${analysisId}] Regeneration failed:`, regenError);
+              }
+            }
+
+            if (missingSections.length > 0) {
+              console.warn(`⚠️ [${analysisId}] Analysis still missing sections after regeneration. Using fallback template.`);
+              finalAnalysis = this.generateFallbackAnalysis(packagingType, extractedMedicineName, dbCandidates, language);
+            }
+
+            comprehensiveAnalysis = finalAnalysis;
             console.log(`✅ [${analysisId}] STEP 4: Bullet formatting applied successfully`);
             console.log(`✅ [${analysisId}] STEP 5: Active ingredient analysis enhanced successfully`);
             
@@ -953,6 +1020,60 @@ CRITICAL REQUIREMENTS:
     analysis += `This information is for educational purposes only. Always consult with a healthcare professional before using any medicine.`;
     
     return analysis;
+  }
+
+  private async regenerateAnalysisWithReminder({
+    analysisId,
+    cleanBase64,
+    language,
+    langHeaders,
+    missingSections,
+    existingPrompt
+  }: {
+    analysisId: string;
+    cleanBase64: string;
+    language: string;
+    langHeaders: { [key: string]: string };
+    missingSections: string[];
+    existingPrompt: string;
+  }): Promise<string> {
+    await this.ensureModelInitialized();
+    if (!this.model) {
+      throw new Error('Gemini model not initialized');
+    }
+
+    const reminderPrompt = `${existingPrompt}
+
+IMPORTANT UPDATE:
+- The previous response was missing these sections: ${missingSections.join(', ')}.
+- Regenerate the ENTIRE analysis.
+- Provide concise but meaningful content for every section.
+- Never leave a section empty or stop mid-sentence.
+- Finish with the ${langHeaders.disclaimer} section.`;
+
+    const controller = new AbortController();
+    const timeoutMs = this.getTimeoutForLanguage(language) + 5000; // Slightly higher for regeneration
+    const timeoutId = setTimeout(() => {
+      console.warn(`⚠️ [${analysisId}] Gemini regeneration timeout after ${timeoutMs}ms, aborting request`);
+      controller.abort();
+    }, timeoutMs);
+
+    try {
+      const response = await this.model.generateContent([
+        { text: reminderPrompt },
+        { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }
+      ], {
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+      const regenerated = response.response.text();
+      console.log(`📋 [${analysisId}] Regenerated analysis length: ${regenerated.length} characters`);
+      return regenerated;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw error;
+    }
   }
 
   // REMOVED: Old analyzeMedicineImage function - now using only analyzeMedicineImageWithStatus

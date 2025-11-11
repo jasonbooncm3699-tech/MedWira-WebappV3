@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { aiPharmacist } from '@/lib/ai-pharmacist-service';
+import { aiPharmacist, ConversationContext as PharmacistConversationContext } from '@/lib/ai-pharmacist-service';
 import { checkTokenAvailability, decrementToken } from '@/lib/npraDatabase';
 import { chatHistoryManager } from '@/lib/chat-history-manager';
 import { checkRateLimit } from '@/lib/rate-limiter';
@@ -26,7 +26,8 @@ export async function POST(request: NextRequest) {
       imageBase64, 
       userId, 
       language = 'English',
-      userContext 
+      userContext,
+      sessionId: clientSessionId
     } = body;
 
     console.log('🤖 AI Pharmacist API called:', {
@@ -75,6 +76,26 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
+    const sessionId = (typeof clientSessionId === 'string' && clientSessionId.trim().length > 0)
+      ? clientSessionId
+      : generateSessionId();
+
+    let sessionMessages: any[] = [];
+    try {
+      sessionMessages = await chatHistoryManager.getSessionMessages(sessionId, userId);
+    } catch (historyError) {
+      console.warn('⚠️ Failed to load session messages:', historyError);
+    }
+
+    const conversationContext = buildConversationContext(sessionMessages);
+
+    console.log('🧠 Conversation context prepared:', {
+      sessionId,
+      existingMessages: sessionMessages.length,
+      hasLatestAnalysis: !!conversationContext.latestAnalysis,
+      shouldAskForMedicine: conversationContext.shouldAskForMedicine
+    });
+
     // Phase 2 Enhancement: Realistic status tracking
     // Create status callback that will be passed to frontend via WebSocket/SSE (future)
     // For now, we'll track stages internally but status display is handled by frontend
@@ -91,7 +112,8 @@ export async function POST(request: NextRequest) {
       userContext,
       language,
       statusCallback, // Phase 2: Pass status callback for realistic tracking
-      userId // Phase 1.4: Pass userId for health profile loading
+      userId, // Phase 1.4: Pass userId for health profile loading
+      conversationContext
     );
 
     // CRITICAL: Save chat history and deduct tokens asynchronously to avoid blocking AI response
@@ -109,16 +131,22 @@ export async function POST(request: NextRequest) {
     if (userId && result.success) {
       // CRITICAL: Save SYNCHRONOUSLY to ensure it actually happens
       try {
-        // Generate ONE session ID for this conversation
-        const sessionId = generateSessionId();
-        console.log('🔍 [DEBUG] Generated session ID:', sessionId);
+        const userMessageSequence = sessionMessages.length + 1;
+        const aiMessageSequence = userMessageSequence + 1;
+        const existingConversation = sessionMessages[0];
+        const existingTags = Array.isArray(existingConversation?.conversation_tags)
+          ? existingConversation?.conversation_tags ?? []
+          : [];
         
         console.log('🔍 [DEBUG] About to save user message to database');
         
         // Generate conversation metadata (generate once for the conversation)
-        const conversationTitle = generateConversationTitle(userMessage, result.message || result.pharmacistAdvice || '');
+        const conversationTitle = existingConversation?.conversation_title
+          ? existingConversation.conversation_title
+          : generateConversationTitle(userMessage, result.message || result.pharmacistAdvice || '');
         const conversationPreview = generateConversationPreview(result.message || result.pharmacistAdvice || '');
-        const conversationTags = generateConversationTags(userMessage, result);
+        const newTags = generateConversationTags(userMessage, result);
+        const conversationTags = Array.from(new Set([...(existingTags || []), ...newTags]));
         
         console.log('🔍 [DEBUG] Generated conversation metadata:', {
           title: conversationTitle,
@@ -133,7 +161,7 @@ export async function POST(request: NextRequest) {
           message_type: 'user',
           image_url: imageBase64 || '', // Use empty string instead of null for NOT NULL constraint
           session_id: sessionId,
-          message_sequence: 1,
+          message_sequence: userMessageSequence,
           conversation_title: conversationTitle,
           conversation_preview: conversationPreview,
           conversation_tags: conversationTags
@@ -171,7 +199,7 @@ export async function POST(request: NextRequest) {
             confidence: result.confidence
           }),
           session_id: sessionId, // SAME session ID
-          message_sequence: 2
+          message_sequence: aiMessageSequence
         });
 
         console.log('✅ AI response saved to database');
@@ -265,6 +293,7 @@ export async function POST(request: NextRequest) {
         data: {
           message: finalMessage, // Use message with permission prompt if pattern detected
           messageType: result.messageType,
+          sessionId,
           medicineName: result.medicineName,
           genericName: result.genericName,
           activeIngredients: result.activeIngredients,
@@ -350,6 +379,45 @@ export async function OPTIONS(request: NextRequest) {
       'Access-Control-Allow-Headers': 'Content-Type',
     },
   });
+}
+
+function buildConversationContext(messages: any[]): PharmacistConversationContext {
+  if (!messages || messages.length === 0) {
+    return {};
+  }
+
+  const recentMessages = messages
+    .slice(-6)
+    .map((msg: any) => {
+      const content = msg.message_type === 'ai'
+        ? (msg.ai_response || msg.message_text || '')
+        : (msg.message_text || '');
+      if (!content || content.trim().length === 0) {
+        return null;
+      }
+      return {
+        role: msg.message_type === 'ai' ? 'ai' as const : 'user' as const,
+        content: content.trim()
+      };
+    })
+    .filter(Boolean) as PharmacistConversationContext['recentMessages'];
+
+  const latestAiMessage = [...messages]
+    .reverse()
+    .find((msg: any) => msg.message_type === 'ai' && ((msg.ai_response && msg.ai_response.trim()) || (msg.message_text && msg.message_text.trim())));
+
+  const latestAnalysis = latestAiMessage
+    ? {
+        medicineName: latestAiMessage.medicine_name || latestAiMessage.generic_name || null,
+        analysisText: (latestAiMessage.ai_response || latestAiMessage.message_text || '').trim()
+      }
+    : undefined;
+
+  return {
+    latestAnalysis,
+    recentMessages,
+    shouldAskForMedicine: messages.length > 0 && !latestAnalysis
+  };
 }
 
 // Helper function to save chat message

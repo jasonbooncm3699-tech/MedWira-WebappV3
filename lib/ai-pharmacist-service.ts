@@ -62,6 +62,15 @@ export interface UserMedicationContext {
   medicalConditions?: string[];
 }
 
+export interface ConversationContext {
+  latestAnalysis?: {
+    medicineName?: string | null;
+    analysisText: string;
+  };
+  recentMessages?: Array<{ role: 'user' | 'ai'; content: string }>;
+  shouldAskForMedicine?: boolean;
+}
+
 /**
  * AI Pharmacist class - Professional Medicine Assistant
  * 
@@ -135,7 +144,8 @@ export class AIPharmacistService {
     userContext?: UserMedicationContext,
     language: string = 'English',
     statusCallback?: (status: string) => void,
-    userId?: string
+    userId?: string,
+    conversationContext?: ConversationContext
   ): Promise<PharmacistAnalysisResult> {
     const analysisId = `pharmacist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
@@ -162,7 +172,7 @@ export class AIPharmacistService {
       if (imageBase64) {
         return await this.analyzeMedicineWithImage(userMessage, imageBase64, userContext, language, statusCallback);
       } else {
-        return await this.handleTextOnlyQuery(userMessage, userContext, language, statusCallback, userId);
+        return await this.handleTextOnlyQuery(userMessage, userContext, language, statusCallback, userId, conversationContext);
       }
 
     } catch (error) {
@@ -185,7 +195,8 @@ export class AIPharmacistService {
     userContext?: UserMedicationContext,
     language: string = 'English',
     statusCallback?: (status: string) => void,
-    userId?: string
+    userId?: string,
+    conversationContext?: ConversationContext
   ): Promise<PharmacistAnalysisResult> {
     
     // Phase 1.4: Load user health profile
@@ -291,6 +302,27 @@ export class AIPharmacistService {
       ? allCurrentMedications.map(m => `${m.name}${m.frequency ? ` (${m.frequency})` : ''}`).join(', ')
       : 'None';
 
+    const previousContextSections: string[] = [];
+    if (conversationContext?.latestAnalysis?.analysisText) {
+      previousContextSections.push(
+        `Most recent medicine discussed: ${conversationContext.latestAnalysis.medicineName || 'Unknown'}\n${conversationContext.latestAnalysis.analysisText}`
+      );
+    }
+    if (conversationContext?.recentMessages && conversationContext.recentMessages.length > 0) {
+      const formattedRecent = conversationContext.recentMessages
+        .map(msg => `${msg.role === 'ai' ? 'Assistant' : 'User'}: ${msg.content}`)
+        .join('\n');
+      previousContextSections.push(`Recent conversation excerpts:\n${formattedRecent}`);
+    }
+
+    const conversationContextText = previousContextSections.length > 0
+      ? previousContextSections.join('\n\n')
+      : 'No useful prior context was provided. Treat this as a new question if the user does not restate the medicine.';
+
+    const fallbackInstruction = conversationContext?.shouldAskForMedicine
+      ? '\nIf you cannot identify the medicine from the conversation context, politely ask the user to remind you of the medicine name before providing guidance.'
+      : '';
+
     // Create professional pharmacist prompt with health profile context
     const pharmacistPrompt = `You are a professional AI pharmacist assistant. Your role is to provide accurate, helpful, and safe information about medicines and health.
 
@@ -314,6 +346,11 @@ ${userContext ? `
 Known allergies: ${userContext.allergies.join(', ') || 'None'}
 Medical conditions: ${userContext.medicalConditions?.join(', ') || 'None specified'}
 ` : 'No additional user context provided'}
+
+**PREVIOUS CONVERSATION CONTEXT:**
+${conversationContextText}
+
+${fallbackInstruction ? `**CONTEXT NOTE:**${fallbackInstruction}` : ''}
 
 **SPECIFIC INSTRUCTIONS:**
 1. Reference user's health history when relevant (e.g., "I remember you mentioned gastric pain before...")

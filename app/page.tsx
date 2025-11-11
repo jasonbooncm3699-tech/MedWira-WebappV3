@@ -37,6 +37,13 @@ const normalizeLanguageForPrompts = (lang: string): string => {
   return LANGUAGE_NORMALIZATION_MAP[lang] || lang;
 };
 
+const generateSessionId = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).slice(2);
+};
+
 const getPhotoPromptTemplates = (lang: string): string[] => {
   const normalizedLang = normalizeLanguageForPrompts(lang);
   const prompts: { [key: string]: string[] } = {
@@ -266,6 +273,7 @@ export default function Home() {
   
   // Language state (declared early to avoid "used before declaration" errors)
   const [language, setLanguage] = useState('English');
+  const [sessionId, setSessionId] = useState<string>(() => generateSessionId());
 
   // Helper function to extract first name from display_name
   const getFirstName = (
@@ -615,6 +623,7 @@ const [showCamera, setShowCamera] = useState(false);
       userMessage: userMessage,
       userId: userId,
       language: language,
+      sessionId,
       userContext: {
         currentMedications: [],
         allergies: allergy ? [allergy] : [],
@@ -645,6 +654,9 @@ const [showCamera, setShowCamera] = useState(false);
       const result = await response.json();
 
       if (response.status === 200 && result.status === 'SUCCESS') {
+        if (result.data?.sessionId && result.data.sessionId !== sessionId) {
+          setSessionId(result.data.sessionId);
+        }
         // Create comprehensive AI pharmacist response with all information
         let fullResponse = result.data?.message || result.data?.pharmacistAdvice || 'AI Pharmacist consultation complete';
         
@@ -790,6 +802,7 @@ const [showCamera, setShowCamera] = useState(false);
     // Clear current session and start fresh
     setMessages([freshWelcomeMessage]);
     setSideNavOpen(false); // Close side nav after starting new chat
+    setSessionId(generateSessionId());
     
     // REMOVED: fetchUserChatHistory call that was overwriting messages after new chat
     // The fresh welcome message is already set above and saved to localStorage
@@ -1361,7 +1374,8 @@ const [showCamera, setShowCamera] = useState(false);
           userId: userId,
           language: language, // Use current language state instead of hardcoded 'English'
           textQuery: textQuery,
-          userAllergies: allergy
+          userAllergies: allergy,
+          sessionId
         })
       });
 
@@ -1406,7 +1420,7 @@ const [showCamera, setShowCamera] = useState(false);
 
               if (data.type === 'status' && data.status) {
                 // Real status update from backend
-                setAiStatus(data.status);
+                setAiStatus(prev => (prev === data.status ? prev : data.status));
                 
                 // Handle completion status
                 if (data.status === 'Analysis completed successfully') {
@@ -1425,6 +1439,10 @@ const [showCamera, setShowCamera] = useState(false);
                   medicineName: data.result.medicineName,
                   hasData: !!data.result.rawAnalysis
                 });
+                
+                if (data.result.sessionId && data.result.sessionId !== sessionId) {
+                  setSessionId(data.result.sessionId);
+                }
                 
                 // CRITICAL FIX: Force AI status to disappear immediately after receiving complete data
                 console.log(`📊 [Frontend] FORCING AI status to disappear after receiving complete data`);
@@ -1469,32 +1487,64 @@ const [showCamera, setShowCamera] = useState(false);
                 // DIRECT APPROACH: Add AI message with rawAnalysis content directly to chat
                 const rawContent = data.result.rawAnalysis || 'Medicine analysis completed successfully.';
                 const translatedContent = translateMedicineAnalysis(rawContent, language);
-                
-                const aiMessage = {
-                  id: (Date.now() + 1).toString(),
-                  type: 'ai' as const,
-                  content: translatedContent,
-                  timestamp: new Date()
+
+                const structuredData = {
+                  medicineName: data.result.medicineName,
+                  genericName: data.result.genericName,
+                  purpose: data.result.purpose,
+                  dosageInstructions: data.result.dosageInstructions,
+                  sideEffects: Array.isArray(data.result.sideEffects)
+                    ? data.result.sideEffects.join('\n• ')
+                    : data.result.sideEffects,
+                  drugInteractions: data.result.drugInteractions,
+                  safetyNotes: data.result.safetyNotes,
+                  storage: data.result.storage,
+                  allergyWarning: data.result.allergyWarning,
+                  packagingDetected: data.result.packagingDetected,
+                  disclaimer: data.result.disclaimer,
+                  activeIngredients: data.result.activeIngredients,
+                  databaseVerified: data.result.databaseVerified,
+                  confidence: data.result.confidence,
+                  rawAnalysis: rawContent,
+                  language
                 };
 
-                console.log(`📊 [Frontend] Adding direct AI message:`, {
-                  messageId: aiMessage.id,
-                  type: aiMessage.type,
-                  contentLength: aiMessage.content.length,
-                  medicineName: data.result.medicineName
-                });
+                const scheduleFrame = typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
+                  ? window.requestAnimationFrame.bind(window)
+                  : ((cb: FrameRequestCallback) => setTimeout(() => cb(typeof performance !== 'undefined' ? performance.now() : Date.now()), 0));
 
-                setMessages(prev => {
-                  const updatedMessages = [...prev, aiMessage];
-                  // Save to localStorage immediately
-                  chatStorage.saveChatHistory(updatedMessages, user?.id);
-                  return updatedMessages;
-                });
+                scheduleFrame(() => {
+                  const translatedContent = translateMedicineAnalysis(rawContent, language);
+                  const displayStructuredData = {
+                    ...structuredData,
+                    rawAnalysis: translatedContent
+                  };
+                  const aiMessage = {
+                    id: (Date.now() + 1).toString(),
+                    type: 'structured' as const,
+                    content: translatedContent,
+                    structuredData: displayStructuredData,
+                    rawAnalysis: translatedContent,
+                    timestamp: new Date()
+                  };
 
-                // Auto-scroll to show the new AI message
-                setTimeout(() => {
-                  scrollToBottom();
-                }, 100);
+                  console.log(`📊 [Frontend] Adding direct AI message:`, {
+                    messageId: aiMessage.id,
+                    type: aiMessage.type,
+                    contentLength: aiMessage.content.length,
+                    medicineName: data.result.medicineName
+                  });
+
+                  setMessages(prev => {
+                    const updatedMessages = [...prev, aiMessage];
+                    chatStorage.saveChatHistory(updatedMessages, user?.id);
+                    return updatedMessages;
+                  });
+
+                  setTimeout(() => {
+                    scrollToBottom();
+                  }, 100);
+                });
 
                 // Update user tokens if provided (non-blocking)
                 if (data.result.tokensRemaining !== undefined) {
