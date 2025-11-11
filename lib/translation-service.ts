@@ -50,6 +50,11 @@ export const MEDICINE_TRANSLATIONS: TranslationMaps = {
     '**Warnings**': '**警告**',
     '**Storage**': '**储存**',
     '**Disclaimer**': '**免责声明**',
+    'Professional Assessment': '专业评估',
+    'Key Information': '关键信息',
+    'Safety Considerations': '安全注意事项',
+    'Important Reminder': '重要提醒',
+    'Follow-up Questions': '后续问题',
     
     // Common terms
     'Adults': '成人',
@@ -88,6 +93,11 @@ export const MEDICINE_TRANSLATIONS: TranslationMaps = {
     '**Warnings**': '**Amaran**',
     '**Storage**': '**Penyimpanan**',
     '**Disclaimer**': '**Penafian**',
+    'Professional Assessment': 'Penilaian Profesional',
+    'Key Information': 'Maklumat Utama',
+    'Safety Considerations': 'Pertimbangan Keselamatan',
+    'Important Reminder': 'Peringatan Penting',
+    'Follow-up Questions': 'Soalan Susulan',
     
     // Common terms
     'Adults': 'Dewasa',
@@ -126,6 +136,11 @@ export const MEDICINE_TRANSLATIONS: TranslationMaps = {
     '**Warnings**': '**Peringatan**',
     '**Storage**': '**Penyimpanan**',
     '**Disclaimer**': '**Penyangkalan**',
+    'Professional Assessment': 'Penilaian Profesional',
+    'Key Information': 'Informasi Kunci',
+    'Safety Considerations': 'Pertimbangan Keamanan',
+    'Important Reminder': 'Pengingat Penting',
+    'Follow-up Questions': 'Pertanyaan Tindak Lanjut',
     
     // Common terms
     'Adults': 'Dewasa',
@@ -160,6 +175,11 @@ export const MEDICINE_TRANSLATIONS: TranslationMaps = {
     '**Warnings**': '**คำเตือน**',
     '**Storage**': '**การเก็บรักษา**',
     '**Disclaimer**': '**ข้อจำกัดความรับผิดชอบ**',
+    'Professional Assessment': 'การประเมินโดยผู้เชี่ยวชาญ',
+    'Key Information': 'ข้อมูลสำคัญ',
+    'Safety Considerations': 'ข้อควรระวังด้านความปลอดภัย',
+    'Important Reminder': 'ข้อเตือนสำคัญ',
+    'Follow-up Questions': 'คำถามติดตามผล',
     
     // Common terms
     'Adults': 'ผู้ใหญ่',
@@ -194,6 +214,11 @@ export const MEDICINE_TRANSLATIONS: TranslationMaps = {
     '**Warnings**': '**Cảnh báo**',
     '**Storage**': '**Bảo quản**',
     '**Disclaimer**': '**Tuyên bố từ chối trách nhiệm**',
+    'Professional Assessment': 'Đánh giá chuyên môn',
+    'Key Information': 'Thông tin quan trọng',
+    'Safety Considerations': 'Lưu ý an toàn',
+    'Important Reminder': 'Lời nhắc quan trọng',
+    'Follow-up Questions': 'Câu hỏi tiếp theo',
     
     // Common terms
     'Adults': 'Người lớn',
@@ -228,6 +253,11 @@ export const MEDICINE_TRANSLATIONS: TranslationMaps = {
     '**Warnings**': '**Mga Babala**',
     '**Storage**': '**Pagtago**',
     '**Disclaimer**': '**Disclaimer**',
+    'Professional Assessment': 'Propesyonal na Pagsusuri',
+    'Key Information': 'Mahalagang Impormasyon',
+    'Safety Considerations': 'Mga Pag-iingat sa Kaligtasan',
+    'Important Reminder': 'Mahalagang Paalala',
+    'Follow-up Questions': 'Mga Tanong na Susundan',
     
     // Common terms
     'Adults': 'Matatanda',
@@ -262,6 +292,11 @@ export const MEDICINE_TRANSLATIONS: TranslationMaps = {
     '**Warnings**': '**သတိပေးချက်များ**',
     '**Storage**': '**သိမ်းဆည်းခြင်း**',
     '**Disclaimer**': '**အကြောင်းကြားချက်**',
+    'Professional Assessment': 'ပရော်ဖက်ရှင်နယ် သုံးသပ်ချက်',
+    'Key Information': 'အရေးကြီးသော အချက်အလက်များ',
+    'Safety Considerations': 'လုံခြုံရေးဆိုင်ရာ စဉ်းစားရန်များ',
+    'Important Reminder': 'အရေးကြီးသော မှတ်သားချက်',
+    'Follow-up Questions': 'နောက်ထပ်မေးခွန်းများ',
     
     // Common terms
     'Adults': 'လူကြီးများ',
@@ -296,6 +331,11 @@ export const MEDICINE_TRANSLATIONS: TranslationMaps = {
     '**Warnings**': '**ការព្រមាន**',
     '**Storage**': '**ការផ្ទុក**',
     '**Disclaimer**': '**ការបដិសេធ**',
+    'Professional Assessment': 'ការវាយតម្លៃរបស់អ្នកជំនាញ',
+    'Key Information': 'ព័ត៌មានសំខាន់',
+    'Safety Considerations': 'ការពិចារណាអំពីសុវត្ថិភាព',
+    'Important Reminder': 'ការរំលឹកសំខាន់',
+    'Follow-up Questions': 'សំណួរបន្ត',
     
     // Common terms
     'Adults': 'មនុស្សពេញវ័យ',
@@ -330,6 +370,11 @@ export const MEDICINE_TRANSLATIONS: TranslationMaps = {
     '**Warnings**': '**ຄຳເຕືອນ**',
     '**Storage**': '**ການເກັບມ້ຽນ**',
     '**Disclaimer**': '**ຄຳແຈ້ງ**',
+    'Professional Assessment': 'ການປະເມີນຂອງຜູ້ຊ່ຽວຊານ',
+    'Key Information': 'ຂໍ້ມູນສຳຄັນ',
+    'Safety Considerations': 'ຂໍ້ພິຈາລະນາດ້ານຄວາມປອດໄພ',
+    'Important Reminder': 'ຂໍ້ເຕືອນສຳຄັນ',
+    'Follow-up Questions': 'ຄຳຖາມຕໍ່ເນື່ອງ',
     
     // Common terms
     'Adults': 'ຜູ້ໃຫຍ່',
